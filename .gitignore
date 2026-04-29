@@ -1,0 +1,22 @@
+# Secrets y configuración sensible
+.env
+*.env
+secrets/
+config.local.*
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Backups automáticos
+*.bak
+*.tmp
+
+# IDE
+.idea/
+.vscode/
+*.swp
