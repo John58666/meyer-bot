@@ -20,3 +20,5 @@ logs/
 .idea/
 .vscode/
 *.swp
+*.env.*
+!.env.example
