@@ -1,188 +1,149 @@
 {
-    "updatedAt": "2026-04-28T04:23:28.445Z",
-    "createdAt": "2026-04-28T04:23:28.445Z",
-    "id": "tzFJ9m2pJX1AheI0",
-    "name": "Recordatorios 24h - Peluquer\u00eda Meyer",
-    "description": null,
-    "active": true,
-    "isArchived": false,
-    "nodes": [
-        {
-            "id": "51094806-da34-43bd-832b-e1c89d975416",
-            "name": "Schedule Trigger",
-            "type": "n8n-nodes-base.scheduleTrigger",
-            "typeVersion": 1.2,
-            "position": [
-                0,
-                0
-            ],
-            "parameters": {
-                "rule": {
-                    "interval": [
-                        {
-                            "field": "cronExpression",
-                            "expression": "0 15 * * *"
-                        }
-                    ]
-                }
+  "name": "Recordatorios 24h - Peluquería Meyer",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 15 * * *"
             }
+          ]
+        }
+      },
+      "id": "51094806-da34-43bd-832b-e1c89d975416",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "getRows",
+        "documentId": {
+          "__rl": true,
+          "value": "1gMfpG-7AN3TmqOOL2xTDgNE3Y_G8PNuwCsVsm-4JsW8",
+          "mode": "list",
+          "cachedResultName": "CItas Peluqueria ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1gMfpG-7AN3TmqOOL2xTDgNE3Y_G8PNuwCsVsm-4JsW8/edit?usp=drivesdk"
         },
-        {
-            "id": "22f15c80-faeb-4e25-b63f-25ba34ce994b",
-            "name": "Leer Citas",
-            "type": "n8n-nodes-base.googleSheets",
-            "typeVersion": 4.7,
-            "position": [
-                240,
-                0
-            ],
-            "credentials": {
-                "googleApi": {
-                    "id": "BMX8jHVHhVXSfDZ4",
-                    "name": "Google Sheets account 3"
-                }
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Datos clientes",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1gMfpG-7AN3TmqOOL2xTDgNE3Y_G8PNuwCsVsm-4JsW8/edit#gid=0"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "id": "22f15c80-faeb-4e25-b63f-25ba34ce994b",
+      "name": "Leer Citas",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [240, 0],
+      "credentials": {
+        "googleApi": {
+          "id": "BMX8jHVHhVXSfDZ4",
+          "name": "Google Sheets account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filtrar citas de mañana con estado \"Pendiente\" y preparar mensajes\n\nconst manana = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }));\nmanana.setDate(manana.getDate() + 1);\nconst dd = String(manana.getDate()).padStart(2, '0');\nconst mm = String(manana.getMonth() + 1).padStart(2, '0');\nconst yyyy = manana.getFullYear();\nconst fechaManana = `${dd}/${mm}/${yyyy}`;\n\nconst diasSemana = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];\nconst meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];\nconst fechaNatural = `${diasSemana[manana.getDay()]} ${manana.getDate()} de ${meses[manana.getMonth()]}`;\n\nconst resultados = [];\n\nfor (const item of $input.all()) {\n  const row = item.json;\n\n  const fecha    = (row['Fecha']     || '').toString().trim();\n  const hora     = (row['Hora ']     || row['Hora']    || '').toString().trim();\n  const nombre   = (row['Nombre ']   || row['Nombre']  || 'cliente').toString().trim();\n  const servicio = (row['Servicio']  || '').toString().trim();\n  const estado   = (row['Estado ']   || row['Estado']  || '').toString().trim();\n  const rawNum   = (row['Número ']   || row['Número']  || '').toString().trim();\n\n  // SOLO citas con estado \"Pendiente\"\n  if (estado !== 'Pendiente') continue;\n\n  // Limpiar número: quitar @s.whatsapp.net y caracteres no numéricos\n  const numero = rawNum.replace(/@s\\.whatsapp\\.net/g, '').replace(/\\D/g, '');\n\n  if (!fecha || !numero || !hora) continue;\n  if (fecha !== fechaManana) continue;\n\n  const mensaje =\n    `Hola ${nombre} 👋\\n\\n` +\n    `Te recordamos que tienes una cita en *Peluquería Meyer* mañana ` +\n    `*${fechaNatural}* a las *${hora}*.\\n\\n` +\n    `✂️ Servicio: *${servicio}*\\n\\n` +\n    `Si necesitas cancelar o reagendar, responde este mensaje 😊`;\n\n  resultados.push({\n    json: {\n      numero,\n      nombre,\n      mensaje,\n      fecha,\n      hora,\n      servicio\n    }\n  });\n}\n\nreturn resultados;"
+      },
+      "id": "5b0b8109-c39a-4159-a9be-19dc964cfb2d",
+      "name": "Filtrar Mañana",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://178.104.27.180:8080/message/sendText/peluqueria-beta",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.EVOLUTION_API_KEY }}"
             },
-            "parameters": {
-                "authentication": "serviceAccount",
-                "operation": "getRows",
-                "documentId": {
-                    "__rl": true,
-                    "value": "1gMfpG-7AN3TmqOOL2xTDgNE3Y_G8PNuwCsVsm-4JsW8",
-                    "mode": "list",
-                    "cachedResultName": "CItas Peluqueria ",
-                    "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1gMfpG-7AN3TmqOOL2xTDgNE3Y_G8PNuwCsVsm-4JsW8/edit?usp=drivesdk"
-                },
-                "sheetName": {
-                    "__rl": true,
-                    "value": "gid=0",
-                    "mode": "list",
-                    "cachedResultName": "Datos clientes",
-                    "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1gMfpG-7AN3TmqOOL2xTDgNE3Y_G8PNuwCsVsm-4JsW8/edit#gid=0"
-                },
-                "filtersUI": {},
-                "returnAll": true,
-                "options": {}
+            {
+              "name": "Content-Type",
+              "value": "application/json"
             }
+          ]
         },
-        {
-            "id": "5b0b8109-c39a-4159-a9be-19dc964cfb2d",
-            "name": "Filtrar Ma\u00f1ana",
-            "type": "n8n-nodes-base.code",
-            "typeVersion": 2,
-            "position": [
-                480,
-                0
-            ],
-            "parameters": {
-                "jsCode": "\n// Filtrar citas de ma\u00f1ana y preparar mensajes de recordatorio\n\nconst manana = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }));\nmanana.setDate(manana.getDate() + 1);\nconst dd = String(manana.getDate()).padStart(2, '0');\nconst mm = String(manana.getMonth() + 1).padStart(2, '0');\nconst yyyy = manana.getFullYear();\nconst fechaManana = `${dd}/${mm}/${yyyy}`;\n\nconst diasSemana = ['domingo','lunes','martes','mi\u00e9rcoles','jueves','viernes','s\u00e1bado'];\nconst meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];\nconst fechaNatural = `${diasSemana[manana.getDay()]} ${manana.getDate()} de ${meses[manana.getMonth()]}`;\n\nconst resultados = [];\n\nfor (const item of $input.all()) {\n  const row = item.json;\n\n  const fecha    = (row['Fecha']     || '').toString().trim();\n  const hora     = (row['Hora ']     || row['Hora']    || '').toString().trim();\n  const nombre   = (row['Nombre ']   || row['Nombre']  || 'cliente').toString().trim();\n  const servicio = (row['Servicio']  || '').toString().trim();\n  const estado   = (row['Estado ']   || row['Estado']  || '').toString().trim().toLowerCase();\n  const rawNum   = (row['N\u00famero ']   || row['N\u00famero']  || '').toString().trim();\n\n  // Limpiar n\u00famero: quitar @s.whatsapp.net y caracteres no num\u00e9ricos\n  const numero = rawNum.replace(/@s\\.whatsapp\\.net/g, '').replace(/\\D/g, '');\n\n  if (!fecha || !numero || !hora) continue;\n  if (estado.includes('cancel'))  continue;\n  if (fecha !== fechaManana)       continue;\n\n  const mensaje =\n    `Hola ${nombre} \ud83d\udc4b\\n\\n` +\n    `Te recordamos que tienes una cita en *Peluquer\u00eda Meyer* ma\u00f1ana ` +\n    `*${fechaNatural}* a las *${hora}*.\\n\\n` +\n    `\u2702\ufe0f Servicio: *${servicio}*\\n\\n` +\n    `Si necesitas cancelar o reagendar, responde este mensaje \ud83d\ude0a`;\n\n  resultados.push({\n    json: { numero, nombre, hora, servicio, fecha, fechaNatural, mensaje }\n  });\n}\n\nreturn resultados;\n"
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.numero }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.mensaje }}"
             }
+          ]
         },
-        {
-            "id": "1a2214f3-cfda-493d-81fd-12e2e8676536",
-            "name": "Enviar Recordatorio WhatsApp",
-            "type": "n8n-nodes-base.httpRequest",
-            "typeVersion": 4.4,
-            "position": [
-                720,
-                0
-            ],
-            "parameters": {
-                "method": "POST",
-                "url": "http://178.104.27.180:8080/message/sendText/peluqueria-beta",
-                "sendHeaders": true,
-                "headerParameters": {
-                    "parameters": [
-                        {
-                            "name": "apikey",
-                            "value": "988D01BD-F7B9-4B4E-9834-575D73A966A9"
-                        },
-                        {
-                            "name": "Content-Type",
-                            "value": "application/json"
-                        }
-                    ]
-                },
-                "sendBody": true,
-                "bodyParameters": {
-                    "parameters": [
-                        {
-                            "name": "number",
-                            "value": "={{ $json.numero }}"
-                        },
-                        {
-                            "name": "text",
-                            "value": "={{ $json.mensaje }}"
-                        }
-                    ]
-                },
-                "options": {}
-            }
-        }
-    ],
-    "connections": {
-        "Schedule Trigger": {
-            "main": [
-                [
-                    {
-                        "node": "Leer Citas",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Leer Citas": {
-            "main": [
-                [
-                    {
-                        "node": "Filtrar Ma\u00f1ana",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Filtrar Ma\u00f1ana": {
-            "main": [
-                [
-                    {
-                        "node": "Enviar Recordatorio WhatsApp",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        }
+        "options": {}
+      },
+      "id": "1a2214f3-cfda-493d-81fd-12e2e8676536",
+      "name": "Enviar Recordatorio WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [720, 0]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Leer Citas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "settings": {
-        "executionOrder": "v1"
+    "Leer Citas": {
+      "main": [
+        [
+          {
+            "node": "Filtrar Mañana",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "staticData": null,
-    "meta": null,
-    "pinData": null,
-    "versionId": "207d9576-fb23-487e-a266-021c22cb8fb2",
-    "activeVersionId": null,
-    "versionCounter": 2,
-    "triggerCount": 0,
-    "shared": [
-        {
-            "updatedAt": "2026-04-28T04:23:28.450Z",
-            "createdAt": "2026-04-28T04:23:28.450Z",
-            "role": "workflow:owner",
-            "workflowId": "tzFJ9m2pJX1AheI0",
-            "projectId": "0YdTEHLo3KgLAsdu",
-            "project": {
-                "updatedAt": "2026-03-23T06:26:02.459Z",
-                "createdAt": "2026-03-06T01:45:34.921Z",
-                "id": "0YdTEHLo3KgLAsdu",
-                "name": "Johnander Prieto <jhonander208@gmail.com>",
-                "type": "personal",
-                "icon": null,
-                "description": null,
-                "creatorId": "710fc272-756d-4d30-ad59-1a844c87767b"
-            }
-        }
-    ],
-    "tags": [],
-    "activeVersion": null
+    "Filtrar Mañana": {
+      "main": [
+        [
+          {
+            "node": "Enviar Recordatorio WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "versionId": "207d9576-fb23-487e-a266-021c22cb8fb3",
+  "id": "tzFJ9m2pJX1AheI0",
+  "tags": []
 }
