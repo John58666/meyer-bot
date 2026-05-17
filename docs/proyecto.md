@@ -79,7 +79,7 @@ Automatización completa del canal WhatsApp Business de Peluquería Meyer median
 |------------|------|-----------|---------|
 | **Evolution API** | Gateway WhatsApp | VPS Ubuntu (self-hosted) | Recibe/envía mensajes de WhatsApp |
 | **n8n** | Workflow orchestrator | https://n8n.zyvenshop.com | Orquesta toda la lógica de negocio |
-| **Claude Haiku 4.5** | LLM conversacional | Anthropic API | Genera respuestas en lenguaje natural |
+| **Groq (llama-3.3-70b)** | LLM conversacional | Groq API | Genera respuestas en lenguaje natural |
 | **Google Sheets** | Base de datos | Google Cloud | Almacena citas (Fecha, Hora, Cliente, Servicio, Estado) |
 | **Google Calendar** | Gestión de eventos | Google Cloud | (Temporalmente deshabilitado) |
 
@@ -97,7 +97,7 @@ El sistema consta de 2 workflows principales:
 
 **Funciones**:
 - Filtra grupos y rate limit (50 msg/hora por usuario)
-- Conversación con Claude Haiku + memoria de 10 mensajes
+- Conversación con Groq (llama-3.3-70b) + memoria de 10 mensajes
 - Valida horario de atención
 - Agendamiento con orden estricto (servicio → fecha → hora)
 - Verificación de disponibilidad en tiempo real

@@ -1,6 +1,6 @@
 # System Prompt — Agente Meyer Bot
 
-> Este archivo documenta el system prompt utilizado en el nodo **AI Agent** (Claude Haiku 4.5) dentro del workflow `peluqueria-beta.json`.
+> Este archivo documenta el system prompt utilizado en el nodo **AI Agent** (Groq / llama-3.3-70b) dentro del workflow `peluqueria-beta.json`.
 
 **Última actualización**: Mayo 17, 2026
 
@@ -241,7 +241,7 @@ Bot: Con gusto, aquí estamos para lo que necesites 😊
 
 ## Notas Técnicas
 
-- **Modelo**: Claude Haiku 4.5 (`claude-haiku-4-5-20251001`)
+- **Modelo**: Groq llama-3.3-70b (`llama-3.3-70b-versatile`)
 - **Ubicación en workflow**: Nodo "AI Agent" (línea 82-98 del JSON)
 - **Memoria**: 10 mensajes por usuario (nodo "Simple Memory")
 - **Timeout**: Sin timeout específico configurado

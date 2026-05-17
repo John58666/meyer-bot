@@ -50,7 +50,7 @@ El workflow principal orquesta toda la conversación de WhatsApp con IA para Pel
 
               ▼
     ┌──────────────────┐
-    │    AI Agent      │ ◄─── [Anthropic Chat Model] (Claude Haiku 4.5)
+    │    AI Agent      │ ◄─── [Groq Chat Model] (llama-3.3-70b)
     └─────────┬────────┘      │
               │               └─── [Simple Memory] (10 msgs/usuario)
               │
@@ -179,11 +179,11 @@ El workflow principal orquesta toda la conversación de WhatsApp con IA para Pel
 
 #### 4. AI Agent
 - **Tipo**: `@n8n/n8n-nodes-langchain.agent`
-- **Función**: Orquesta la conversación con Claude
+- **Función**: Orquesta la conversación con Groq
 - **Input**: `{{ $('Code in JavaScript').item.json.textoOriginal }}`
 - **System Message**: Prompt completo de Peluquería Meyer (ver `prompts/meyer-system-prompt.md`)
 - **Conexiones**:
-  - Model: Anthropic Chat Model
+  - Model: Groq Chat Model
   - Memory: Simple Memory (10 mensajes)
 
 **Lógica del System Prompt:**
@@ -203,10 +203,10 @@ El workflow principal orquesta toda la conversación de WhatsApp con IA para Pel
 - NUNCA confirmar sin tener los 3 datos explícitos
 - Si fuera de horario → responder ÚNICAMENTE con `mensajeHorario`
 
-#### 5. Anthropic Chat Model
-- **Tipo**: `@n8n/n8n-nodes-langchain.lmChatAnthropic`
-- **Modelo**: `claude-haiku-4-5-20251001`
-- **Credential**: ID `BzavBObopBrzWpRi` (configurada en n8n)
+#### 5. Groq Chat Model
+- **Tipo**: `@n8n/n8n-nodes-langchain.lmChatGroq`
+- **Modelo**: `llama-3.3-70b-versatile`
+- **Credential**: ID configurada en n8n
 
 #### 6. Simple Memory
 - **Tipo**: `@n8n/n8n-nodes-langchain.memoryBufferWindow`
@@ -363,7 +363,7 @@ El workflow principal orquesta toda la conversación de WhatsApp con IA para Pel
 ```
 Webhook → If → Code in JavaScript → AI Agent → Wait → If1
                                        ↑              ↓
-                        [Anthropic] ←─┤         ┌────┴─────────┐
+                        [Groq] ←─┤         ┌────┴─────────┐
                         [Memory] ←────┘    (SI) │         (NO) │
                                                  ↓              ↓
                                     Leer Disponibilidad      If2 → HTTP Request
@@ -396,7 +396,7 @@ Estas variables deben estar configuradas en `.env` o en n8n:
 | `EVOLUTION_API_URL` | URL base de Evolution API | HTTP Request (x3) |
 | `EVOLUTION_API_KEY` | Autenticación Evolution API | ⚠️ Hardcodeada en 3 nodos |
 | `GOOGLE_SHEET_ID` | ID del Sheet de citas | Leer/Append Google Sheets |
-| `ANTHROPIC_API_KEY` | Credential para Claude | Anthropic Chat Model |
+| `GROQ_API_KEY` | Credential para Groq | Groq Chat Model |
 | `MEYER_NUMERO_DUENO` | Número del dueño para notificaciones | Code in JavaScript1 |
 
 ---
@@ -405,7 +405,7 @@ Estas variables deben estar configuradas en `.env` o en n8n:
 
 | Credential | Tipo | ID | Uso |
 |------------|------|----|----|
-| Anthropic account | API Key | `BzavBObopBrzWpRi` | Claude Haiku |
+| Groq account | API Key | Configurada en n8n | llama-3.3-70b |
 | Google Sheets account 3 | Service Account | `BMX8jHVHhVXSfDZ4` | Leer/Escribir Sheet |
 | Header Auth account | HTTP Header | `7zNGL0U3zg4LEZZS` | Evolution API (dueño) |
 | Header Auth account 2 | HTTP Header | `eCohHiQfHWlNdh0P` | Evolution API (cliente) |
@@ -464,10 +464,10 @@ Estas variables deben estar configuradas en `.env` o en n8n:
    - Calcula: fechaHoy="17/05/2026", mañana="18/05/2026", calendario="..."
    - fueraDeHorario=false (2pm está en horario)
 
-4. AI Agent procesa con Claude:
+4. AI Agent procesa con Groq (llama-3.3-70b):
    - System prompt recibe contexto de fechas
-   - Claude identifica: servicio="Corte caballero", fecha="mañana", hora="2pm"
-   - Claude responde: "Perfecto, te confirmo: Corte caballero, 18/05/2026, 14:00. ¿Confirmamos?"
+   - LLM identifica: servicio="Corte caballero", fecha="mañana", hora="2pm"
+   - LLM responde: "Perfecto, te confirmo: Corte caballero, 18/05/2026, 14:00. ¿Confirmamos?"
 
 5. Cliente responde: "Sí, confirmo"
    → AI Agent responde: "CITA_CONFIRMADA|Corte caballero|18/05/2026|14:00"

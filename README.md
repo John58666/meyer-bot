@@ -2,7 +2,7 @@
 
 > Bot de WhatsApp con IA para Peluquería Meyer — Automatización inteligente de citas con verificación de disponibilidad en tiempo real
 
-![Stack](https://img.shields.io/badge/stack-n8n%20%2B%20Evolution%20API%20%2B%20Claude%20Haiku%204.5-blueviolet)
+![Stack](https://img.shields.io/badge/stack-n8n%20%2B%20Evolution%20API%20%2B%20Groq%20llama--3.3--70b-blueviolet)
 ![Status](https://img.shields.io/badge/estado-beta%20en%20producci%C3%B3n-brightgreen)
 ![License](https://img.shields.io/badge/licencia-privado-lightgrey)
 ![Client](https://img.shields.io/badge/cliente-Peluquer%C3%ADa%20Meyer-ff69b4)
@@ -17,7 +17,7 @@ Este proyecto es el **primer cliente** de una plataforma SaaS de agentes WhatsAp
 
 ### ✨ Capacidades Actuales
 
-- ✅ **Conversación natural con Claude Haiku 4.5** — Entiende lenguaje coloquial
+- ✅ **Conversación natural con Groq (llama-3.3-70b)** — Entiende lenguaje coloquial
 - ✅ **Agendamiento inteligente** — Guía al cliente paso a paso (servicio → fecha → hora)
 - ✅ **Verificación de disponibilidad en tiempo real** — Lee Google Sheet antes de confirmar
 - ✅ **Sistema anti-colisión** — No permite agendar horarios ya ocupados
@@ -124,11 +124,11 @@ Estado: Pendiente ✅
      │            │                │
      ▼            ▼                ▼
 ┌─────────┐ ┌──────────┐ ┌─────────────────┐
-│ Claude  │ │  Google  │ │ Google Calendar │
-│ Haiku   │ │  Sheets  │ │  (deshabilitado)│
-│ 4.5 API │ │          │ └─────────────────┘
+│  Groq   │ │  Google  │ │ Google Calendar │
+│ llama-  │ │  Sheets  │ │  (deshabilitado)│
+│ 3.3-70b │ │          │ └─────────────────┘
 └─────────┘ └──────────┘
-  Anthropic   Base datos
+  Groq API    Base datos
      IA         citas
 ```
 
@@ -138,7 +138,7 @@ Estado: Pendiente ✅
 |------------|---------|-----------|--------|
 | **Evolution API** | Gateway WhatsApp Business | VPS Ubuntu :8080 | ✅ Activo |
 | **n8n** | Orquestador de workflows | https://n8n.zyvenshop.com | ✅ Activo |
-| **Claude Haiku 4.5** | Modelo de lenguaje conversacional | Anthropic API | ✅ Activo |
+| **Groq (llama-3.3-70b)** | Modelo de lenguaje conversacional | Groq API | ✅ Activo |
 | **Google Sheets** | Base de datos de citas | Google Cloud | ✅ Activo |
 | **Google Calendar** | Gestión de eventos | Google Cloud | ⏸️ Pausado |
 
@@ -147,7 +147,7 @@ Estado: Pendiente ✅
 1. **Cliente envía mensaje** → Evolution API recibe
 2. **Evolution API** → POST webhook a n8n
 3. **n8n filtra** → Rechaza grupos y spam
-4. **n8n procesa** → Claude Haiku genera respuesta
+4. **n8n procesa** → Groq (llama-3.3-70b) genera respuesta
 5. **¿Cliente confirma cita?**
    - **SÍ**: Verifica disponibilidad en Sheet → Guarda → Notifica
    - **NO**: Responde conversación normal
@@ -174,7 +174,7 @@ El sistema funciona con 2 workflows independientes en n8n:
    - Calcula fechas (hoy, mañana, próximos 7 días)
 
 2. **Conversación con IA**
-   - Claude Haiku 4.5 genera respuestas
+   - Groq (llama-3.3-70b) genera respuestas
    - Memoria: últimos 10 mensajes por usuario
    - Valida horario de atención
 
@@ -279,7 +279,7 @@ meyer-bot/
 - Docker y Docker Compose
 
 ### Servicios Externos
-- **Anthropic API** — Cuenta con acceso a Claude Haiku 4.5
+- **Groq API** — Cuenta con acceso a llama-3.3-70b
 - **Google Cloud** — Service Account con permisos:
   - Google Sheets API (read/write)
   - Google Calendar API (read/write) — opcional
@@ -291,10 +291,10 @@ meyer-bot/
 |----------|------------------|
 | VPS (2GB RAM) | USD $10-20 |
 | Dominio + SSL | USD $1-2 |
-| Anthropic API (Claude Haiku) | USD $5-15 (según uso) |
+| Groq API (llama-3.3-70b) | Gratis (tier gratuito) |
 | Google Cloud | Gratis (tier gratuito) |
 | WhatsApp Business | Gratis |
-| **Total** | **USD $16-37/mes** |
+| **Total** | **USD $11-22/mes** |
 
 ---
 
@@ -330,8 +330,8 @@ GOOGLE_CREDENTIALS_PATH=./secrets/google-credentials.json
 GOOGLE_SHEET_ID=1gMfpG-7AN3TmqOOL2xTDgNE3Y_G8PNuwCsVsm-4JsW8
 GOOGLE_CALENDAR_ID=tu-calendar-id@group.calendar.google.com  # Opcional
 
-# Anthropic (se configura en n8n, no requerida en .env)
-ANTHROPIC_API_KEY=sk-ant-api03-...
+# Groq (se configura en n8n, no requerida en .env)
+GROQ_API_KEY=gsk_...
 
 # Peluquería Meyer
 MEYER_NUMERO_DUENO=573XXXXXXXXX  # Número del dueño para notificaciones
@@ -399,9 +399,9 @@ Ver [documentación oficial de n8n](https://docs.n8n.io/hosting/)
 ### 6. Configurar Credenciales en n8n
 
 1. Ir a **Settings → Credentials**
-2. Agregar credencial **Anthropic**:
-   - Name: `Anthropic account`
-   - API Key: Tu API key de Anthropic
+2. Agregar credencial **Groq**:
+   - Name: `Groq account`
+   - API Key: Tu API key de Groq
 3. Agregar credencial **Google Service Account**:
    - Name: `Google Sheets account 3`
    - Service Account Email: (del JSON)
@@ -694,7 +694,7 @@ test: agregar o modificar tests
 **Stack**:
 - n8n: https://n8n.zyvenshop.com
 - Evolution API: VPS Ubuntu
-- Claude Haiku 4.5: Anthropic API
+- Groq: llama-3.3-70b
 
 ---
 
@@ -708,7 +708,7 @@ test: agregar o modificar tests
 
 - **n8n**: Plataforma de automatización workflow-based
 - **Evolution API**: Gateway WhatsApp Business open source
-- **Anthropic**: Claude Haiku 4.5 para conversaciones en lenguaje natural
+- **Groq**: llama-3.3-70b para conversaciones en lenguaje natural
 - **Peluquería Meyer**: Primer cliente y validación del modelo de negocio
 
 ---

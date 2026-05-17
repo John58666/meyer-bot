@@ -8,7 +8,7 @@ Objetivo: escalar a más negocios locales y reemplazar el trabajo actual de John
 ## Stack
 - **n8n** (n8n.zyvenshop.com) — orquestador de workflows
 - **Evolution API** — conexión con WhatsApp (VPS Ubuntu)
-- **Claude Haiku 4.5** — modelo de IA para conversación
+- **Groq / llama-3.3-70b** — modelo de IA para conversación
 - **Google Sheets** — base de datos de citas
 - **Google Calendar** — gestión de eventos (temporalmente deshabilitado)
 - **VPS Ubuntu** — servidor en 178.104.27.180 (no compartir esta IP)
@@ -68,7 +68,7 @@ meyer-bot/
 - Migrar a credentials nativas de n8n (ver docs/pendientes-seguridad.md)
 
 ## Lo que está funcionando
-- ✅ Bot agenda citas por WhatsApp con Claude Haiku 4.5
+- ✅ Bot agenda citas por WhatsApp con Groq (llama-3.3-70b)
 - ✅ Validación de horario de negocio (fuera de horario = mensaje automático)
 - ✅ Verificación de disponibilidad en tiempo real antes de confirmar
 - ✅ Sistema anti-colisión: no permite agendar horarios ya ocupados
@@ -90,7 +90,7 @@ meyer-bot/
 
 ### Fase 2: Conversación IA
 4. **AI Agent** → orquesta la conversación
-5. **Anthropic Chat Model** → Claude Haiku 4.5
+5. **Groq Chat Model** → llama-3.3-70b
 6. **Simple Memory** → historial de 10 mensajes por usuario
 7. **Wait** → espera 3 segundos antes de continuar
 

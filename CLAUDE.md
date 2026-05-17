@@ -2,7 +2,7 @@
 
 ## Qué es este proyecto
 Bot de WhatsApp con IA para Peluquería Meyer.
-Stack: n8n + Evolution API + Claude Haiku.
+Stack: n8n + Evolution API + Groq (llama-3.3-70b).
 Plataforma SaaS en construcción para negocios locales.
 
 ## SEGURIDAD — CRÍTICO
