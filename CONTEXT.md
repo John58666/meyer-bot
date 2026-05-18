@@ -39,33 +39,27 @@ meyer-bot/
 └── README.md                      # Documentación principal
 ```
 
-## Cambios Recientes (Mayo 17, 2026)
+## Sprint 0 — COMPLETADO ✅ (Mayo 18, 2026)
 
-### ✅ Infraestructura
-- Credenciales movidas a .env (9 variables configuradas)
-- docker-compose.yml simplificado (solo n8n local, 9 líneas)
-- EVOLUTION_API_KEY agregada como variable de entorno
-- N8N_BLOCK_ENV_ACCESS_IN_NODE=false configurado
+### ✅ Seguridad
+- EVOLUTION_API_KEY migrada a .env — todos los nodos usan `$env.EVOLUTION_API_KEY`
+- Google private key eliminada del workflow (nodo "Code in JavaScript2" desconectado)
+- N8N_BLOCK_ENV_ACCESS_IN_NODE=false configurado en docker-compose.yml
 
-### ✅ Workflow Principal
-- **Verificación de disponibilidad en tiempo real** implementada
-- Sistema anti-colisión de horarios: lee Google Sheet antes de confirmar
-- Flujo completo funcionando end-to-end:
-  1. Cliente solicita cita → Claude conversa
-  2. Cliente confirma → Sistema verifica disponibilidad en Sheet
-  3. Si disponible → Guarda en Sheet + notifica dueño + confirma cliente
-  4. Si ocupado → Avisa al cliente y permite elegir otro horario
+### ✅ Bot End-to-End
+- Flujo completo funcionando: recepción → conversación IA → validación → persistencia → notificaciones
+- Verificación de disponibilidad en tiempo real antes de confirmar cita
+- Sistema anti-colisión de horarios operativo
 
-### ⚠️ Google Calendar
-- Nodo temporalmente deshabilitado del flujo principal
-- Código aún presente en "Code in JavaScript2" pero no se ejecuta
-- Razón: limpieza de credenciales y migración a variables de entorno
-- Private key de Google aún hardcodeada en el código (nodo inactivo)
+### ✅ Recordatorios 24h
+- Workflow independiente con cron diario a las 3PM
+- Filtra citas con estado "Pendiente" y envía recordatorio 24h antes
+- Usa `$env.EVOLUTION_API_KEY` (sin keys hardcodeadas)
 
-### ⚠️ Pendientes de Seguridad
-- 3 nodos HTTP Request tienen EVOLUTION_API_KEY hardcodeada (líneas 148, 535, 97)
-- IP del servidor hardcodeada en múltiples nodos: 178.104.27.180
-- Migrar a credentials nativas de n8n (ver docs/pendientes-seguridad.md)
+### 🔧 Google Calendar
+- Nodo deshabilitado del flujo principal
+- Código eliminado, sin private key expuesta
+- Reactivación pendiente de migrar credenciales a n8n credentials nativas
 
 ## Lo que está funcionando
 - ✅ Bot agenda citas por WhatsApp con Groq (llama-3.3-70b)
@@ -130,8 +124,7 @@ Ver diagrama completo en `docs/workflow-arquitectura.md`
 ## Bugs y Mejoras Pendientes
 
 ### 🔴 CRÍTICO
-1. **Credenciales hardcodeadas**: Migrar EVOLUTION_API_KEY a credentials de n8n (3 nodos)
-2. **Private key expuesta**: Limpiar Google private key del nodo "Code in JavaScript2"
+1. **IP del servidor hardcodeada** en múltiples nodos: 178.104.27.180 — migrar a variable de entorno o credentials de n8n
 
 ### 🟡 ALTA PRIORIDAD
 1. **Disponibilidad proactiva**: Bot debe mostrar slots libres ANTES de que cliente elija
@@ -161,9 +154,9 @@ Ver diagrama completo en `docs/workflow-arquitectura.md`
 ## Reglas de seguridad — CRÍTICO
 - ✅ Variables sensibles en .env (ignorado por Git)
 - ✅ Credenciales Google en secrets/ (ignorado por Git)
-- ⚠️ AÚN HAY API keys hardcodeadas en workflow (ver docs/pendientes-seguridad.md)
+- ✅ EVOLUTION_API_KEY migrada a $env — sin keys hardcodeadas en workflow
+- ✅ Google private key eliminada del workflow
 - NUNCA subir .env ni secrets/ a Git
-- La private key del Service Account debe ir en credentials de n8n, no en código
 - Antes de cualquier commit verificar que .env y secrets/ no estén incluidos
 - Verificar con: `git status` antes de cada commit
 
