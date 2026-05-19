@@ -75,6 +75,20 @@ meyer-bot/
 - ✅ Memoria de conversación: últimos 10 mensajes por usuario
 - ✅ Cálculo automático de fechas (hoy, mañana, próximos 7 días en contexto)
 
+## Sprint 1 — COMPLETADO ✅ (Mayo 18, 2026)
+
+### ✅ PostgreSQL
+- Container meyer_postgres corriendo en VPS (postgres:16-alpine)
+- Schema multi-tenant: tablas businesses + appointments
+- Meyer registrado como business_id=1
+- 34 citas migradas desde Google Sheets
+
+### ✅ Workflows migrados
+- peluqueria-beta: nodos Sheets → PostgreSQL (Leer Disponibilidad, Insertar Cita)
+- recordatorios-meyer: nodo Leer Citas → PostgreSQL
+- IP hardcodeada → $env.EVOLUTION_API_URL
+- Número dueño hardcodeado → $env.OWNER_NUMBER
+
 ## Arquitectura del Workflow Principal (19 nodos)
 
 ### Fase 1: Recepción y Filtrado
