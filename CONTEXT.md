@@ -7,10 +7,10 @@ Objetivo: escalar a más negocios locales y reemplazar el trabajo actual de John
 
 ## Stack
 - **n8n** (n8n.zyvenshop.com) — orquestador de workflows
-- **Evolution API** — conexión con WhatsApp (VPS Ubuntu)
+- **Evolution API** — conexión con WhatsApp (VPS Ubuntu) — temporal, migrar a WA Cloud API
 - **Groq / llama-3.3-70b** — modelo de IA para conversación
-- **Google Sheets** — base de datos de citas
-- **Google Calendar** — gestión de eventos (temporalmente deshabilitado)
+- **PostgreSQL 16** (Docker: meyer_postgres) — base de datos principal
+- **Google Sheets** — desconectado del bot, solo referencia histórica
 - **VPS Ubuntu** — servidor en 178.104.27.180 (no compartir esta IP)
 
 ## Repositorio
@@ -21,22 +21,28 @@ Objetivo: escalar a más negocios locales y reemplazar el trabajo actual de John
 ```
 meyer-bot/
 ├── workflows/
-│   ├── peluqueria-beta.json        # Flujo principal (19 nodos)
+│   ├── peluqueria-beta.json        # Flujo principal (21 nodos)
 │   └── recordatorios-meyer.json    # Recordatorios automáticos
+├── database/
+│   ├── schema.sql                  # Schema PostgreSQL multi-tenant
+│   ├── migrate-from-sheets.js      # Script one-shot de migración (ya ejecutado)
+│   └── n8n-queries.sql             # Queries de referencia para nodos n8n
+├── infrastructure/
+│   └── docker-compose.db.yml       # Referencia del servicio postgres agregado al VPS
 ├── docs/
-│   ├── proyecto.md                 # Documentación general
-│   ├── workflow-arquitectura.md    # Diagrama y flujo detallado
-│   └── pendientes-seguridad.md     # Issues de seguridad
+│   ├── proyecto.md
+│   ├── workflow-arquitectura.md
+│   └── pendientes-seguridad.md
 ├── prompts/
-│   └── meyer-system-prompt.md      # System prompt del agente
+│   └── meyer-system-prompt.md
 ├── clientes/meyer/
 ├── secrets/                        # Credenciales Google (ignorado en Git)
-├── .env                           # Variables de entorno (ignorado en Git)
-├── .env.example                   # Plantilla de variables
-├── docker-compose.yml             # Configuración n8n local
-├── CONTEXT.md                     # Este archivo
-├── CLAUDE.md                      # Reglas para Claude
-└── README.md                      # Documentación principal
+├── .env                            # Variables de entorno (ignorado en Git)
+├── .env.example
+├── docker-compose.yml
+├── CONTEXT.md
+├── CLAUDE.md
+└── README.md
 ```
 
 ## Sprint 0 — COMPLETADO ✅ (Mayo 18, 2026)
@@ -45,87 +51,108 @@ meyer-bot/
 - EVOLUTION_API_KEY migrada a .env — todos los nodos usan `$env.EVOLUTION_API_KEY`
 - Google private key eliminada del workflow (nodo "Code in JavaScript2" desconectado)
 - N8N_BLOCK_ENV_ACCESS_IN_NODE=false configurado en docker-compose.yml
-
-### ✅ Bot End-to-End
-- Flujo completo funcionando: recepción → conversación IA → validación → persistencia → notificaciones
-- Verificación de disponibilidad en tiempo real antes de confirmar cita
-- Sistema anti-colisión de horarios operativo
-
-### ✅ Recordatorios 24h
-- Workflow independiente con cron diario a las 3PM
-- Filtra citas con estado "Pendiente" y envía recordatorio 24h antes
-- Usa `$env.EVOLUTION_API_KEY` (sin keys hardcodeadas)
-
-### 🔧 Google Calendar
-- Nodo deshabilitado del flujo principal
-- Código eliminado, sin private key expuesta
-- Reactivación pendiente de migrar credenciales a n8n credentials nativas
-
-## Lo que está funcionando
-- ✅ Bot agenda citas por WhatsApp con Groq (llama-3.3-70b)
-- ✅ Validación de horario de negocio (fuera de horario = mensaje automático)
-- ✅ Verificación de disponibilidad en tiempo real antes de confirmar
-- ✅ Sistema anti-colisión: no permite agendar horarios ya ocupados
-- ✅ Google Sheets registra citas automáticamente (Fecha, Hora, Nombre, Servicio, Número, Estado)
-- ✅ Recordatorios 24h antes de cada cita (workflow independiente, cron 3PM diario)
-- ✅ Notificación al dueño cuando se agenda una cita nueva
-- ✅ Confirmación al cliente con detalles de la cita
-- ✅ Filtro de grupos (solo mensajes directos)
-- ✅ Rate limit: 50 mensajes/hora por número
-- ✅ Memoria de conversación: últimos 10 mensajes por usuario
-- ✅ Cálculo automático de fechas (hoy, mañana, próximos 7 días en contexto)
+- IP del servidor migrada a `$env.EVOLUTION_API_URL` en los 4 nodos HTTP
+- Número del dueño migrado a `$env.OWNER_NUMBER` en Code in JavaScript1
 
 ## Sprint 1 — COMPLETADO ✅ (Mayo 18, 2026)
 
 ### ✅ PostgreSQL
 - Container meyer_postgres corriendo en VPS (postgres:16-alpine)
-- Schema multi-tenant: tablas businesses + appointments
+- Mismo VPS, red Docker n8n_default
+- Schema multi-tenant: tablas `businesses` + `appointments`
 - Meyer registrado como business_id=1
-- 34 citas migradas desde Google Sheets
+- 34 citas migradas desde Google Sheets (datos de beta)
+- Credential "Postgres account" en n8n con host `meyer_postgres`
 
-### ✅ Workflows migrados
-- peluqueria-beta: nodos Sheets → PostgreSQL (Leer Disponibilidad, Insertar Cita)
-- recordatorios-meyer: nodo Leer Citas → PostgreSQL
-- IP hardcodeada → $env.EVOLUTION_API_URL
-- Número dueño hardcodeado → $env.OWNER_NUMBER
+### ✅ Workflows migrados a PostgreSQL
+- peluqueria-beta: nodos Sheets reemplazados por PostgreSQL
+  - "Leer Disponibilidad" → PostgreSQL COUNT query
+  - "Verificar Slot" → JS simplificado que lee total del COUNT
+  - "Append row in sheet" → "Insertar Cita" PostgreSQL INSERT
+- recordatorios-meyer: nodo "Leer Citas" → PostgreSQL SELECT
 
-## Arquitectura del Workflow Principal (19 nodos)
+### ⚠️ Pendiente de seguridad
+- Google private key aún está en `/root/n8n/.env` en texto plano
+  → Migrar a n8n credentials nativas (Google Service Account)
+  → Eliminar GOOGLE_PRIVATE_KEY del .env del VPS
+
+## Sprint 2 — COMPLETADO ✅ (Mayo 18, 2026)
+
+### ✅ Disponibilidad proactiva
+- Nuevo nodo PostgreSQL "Leer Slots Disponibles" antes del AI Agent
+- Query con generate_series: calcula slots libres de los próximos 7 días
+- Nuevo nodo Code "Formatear Disponibilidad": agrupa slots por día en texto natural
+- AI Agent recibe disponibilidad real en el system prompt
+- Bot muestra horarios disponibles antes de que el cliente elija
+- Domingos con horario diferente (10AM-5PM) correctamente excluidos del generate_series
+
+### 🔧 Ajustes pendientes del Sprint 2
+1. **Texto demasiado largo**: bot muestra todos los días de golpe en WhatsApp
+   → Ajustar prompt para mostrar solo el día solicitado
+2. **Confusión de fechas**: "mañana" no siempre coincide entre el calendario y el listado
+   → Sincronizar fecha del Code in JavaScript con el generate_series
+
+## Arquitectura del Workflow Principal (21 nodos)
 
 ### Fase 1: Recepción y Filtrado
 1. **Webhook** → recibe POST de Evolution API
 2. **If** → filtra grupos (@g.us) y mensajes vacíos
 3. **Code in JavaScript** → rate limit + extrae mensaje + calcula fechas (Bogotá timezone)
 
-### Fase 2: Conversación IA
-4. **AI Agent** → orquesta la conversación
-5. **Groq Chat Model** → llama-3.3-70b
-6. **Simple Memory** → historial de 10 mensajes por usuario
-7. **Wait** → espera 3 segundos antes de continuar
+### Fase 2: Disponibilidad + Conversación IA
+4. **Leer Slots Disponibles** → PostgreSQL: slots libres próximos 7 días
+5. **Formatear Disponibilidad** → Code JS: agrupa slots por día en texto natural
+6. **AI Agent** → orquesta la conversación con disponibilidad real en system prompt
+7. **Groq Chat Model** → llama-3.3-70b
+8. **Simple Memory** → historial de 10 mensajes por usuario
+9. **Wait** → espera 3 segundos antes de continuar
 
 ### Fase 3: Decisión y Validación
-8. **If1** → detecta "CITA_CONFIRMADA|servicio|fecha|hora" en respuesta
-9. **Leer Disponibilidad** → consulta todas las citas en Google Sheet
-10. **Verificar Slot** → compara fecha/hora solicitada vs. ocupadas
-11. **¿Disponible?** → decide si el horario está libre
+10. **If1** → detecta "CITA_CONFIRMADA|servicio|fecha|hora" en respuesta
+11. **Leer Disponibilidad** → PostgreSQL COUNT: verifica si el slot sigue libre
+12. **Verificar Slot** → Code JS: evalúa resultado del COUNT
+13. **¿Disponible?** → decide si el horario está libre
 
 ### Fase 4: Persistencia y Notificaciones
-12. **Append row in sheet** → guarda cita (si disponible)
-13. **Code in JavaScript1** → construye mensajes para dueño y cliente
-14. **Code in JavaScript2** → (DESHABILITADO) código de Google Calendar
-15. **HTTP Request1** → envía notificación al dueño (WhatsApp)
-16. **HTTP Request2** → envía confirmación al cliente (WhatsApp)
+14. **Insertar Cita** → PostgreSQL INSERT en tabla appointments
+15. **Code in JavaScript1** → construye mensajes para dueño y cliente
+16. **Code in JavaScript2** → (DESHABILITADO) Google Calendar
+17. **HTTP Request1** → notificación al dueño (WhatsApp)
+18. **HTTP Request2** → confirmación al cliente (WhatsApp)
 
-### Rama alternativa (no confirmación)
-17. **If2** → detecta si NO hay confirmación
-18. **HTTP Request** → responde conversación normal
-19. **Aviso Slot Ocupado** → informa si el horario está ocupado
+### Rama alternativa
+19. **If2** → detecta si NO hay confirmación
+20. **HTTP Request** → responde conversación normal
+21. **Aviso Slot Ocupado** → informa si el horario está ocupado
 
-Ver diagrama completo en `docs/workflow-arquitectura.md`
+## Base de Datos PostgreSQL
 
-## Google Sheets
-- Archivo: "CItas Peluqueria"
-- Pestaña: "Datos clientes"
-- Columnas: Fecha | Hora | Nombre | Servicio | Número | Estado | EventID
+### Conexión
+- Host (desde n8n): `meyer_postgres`
+- Puerto: 5432
+- Base de datos: `meyer_db`
+- Usuario: `meyer_user`
+- Password: en `$POSTGRES_PASSWORD` del .env del VPS
+- Container Docker: `meyer_postgres` en red `n8n_default`
+
+### Schema
+```sql
+businesses (id, slug, name, whatsapp_instance, owner_number, timezone, active)
+appointments (id, business_id, fecha DATE, hora TIME, nombre, servicio, 
+              numero, estado, calendar_event_id, created_at, updated_at)
+```
+
+### Estados válidos de appointments
+`Pendiente` | `Confirmada` | `Cancelada` | `Completada`
+
+## Variables de entorno del VPS (/root/n8n/.env)
+```
+EVOLUTION_API_KEY=...
+EVOLUTION_API_URL=http://178.104.27.180:8080
+OWNER_NUMBER=573142556322
+POSTGRES_PASSWORD=...
+NODE_FUNCTION_ALLOW_ENV=...,EVOLUTION_API_URL,OWNER_NUMBER
+```
 
 ## Servicios y precios (Peluquería Meyer)
 - Corte dama: $35.000
@@ -135,50 +162,110 @@ Ver diagrama completo en `docs/workflow-arquitectura.md`
 - Peinado especial: $50.000
 - Horario: Lunes-Sábado 9AM-7PM | Domingos 10AM-5PM
 
-## Bugs y Mejoras Pendientes
+## Lo que está funcionando
+- ✅ Bot agenda citas por WhatsApp con Groq (llama-3.3-70b)
+- ✅ Disponibilidad proactiva: muestra slots libres reales antes de agendar
+- ✅ Validación de horario de negocio (fuera de horario = mensaje automático)
+- ✅ Verificación anti-colisión en tiempo real antes de confirmar
+- ✅ PostgreSQL registra citas automáticamente
+- ✅ Recordatorios 24h antes de cada cita (cron 3PM diario)
+- ✅ Notificación al dueño cuando se agenda una cita nueva
+- ✅ Confirmación al cliente con detalles de la cita
+- ✅ Filtro de grupos (solo mensajes directos)
+- ✅ Rate limit: 50 mensajes/hora por número
+- ✅ Memoria de conversación: últimos 10 mensajes por usuario
+- ✅ Cálculo automático de fechas (hoy, mañana, próximos 7 días en contexto)
+
+## Backlog priorizado
 
 ### 🔴 CRÍTICO
-1. **IP del servidor hardcodeada** en múltiples nodos: 178.104.27.180 — migrar a variable de entorno o credentials de n8n
+1. **Google private key en .env del VPS en texto plano**
+   → Migrar a n8n credentials nativas (Google Service Account)
+   → Eliminar GOOGLE_PRIVATE_KEY del .env del VPS
+   → Afecta: si alguien accede al VPS, tiene la key expuesta
 
 ### 🟡 ALTA PRIORIDAD
-1. **Disponibilidad proactiva**: Bot debe mostrar slots libres ANTES de que cliente elija
-   - Leer Sheet, calcular ocupados, pasar disponibles a Claude en system prompt
-   - Ejemplo: "Tengo disponible: 9AM, 11AM, 2PM, 4PM"
 
-2. **Reagendamiento**: No existe lógica completa
-   - Buscar cita existente por número en Sheet
-   - Actualizar fecha/hora (o borrar y crear nueva)
-   - Si Calendar está activo: borrar evento viejo usando EventID
+2. **Sprint 3 — Dashboard de gestión** (siguiente)
+   - Vista de citas del día y la semana
+   - Acciones: cancelar, reagendar
+   - Conectado directo a PostgreSQL
+   - Servido desde el VPS con nginx
+   - Tecnología: HTML/JS estático + n8n webhooks como API
+     (sin frameworks, sin build, funcional para el dueño)
 
-3. **Cancelación automática**: Bot solo responde texto pero no ejecuta
-   - Cambiar Estado a "Cancelada" en Sheet
-   - Si Calendar está activo: borrar evento usando EventID
+3. **Reagendamiento por WhatsApp** (faltaba en backlog original)
+   - Buscar cita existente por número en PostgreSQL
+   - UPDATE fecha/hora en appointments
+   - Confirmar cambio al cliente
+
+4. **Cancelación por WhatsApp** (faltaba en backlog original)
+   - Buscar cita por número
+   - UPDATE estado = 'Cancelada'
+   - Confirmar al cliente
+
+5. **Ajustes de disponibilidad proactiva**
+   - Mostrar solo el día solicitado, no todos los días de golpe
+   - Sincronizar "mañana" entre calendario y listado de slots
+
+### 🟠 MEDIA PRIORIDAD
+
+6. **Migración a WhatsApp Cloud API oficial** (cuando termine el dashboard)
+   - Reemplazar Evolution API por Meta WhatsApp Business API
+   - Cambios en: Webhook, nodo If, Code in JavaScript, 4 nodos HTTP Request
+   - Requiere HTTPS en el webhook (ya disponible en n8n.zyvenshop.com)
+   - Formato de payload completamente distinto al de Evolution API
+   - Mantener Evolution API activo hasta que WA Cloud API esté probado
+
+7. **Reactivar Google Calendar**
+   - Migrar credenciales a n8n credentials nativas
+   - Reconectar nodo Code in JavaScript2 al flujo
+   - Guardar calendar_event_id en PostgreSQL para reagendamiento/cancelación
 
 ### 🟢 MEJORAS
-1. **Métricas para el dueño**: Resumen periódico automático
-   - Tipos de cortes más solicitados
+
+8. **Métricas para el dueño**
+   - Resumen semanal automático por WhatsApp
+   - Tipos de servicio más solicitados
    - Horarios con mayor demanda
    - Tasa de cancelación
-   
-2. **Reactivar Google Calendar**: Una vez migradas las credenciales
-   - Eliminar código hardcoded
-   - Usar credentials de n8n
-   - Reconectar nodo al flujo principal
+   - Fuente: queries SQL sobre appointments
 
-## Reglas de seguridad — CRÍTICO
-- ✅ Variables sensibles en .env (ignorado por Git)
-- ✅ Credenciales Google en secrets/ (ignorado por Git)
-- ✅ EVOLUTION_API_KEY migrada a $env — sin keys hardcodeadas en workflow
-- ✅ Google private key eliminada del workflow
+9. **Rate limit en PostgreSQL** (en lugar de static data de n8n)
+   - Actualmente usa $getWorkflowStaticData (se pierde al reiniciar n8n)
+   - Migrar a tabla `rate_limits` en PostgreSQL para persistencia real
+
+10. **Multi-tenant real**
+    - Actualmente business_id=1 hardcodeado en todos los queries
+    - Leer business_id desde la instancia de Evolution API (`peluqueria-beta`)
+    - Permitir onboarding de nuevos clientes sin tocar el workflow
+
+## Plan de migración a WhatsApp Cloud API
+
+Cuando llegue el momento (post-dashboard), los cambios son:
+
+| Nodo | Cambio |
+|---|---|
+| Webhook | Agregar verificación de token META |
+| If | Cambiar path de remoteJid a messages[0].from |
+| Code in JavaScript | Cambiar extracción de mensaje y número |
+| HTTP Request (x4) | POST a graph.facebook.com con Bearer token |
+| Variables .env | Agregar WHATSAPP_TOKEN, WHATSAPP_PHONE_ID |
+
+## Reglas de seguridad
+- ✅ EVOLUTION_API_KEY en $env
+- ✅ EVOLUTION_API_URL en $env
+- ✅ OWNER_NUMBER en $env
+- ✅ Credenciales Google en secrets/ (ignorado en Git)
+- ✅ .env ignorado en Git
+- ⚠️ GOOGLE_PRIVATE_KEY aún en .env del VPS — pendiente de limpiar
 - NUNCA subir .env ni secrets/ a Git
-- Antes de cualquier commit verificar que .env y secrets/ no estén incluidos
-- Verificar con: `git status` antes de cada commit
+- Verificar con `git status` antes de cada commit
 
 ## Reglas de trabajo en equipo
 - Pensar siempre en escala, no solo en Meyer
-- Preguntar si hay dudas antes de asumir
-- Decir "no sé" cuando aplique
 - No dar la razón sin razonar primero
-- Cada decisión debe considerar cómo funciona para el cliente 10 o 100
+- Cada decisión considera cómo funciona para el cliente 10 o 100
 - Documentar TODO: cada cambio de arquitectura actualiza CONTEXT.md
 - Commits descriptivos: `feat:`, `fix:`, `chore:`, `docs:`
+- Exportar workflow de n8n antes de cada commit (UI → Export → Download)
