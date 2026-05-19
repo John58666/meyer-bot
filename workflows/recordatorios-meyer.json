@@ -20,40 +20,25 @@
     },
     {
       "parameters": {
-        "authentication": "serviceAccount",
-        "operation": "getRows",
-        "documentId": {
-          "__rl": true,
-          "value": "1gMfpG-7AN3TmqOOL2xTDgNE3Y_G8PNuwCsVsm-4JsW8",
-          "mode": "list",
-          "cachedResultName": "CItas Peluqueria ",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1gMfpG-7AN3TmqOOL2xTDgNE3Y_G8PNuwCsVsm-4JsW8/edit?usp=drivesdk"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "gid=0",
-          "mode": "list",
-          "cachedResultName": "Datos clientes",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1gMfpG-7AN3TmqOOL2xTDgNE3Y_G8PNuwCsVsm-4JsW8/edit#gid=0"
-        },
-        "returnAll": true,
+        "operation": "executeQuery",
+        "query": "SELECT a.fecha::text AS \"Fecha\", a.hora::text AS \"Hora\", a.nombre AS \"Nombre\", a.servicio AS \"Servicio\", a.numero AS \"Número\", a.estado AS \"Estado\", b.whatsapp_instance, b.owner_number FROM appointments a JOIN businesses b ON b.id = a.business_id WHERE a.fecha = CURRENT_DATE + INTERVAL '1 day' AND a.estado = 'Pendiente' AND b.active = TRUE",
         "options": {}
       },
       "id": "22f15c80-faeb-4e25-b63f-25ba34ce994b",
       "name": "Leer Citas",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.7,
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1.2,
       "position": [240, 0],
       "credentials": {
-        "googleApi": {
-          "id": "BMX8jHVHhVXSfDZ4",
-          "name": "Google Sheets account 3"
+        "postgres": {
+          "id": "POSTGRES_CREDENTIAL_ID",
+          "name": "meyer-postgres"
         }
       }
     },
     {
       "parameters": {
-        "jsCode": "// Filtrar citas de mañana con estado \"Pendiente\" y preparar mensajes\n\nconst manana = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }));\nmanana.setDate(manana.getDate() + 1);\nconst dd = String(manana.getDate()).padStart(2, '0');\nconst mm = String(manana.getMonth() + 1).padStart(2, '0');\nconst yyyy = manana.getFullYear();\nconst fechaManana = `${dd}/${mm}/${yyyy}`;\n\nconst diasSemana = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];\nconst meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];\nconst fechaNatural = `${diasSemana[manana.getDay()]} ${manana.getDate()} de ${meses[manana.getMonth()]}`;\n\nconst resultados = [];\n\nfor (const item of $input.all()) {\n  const row = item.json;\n\n  const fecha    = (row['Fecha']     || '').toString().trim();\n  const hora     = (row['Hora ']     || row['Hora']    || '').toString().trim();\n  const nombre   = (row['Nombre ']   || row['Nombre']  || 'cliente').toString().trim();\n  const servicio = (row['Servicio']  || '').toString().trim();\n  const estado   = (row['Estado ']   || row['Estado']  || '').toString().trim();\n  const rawNum   = (row['Número ']   || row['Número']  || '').toString().trim();\n\n  // SOLO procesar citas con estado === 'Pendiente'\n  if (estado === 'Pendiente') {\n    const numero = rawNum.replace(/@s\\.whatsapp\\.net/g, '').replace(/\\D/g, '');\n    if (fecha && numero && hora && fecha === fechaManana) {\n      const mensaje =\n        `Hola ${nombre} 👋\\n\\n` +\n        `Te recordamos que tienes una cita en *Peluquería Meyer* mañana ` +\n        `*${fechaNatural}* a las *${hora}*.\\n\\n` +\n        `✂️ Servicio: *${servicio}*\\n\\n` +\n        `Si necesitas cancelar o reagendar, responde este mensaje 😊`;\n      resultados.push({ json: { numero, nombre, mensaje, fecha, hora, servicio } });\n    }\n  }\n}\n\nreturn resultados;"
+        "jsCode": "// Construir mensajes para citas de mañana (ya filtradas por PostgreSQL)\nconst diasSemana = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];\nconst meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];\n\nconst manana = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }));\nmanana.setDate(manana.getDate() + 1);\nconst fechaNatural = `${diasSemana[manana.getDay()]} ${manana.getDate()} de ${meses[manana.getMonth()]}`;\n\nconst resultados = [];\n\nfor (const item of $input.all()) {\n  const row = item.json;\n  const numero = (row['Número'] || '').toString().trim().replace(/@s\\.whatsapp\\.net/g, '').replace(/\\D/g, '');\n  const nombre = (row['Nombre'] || 'cliente').toString().trim();\n  const hora = (row['Hora'] || '').toString().trim();\n  const servicio = (row['Servicio'] || '').toString().trim();\n\n  if (numero && hora) {\n    const mensaje = `Hola ${nombre} 👋\\n\\nTe recordamos que tienes una cita en *Peluquería Meyer* mañana *${fechaNatural}* a las *${hora}*.\\n\\n✂️ Servicio: *${servicio}*\\n\\nSi necesitas cancelar o reagendar, responde este mensaje 😊`;\n    resultados.push({ json: { numero, nombre, mensaje, hora, servicio } });\n  }\n}\n\nreturn resultados;"
       },
       "id": "5b0b8109-c39a-4159-a9be-19dc964cfb2d",
       "name": "Filtrar Mañana",
