@@ -1,0 +1,63 @@
+# ============================================================
+# Agregar este bloque al docker-compose.yml del VPS
+# (el que ya tiene n8n y Evolution API)
+#
+# PASOS:
+#   1. ssh root@VPS
+#   2. cd /ruta/del/docker-compose
+#   3. Agregar el servicio 'postgres' debajo de los servicios existentes
+#   4. Agregar 'postgres' al 'depends_on' del servicio n8n si existe
+#   5. docker compose up -d postgres
+#   6. docker compose exec postgres psql -U meyer_user -d meyer_db -f /schema.sql
+# ============================================================
+
+services:
+  postgres:
+    image: postgres:16-alpine          # Alpine = imagen mínima, ~80MB
+    container_name: meyer_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: meyer_db
+      POSTGRES_USER: meyer_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}   # Agregar al .env del VPS
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql  # Se ejecuta al crear el container
+    ports:
+      - "5432:5432"                    # Solo exponer si necesitas acceso externo para dashboard
+                                       # Si el dashboard corre en el mismo VPS → quitar esto
+    networks:
+      - meyer_network                  # Usar la misma red que n8n
+
+# Agregar al bloque de volumes existente:
+volumes:
+  postgres_data:
+
+# Asegurarse que existe la network:
+networks:
+  meyer_network:
+    external: true   # Si ya existe. Si no: quitar 'external: true'
+
+# ============================================================
+# CONFIGURACIÓN DE N8N para conectar a PostgreSQL
+# Agregar estas env vars al servicio de n8n en el docker-compose del VPS:
+# ============================================================
+#
+# En el servicio n8n, bajo 'environment:':
+#
+#   DB_TYPE: postgresdb              ← esto es para la BD INTERNA de n8n, NO para los workflows
+#                                       Solo si quieres migrar n8n de SQLite a PG (opcional)
+#
+# Para conectar los NODOS de workflow a PostgreSQL:
+# → En n8n UI: Settings → Credentials → New → PostgreSQL
+#   host: postgres  (nombre del servicio Docker)
+#   port: 5432
+#   database: meyer_db
+#   user: meyer_user
+#   password: [valor de POSTGRES_PASSWORD]
+# ============================================================
+
+# ============================================================
+# Agregar al .env del VPS:
+# POSTGRES_PASSWORD=genera_una_password_segura_aqui
+# ============================================================
