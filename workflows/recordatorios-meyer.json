@@ -16,7 +16,10 @@
       "name": "Schedule Trigger",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [0, 0]
+      "position": [
+        0,
+        0
+      ]
     },
     {
       "parameters": {
@@ -27,8 +30,11 @@
       "id": "22f15c80-faeb-4e25-b63f-25ba34ce994b",
       "name": "Leer Citas",
       "type": "n8n-nodes-base.postgres",
-      "typeVersion": 1.2,
-      "position": [240, 0],
+      "typeVersion": 2.5,
+      "position": [
+        240,
+        0
+      ],
       "credentials": {
         "postgres": {
           "id": "POSTGRES_CREDENTIAL_ID",
@@ -44,7 +50,10 @@
       "name": "Filtrar Mañana",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [480, 0]
+      "position": [
+        480,
+        0
+      ]
     },
     {
       "parameters": {
@@ -82,7 +91,10 @@
       "name": "Enviar Recordatorio WhatsApp",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [720, 0]
+      "position": [
+        720,
+        0
+      ]
     }
   ],
   "pinData": {},
