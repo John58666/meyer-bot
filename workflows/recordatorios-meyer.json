@@ -64,7 +64,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://178.104.27.180:8080/message/sendText/peluqueria-beta",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/peluqueria-beta",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
