@@ -12,13 +12,13 @@
           ]
         }
       },
-      "id": "51094806-da34-43bd-832b-e1c89d975416",
-      "name": "Schedule Trigger",
+      "id": "2b35d2b0-79ee-4678-980c-c84949abaf4d",
+      "name": "Schedule Trigger1",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
-        0,
-        0
+        576,
+        -480
       ]
     },
     {
@@ -27,32 +27,32 @@
         "query": "SELECT a.fecha::text AS \"Fecha\", a.hora::text AS \"Hora\", a.nombre AS \"Nombre\", a.servicio AS \"Servicio\", a.numero AS \"Número\", a.estado AS \"Estado\", b.whatsapp_instance, b.owner_number FROM appointments a JOIN businesses b ON b.id = a.business_id WHERE a.fecha = CURRENT_DATE + INTERVAL '1 day' AND a.estado = 'Pendiente' AND b.active = TRUE",
         "options": {}
       },
-      "id": "22f15c80-faeb-4e25-b63f-25ba34ce994b",
-      "name": "Leer Citas",
+      "id": "d1ec841e-4826-4836-b39d-c5c0385312e6",
+      "name": "Leer Citas1",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        240,
-        0
+        816,
+        -480
       ],
       "credentials": {
         "postgres": {
-          "id": "POSTGRES_CREDENTIAL_ID",
-          "name": "meyer-postgres"
+          "id": "AkRs7Kx5gs6JnVMz",
+          "name": "Postgres account"
         }
       }
     },
     {
       "parameters": {
-        "jsCode": "// Construir mensajes para citas de mañana (ya filtradas por PostgreSQL)\nconst diasSemana = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];\nconst meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];\n\nconst manana = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }));\nmanana.setDate(manana.getDate() + 1);\nconst fechaNatural = `${diasSemana[manana.getDay()]} ${manana.getDate()} de ${meses[manana.getMonth()]}`;\n\nconst resultados = [];\n\nfor (const item of $input.all()) {\n  const row = item.json;\n  const numero = (row['Número'] || '').toString().trim().replace(/@s\\.whatsapp\\.net/g, '').replace(/\\D/g, '');\n  const nombre = (row['Nombre'] || 'cliente').toString().trim();\n  const hora = (row['Hora'] || '').toString().trim();\n  const servicio = (row['Servicio'] || '').toString().trim();\n\n  if (numero && hora) {\n    const mensaje = `Hola ${nombre} 👋\\n\\nTe recordamos que tienes una cita en *Peluquería Meyer* mañana *${fechaNatural}* a las *${hora}*.\\n\\n✂️ Servicio: *${servicio}*\\n\\nSi necesitas cancelar o reagendar, responde este mensaje 😊`;\n    resultados.push({ json: { numero, nombre, mensaje, hora, servicio } });\n  }\n}\n\nreturn resultados;"
+        "jsCode": "// Construir mensajes para citas de mañana (ya filtradas por PostgreSQL)\nconst diasSemana = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];\nconst meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];\n\nconst manana = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }));\nmanana.setDate(manana.getDate() + 1);\nconst fechaNatural = `${diasSemana[manana.getDay()]} ${manana.getDate()} de ${meses[manana.getMonth()]}`;\n\nconst resultados = [];\n\nfor (const item of $input.all()) {\n  const row = item.json;\n  const numero = (row['Número'] || '').toString().trim().replace(/@s\\.whatsapp\\.net/g, '').replace(/\\D/g, '');\n  const nombre = (row['Nombre'] || 'cliente').toString().trim();\n  const hora = (row['Hora'] || '').toString().trim().substring(0,5);\n  const servicio = (row['Servicio'] || '').toString().trim();\n\n  if (numero && hora) {\n    const mensaje = `Hola ${nombre} 👋\\n\\nTe recordamos que tienes una cita en *Peluquería Meyer* mañana *${fechaNatural}* a las *${hora.substring(0,5)}*.\\n\\n✂️ Servicio: *${servicio}*\\n\\nSi necesitas cancelar o reagendar, responde este mensaje 😊`;\n    resultados.push({ json: { numero, nombre, mensaje, hora, servicio } });\n  }\n}\n\nreturn resultados;"
       },
-      "id": "5b0b8109-c39a-4159-a9be-19dc964cfb2d",
-      "name": "Filtrar Mañana",
+      "id": "55420021-26ca-4235-940e-4ca99c41f038",
+      "name": "Filtrar Mañana1",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        480,
-        0
+        1056,
+        -480
       ]
     },
     {
@@ -87,45 +87,45 @@
         },
         "options": {}
       },
-      "id": "1a2214f3-cfda-493d-81fd-12e2e8676536",
-      "name": "Enviar Recordatorio WhatsApp",
+      "id": "65e4de52-d090-4187-b4c6-c93cbe81a106",
+      "name": "Enviar Recordatorio WhatsApp1",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        720,
-        0
+        1296,
+        -480
       ]
     }
   ],
   "pinData": {},
   "connections": {
-    "Schedule Trigger": {
+    "Schedule Trigger1": {
       "main": [
         [
           {
-            "node": "Leer Citas",
+            "node": "Leer Citas1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Leer Citas": {
+    "Leer Citas1": {
       "main": [
         [
           {
-            "node": "Filtrar Mañana",
+            "node": "Filtrar Mañana1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Filtrar Mañana": {
+    "Filtrar Mañana1": {
       "main": [
         [
           {
-            "node": "Enviar Recordatorio WhatsApp",
+            "node": "Enviar Recordatorio WhatsApp1",
             "type": "main",
             "index": 0
           }
@@ -135,12 +135,15 @@
   },
   "active": true,
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
   },
+  "versionId": "c7e2dc8f-98de-431d-bc8b-95ea73750e40",
   "meta": {
-    "templateCredsSetupCompleted": true
+    "templateCredsSetupCompleted": true,
+    "instanceId": "78865b14428b3461ac0504416eb2ba5903a5482f3190c606719f27159eed62fe"
   },
-  "versionId": "207d9576-fb23-487e-a266-021c22cb8fb3",
-  "id": "tzFJ9m2pJX1AheI0",
+  "id": "Z2sN3aLwcxKbWS7o",
   "tags": []
 }

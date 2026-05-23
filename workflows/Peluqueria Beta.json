@@ -1,0 +1,729 @@
+{
+  "name": "Peluqueria Beta",
+  "nodes": [
+    {
+      "parameters": {
+        "multipleMethods": true,
+        "httpMethod": [
+          "POST"
+        ],
+        "path": "whatsapp-meyer",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -896,
+        -2768
+      ],
+      "id": "779d9f49-e836-422a-8544-95b9444d665f",
+      "name": "Webhook",
+      "webhookId": "6d4ba56d-3718-4c83-be0d-8fc2d8b55b37"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7b6ad100-0073-4823-97fc-8bd2f67cfab9",
+              "leftValue": "=={{ $json.body.data.key.remoteJid }}",
+              "rightValue": "@g.us",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            },
+            {
+              "id": "02acb1c0-6c52-4ba1-8500-4fc55b513593",
+              "leftValue": "=={{ $json.body.data.message?.conversation || $json.body.data.message?.extendedTextMessage?.text }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {
+          "ignoreCase": false
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -688,
+        -2768
+      ],
+      "id": "5463b384-5c87-47bb-928a-691ccd0cb84c",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ── FILTRO fromMe ──────────────────────\nif ($json.body.data.key.fromMe === true) {\n  return [];\n}\n\n// ── RATE LIMIT ────────────────────────\nconst numero = $json.body.data.key.remoteJid;\nconst ahora = Date.now();\nconst ventana = 60 * 60 * 1000;\nconst limite = 50;\n\nconst historialRaw = $getWorkflowStaticData('global');\nif (!historialRaw.rateLimits) historialRaw.rateLimits = {};\nconst historial = historialRaw.rateLimits[numero] || [];\nconst recientes = historial.filter(t => ahora - t < ventana);\n\nif (recientes.length >= limite) {\n  return [];\n}\n\nrecientes.push(ahora);\nhistorialRaw.rateLimits[numero] = recientes;\n\n// ── FECHA HOY Y MAÑANA (Bogotá) ────────\nconst ahoraBogota = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }));\nconst dia = String(ahoraBogota.getDate()).padStart(2, '0');\nconst mes = String(ahoraBogota.getMonth() + 1).padStart(2, '0');\nconst anio = ahoraBogota.getFullYear();\nconst fechaHoy = `${dia}/${mes}/${anio}`;\n\nconst manana = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }));\nmanana.setDate(manana.getDate() + 1);\nconst dman = String(manana.getDate()).padStart(2, '0');\nconst mman = String(manana.getMonth() + 1).padStart(2, '0');\nconst yman = manana.getFullYear();\nconst mañanaStr = `${dman}/${mman}/${yman}`;\n\n// ── CALENDARIO PRÓXIMOS 7 DÍAS ─────────\nconst diasSemana = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];\nlet calendario = `Mañana: ${mañanaStr}\\n`;\nfor (let i = 1; i <= 7; i++) {\n  const d = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }));\n  d.setDate(d.getDate() + i);\n  const dd = String(d.getDate()).padStart(2, '0');\n  const mm = String(d.getMonth() + 1).padStart(2, '0');\n  const yyyy = d.getFullYear();\n  calendario += `${diasSemana[d.getDay()]}: ${dd}/${mm}/${yyyy}\\n`;\n}\n\n// ── EXTRAER MENSAJE ────────────────────\nconst mensaje = $json.body.data.message?.conversation || \n                $json.body.data.message?.extendedTextMessage?.text || \n                '';\n\n// ── VALIDACIÓN DE HORARIO ─────────────────────────────────────────────────\n// Trabaja sobre la hora que el cliente menciona en el mensaje,\n// no sobre la hora actual del servidor.\nfunction detectarFueraDeHorario(texto) {\n  const t = (texto || '').toLowerCase()\n    .replace(/[áàä]/g,'a').replace(/[éèë]/g,'e')\n    .replace(/[íìï]/g,'i').replace(/[óòö]/g,'o')\n    .replace(/[úùü]/g,'u');\n\n  // Detectar si la solicitud es para domingo (distinto horario)\n  let esDomingo = /\\bdomingo\\b/.test(t);\n\n  // Si el mensaje incluye una fecha DD/MM/YYYY, verificar si cae en domingo\n  if (!esDomingo) {\n    const mf = t.match(/\\b(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})\\b/);\n    if (mf) {\n      const dFecha = new Date(parseInt(mf[3]), parseInt(mf[2]) - 1, parseInt(mf[1]));\n      if (dFecha.getDay() === 0) esDomingo = true;\n    }\n  }\n\n  const abreH   = esDomingo ? 10 : 9;\n  const cierraH = esDomingo ? 17 : 19;\n\n  let hora = null;\n\n  // 1) HH:MM con am/pm opcional  →  \"14:30\", \"2:30pm\", \"14:30 pm\"\n  const mHHMM = t.match(/\\b(\\d{1,2}):(\\d{2})\\s*([ap]\\.?m\\.?)?/);\n  if (mHHMM) {\n    let h = parseInt(mHHMM[1]);\n    const m = parseInt(mHHMM[2]);\n    const suf = (mHHMM[3] || '').replace(/\\./g, '');\n    if (suf.startsWith('p') && h < 12) h += 12;\n    if (suf.startsWith('a') && h === 12) h = 0;\n    hora = h + m / 60;\n  }\n\n  // 2) Número + \"pm\"  →  \"3pm\", \"3 pm\", \"3 p.m.\"\n  if (hora === null) {\n    const mPm = t.match(/\\b(\\d{1,2})\\s*p\\.?m\\.?\\b/);\n    if (mPm) { let h = parseInt(mPm[1]); if (h < 12) h += 12; hora = h; }\n  }\n\n  // 3) Número + \"am\"  →  \"8am\", \"8 am\", \"8 a.m.\"\n  if (hora === null) {\n    const mAm = t.match(/\\b(\\d{1,2})\\s*a\\.?m\\.?\\b/);\n    if (mAm) { let h = parseInt(mAm[1]); if (h === 12) h = 0; hora = h; }\n  }\n\n  // 4) \"a las X de la tarde / noche\"  →  pm\n  if (hora === null) {\n    const mT = t.match(/(?:a las|las)\\s+(\\d{1,2})(?:\\s+de la|\\s+en la)?\\s+(?:tarde|noche)/);\n    if (mT) { let h = parseInt(mT[1]); if (h < 12) h += 12; hora = h; }\n  }\n\n  // 5) \"a las X de la mañana\"  →  am\n  if (hora === null) {\n    const mM = t.match(/(?:a las|las)\\s+(\\d{1,2})(?:\\s+de la)?\\s+manana/);\n    if (mM) { let h = parseInt(mM[1]); if (h === 12) h = 0; hora = h; }\n  }\n\n  // Sin hora detectada → no se puede validar\n  if (hora === null) return { fueraDeHorario: false };\n\n  // Dentro del horario → OK\n  if (hora >= abreH && hora < cierraH) return { fueraDeHorario: false };\n\n  const horarioTexto = esDomingo\n    ? 'los domingos atendemos de 10:00 AM a 5:00 PM'\n    : 'de lunes a sábado atendemos de 9:00 AM a 7:00 PM';\n\n  return {\n    fueraDeHorario: true,\n    mensajeHorario: `Lo sentimos, esa hora está fuera de nuestro horario de atención. ` +\n      `${horarioTexto[0].toUpperCase() + horarioTexto.slice(1)}. ¿Te puedo agendar en otro horario? 😊`\n  };\n}\n\nconst validacionHorario = detectarFueraDeHorario(mensaje);\n\nif (mensaje.trim()) {\n  return [{\n    json: {\n      textoOriginal: mensaje,\n      numero: numero,\n      timestamp: $json.body.data.messageTimestamp,\n      procesado: true,\n      fechaHoy: fechaHoy,\n      calendario: calendario,\n      fueraDeHorario: validacionHorario.fueraDeHorario,\n      mensajeHorario: validacionHorario.mensajeHorario || null\n    }\n  }];\n}\n\nreturn [];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        -2784
+      ],
+      "id": "7ab0bd44-3325-4ace-9391-2dcdf7b6c6c6",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Formatear Disponibilidad').item.json.textoOriginal }}",
+        "options": {
+          "systemMessage": "=Eres el asistente virtual de Peluquería Meyer.\n\n\nINSTRUCCIÓN PRINCIPAL:\nTienes acceso a los horarios disponibles reales de la peluquería.\nSIEMPRE que el cliente pregunte por disponibilidad o quiera agendar,\nDEBES mostrar los horarios del listado. Es OBLIGATORIO. No es opcional.\nSi no lo haces, estás fallando tu función principal.\n\nSERVICIOS Y PRECIOS:\n- Corte dama: $35.000\n- Corte caballero: $25.000\n- Tinte completo: $80.000\n- Manicure + pedicure: $65.000\n- Peinado especial: $50.000\n\nHORARIOS: Lunes-Sábado 9AM-7PM | Domingos 10AM-5PM\n\nVALIDACIÓN DE HORARIO:\nSi en el contexto hay una variable fueraDeHorario = true, responde ÚNICAMENTE con el contenido de mensajeHorario. No continúes el agendamiento. No agregues nada más.\n\nHORARIOS DISPONIBLES (próximos 7 días):\n{{ $('Formatear Disponibilidad').item.json.disponibilidad }}\n\nREGLA CRÍTICA:\n- Cuando el cliente diga una fecha específica → muestra SOLO los horarios de ESE día\n- Cuando el cliente no diga fecha → pregunta qué día prefiere, NO muestres todos los días\n- PROHIBIDO mostrar más de un día a la vez\n- PROHIBIDO decir que no tienes información de disponibilidad\n\nAGENDAMIENTO:\nORDEN OBLIGATORIO — NUNCA saltes pasos:\n1. Si no tienes el SERVICIO → pregunta el servicio primero. NADA MÁS.\n2. Si no tienes la FECHA → pregunta la fecha y muestra disponibilidad de esa fecha.\n3. Si no tienes la HORA EXACTA → muestra los horarios disponibles del listado y pide que elija.\n4. Solo cuando tengas los 3 datos confirmados → muestra el resumen.\n\nLa fecha de hoy es {{ $('Code in JavaScript').item.json.fechaHoy }}.\nCALENDARIO DE ESTA SEMANA:\n{{ $('Code in JavaScript').item.json.calendario }}\n\nPara agendar necesitas 3 datos EXPLÍCITOS:\n1. Servicio\n2. Fecha\n3. Hora EXACTA en formato HH:MM\n\nCuando tengas los 3 datos muestra el resumen y pide confirmación:\n\"Perfecto, te confirmo los datos:\n✂️ Servicio: [servicio]\n📅 Fecha: [fecha en lenguaje natural]\n⏰ Hora: [hora]\n¿Confirmamos la cita? 😊\"\n\nSolo cuando el cliente confirme con \"sí\", \"confirmo\", \"listo\", \"dale\" o cualquier expresión afirmativa, responde ÚNICAMENTE:\nCITA_CONFIRMADA|servicio|DD/MM/YYYY|HH:MM\n\nCRÍTICO — HORA EXACTA: Expresiones como \"en la tarde\", \"en la mañana\", \"más tarde\" NO son horas válidas. Muestra el listado y pide que elija una hora exacta del mismo.\nNUNCA confirmes una hora sin saber si es AM o PM.\n\nCANCELACIONES Y CAMBIOS: Responde con calidez y dile que el equipo lo contactará pronto.\n\nREGLAS GENERALES:\n- Responde SIEMPRE en español\n- Máximo 5 líneas por respuesta\n- En conversaciones normales termina con una pregunta\n- NUNCA termines con pregunta al confirmar una cita\n- FORMATO DE FECHA: Usa lenguaje natural. CORRECTO: \"el miércoles 8 de abril\". INCORRECTO: \"08/04/2026\"\n- ASESORÍA: Si el cliente pide recomendación, respóndela brevemente antes de continuar.\n- SERVICIOS: NUNCA menciones servicios fuera de tu lista. Si no existe responde: \"Lo sentimos, ese servicio no está disponible. Nuestros servicios son: Corte dama $35.000, Corte caballero $25.000, Tinte completo $80.000, Manicure + pedicure $65.000, Peinado especial $50.000. ¿Puedo ayudarte con alguno? 😊\""
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        144,
+        -2784
+      ],
+      "id": "4d496ba0-3200-4b8b-800d-02ddc4eec414",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        128,
+        -2544
+      ],
+      "id": "6d85e576-e598-497b-ad9d-bd149c862b39",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "CJAed2xdCyRjPBAD",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Code in JavaScript').item.json.numero }}_v3",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        256,
+        -2528
+      ],
+      "id": "714c3ab3-05e3-4df9-9e95-b5de296fa0db",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/peluqueria-beta",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.EVOLUTION_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "=application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "=={{ $('Webhook').item.json.body.data.key.remoteJid.split('@')[0] }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $('AI Agent').item.json.output.includes('CITA_CONFIRMADA') ? '✅ ¡Cita registrada! En breve recibirás la confirmación.' : $('AI Agent').item.json.output }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1136,
+        -2608
+      ],
+      "id": "013f541e-e6b1-4c5b-97b7-dbc4e568463b",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        -2768
+      ],
+      "id": "906d7c40-40e7-42f4-a149-fd4495c706bf",
+      "name": "Wait",
+      "webhookId": "3733bbb3-d3d4-4e6a-b98a-ad97bce937ee"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "15af952b-5c53-4306-a75b-70ff2ea9043b",
+              "leftValue": "=={{ $('AI Agent').item.json.output }}",
+              "rightValue": "=CITA_CONFIRMADA",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        656,
+        -2768
+      ],
+      "id": "d4b3d0b2-00eb-4d3f-93d9-d828a5a2f6f5",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO appointments (business_id, fecha, hora, nombre, servicio, numero, estado) VALUES (1, TO_DATE('{{ $('AI Agent').item.json.output.split('|')[2] }}', 'DD/MM/YYYY'), '{{ $('AI Agent').item.json.output.split('|')[3].split('\\n')[0].trim() }}'::time, '{{ $('Webhook').item.json.body.data.pushName }}', '{{ $('AI Agent').item.json.output.split('|')[1] }}', '{{ $('Code in JavaScript').item.json.numero.replace('@s.whatsapp.net','') }}', 'Pendiente') RETURNING id, fecha::text, hora::text, nombre, servicio, numero, estado",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1136,
+        -2800
+      ],
+      "id": "75466f58-72c5-40b3-80b5-9cf9bbef18c1",
+      "name": "Insertar Cita",
+      "credentials": {
+        "postgres": {
+          "id": "AkRs7Kx5gs6JnVMz",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/peluqueria-beta",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $('Code in JavaScript1').item.json.bodyDueno }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1760,
+        -2800
+      ],
+      "id": "a919aec6-67de-4b19-8622-c17016a50e59",
+      "name": "HTTP Request1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "7zNGL0U3zg4LEZZS",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/peluqueria-beta",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $('Code in JavaScript1').item.json.bodyCliente }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1968,
+        -2800
+      ],
+      "id": "0fca27ce-2cf7-41cc-85f1-8bf64b2e980a",
+      "name": "HTTP Request2",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "eCohHiQfHWlNdh0P",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = $('AI Agent').item.json.output.split('|');\nconst servicio = output[1] || '';\nconst fecha = output[2] || '';\nconst hora = (output[3] || '').split('\\n')[0].trim();\nconst nombre = $('Webhook').item.json.body.data.pushName || 'Cliente';\nconst numero = ($('Code in JavaScript').item.json.numero || '').replace('@s.whatsapp.net', '');\nconst numeroDueno = $env.OWNER_NUMBER;\n\n// Construir datetimes para Google Calendar\nconst [dia, mes, anio] = fecha.split('/');\nconst fechaISO = `${anio}-${mes}-${dia}`;\nconst [hh, mm] = hora.split(':').map(Number);\nconst endHour = String(hh + 1).padStart(2, '0');\nconst startDateTime = `${fechaISO}T${hora}:00-05:00`;\nconst endDateTime = `${fechaISO}T${endHour}:${String(mm).padStart(2, '0')}:00-05:00`;\n\nconst textoDueno = `🔔 *Nueva cita agendada*\\n\\n👤 *Cliente:* ${nombre}\\n📞 *Número:* ${numero}\\n✂️ *Servicio:* ${servicio}\\n📅 *Fecha:* ${fecha}\\n⏰ *Hora:* ${hora}\\n\\n_Estado: Pendiente_ ✅`;\nconst textoCliente = `✅ ¡Tu cita quedó confirmada!\\n\\n✂️ *Servicio:* ${servicio}\\n📅 *Fecha:* ${fecha}\\n⏰ *Hora:* ${hora}\\n\\n¡Te esperamos en Peluquería Meyer! 💇‍♂️\\nCualquier cambio, escríbenos aquí mismo 😊`;\n\nreturn [{\n  json: {\n    numeroDueno,\n    numeroCliente: numero,\n    nombreCliente: nombre,\n    servicio,\n    fecha,\n    hora,\n    startDateTime,\n    endDateTime,\n    textoDueno,\n    textoCliente,\n    bodyDueno: JSON.stringify({ number: numeroDueno, text: textoDueno }),\n    bodyCliente: JSON.stringify({ number: numero, text: textoCliente })\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        -2800
+      ],
+      "id": "c9510a16-4972-48b1-a349-80aa839a92d5",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "64bee1da-ab9b-451f-9d65-5cd15a47e810",
+              "leftValue": "={{ $('AI Agent').item.json.output }}",
+              "rightValue": "CITA_CONFIRMADA",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        848,
+        -2608
+      ],
+      "id": "3729efa9-3c3d-4ad9-a702-d568b40e2682",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Google Calendar - DESHABILITADO\n// Credenciales migradas a variables de entorno\n// Para reactivar: usar nodo nativo de Google Calendar de n8n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        -2800
+      ],
+      "id": "640cd114-581b-494f-9353-ef94cb380d40",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT COUNT(*) as total FROM appointments WHERE business_id = 1 AND fecha = TO_DATE('{{ $('AI Agent').item.json.output.split('|')[2] }}', 'DD/MM/YYYY') AND hora = '{{ $('AI Agent').item.json.output.split('|')[3].split('\\n')[0].trim() }}'::time AND estado != 'Cancelada'",
+        "options": {}
+      },
+      "id": "0e2f04f5-edb3-46ac-92a3-2dfb3e668a21",
+      "name": "Leer Disponibilidad",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        832,
+        -2896
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "AkRs7Kx5gs6JnVMz",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const total = $input.first().json.total;\nconst numero = ($('Code in JavaScript').item.json.numero || '').replace(/@s\\.whatsapp\\.net/g, '').replace(/\\D/g, '');\nconst partes = $('AI Agent').item.json.output.split('|');\nreturn [{ json: { disponible: total == 0, fechaDeseada: partes[2]?.trim(), horaDeseada: partes[3]?.split('\\n')[0].trim(), numero } }];"
+      },
+      "id": "44464d16-f0ae-4dfd-ad01-57356121ff65",
+      "name": "Verificar Slot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        -2896
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5d2e10d6-636e-4be9-8d9c-cf3005572a95",
+              "leftValue": "={{ $json.disponible }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "3d828b3a-282d-4e20-a833-d057f4fa476e",
+      "name": "¿Disponible?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1232,
+        -2896
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/peluqueria-beta",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.EVOLUTION_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.numero }}"
+            },
+            {
+              "name": "text",
+              "value": "Lo sentimos, ese horario ya está reservado. ¿Te gustaría elegir otra hora? 😊"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "67c6afc2-51eb-4d51-afa7-589879e8f028",
+      "name": "Aviso Slot Ocupado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1424,
+        -2640
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH slots AS (\n  SELECT generate_series(\n    '2000-01-01 09:00'::timestamp,\n    '2000-01-01 18:00'::timestamp,\n    '1 hour'::interval\n  )::time AS hora\n)\nSELECT\n  fecha_slot::text AS fecha,\n  to_char(s.hora, 'HH12:MI AM') AS slot\nFROM (\n  SELECT (NOW() AT TIME ZONE 'America/Bogota')::date + n AS fecha_slot\n  FROM generate_series(0,7) AS n\n) dias\nCROSS JOIN slots s\nWHERE s.hora NOT IN (\n  SELECT hora FROM appointments\n  WHERE business_id = 1\n    AND fecha = dias.fecha_slot\n    AND estado != 'Cancelada'\n)\nORDER BY fecha_slot, s.hora",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -240,
+        -2784
+      ],
+      "id": "f1631a37-8945-4630-8243-9fe09875d384",
+      "name": "Leer Slots Disponibles",
+      "credentials": {
+        "postgres": {
+          "id": "AkRs7Kx5gs6JnVMz",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Construir resumen de disponibilidad para los próximos 7 días\nconst slots = $input.all();\nconst diasSemana = ['Domingo','Lunes','Martes','Miércoles',\n                    'Jueves','Viernes','Sábado'];\nconst meses = ['enero','febrero','marzo','abril','mayo','junio',\n               'julio','agosto','septiembre','octubre','noviembre','diciembre'];\n\nconst porFecha = {};\nfor (const item of slots) {\n  const fecha = item.json.fecha;\n  const slot = item.json.slot;\n  if (!porFecha[fecha]) porFecha[fecha] = [];\n  porFecha[fecha].push(slot);\n}\n\nlet disponibilidad = '';\nfor (const [fecha, horas] of Object.entries(porFecha)) {\n  const d = new Date(fecha + 'T00:00:00');\n  const nombreDia = diasSemana[d.getUTCDay()];\n  const dia = d.getUTCDate();\n  const mes = meses[d.getUTCMonth()];\n  disponibilidad += `${nombreDia} ${dia} de ${mes}: ${horas.join(', ')}\\n`;\n}\n\n// Pasar todo el contexto anterior más la disponibilidad\nconst prev = $('Code in JavaScript').item.json;\nreturn [{\n  json: {\n    ...prev,\n    disponibilidad: disponibilidad || 'Sin disponibilidad en los próximos 7 días'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        -2784
+      ],
+      "id": "c06a956a-09f7-4cd9-b43d-92f702478857",
+      "name": "Formatear Disponibilidad"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Leer Slots Disponibles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Leer Disponibilidad",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insertar Cita": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Disponibilidad": {
+      "main": [
+        [
+          {
+            "node": "Verificar Slot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Slot": {
+      "main": [
+        [
+          {
+            "node": "¿Disponible?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Disponible?": {
+      "main": [
+        [
+          {
+            "node": "Insertar Cita",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aviso Slot Ocupado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Slots Disponibles": {
+      "main": [
+        [
+          {
+            "node": "Formatear Disponibilidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Disponibilidad": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "72a91bf4-28d6-4e7a-bd86-ab53ffea76cb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "78865b14428b3461ac0504416eb2ba5903a5482f3190c606719f27159eed62fe"
+  },
+  "id": "l5HzXfp5yvlWqLR6",
+  "tags": []
+}
