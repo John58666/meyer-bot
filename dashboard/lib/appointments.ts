@@ -59,3 +59,43 @@ export async function getTodayStats(
     canceladas:  parseInt(rows[0].canceladas),
   };
 }
+
+export type WeekAppointment = Appointment & {
+  fecha: string; // YYYY-MM-DD
+};
+
+export async function getWeekAppointments(
+  businessId: number
+): Promise<Record<string, WeekAppointment[]>> {
+  // Lunes de esta semana en Bogotá
+  const nowBogota = new Date(
+    new Date().toLocaleString("en-US", { timeZone: "America/Bogota" })
+  );
+  const day = nowBogota.getDay(); // 0=dom, 1=lun...
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+  const monday = new Date(nowBogota);
+  monday.setDate(nowBogota.getDate() + diffToMonday);
+
+  // Domingo de esta semana
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+
+  const toISO = (d: Date) => d.toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
+
+  const { rows } = await pool.query(
+    `SELECT id, fecha::text, hora::text, nombre, servicio, numero, estado, created_at::text
+     FROM appointments
+     WHERE fecha BETWEEN $1 AND $2
+       AND business_id = $3
+     ORDER BY fecha ASC, hora ASC`,
+    [toISO(monday), toISO(sunday), businessId]
+  );
+
+  // Agrupar por fecha
+  const grouped: Record<string, WeekAppointment[]> = {};
+  for (const row of rows) {
+    if (!grouped[row.fecha]) grouped[row.fecha] = [];
+    grouped[row.fecha].push(row);
+  }
+  return grouped;
+}
