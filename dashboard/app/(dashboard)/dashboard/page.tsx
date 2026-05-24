@@ -5,6 +5,7 @@ import { StatsCards } from "@/components/stats-cards";
 import { AppointmentList } from "@/components/appointment-list";
 import { RefreshButton } from "@/components/refresh-button";
 import { NewAppointmentSheet } from "@/components/new-appointment-sheet";
+import { AutoRefresh } from "@/components/auto-refresh";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -29,6 +30,7 @@ export default async function DashboardPage() {
 
   return (
     <div>
+      <AutoRefresh intervalMs={30000} />
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
