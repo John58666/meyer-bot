@@ -63,7 +63,7 @@ export function AppointmentActions({
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
+        <DropdownMenuTrigger >
           <button
             className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-muted)] hover:text-white hover:bg-white/5 transition-colors flex-shrink-0"
             disabled={isPending}

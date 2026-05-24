@@ -32,7 +32,7 @@ export function Topbar({ user }: TopbarProps) {
       </div>
 
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
+        <DropdownMenuTrigger>
           <button className="focus:outline-none">
             <Avatar className="h-8 w-8 border-2 border-[var(--color-accent)] cursor-pointer">
               <AvatarFallback className="bg-[var(--bg-card)] text-white text-xs">

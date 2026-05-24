@@ -61,7 +61,7 @@ export function NewAppointmentSheet() {
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
+      <SheetTrigger>
         <Button
           size="sm"
           className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white rounded-full gap-1"

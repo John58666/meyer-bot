@@ -1,8 +1,5 @@
 import type { NextAuthConfig } from "next-auth";
 
-// Este archivo NO importa bcryptjs ni pg.
-// Se usa en middleware.ts (Edge runtime).
-
 export const authConfig = {
   pages: {
     signIn: "/login",
@@ -26,17 +23,16 @@ export const authConfig = {
     },
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
-        token.businessId = (user as { businessId?: number }).businessId;
-        token.role = (user as { role?: string }).role;
+        token.id = user.id ?? "";
+        token.businessId = ((user as { businessId?: number }).businessId) ?? 0;
+        token.role = ((user as { role?: string }).role) ?? "owner";
       }
       return token;
     },
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string;
-        (session.user as { businessId?: number }).businessId =
-          token.businessId as number;
+        (session.user as { businessId?: number }).businessId = token.businessId as number;
         (session.user as { role?: string }).role = token.role as string;
       }
       return session;
