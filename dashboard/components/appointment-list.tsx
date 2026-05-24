@@ -1,5 +1,6 @@
 import type { Appointment } from "@/lib/appointments";
 import { Calendar } from "lucide-react";
+import { AppointmentActions } from "@/components/appointment-actions";
 
 interface AppointmentListProps {
   appointments: Appointment[];
@@ -78,13 +79,18 @@ export function AppointmentList({ appointments }: AppointmentListProps) {
               </p>
             </div>
 
-            {/* Estado */}
-            <div className="flex-shrink-0">
+            {/* Estado + Acciones */}
+            <div className="flex items-center gap-2 flex-shrink-0">
               <span
                 className={`text-xs font-medium px-2.5 py-1 rounded-full ${status.bg} ${status.text}`}
               >
                 {status.label}
               </span>
+              <AppointmentActions
+                id={apt.id}
+                nombre={apt.nombre}
+                estado={apt.estado}
+              />
             </div>
           </div>
         );

@@ -4,6 +4,7 @@ import { getTodayAppointments, getTodayStats } from "@/lib/appointments";
 import { StatsCards } from "@/components/stats-cards";
 import { AppointmentList } from "@/components/appointment-list";
 import { RefreshButton } from "@/components/refresh-button";
+import { NewAppointmentSheet } from "@/components/new-appointment-sheet";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -36,7 +37,10 @@ export default async function DashboardPage() {
             {fechaCapitalizada}
           </p>
         </div>
-        <RefreshButton />
+        <div className="flex items-center gap-2">
+          <NewAppointmentSheet />
+          <RefreshButton />
+        </div>
       </div>
 
       {/* Stats */}
