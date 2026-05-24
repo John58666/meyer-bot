@@ -1,0 +1,1058 @@
+{
+  "meta": {
+    "document_type": "project_context",
+    "version": "2.0_final",
+    "created_by": "Análisis visual y funcional completo de Fresha",
+    "sources": [
+      "https://www.fresha.com/es/a/meyer-studio-medina-carrera-7-10-67-y4hsmhtb (perfil público)",
+      "https://partners.fresha.com/users/sign-in (login de partners)",
+      "https://partners.fresha.com/dashboard (dashboard interno)",
+      "https://partners.fresha.com/calendar (calendario de citas)",
+      "https://partners.fresha.com/calendar/onboarding (panel de onboarding)"
+    ],
+    "date_analyzed": "2026-05-19",
+    "purpose": "Contexto completo para construir una plataforma de gestión de citas y perfil público para negocios de belleza/bienestar. Leer junto al context.md del proyecto.",
+    "instruction_to_claude": "Lee este archivo junto al context.md del usuario. Antes de escribir cualquier código, revisa la sección clarifying_questions y haz solo las que no estén ya respondidas en context.md. Una vez respondidas, sugiere el stack óptimo justificando cada decisión."
+  },
+
+  "clarifying_questions": {
+    "instruction": "Hacer TODAS las preguntas sin respuesta antes de escribir código. Las marcadas 'alta' son bloqueantes.",
+    "questions": [
+      {
+        "id": "Q1",
+        "priority": "alta",
+        "category": "stack_frontend",
+        "question": "¿Ya tienes un framework frontend definido? (React, Next.js, Vue, Nuxt, Svelte, Astro, HTML puro, otro)",
+        "why": "Define la estructura de componentes, routing y estrategia de renderizado de toda la app",
+        "options": [
+          { "option": "Next.js 14+ App Router", "best_for": "SEO en perfil público + dashboard privado en la misma app. RECOMENDADO." },
+          { "option": "React + Vite SPA", "best_for": "Si el perfil público no necesita SEO y prefieres simplicidad" },
+          { "option": "Astro + React islands", "best_for": "Si el perfil público es lo más importante y quieres máxima performance estática" }
+        ]
+      },
+      {
+        "id": "Q2",
+        "priority": "alta",
+        "category": "stack_backend",
+        "question": "¿Tienes backend propio o usas un BaaS? (Node/Express, Django, Laravel, Supabase, Firebase, PocketBase, otro)",
+        "why": "Determina cómo se modelan citas, usuarios, negocios y notificaciones en tiempo real",
+        "options": [
+          { "option": "Supabase", "best_for": "Avance rápido. PostgreSQL + Auth + Realtime + Storage listo. Muy compatible con Next.js. RECOMENDADO." },
+          { "option": "Firebase", "best_for": "Si ya tienes experiencia con Google Cloud" },
+          { "option": "Node.js + Prisma + PostgreSQL", "best_for": "Control total sobre la API y el modelo de datos" }
+        ]
+      },
+      {
+        "id": "Q3",
+        "priority": "alta",
+        "category": "autenticacion",
+        "question": "¿Cómo manejas la autenticación? (Clerk, NextAuth, Supabase Auth, Firebase Auth, Auth0, JWT propio)",
+        "why": "Hay dos tipos de usuario: cliente final (reserva citas) y profesional/negocio (gestiona). Necesitamos saber si el sistema soporta roles.",
+        "options": [
+          { "option": "Clerk", "best_for": "Next.js + solución más rápida con UI lista, roles y organizaciones" },
+          { "option": "Supabase Auth", "best_for": "Si ya usas Supabase — auth + RLS integrado en una sola plataforma" },
+          { "option": "NextAuth v5", "best_for": "Control total con base de datos propia" }
+        ]
+      },
+      {
+        "id": "Q4",
+        "priority": "alta",
+        "category": "css_styling",
+        "question": "¿Qué sistema de estilos usas o prefieres? (Tailwind CSS, CSS Modules, Styled Components, Sass, otro)",
+        "why": "Afecta cómo se escriben todos los componentes del design system",
+        "options": [
+          { "option": "Tailwind CSS v3/v4", "best_for": "RECOMENDADO — dark mode y design system rápido con utilidades. Compatible con shadcn/ui." },
+          { "option": "CSS Modules", "best_for": "Si prefieres CSS puro organizado por componente" }
+        ]
+      },
+      {
+        "id": "Q5",
+        "priority": "alta",
+        "category": "componentes_ui",
+        "question": "¿Usas alguna librería de componentes UI base? (shadcn/ui, Radix UI, MUI, Ant Design, Chakra, ninguna)",
+        "why": "Determina si modales, dropdowns, tooltips y sheets se construyen desde cero o se extienden",
+        "options": [
+          { "option": "shadcn/ui + Radix UI", "best_for": "RECOMENDADO — accesibles, sin estilos impuestos, 100% customizables con Tailwind. Perfecto para dark mode." }
+        ]
+      },
+      {
+        "id": "Q6",
+        "priority": "media",
+        "category": "calendario",
+        "question": "¿El calendario se construye desde cero o se puede usar una librería base? (FullCalendar, react-big-calendar, @schedule-x, desde cero)",
+        "why": "El timeline 24h con drag & drop, bloques de color y multi-profesional es complejo. Una librería ahorra semanas.",
+        "options": [
+          { "option": "@schedule-x", "best_for": "RECOMENDADO — moderna, customizable, dark mode nativo, timeline view" },
+          { "option": "FullCalendar", "best_for": "Muy completo, más pesado, muchas vistas disponibles" },
+          { "option": "Desde cero con CSS Grid", "best_for": "Control total sin restricciones de tiempo" }
+        ]
+      },
+      {
+        "id": "Q7",
+        "priority": "media",
+        "category": "estado_global",
+        "question": "¿Preferencia para manejo de estado global? (Zustand, Redux Toolkit, Jotai, Context API, TanStack Query)",
+        "why": "El dashboard tiene widgets con datos en tiempo real, el calendario necesita sincronización entre vistas.",
+        "options": [
+          { "option": "Zustand + TanStack Query", "best_for": "RECOMENDADO — Zustand para estado UI (sidebar, modales, onboarding) + TanStack Query para cache del servidor" }
+        ]
+      },
+      {
+        "id": "Q8",
+        "priority": "media",
+        "category": "tiempo_real",
+        "question": "¿Las notificaciones y el calendario necesitan actualizarse en tiempo real sin recargar?",
+        "why": "Si sí, necesitamos WebSockets o SSE",
+        "options": [
+          { "option": "Supabase Realtime", "best_for": "Si ya usas Supabase — suscripción a cambios en PostgreSQL sin config extra" },
+          { "option": "Pusher", "best_for": "Backend propio con WebSockets gestionados" }
+        ]
+      },
+      {
+        "id": "Q9",
+        "priority": "media",
+        "category": "mapas",
+        "question": "¿Qué servicio de mapas para el perfil público? (Google Maps, Mapbox, Leaflet + OpenStreetMap)",
+        "options": [
+          { "option": "Mapbox GL JS", "best_for": "RECOMENDADO — dark mode nativo, pins customizados, 50k cargas/mes gratis" },
+          { "option": "Google Maps Embed", "best_for": "Si ya tienes Google Cloud configurado" },
+          { "option": "Leaflet + OpenStreetMap", "best_for": "100% gratuito, sin API key" }
+        ]
+      },
+      {
+        "id": "Q10",
+        "priority": "baja",
+        "category": "deployment",
+        "question": "¿Dónde se despliega la app? (Vercel, Netlify, Railway, VPS, AWS)",
+        "options": [
+          { "option": "Vercel", "best_for": "Next.js — deployment automático, edge functions, dominio gratis" },
+          { "option": "Railway", "best_for": "Backend propio con base de datos — todo en un lugar" }
+        ]
+      },
+      {
+        "id": "Q11",
+        "priority": "baja",
+        "category": "pagos",
+        "question": "¿La plataforma procesa pagos? ¿En qué mercado? (Colombia, España, global)",
+        "options": [
+          { "option": "Wompi", "best_for": "Mercado Colombia — nativo y preferido" },
+          { "option": "PayU", "best_for": "Cobertura latinoamericana amplia" },
+          { "option": "Stripe", "best_for": "Mercado global, USA o Europa" }
+        ]
+      },
+      {
+        "id": "Q12",
+        "priority": "baja",
+        "category": "notificaciones_externas",
+        "question": "¿Las confirmaciones de cita van por email, WhatsApp o SMS?",
+        "why": "En Colombia/LATAM WhatsApp tiene mucha más tasa de apertura que email o SMS",
+        "options": [
+          { "option": "Resend + React Email", "best_for": "Emails transaccionales con plantillas React — fácil con Next.js" },
+          { "option": "WhatsApp Business API (Meta) / Twilio", "best_for": "Notificaciones por WhatsApp" }
+        ]
+      }
+    ]
+  },
+
+  "project": {
+    "name": "Plataforma de gestión para negocios de belleza/bienestar",
+    "description": "Aplicación web inspirada en Fresha. Permite a profesionales gestionar citas, clientes, servicios y ventas. Incluye perfil público para que clientes vean y reserven.",
+    "user_types": [
+      { "type": "profesional/negocio", "access": "dashboard privado — requiere login", "routes": ["/dashboard", "/calendar", "/clients", "/sales", "/team", "/reports", "/settings"] },
+      { "type": "cliente_final", "access": "perfil público — sin login", "routes": ["/p/[slug]"] }
+    ],
+    "default_mode": "dark",
+    "language": "Español"
+  },
+
+  "design_system": {
+    "color_palette": {
+      "background_primary": "#0A0A0A",
+      "background_sidebar": "#050505",
+      "background_card": "#1A1A1A",
+      "background_card_border": "rgba(255,255,255,0.06)",
+      "accent_primary": "#6B4EFF",
+      "accent_secondary": "#3B82F6",
+      "accent_onboarding_gradient": "linear-gradient(135deg, #3B82F6, #6B4EFF)",
+      "text_primary": "#FFFFFF",
+      "text_secondary": "#888888",
+      "text_muted": "#555555",
+      "success": "#22C55E",
+      "danger": "#EF4444",
+      "warning": "#F59E0B",
+      "off_hours_pattern": "repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.03) 4px, rgba(255,255,255,0.03) 8px)"
+    },
+    "typography": {
+      "font_family": "Inter, sans-serif",
+      "heading_large": { "size": "24px", "weight": "bold" },
+      "heading_medium": { "size": "18px", "weight": "semibold" },
+      "body": { "size": "14px", "weight": "regular" },
+      "caption": { "size": "12px", "weight": "regular" },
+      "label": { "size": "12px", "weight": "medium", "transform": "uppercase", "letter_spacing": "0.05em" }
+    },
+    "border_radius": {
+      "card": "12px",
+      "button_pill": "999px",
+      "avatar": "50%",
+      "badge": "999px",
+      "sidebar_icon_active": "10px",
+      "input": "8px"
+    },
+    "spacing": {
+      "base": "4px",
+      "scale": [4, 8, 12, 16, 24, 32, 48, 64]
+    },
+    "shadows": {
+      "card": "0 1px 3px rgba(0,0,0,0.4)",
+      "modal": "0 20px 60px rgba(0,0,0,0.6)",
+      "sticky_bottom": "0 -4px 20px rgba(0,0,0,0.5)"
+    },
+    "borders": {
+      "rule": "SIEMPRE sutiles — nunca bordes blancos sólidos",
+      "default": "1px solid rgba(255,255,255,0.06)",
+      "hover": "1px solid rgba(255,255,255,0.12)",
+      "active": "1px solid #6B4EFF"
+    }
+  },
+
+  "global_layout": {
+    "structure": "3 capas simultáneas",
+    "topbar": {
+      "position": "fixed top, full-width",
+      "height": "56px",
+      "background": "#0A0A0A",
+      "z_index": 100,
+      "elements": [
+        {
+          "name": "logo",
+          "position": "left",
+          "style": "logotipo en texto blanco bold"
+        },
+        {
+          "name": "onboarding_cta",
+          "position": "left-center",
+          "style": "pill grande, background #6B4EFF, ícono cohete izquierda, texto 'Continuar con la configuración', flecha › derecha",
+          "visibility": "solo hasta completar todos los pasos del onboarding — luego desaparece"
+        },
+        {
+          "name": "action_icons",
+          "position": "right",
+          "items": [
+            { "icon": "search", "label": "Buscar", "action": "abre buscador global" },
+            { "icon": "bar_chart", "label": "Analytics", "action": "panel de rendimiento" },
+            { "icon": "bell", "label": "Notificaciones", "badge": { "type": "número", "color": "#EF4444", "example": "2" } },
+            { "icon": "message_circle", "label": "Fresha Connect / Mensajes", "badge": { "type": "punto", "color": "#6B4EFF" } },
+            { "icon": "avatar_circular", "label": "Perfil de usuario", "size": "32px", "action": "menú de usuario" }
+          ]
+        }
+      ]
+    },
+    "sidebar": {
+      "position": "fixed left, below topbar",
+      "width": "56px",
+      "background": "#050505",
+      "style": "icon-only — sin texto en estado normal",
+      "active_item": { "background": "#6B4EFF", "border_radius": "10px" },
+      "notification_dot": { "size": "8px", "colors": { "messages": "#6B4EFF", "alerts": "#EF4444" } },
+      "nav_items": [
+        { "order": 1, "icon": "home", "route": "/dashboard", "label": "Inicio" },
+        { "order": 2, "icon": "calendar", "route": "/calendar", "label": "Calendario" },
+        { "order": 3, "icon": "tag", "route": "/sales", "label": "Ventas", "has_submenu": true,
+          "submenu": ["Resumen de ventas diario", "Citas", "Ventas", "Pagos", "Tarjetas regalo vendidas", "Membresías vendidas"] },
+        { "order": 4, "icon": "smile", "route": "/clients", "label": "Clientes" },
+        { "order": 5, "icon": "book_open", "route": "/catalog", "label": "Catálogo de servicios" },
+        { "order": 6, "icon": "user", "route": "/team", "label": "Equipo" },
+        { "order": 7, "icon": "megaphone", "route": "/marketing", "label": "Marketing" },
+        { "order": 8, "icon": "users", "route": "/crm", "label": "CRM", "notification_dot": true },
+        { "order": 9, "icon": "trending_up", "route": "/reports", "label": "Reportes" },
+        { "order": 10, "icon": "grid_plus", "route": "/addons", "label": "Add-ons" },
+        { "order": 11, "icon": "settings", "route": "/settings", "label": "Configuración" },
+        { "order": 12, "icon": "help_circle", "route": "/help", "label": "Ayuda", "vertical_position": "bottom — siempre al fondo" }
+      ],
+      "submenu": {
+        "type": "flyout panel overlay",
+        "trigger": "click en ícono con has_submenu: true",
+        "width": "200px",
+        "position": "a la derecha del sidebar, sin desplazar contenido principal",
+        "style": "fondo #050505, borde derecho sutil",
+        "header": "título de sección en blanco bold",
+        "items": "lista de links, texto blanco, sin íconos, padding 12px 16px",
+        "collapse_button": "botón '←' en esquina superior derecha del flyout"
+      }
+    },
+    "main_content": {
+      "margin_left": "56px",
+      "margin_top": "56px",
+      "background": "#0A0A0A",
+      "padding": "24px"
+    }
+  },
+
+  "pages": {
+
+    "auth": {
+      "route": "/auth",
+      "access": "público",
+      "layout": "split-screen 50/50 en desktop, columna única en móvil",
+      "left_panel": {
+        "background": "#0A0A0A",
+        "width": "50%",
+        "content": {
+          "heading": { "text": "[App] para profesionales", "style": "24px bold blanco centrado" },
+          "subheading": { "text": "Crea una cuenta o inicia sesión para gestionar tu negocio.", "style": "14px gris centrado" },
+          "form": {
+            "flow": "progresivo — paso 1: solo email. Paso 2: contraseña o setup según si usuario existe o es nuevo.",
+            "step_1": {
+              "field": { "type": "email", "placeholder": "Introduce tu email", "style": "input full-width, borde rgba blanco sutil, focus: borde #6B4EFF" },
+              "cta": { "text": "Continuar", "style": "pill blanco con texto negro, full-width, hover: opacity 0.9" }
+            }
+          },
+          "divider": { "style": "línea horizontal con 'O' centrado en texto gris" },
+          "social_buttons": [
+            { "provider": "Facebook", "icon": "logo Facebook azul", "text": "Continuar con Facebook", "style": "fondo #1A1A1A, texto blanco, full-width pill" },
+            { "provider": "Google", "icon": "logo Google oficial", "text": "Continuar con Google", "style": "fondo #1A1A1A, texto blanco, full-width pill" },
+            { "provider": "Apple", "icon": "logo Apple blanco", "text": "Continuar con Apple", "style": "fondo #1A1A1A, texto blanco, full-width pill" }
+          ],
+          "redirect_hint": {
+            "text": "¿Eres cliente y quieres reservar una cita?",
+            "link": { "text": "Ir a la app para clientes", "style": "color #6B4EFF, underline en hover" }
+          },
+          "security_notice": {
+            "text": "Este sitio está protegido por reCAPTCHA.",
+            "style": "texto micro, #555555, centrado, debajo del formulario"
+          },
+          "footer": {
+            "items": [
+              { "icon": "globe", "label": "Selector de idioma" },
+              { "label": "Ayuda", "href": "/help" },
+              { "label": "Política de Privacidad", "href": "/privacy" }
+            ],
+            "style": "separados por •, texto 12px #555555, centrado"
+          }
+        }
+      },
+      "right_panel": {
+        "width": "50%",
+        "content": "fotografía de profesional trabajando (barbero/estilista con tablet), iluminación natural cálida",
+        "style": "full-height, object-fit: cover, sin overlay",
+        "purpose": "humanizar — muestra al usuario objetivo de la plataforma"
+      }
+    },
+
+    "dashboard": {
+      "route": "/dashboard",
+      "access": "privado — requiere auth",
+      "subheader": {
+        "left": "← botón volver + título 'Inicio'",
+        "right": "vacío"
+      },
+      "layout": "columna única de widgets apilados",
+      "widgets": [
+        {
+          "id": "recent_sales",
+          "title": "Ventas recientes",
+          "subtitle": "Últimos 7 días",
+          "type": "chart_area",
+          "options_menu": {
+            "icon": "⋮ tres puntos",
+            "position": "esquina superior derecha del widget",
+            "actions": ["Cambiar período", "Ocultar widget", "Ver detalle"]
+          },
+          "empty_state": {
+            "icon": "trending_up",
+            "title": "No hay datos de ventas",
+            "message": "Reserva algunas citas para que aparezcan datos de ventas"
+          }
+        },
+        {
+          "id": "upcoming_appointments",
+          "title": "Próximas citas",
+          "subtitle": "Próximos 7 días",
+          "type": "widget_compuesto",
+          "options_menu": true,
+          "content": {
+            "counter": {
+              "value": "número grande bold",
+              "label": "cita(s)",
+              "example": "2 cita(s)"
+            },
+            "breakdown": [
+              { "label": "Citas confirmadas", "value_style": "número bold" },
+              { "label": "Citas canceladas", "value_style": "número bold" }
+            ],
+            "mini_bar_chart": {
+              "type": "barras verticales",
+              "x_axis": "días abreviados: mié. 20, jue. 21, vie. 22...",
+              "y_axis": "0 a 4 citas",
+              "bar_colors": {
+                "confirmadas": "#6B4EFF",
+                "canceladas": "#EF4444"
+              },
+              "legend": ["Confirmado", "Cancelada"]
+            },
+            "activity_list": {
+              "title": "Actividad de citas",
+              "item_structure": {
+                "date_badge": { "style": "número de día en círculo, fondo #6B4EFF, texto blanco bold", "example": "20" },
+                "month_label": "mes abreviado debajo del número",
+                "datetime_full": "formato: 'mié., 20 may. 2026 1:00pm'",
+                "status_badge": {
+                  "values": ["Reservada", "Cancelada", "Completada"],
+                  "colors": { "Reservada": "#22C55E", "Cancelada": "#EF4444", "Completada": "#888888" }
+                },
+                "service_name": "texto bold",
+                "detail": "nombre cliente + duración + 'con' + nombre profesional",
+                "example": "Tinte — Jane Doe, 1 h 15 min con Johnander"
+              }
+            }
+          }
+        },
+        {
+          "id": "today_appointments",
+          "title": "Próximas citas de hoy",
+          "type": "list",
+          "empty_state": {
+            "icon": "calendar_clock",
+            "title": "No hay citas hoy",
+            "message": "Visita la sección [Calendario] para añadir algunas citas",
+            "link_in_message": { "word": "Calendario", "href": "/calendar", "color": "#6B4EFF" }
+          }
+        },
+        {
+          "id": "top_services",
+          "title": "Mejores servicios",
+          "type": "ranking_list",
+          "item_structure": {
+            "name": "texto bold",
+            "stats": "N Este mes / N Último mes",
+            "separator": "línea rgba(255,255,255,0.06) entre items"
+          }
+        },
+        {
+          "id": "top_team_member",
+          "title": "Mejor miembro del equipo",
+          "type": "highlight",
+          "empty_state": {
+            "icon": "search",
+            "title": "No hay ventas este mes",
+            "message": "Crea algunas ventas para poder ver los datos de las ventas"
+          }
+        }
+      ]
+    },
+
+    "calendar": {
+      "route": "/calendar",
+      "access": "privado",
+      "subheader": {
+        "left": [
+          { "element": "hamburger", "icon": "☰", "action": "toggle sidebar expandido" },
+          { "element": "date_selector", "display": "'mar 19 may' + chevron ∨", "action": "abre date picker" }
+        ],
+        "center": {
+          "element": "professional_column_headers",
+          "structure": "avatar circular (32px, borde #6B4EFF) + nombre debajo",
+          "note": "una columna por profesional — layout horizontal al agregar más"
+        },
+        "right": [
+          { "icon": "message_circle", "label": "Mensajes" },
+          { "icon": "bell", "label": "Notificaciones", "badge": "punto rojo" },
+          { "icon": "avatar", "label": "Perfil" },
+          { "icon": "layout_grid", "label": "Cambiar vista", "options": ["día", "semana", "mes"] }
+        ]
+      },
+      "grid": {
+        "type": "timeline vertical 24 horas",
+        "time_column": {
+          "width": "50px",
+          "labels": "cada hora en dos líneas: número + am/pm",
+          "style": "12px #888888, alineado a la derecha",
+          "examples": ["12:00 am", "1:00 am", "9:00 am", "12:00 pm", "9:00 pm"]
+        },
+        "grid_lines": {
+          "major": "1px solid rgba(255,255,255,0.06) cada hora",
+          "minor": "1px solid rgba(255,255,255,0.03) cada 30 minutos"
+        },
+        "working_hours": {
+          "background": "#0A0A0A",
+          "style": "zona limpia sin textura"
+        },
+        "off_hours": {
+          "background": "#111111",
+          "pattern": "repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.03) 4px, rgba(255,255,255,0.03) 8px)",
+          "purpose": "diferenciar visualmente fuera de horario laboral"
+        },
+        "current_time_indicator": {
+          "line": "1px solid #EF4444, full-width horizontal",
+          "badge": {
+            "content": "hora actual HH:mm",
+            "style": "pill #EF4444 en extremo izquierdo de la línea",
+            "example": "9:14"
+          },
+          "update": "setInterval cada 60000ms con new Date()"
+        },
+        "appointment_block": {
+          "style": "border-radius 6px, color según categoría o profesional asignado",
+          "content": ["hora inicio - hora fin", "nombre cliente", "nombre servicio"],
+          "height": "proporcional a duración del servicio",
+          "min_height": "30px"
+        },
+        "multi_professional": {
+          "description": "columna adicional por cada profesional",
+          "column_header": "avatar circular + nombre",
+          "column_separator": "1px solid rgba(255,255,255,0.06)"
+        }
+      }
+    },
+
+    "onboarding_panel": {
+      "trigger": "click en CTA del topbar 'Continuar con la configuración'",
+      "type": "drawer deslizable desde la derecha",
+      "width": { "mobile": "100vw", "desktop": "380px" },
+      "z_index": 200,
+      "overlay": "fondo semitransparente rgba(0,0,0,0.5) detrás del drawer",
+      "close_button": { "icon": "✕", "position": "esquina superior derecha", "style": "ícono blanco 20px" },
+
+      "header": {
+        "background": "linear-gradient(135deg, #3B82F6, #6B4EFF)",
+        "padding": "24px",
+        "title": { "text": "Aprendiz legendario", "style": "20px bold blanco" },
+        "subtitle": { "text": "Descubre cómo utilizar tu nueva cuenta", "style": "14px blanco opacity 0.85" },
+        "level_badges": {
+          "layout": "fila horizontal, gap 12px",
+          "items": [
+            {
+              "id": "BASICS",
+              "icon": "estrella en hexágono",
+              "state": "activo",
+              "style_active": "fondo blanco semitransparente, borde blanco sólido",
+              "indicator": "punto blanco debajo del badge"
+            },
+            {
+              "id": "ESSENTIALS",
+              "icon": "cohete en hexágono",
+              "state": "inactivo",
+              "style_inactive": "borde blanco opacity 0.4, sin fondo"
+            },
+            {
+              "id": "BOOKING_BOSS",
+              "icon": "tienda en hexágono",
+              "state": "inactivo",
+              "style_inactive": "borde blanco opacity 0.4, sin fondo"
+            }
+          ]
+        }
+      },
+
+      "intro_video": {
+        "aspect_ratio": "16:9",
+        "thumbnail": "imagen de marca — modelo con fondo rosa, texto superpuesto bold",
+        "play_button": { "style": "círculo blanco semitransparente 48px, triángulo de play centrado" },
+        "border_radius": "12px",
+        "margin": "16px"
+      },
+
+      "checklist": {
+        "gap": "8px",
+        "items": [
+          {
+            "number": 1,
+            "label": "Crea tu cuenta",
+            "status": "completado",
+            "number_badge": { "style": "círculo 24px, borde #3B82F6, número blanco" },
+            "right_indicator": { "type": "check_circle", "color": "#22C55E", "size": "24px" }
+          },
+          {
+            "number": 2,
+            "label": "Crea tu primera cita",
+            "status": "pendiente",
+            "number_badge": { "style": "círculo 24px, borde #3B82F6, número blanco" },
+            "right_indicator": { "type": "chevron_right ›", "color": "#888888" },
+            "action": "navega al flujo de creación de cita"
+          },
+          {
+            "number": 3,
+            "label": "Finaliza la compra de una cita",
+            "status": "pendiente",
+            "number_badge": { "style": "círculo 24px, borde #3B82F6, número blanco" },
+            "right_indicator": { "type": "chevron_right ›", "color": "#888888" },
+            "action": "navega al flujo de pago"
+          }
+        ],
+        "item_style": {
+          "background": "#1A1A1A",
+          "border": "1px solid rgba(255,255,255,0.06)",
+          "border_radius": "10px",
+          "padding": "16px",
+          "display": "flex, space-between, align-center"
+        }
+      },
+
+      "skip_link": {
+        "text": "Omitir esta guía →",
+        "style": "14px #888888, sin estilo botón, margin-top 8px",
+        "action": "cierra el drawer, oculta temporalmente el CTA del topbar"
+      },
+
+      "help_card": {
+        "background": "#1A1A1A",
+        "border": "1px solid rgba(255,255,255,0.06)",
+        "border_radius": "12px",
+        "padding": "20px",
+        "icon": { "style": "logo de la app en gradiente violeta-azul", "size": "32px", "position": "esquina superior derecha" },
+        "title": { "text": "Centro de ayuda", "style": "16px bold blanco" },
+        "description": { "text": "Aprende y crece con nuestro centro de ayuda y base de conocimientos", "style": "14px #888888" },
+        "cta": {
+          "text": "Ir al Centro de ayuda →",
+          "style": "pill outline, borde rgba(255,255,255,0.15), texto blanco, padding 10px 20px",
+          "margin_top": "16px"
+        }
+      }
+    },
+
+    "public_profile": {
+      "route": "/p/[slug]",
+      "access": "público — sin autenticación",
+      "seo": "requiere SSR o SSG para indexación",
+
+      "section_hero_gallery": {
+        "height": "50vh min",
+        "image": "foto del local/negocio, object-fit cover, full-width",
+        "gallery": {
+          "counter": { "text": "1/3", "style": "badge negro semitransparente, esquina inferior derecha" },
+          "navigation": "flechas izquierda/derecha sobre la imagen"
+        },
+        "floating_buttons": {
+          "style": "círculos blancos semitransparentes, backdrop-filter blur",
+          "items": [
+            { "icon": "arrow_left", "position": "esquina superior izquierda", "action": "volver atrás" },
+            { "icon": "share", "position": "esquina superior derecha", "action": "share nativo del SO" },
+            { "icon": "heart", "position": "esquina superior derecha junto a share", "action": "guardar favorito", "states": ["vacío", "relleno rojo"] }
+          ]
+        }
+      },
+
+      "section_business_info": {
+        "background": "blanco o #111111 según modo",
+        "border_radius_top": "20px",
+        "margin_top": "-20px",
+        "padding": "24px",
+        "content": [
+          { "element": "name", "style": "24px bold" },
+          { "element": "category", "style": "14px #888888", "example": "Barbería" },
+          {
+            "element": "rating_row",
+            "content": [
+              { "icon": "estrella ⭐ amarilla" },
+              { "text": "5,0", "style": "bold" },
+              { "text": "(1)", "style": "link color acento — navega a sección reseñas" },
+              { "separator": "•" },
+              { "icon": "reloj 🕐" },
+              { "text": "Cerrado — opens on miércoles at 9:00", "style": "14px", "behavior": "calculado dinámicamente" }
+            ]
+          },
+          {
+            "element": "address_chip",
+            "style": "fondo gris sutil, border-radius 8px, padding 12px 16px, full-width",
+            "content": { "icon": "pin 📍 izquierda", "text": "Carrera 7 # 10-67, Medina" }
+          }
+        ]
+      },
+
+      "section_sticky_nav": {
+        "behavior": "se vuelve sticky al hacer scroll pasando la sección de info",
+        "position": "top: 0 cuando sticky",
+        "background": "heredado — blanco o negro según modo",
+        "items": ["Fotos", "Acerca de", "Servicios", "Equipo", "Reseñas", "Portfolio", "Otros"],
+        "active_indicator": "línea debajo del tab activo, color #6B4EFF",
+        "scroll_spy": "IntersectionObserver — activa el tab de la sección visible",
+        "scroll_behavior": "smooth scroll al sección al hacer click"
+      },
+
+      "section_about": {
+        "title": "Acerca de",
+        "behavior": {
+          "default": "truncado con -webkit-line-clamp: 4",
+          "expanded": "altura completa",
+          "toggle": "enlace 'Leer más' / 'Leer menos', color #6B4EFF"
+        }
+      },
+
+      "section_services": {
+        "title": "Servicios",
+        "category_filters": {
+          "type": "pills horizontales",
+          "style_active": "background #0A0A0A, texto blanco, borde #0A0A0A",
+              "style_inactive": "background transparente, texto #888888, borde rgba(255,255,255,0.15)",
+              "behavior": "click filtra servicios sin recargar página — solo show/hide con estado local"
+            },
+            "service_card": {
+              "background": "#1A1A1A",
+              "border": "1px solid rgba(255,255,255,0.06)",
+              "border_radius": "12px",
+              "padding": "16px",
+              "structure": {
+                "top_row": { "left": "nombre del servicio — 15px bold blanco", "right": "vacío" },
+                "mid_row": { "left": "duración — 13px #888888", "example": "1 h · 1 h 30 min" },
+                "bottom_row": {
+                  "left": "precio — 15px bold blanco",
+                  "right": {
+                    "element": "botón 'Reservar'",
+                    "style": "pill outline, borde rgba(255,255,255,0.2), texto blanco, 12px, padding 8px 16px"
+                  }
+                }
+              }
+            },
+            "ver_todo_button": {
+              "text": "Ver todo",
+              "style": "card separada full-width, outline pill, borde rgba(255,255,255,0.15), texto blanco, centrado",
+              "behavior": "expande lista completa de servicios"
+            }
+          },
+
+          "section_team": {
+            "title": "Equipo",
+            "header_right": { "text": "Ver todo", "style": "link #6B4EFF" },
+            "layout": "scroll horizontal o grid",
+            "item": {
+              "avatar": { "size": "64px", "border_radius": "50%", "border": "2px solid #6B4EFF" },
+              "name": { "style": "13px blanco centrado, margin-top 8px" }
+            }
+          },
+
+          "section_reviews": {
+            "title": "Reseñas",
+            "header": {
+              "rating_stars": "5 estrellas grandes amarillas",
+              "rating_number": "24px bold — ej: 5,0",
+              "review_count": "14px #888888 — ej: (1)"
+            },
+            "review_item": {
+              "layout": "fila horizontal",
+              "avatar": { "size": "40px", "border_radius": "50%" },
+              "content": {
+                "name": "14px bold blanco",
+                "date": "12px #888888 — formato: 'dom, 29 jun 2025 a las 10:49'",
+                "stars": "estrellas individuales pequeñas amarillas"
+              },
+              "separator": "línea rgba(255,255,255,0.06) entre reviews"
+            },
+            "note": "texto de la reseña es opcional — avatar + nombre + fecha + estrellas ya generan confianza"
+          },
+
+          "section_portfolio": {
+            "title": "Portfolio",
+            "title_badge": { "text": "número total de fotos", "style": "badge pill #1A1A1A, 12px #888888", "example": "2" },
+            "layout": "grid 2 columnas, gap 4px",
+            "item": {
+              "aspect_ratio": "1/1 cuadrado",
+              "border_radius": "8px",
+              "style": "object-fit cover"
+            }
+          },
+
+          "section_schedule": {
+            "title": "Horario de apertura",
+            "structure": {
+              "rows": "uno por día de la semana",
+              "columns": ["indicador de color", "nombre del día", "horario o 'Cerrado'"],
+              "current_day": {
+                "detection": "new Date().getDay() en JavaScript",
+                "style": "font-weight bold en nombre del día y horario"
+              },
+              "day_indicator": {
+                "style": "punto circular 8px",
+                "colors": { "open": "#22C55E verde", "closed": "#EF4444 rojo" }
+              }
+            },
+            "example": [
+              { "day": "lunes", "dot": "verde", "hours": "9:00 - 20:00" },
+              { "day": "martes", "dot": "verde", "hours": "9:00 - 20:00", "is_today": true, "style": "bold" },
+              { "day": "miércoles", "dot": "verde", "hours": "9:00 - 20:00" },
+              { "day": "domingo", "dot": "verde", "hours": "9:00 - 18:00" }
+            ],
+            "separator": "línea rgba(255,255,255,0.06) entre filas"
+          },
+
+          "section_additional_info": {
+            "title": "Información adicional",
+            "layout": "lista vertical, gap 12px",
+            "item_style": "ícono izquierda (20px #888888) + texto 14px blanco, display flex align-center",
+            "examples": [
+              { "icon": "check_circle", "label": "Confirmación instantánea" },
+              { "icon": "paw_print", "label": "Admite mascotas" },
+              { "icon": "baby", "label": "Apto para niños" },
+              { "icon": "car", "label": "Aparcamiento" }
+            ]
+          },
+
+          "section_map": {
+            "title": "Ubicación",
+            "type": "mapa interactivo embebido",
+            "height": "200px",
+            "border_radius": "12px",
+            "style": "mapa con skin oscuro/neutro",
+            "custom_pin": {
+              "content": "rating del negocio — ej: '5.0'",
+              "style": "badge negro pill con texto blanco bold sobre el mapa"
+            },
+            "cta": {
+              "text": "Cómo llegar",
+              "action": "abre Google Maps: https://www.google.com/maps/search/?api=1&query=[dirección_encoded]",
+              "style": "link con ícono de flecha, color #6B4EFF, debajo del mapa"
+            }
+          },
+
+          "section_sticky_cta_bottom": {
+            "position": "fixed bottom-0, full-width",
+            "height": "72px",
+            "background": "#FFFFFF o #0A0A0A según modo",
+            "shadow": "0 -4px 20px rgba(0,0,0,0.15)",
+            "z_index": 50,
+            "layout": "flex, space-between, align-center, padding 0 20px",
+            "left": {
+              "text": "N servicios disponibles",
+              "style": "13px #888888"
+            },
+            "right": {
+              "button": "Reservar ahora",
+              "style": "pill #0A0A0A texto blanco, padding 14px 28px, font-weight bold",
+              "behavior": "abre flujo de reserva — modal o nueva página"
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "ux_patterns": {
+    "empty_states": {
+      "rule": "Obligatorio en TODOS los widgets, listas y secciones sin datos. Nunca dejar una sección vacía sin feedback.",
+      "structure": ["ícono ilustrativo centrado", "título descriptivo", "mensaje motivacional o instructivo", "CTA o link opcional"],
+      "examples": [
+        { "context": "sin ventas", "icon": "trending_up", "title": "No hay datos de ventas", "message": "Reserva algunas citas para que aparezcan datos de ventas" },
+        { "context": "sin citas hoy", "icon": "calendar_clock", "title": "No hay citas hoy", "message": "Visita la sección Calendario para añadir algunas citas", "link": "/calendar" },
+        { "context": "sin ventas del equipo", "icon": "search", "title": "No hay ventas este mes", "message": "Crea algunas ventas para poder ver los datos de las ventas" }
+      ]
+    },
+    "progressive_disclosure": {
+      "rule": "Mostrar solo lo necesario en cada paso. Revelar complejidad gradualmente.",
+      "applications": [
+        "Login: solo email en paso 1, contraseña o setup en paso 2",
+        "Descripción del negocio: truncada 4 líneas + toggle 'Leer más'",
+        "Sidebar: icon-only + flyout contextual al activar",
+        "Servicios: mostrar 3 + botón 'Ver todo'",
+        "Onboarding: un paso a la vez con estado visual claro"
+      ]
+    },
+    "real_time": {
+      "applications": [
+        { "feature": "Línea de hora actual en calendario", "implementation": "setInterval(() => updateLine(), 60000)" },
+        { "feature": "Estado abierto/cerrado del negocio", "implementation": "comparar hora local con horario configurado del negocio" },
+        { "feature": "Badge de notificaciones", "implementation": "contador actualizado en tiempo real via WebSocket o polling" },
+        { "feature": "Punto de actividad en sidebar", "implementation": "estado derivado de datos no leídos" }
+      ]
+    },
+    "persistent_cta": {
+      "rule": "El CTA principal nunca debe desaparecer del viewport del usuario.",
+      "applications": [
+        { "context": "perfil público", "element": "botón 'Reservar ahora'", "position": "sticky bottom-0" },
+        { "context": "dashboard partner", "element": "botón 'Continuar con la configuración'", "position": "topbar — hasta completar onboarding" }
+      ]
+    },
+    "gamified_onboarding": {
+      "rule": "El proceso de configuración inicial debe sentirse como subir de nivel, no como llenar formularios.",
+      "elements": [
+        "Nombre de nivel del usuario (ej: 'Aprendiz legendario')",
+        "Badges hexagonales de progreso: BASICS → ESSENTIALS → EXPERTO",
+        "Checklist numerado con estado visual completado/pendiente",
+        "Video de introducción de marca dentro del panel",
+        "Help card siempre al fondo como red de seguridad",
+        "Enlace 'Omitir esta guía' para usuarios avanzados"
+      ]
+    },
+    "trust_signals": {
+      "rule": "Mostrar señales de confianza desde el primer vistazo, sin que el usuario tenga que buscarlas.",
+      "elements": [
+        "Rating visible en el header del perfil público (no solo en la sección de reseñas)",
+        "Número de reseñas entre paréntesis como link",
+        "Fecha real en cada reseña (no 'hace X días')",
+        "Avatar real del cliente en cada reseña",
+        "Estado abierto/cerrado en tiempo real",
+        "Badge de 'Confirmación instantánea' en información adicional"
+      ]
+    },
+    "visual_feedback": {
+      "applications": [
+        "Punto verde/rojo por día en tabla de horarios",
+        "Día actual en negrita en la tabla de horarios",
+        "Check verde en pasos completados del onboarding",
+        "Color de borde en input al hacer focus (#6B4EFF)",
+        "Textura diagonal en horas no laborales del calendario",
+        "Badge rojo en notificaciones del topbar"
+      ]
+    }
+  },
+
+  "components_to_build": [
+    {
+      "name": "TopBar",
+      "props": ["logoText", "showOnboardingCTA", "notificationCount", "hasUnreadMessages", "userAvatar"]
+    },
+    {
+      "name": "SidebarIconOnly",
+      "props": ["activeRoute", "navItems", "onItemClick"]
+    },
+    {
+      "name": "FlyoutSubmenu",
+      "props": ["title", "items", "isOpen", "onClose"]
+    },
+    {
+      "name": "CalendarTimeline",
+      "props": ["date", "professionals", "appointments", "workingHours", "onSlotClick", "onAppointmentClick"]
+    },
+    {
+      "name": "CurrentTimeIndicator",
+      "props": ["containerHeight", "startHour", "endHour"],
+      "behavior": "actualiza posición cada 60 segundos"
+    },
+    {
+      "name": "AppointmentBlock",
+      "props": ["startTime", "endTime", "clientName", "serviceName", "color", "onClick"]
+    },
+    {
+      "name": "DashboardWidget",
+      "props": ["title", "subtitle", "hasOptionsMenu", "isEmpty", "emptyState", "children"]
+    },
+    {
+      "name": "EmptyState",
+      "props": ["icon", "title", "message", "ctaText", "ctaHref"]
+    },
+    {
+      "name": "ActivityList",
+      "props": ["items"],
+      "item_shape": "{ dayNumber, month, datetime, status, serviceName, clientName, duration, professional }"
+    },
+    {
+      "name": "DateBadge",
+      "props": ["day", "month", "color"]
+    },
+    {
+      "name": "MiniBarChart",
+      "props": ["data", "xLabels", "colors", "legend"]
+    },
+    {
+      "name": "OnboardingDrawer",
+      "props": ["isOpen", "onClose", "steps", "currentLevel", "videoThumbnail", "helpCenterUrl"]
+    },
+    {
+      "name": "LevelBadge",
+      "props": ["icon", "label", "isActive"]
+    },
+    {
+      "name": "ChecklistStep",
+      "props": ["number", "label", "status", "onClick"]
+    },
+    {
+      "name": "PublicProfileHero",
+      "props": ["images", "onShare", "onSave", "isSaved"]
+    },
+    {
+      "name": "GalleryCounter",
+      "props": ["current", "total"]
+    },
+    {
+      "name": "BusinessInfoCard",
+      "props": ["name", "category", "rating", "reviewCount", "isOpen", "nextOpenTime", "address"]
+    },
+    {
+      "name": "OpenStatusBadge",
+      "props": ["schedule"],
+      "behavior": "calcula dinámicamente si está abierto con la hora actual"
+    },
+    {
+      "name": "StickyNavTabs",
+      "props": ["tabs", "activeTab", "onTabClick"],
+      "behavior": "scroll-spy con IntersectionObserver"
+    },
+    {
+      "name": "ExpandableText",
+      "props": ["text", "maxLines", "expandLabel", "collapseLabel"]
+    },
+    {
+      "name": "CategoryPillFilter",
+      "props": ["categories", "activeCategory", "onChange"]
+    },
+    {
+      "name": "ServiceCard",
+      "props": ["name", "duration", "price", "currency", "onReserve"]
+    },
+    {
+      "name": "TeamAvatarRow",
+      "props": ["members", "onViewAll"]
+    },
+    {
+      "name": "ReviewCard",
+      "props": ["avatar", "name", "date", "rating", "text"]
+    },
+    {
+      "name": "ScheduleTable",
+      "props": ["schedule"],
+      "schedule_shape": "{ day: string, open: string, close: string, closed: boolean }[]",
+      "behavior": "resalta día actual con new Date().getDay()"
+    },
+    {
+      "name": "AmenitiesList",
+      "props": ["items"],
+      "item_shape": "{ icon: string, label: string }[]"
+    },
+    {
+      "name": "MapEmbed",
+      "props": ["lat", "lng", "rating", "address", "mapStyle"]
+    },
+    {
+      "name": "StickyBottomCTA",
+      "props": ["serviceCount", "ctaText", "onCtaClick"]
+    },
+    {
+      "name": "SplitScreenAuth",
+      "props": ["ambientImage", "appName"]
+    },
+    {
+      "name": "ProgressiveForm",
+      "props": ["steps", "onComplete"]
+    },
+    {
+      "name": "SocialAuthButton",
+      "props": ["provider", "onClick"],
+      "providers": ["facebook", "google", "apple"]
+    },
+    {
+      "name": "NotificationBadge",
+      "props": ["count", "type"],
+      "types": ["number", "dot"]
+    }
+  ],
+
+  "notes_for_claude": [
+    "Leer context.md del usuario ANTES de responder — puede haber decisiones ya tomadas que sobreescriben este archivo",
+    "Hacer TODAS las preguntas de clarifying_questions sin respuesta antes de escribir cualquier código",
+    "Dark mode es el ÚNICO modo — no implementar toggle light/dark salvo petición explícita",
+    "El color de acento #6B4EFF se usa SOLO en: elementos activos, CTAs primarios, bordes de focus, links e indicadores de progreso",
+    "Todos los bordes son rgba(255,255,255,0.06) — NUNCA bordes blancos sólidos",
+    "Todos los botones primarios son pills (border-radius: 999px) — nunca cuadrados",
+    "El sidebar es SIEMPRE icon-only en desktop — el texto de navegación va en el flyout o en el subheader de la vista",
+    "Los empty states son OBLIGATORIOS en todos los widgets y listas — nunca una sección vacía sin feedback",
+    "El CTA de onboarding del topbar desaparece automáticamente cuando todos los steps del checklist están en estado 'completado'",
+    "La línea de hora actual en el calendario: position absolute, calcular top como porcentaje del día transcurrido, actualizar con setInterval cada 60000ms",
+    "El perfil público (/p/[slug]) es ruta completamente pública — sin middleware de auth",
+    "Los filtros de categoría en servicios del perfil público NO recargan la página — solo estado local con show/hide",
+    "El día actual en la tabla de horarios se resalta con JavaScript: new Date().getDay() (0=domingo, 1=lunes...)",
+    "El estado abierto/cerrado del negocio se calcula comparando la hora actual con el horario configurado, considerando zona horaria del negocio",
+    "El botón 'Reservar ahora' del perfil público es sticky bottom-0 con z-index mayor que el contenido pero menor que modales",
+    "Los avatares circulares siempre tienen border 2px solid #6B4EFF como indicador de profesional activo",
+    "El scroll-spy de la navbar del perfil público usa IntersectionObserver con threshold 0.5",
+    "Las notificaciones en el topbar usan badge rojo con número para alertas del sistema y punto azul/violeta para mensajes"
+    "ESTE ARCHIVO ES REFERENCIA DE DISEÑO, NO UN SPEC. No construir un clon de Fresha. El producto es un dashboard de gestión para dueños de peluquerías. Los clientes finales usan WhatsApp, no web. Tomar inspiración visual y de UX pero adaptar al scope definido en CONTEXT.md."
+  ]
+}

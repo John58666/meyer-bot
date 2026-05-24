@@ -31,3 +31,5 @@ dashboard/.env.local
 dashboard/.env
 dashboard/node_modules/
 dashboard/.next/
+INSTRUCCIONES_CLAUDE_CODE.md
+PASO_*.md
