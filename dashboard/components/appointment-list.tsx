@@ -56,7 +56,7 @@ export function AppointmentList({ appointments }: AppointmentListProps) {
         return (
           <div
             key={apt.id}
-            className="bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl p-4 flex items-center gap-4"
+            className="bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl p-4 flex items-start gap-3"
           >
             {/* Hora */}
             <div className="flex-shrink-0 w-16 h-16 bg-[var(--color-accent)]/10 rounded-xl flex flex-col items-center justify-center">
@@ -70,8 +70,10 @@ export function AppointmentList({ appointments }: AppointmentListProps) {
 
             {/* Info */}
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-white truncate">{apt.nombre}</p>
-              <p className="text-sm text-[var(--text-secondary)] truncate">
+              <p className="font-semibold text-white leading-tight break-words">
+                {apt.nombre}
+              </p>
+              <p className="text-sm text-[var(--text-secondary)] break-words">
                 {apt.servicio}
               </p>
               <p className="text-xs text-[var(--text-muted)] mt-0.5">

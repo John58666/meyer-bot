@@ -17,8 +17,8 @@ const DAYS_ES: Record<number, string> = {
 };
 
 const MONTHS_ES = [
-  "ene", "feb", "mar", "abr", "may", "jun",
-  "jul", "ago", "sep", "oct", "nov", "dic",
+  "enero", "febrero", "marzo", "abril", "mayo", "junio",
+  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
 ];
 
 const statusConfig: Record<string, { bg: string; text: string }> = {
@@ -119,10 +119,10 @@ export function WeekView({ appointments, todayISO }: WeekViewProps) {
                         {formatHora(apt.hora)}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-white truncate">
+                        <p className="text-sm font-semibold text-white break-words leading-tight">
                           {apt.nombre}
                         </p>
-                        <p className="text-xs text-[var(--text-secondary)] truncate">
+                        <p className="text-xs text-[var(--text-secondary)] break-words">
                           {apt.servicio}
                         </p>
                       </div>
