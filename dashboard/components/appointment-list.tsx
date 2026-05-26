@@ -69,30 +69,30 @@ export function AppointmentList({ appointments }: AppointmentListProps) {
             </div>
 
             {/* Info */}
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-white leading-tight break-words">
+            <div className="flex-1 flex flex-col gap-0.5">
+              <p className="font-semibold text-white leading-tight">
                 {apt.nombre}
               </p>
-              <p className="text-sm text-[var(--text-secondary)] break-words">
+              <p className="text-sm text-[var(--text-secondary)]">
                 {apt.servicio}
               </p>
-              <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                {formatPhone(apt.numero)}
-              </p>
-            </div>
-
-            {/* Estado + Acciones */}
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <span
-                className={`text-xs font-medium px-2.5 py-1 rounded-full ${status.bg} ${status.text}`}
-              >
-                {status.label}
-              </span>
-              <AppointmentActions
-                id={apt.id}
-                nombre={apt.nombre}
-                estado={apt.estado}
-              />
+              <div className="flex items-center justify-between mt-1">
+                <p className="text-xs text-[var(--text-muted)]">
+                  {formatPhone(apt.numero)}
+                </p>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`text-xs font-medium px-2.5 py-1 rounded-full ${status.bg} ${status.text}`}
+                  >
+                    {status.label}
+                  </span>
+                  <AppointmentActions
+                    id={apt.id}
+                    nombre={apt.nombre}
+                    estado={apt.estado}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         );

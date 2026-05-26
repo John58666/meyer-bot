@@ -118,19 +118,19 @@ export function WeekView({ appointments, todayISO }: WeekViewProps) {
                       <span className="text-sm font-medium text-[var(--color-accent)] w-16 flex-shrink-0">
                         {formatHora(apt.hora)}
                       </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-white break-words leading-tight">
+                      <div className="flex-1 flex flex-col gap-0.5">
+                        <p className="text-sm font-semibold text-white leading-tight">
                           {apt.nombre}
                         </p>
-                        <p className="text-xs text-[var(--text-secondary)] break-words">
+                        <p className="text-xs text-[var(--text-secondary)]">
                           {apt.servicio}
                         </p>
+                        <span
+                          className={`text-xs font-medium px-2 py-0.5 rounded-full self-start mt-0.5 ${status.bg} ${status.text}`}
+                        >
+                          {apt.estado}
+                        </span>
                       </div>
-                      <span
-                        className={`text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${status.bg} ${status.text}`}
-                      >
-                        {apt.estado}
-                      </span>
                     </div>
                   );
                 })}
