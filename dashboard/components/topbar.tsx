@@ -1,6 +1,8 @@
 "use client";
 
 import { signOut } from "next-auth/react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -8,7 +10,38 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut } from "lucide-react";
+import { LogOut, Home, Calendar } from "lucide-react";
+
+const bottomNavItems = [
+  { icon: Home, href: "/dashboard", label: "Inicio" },
+  { icon: Calendar, href: "/dashboard/semana", label: "Semana" },
+];
+
+export function BottomNav() {
+  const pathname = usePathname();
+
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 h-[56px] bg-[var(--bg-sidebar)] border-t border-[var(--border-subtle)] flex items-center justify-around z-40 sm:hidden">
+      {bottomNavItems.map((item) => {
+        const isActive = pathname === item.href;
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`flex flex-col items-center justify-center gap-1 w-16 h-full transition-colors ${
+              isActive
+                ? "text-[var(--color-accent)]"
+                : "text-[var(--text-secondary)]"
+            }`}
+          >
+            <item.icon size={22} />
+            <span className="text-[10px]">{item.label}</span>
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
 
 interface TopbarProps {
   user: {

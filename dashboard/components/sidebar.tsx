@@ -18,7 +18,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed left-0 top-[56px] bottom-0 w-[56px] bg-[var(--bg-sidebar)] border-r border-[var(--border-subtle)] flex flex-col items-center py-3 z-40 overflow-hidden">
+    <aside className="hidden sm:flex fixed left-0 top-[56px] bottom-0 w-[56px] bg-[var(--bg-sidebar)] border-r border-[var(--border-subtle)] flex-col items-center py-3 z-40 overflow-hidden">
       <nav className="flex flex-col items-center gap-2 flex-1">
         {navItems.map((item) => {
           const isActive = pathname === item.href;

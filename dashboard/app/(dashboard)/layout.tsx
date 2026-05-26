@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
-import { Topbar } from "@/components/topbar";
+import { Topbar, BottomNav } from "@/components/topbar";
 
 export default async function DashboardLayout({
   children,
@@ -15,7 +15,8 @@ export default async function DashboardLayout({
     <div className="min-h-screen bg-[var(--bg-primary)]">
       <Topbar user={session.user} />
       <Sidebar />
-      <main className="ml-[56px] mt-[56px] p-6">{children}</main>
+      <main className="ml-0 sm:ml-[56px] mt-[56px] pb-[56px] sm:pb-0 p-6">{children}</main>
+      <BottomNav />
     </div>
   );
 }
