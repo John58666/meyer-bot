@@ -2,24 +2,20 @@
 
 ## Qué es este proyecto
 Plataforma SaaS de agentes WhatsApp con IA para negocios locales.
-Primer cliente: Peluquería Meyer — bot en producción beta.
-Objetivo: escalar a más negocios locales y reemplazar el trabajo actual de Johnander.
+Primer cliente: Peluquería Meyer — bot + dashboard en producción.
+Objetivo: escalar a más negocios locales (meta: 3 clientes esta semana).
 
 ## Stack actual
-- **n8n** (n8n.zyvenshop.com) — orquestador de workflows (temporal, será reemplazado por backend propio)
-- **Evolution API** — conexión con WhatsApp (temporal, migrar a WA Cloud API)
+- **n8n** (n8n.zyvenshop.com) — orquestador de workflows (temporal, reemplazar con 30+ clientes)
+- **Evolution API** — conexión con WhatsApp (temporal, migrar a WA Cloud API oficial de Meta)
 - **Groq / llama-3.3-70b** — modelo de IA para conversación
 - **PostgreSQL 16** (Docker: meyer_postgres) — base de datos principal
+- **Next.js 16** + App Router — dashboard frontend (en producción)
+- **Tailwind v4** + **shadcn/ui** — estilos y componentes dashboard
+- **NextAuth v5** (JWT) — autenticación dashboard contra PostgreSQL
+- **PM2** — process manager Next.js en VPS
 - **VPS Ubuntu** — servidor en 178.104.27.180 (no compartir esta IP)
 - **nginx** — proxy reverso (v1.24.0)
-
-## Stack futuro (Dashboard V1)
-- **Next.js 14** + App Router — frontend dashboard
-- **Tailwind CSS** + **shadcn/ui** — estilos y componentes
-- **NextAuth v5** — autenticación contra PostgreSQL
-- **PM2** — process manager para Next.js en VPS
-- **Polling 30s** — sincronización dashboard ↔ bot (sin WebSockets por ahora)
-- **Todo en el mismo VPS** — sin Supabase, sin Vercel, una sola BD
 
 ## Repositorio
 - GitHub: https://github.com/John58666/meyer-bot (privado)
@@ -34,22 +30,33 @@ meyer-bot/
 ├── database/
 │   ├── schema.sql                  # Schema PostgreSQL multi-tenant
 │   ├── migrate-from-sheets.js      # Script one-shot de migración (ya ejecutado)
-│   └── n8n-queries.sql             # Queries de referencia para nodos n8n
+│   ├── n8n-queries.sql             # Queries de referencia para nodos n8n
+│   ├── migrations/
+│   │   └── 002_sprint3_schema.sql  # Migración Sprint 3 (ya ejecutada)
+│   └── seeds/
+│       ├── seed-professionals.sql  # Profesional inicial Meyer (ya ejecutado)
+│       └── seed-users.js           # Crear usuarios del dashboard
+├── dashboard/                      # Next.js app — EN PRODUCCIÓN
+│   ├── app/
+│   │   ├── (auth)/login/           # Pantalla de login
+│   │   ├── (dashboard)/            # Layout con sidebar + topbar
+│   │   │   ├── dashboard/          # Vista Hoy (/)
+│   │   │   └── semana/             # Vista Semana
+│   │   └── api/auth/               # NextAuth handlers
+│   ├── components/                 # Componentes UI
+│   ├── lib/
+│   │   ├── db.ts                   # Pool PostgreSQL
+│   │   ├── auth.ts                 # NextAuth config
+│   │   └── appointments.ts         # Queries de citas
+│   ├── lib/actions.ts              # Server Actions (crear, cancelar, reagendar)
+│   └── middleware.ts               # Protección de rutas
 ├── infrastructure/
-│   └── docker-compose.db.yml       # Referencia del servicio postgres
+│   └── docker-compose.db.yml
 ├── docs/
-│   ├── proyecto.md
-│   ├── workflow-arquitectura.md
-│   └── pendientes-seguridad.md
 ├── prompts/
 │   └── meyer-system-prompt.md
-├── dashboard/                      # NUEVO — Next.js app
-│   ├── (pendiente de crear)
-│   └── ...
-├── clientes/meyer/
-├── secrets/                        # Credenciales Google (ignorado en Git)
-├── .env                            # Variables de entorno (ignorado en Git)
-├── .env.example
+├── secrets/                        # (ignorado en Git)
+├── .env                            # (ignorado en Git)
 ├── docker-compose.yml
 ├── CONTEXT.md
 ├── CLAUDE.md
@@ -57,148 +64,66 @@ meyer-bot/
 ```
 
 ## Sprint 0 — COMPLETADO ✅ (Mayo 18, 2026)
-
-### ✅ Seguridad
-- EVOLUTION_API_KEY migrada a .env — todos los nodos usan `$env.EVOLUTION_API_KEY`
-- Google private key eliminada del workflow (nodo "Code in JavaScript2" desconectado)
-- N8N_BLOCK_ENV_ACCESS_IN_NODE=false configurado en docker-compose.yml
-- IP del servidor migrada a `$env.EVOLUTION_API_URL` en los 4 nodos HTTP
-- Número del dueño migrado a `$env.OWNER_NUMBER` en Code in JavaScript1
+- EVOLUTION_API_KEY, EVOLUTION_API_URL, OWNER_NUMBER migradas a .env
+- Google private key eliminada del workflow
+- N8N_BLOCK_ENV_ACCESS_IN_NODE=false en docker-compose.yml
 
 ## Sprint 1 — COMPLETADO ✅ (Mayo 18, 2026)
-
-### ✅ PostgreSQL
-- Container meyer_postgres corriendo en VPS (postgres:16-alpine)
-- Mismo VPS, red Docker n8n_default
-- Schema multi-tenant: tablas `businesses` + `appointments`
+- Container meyer_postgres en VPS (postgres:16-alpine)
+- Schema multi-tenant: businesses + appointments
 - Meyer registrado como business_id=1
-- 34 citas migradas desde Google Sheets (datos de beta)
-- Credential "Postgres account" en n8n con host `meyer_postgres`
-
-### ✅ Workflows migrados a PostgreSQL
-- peluqueria-beta: nodos Sheets reemplazados por PostgreSQL
-  - "Leer Disponibilidad" → PostgreSQL COUNT query
-  - "Verificar Slot" → JS simplificado que lee total del COUNT
-  - "Append row in sheet" → "Insertar Cita" PostgreSQL INSERT
-- recordatorios-meyer: nodo "Leer Citas" → PostgreSQL SELECT
+- 34 citas migradas desde Google Sheets
+- Workflows n8n migrados a PostgreSQL
 
 ## Sprint 2 — COMPLETADO ✅ (Mayo 19, 2026)
+- Disponibilidad proactiva con generate_series
+- Timezone America/Bogota en todos los queries
+- System prompt: mostrar solo día solicitado
 
-### ✅ Disponibilidad proactiva
-- Nodo PostgreSQL "Leer Slots Disponibles" antes del AI Agent
-- Query con generate_series: calcula slots libres próximos 7 días
-- Nodo Code "Formatear Disponibilidad": agrupa slots por día en texto natural
-- AI Agent recibe disponibilidad real en el system prompt
-- Bot muestra horarios disponibles antes de que el cliente elija
-- Domingos con horario diferente (10AM-5PM) correctamente excluidos
-- Timezone corregido a America/Bogota en todos los queries
-- generate_series(0,7) para incluir día actual
-- System prompt ajustado: mostrar solo día solicitado, no todos de golpe
+## Sprint 3 — COMPLETADO ✅ (Mayo 25, 2026)
 
-### ✅ Fixes aplicados
-- Hora sin segundos en recordatorios (substring 0,5)
-- Timezone corregido con NOW() AT TIME ZONE 'America/Bogota'
-- System prompt: instrucción OBLIGATORIA para usar datos de disponibilidad
+### ✅ Schema nuevas tablas
+- `users` — usuarios del dashboard (BIGINT IDENTITY, índice LOWER(email), updated_at trigger)
+- `professionals` — peluqueros por negocio
+- `businesses.multi_professional` — flag para multi-barbero
+- `appointments.professional_id` — FK a professionals (ON DELETE SET NULL)
+- Estrategia sesión: JWT (migrar a Database sessions cuando haya empleados reales)
 
-### 🔧 Ajustes pendientes del Sprint 2
-1. Mejora visual de cómo se muestran horarios en WhatsApp (formato compacto, separar AM/PM)
-2. Orden estricto: servicio → fecha → hora (modelo a veces salta pasos)
+### ✅ Dashboard en producción
+- URL: https://dashboard.zyvenshop.com
+- Login con email + contraseña (NextAuth v5 JWT)
+- Vista "Hoy" — stats (total, pendientes, completadas, canceladas) + lista de citas
+- Vista "Semana" — citas agrupadas por día (lunes a domingo)
+- Agendar cita manual — Bottom Sheet con nombre, teléfono, servicio, fecha, hora
+- Completar / Cancelar (con confirmación) / Reagendar
+- Polling automático 30s — citas del bot aparecen sin recargar
+- Responsive mobile-first — sidebar oculto en móvil, bottom nav con Inicio/Semana
+- Deploy: PM2 puerto 3001 + nginx proxy + SSL certbot
 
-## Sprint 3 — Dashboard V1 (PLANIFICADO)
+### ✅ Infraestructura dashboard
+- Puerto meyer_postgres: 127.0.0.1:5432 (solo localhost, no público)
+- AUTH_TRUST_HOST=true en .env.local del dashboard
+- Deploy script: `/root/deploy-dashboard.sh`
+  ```bash
+  cd /root/meyer-bot && git pull origin main && cd dashboard && npm run build && pm2 restart meyer-dashboard
+  ```
 
-### Decisiones de arquitectura aprobadas
-- **Frontend:** Next.js 14 + Tailwind CSS + shadcn/ui
-- **Auth:** NextAuth v5 con credentials provider contra PostgreSQL propio
-- **BD:** PostgreSQL existente en VPS (UNA sola BD para todo)
-- **Realtime:** Polling cada 30s (sin WebSockets — volumen no lo justifica)
-- **Deploy:** VPS con PM2 + nginx en dashboard.zyvenshop.com
-- **NO Supabase** — evitar dependencia externa y dos BDs separadas
-- **NO Vercel** — evitar latencia entre edge y VPS
+### 🔧 Pendiente del Sprint 3
+- Vista calendario (semana/mes toggle con librería) — SIGUIENTE
+- Responsive: bottom sheet en móvil funciona, acciones (⋮) pendiente de probar en celular
 
-### Descartado con justificación
-- Supabase Auth → Crea dos BDs separadas, Realtime no funciona con PostgreSQL externo
-- Vercel → Latencia con PostgreSQL en VPS, complejidad innecesaria
-- WebSockets → Over-engineering para 5-20 citas/día por negocio
-- Mapa en V1 → Sin valor funcional, se agrega después al bot como link de Google Maps en confirmación
+## Sprint 4 — PLANIFICADO (próximo)
 
-### Funcionalidades V1
-1. Login/signup con email + contraseña
-2. Vista "Hoy" — lista de citas del día
-3. Vista "Semana" — citas agrupadas por día
-4. Agendar cita manualmente (para cuando cliente llama por teléfono)
-5. Cancelar cita
-6. Reagendar cita
-7. Marcar como completada
-8. Stats: total hoy, pendientes, completadas, canceladas
-9. Responsive mobile-first
-10. Polling 30s — citas nuevas del bot aparecen automáticamente
+### Prioridades en orden
+1. **Vista calendario** — toggle semana/mes desde mismo botón, librería (no desde cero), mes muestra conteo de citas por día
+2. **Multi-tenant real** — onboardear negocios 2 y 3 (ahora todo hardcodeado a business_id=1)
+3. **WhatsApp Cloud API (Meta)** — cada negocio nuevo usará número oficial (pendiente acceso Meta Business)
+4. **Onboarding sin código** — panel de admin para crear negocios sin tocar BD manualmente
+5. **Multi-barbero UI** — cuando businesses.multi_professional = true, mostrar columnas por profesional
 
-### Schema nuevo (agregar a PostgreSQL existente)
-
-```sql
--- Tabla de usuarios del dashboard
-CREATE TABLE users (
-  id SERIAL PRIMARY KEY,
-  email TEXT UNIQUE NOT NULL,
-  password_hash TEXT NOT NULL,
-  name TEXT NOT NULL,
-  business_id INTEGER REFERENCES businesses(id),
-  role TEXT DEFAULT 'owner' CHECK (role IN ('owner','employee','admin')),
-  active BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Tabla de profesionales (peluqueros)
-CREATE TABLE professionals (
-  id SERIAL PRIMARY KEY,
-  business_id INTEGER REFERENCES businesses(id),
-  name TEXT NOT NULL,
-  active BOOLEAN DEFAULT true
-);
-
--- Agregar a businesses
-ALTER TABLE businesses ADD COLUMN multi_professional BOOLEAN DEFAULT false;
-
--- Agregar a appointments
-ALTER TABLE appointments ADD COLUMN professional_id INTEGER REFERENCES professionals(id);
-```
-
-### Multi-profesional (diseñado pero no activo en V1)
-- `businesses.multi_professional = false` → bot no pregunta "¿con quién?", dashboard no muestra peluquero
-- `businesses.multi_professional = true` → bot pregunta, dashboard filtra por peluquero
-- Meyer V1: multi_professional = false (1 solo peluquero)
-- Se activa por cliente cuando lo requiera
-- En dashboard: si multi_professional = true → citas muestran nombre peluquero, formulario tiene selector, filtro por profesional
-- En dashboard: si multi_professional = false → nada de eso aparece
-
-### Fases de ejecución
-```
-Fase 1 → Schema + Auth (sesión 1)
-  1.1 Crear tablas users, professionals en PostgreSQL
-  1.2 Agregar professional_id y multi_professional al schema
-  1.3 Inicializar Next.js + Tailwind + shadcn/ui
-  1.4 Configurar NextAuth v5
-  1.5 Login funcional
-
-Fase 2 → Dashboard funcional (sesión 2-3)
-  2.1 Vista "Hoy"
-  2.2 Vista "Semana"
-  2.3 Agendar cita manual
-  2.4 Cancelar / Completar / Reagendar
-  2.5 Stats
-  2.6 Responsive
-
-Fase 3 → Sincronización (sesión 4)
-  3.1 Polling 30s
-  3.2 Bot confirma → dashboard actualiza
-  3.3 Dashboard cancela → no afecta bot
-
-Fase 4 → Deploy (sesión 4)
-  4.1 Next.js en VPS con PM2
-  4.2 nginx proxy → dashboard.zyvenshop.com
-  4.3 SSL con certbot
-  4.4 DNS en Namecheap (A record → 178.104.27.180)
-```
+### Bloqueantes externos
+- Meta Business Suite: necesario para WhatsApp oficial por negocio
+- Sin acceso a Meta → nuevos clientes usan Evolution API temporalmente
 
 ## Arquitectura del Workflow Principal (21 nodos)
 
@@ -208,7 +133,7 @@ Fase 4 → Deploy (sesión 4)
 3. **Code in JavaScript** → rate limit + extrae mensaje + calcula fechas (Bogotá timezone)
 
 ### Fase 2: Disponibilidad + Conversación IA
-4. **Leer Slots Disponibles** → PostgreSQL: slots libres próximos 7 días (NOW() AT TIME ZONE 'America/Bogota')
+4. **Leer Slots Disponibles** → PostgreSQL: slots libres próximos 7 días
 5. **Formatear Disponibilidad** → Code JS: agrupa slots por día en texto natural
 6. **AI Agent** → orquesta conversación con disponibilidad real en system prompt
 7. **Groq Chat Model** → llama-3.3-70b
@@ -237,27 +162,67 @@ Fase 4 → Deploy (sesión 4)
 
 ### Conexión
 - Host (desde n8n): `meyer_postgres`
+- Host (desde dashboard en VPS): `127.0.0.1`
+- Host (desde dashboard en desarrollo local): `localhost` (con túnel SSH)
 - Puerto: 5432
 - Base de datos: `meyer_db`
 - Usuario: `meyer_user`
 - Password: en $POSTGRES_PASSWORD del .env del VPS
-- Container Docker: `meyer_postgres` en red `n8n_default`
 
-### Schema actual
+### Schema actual (completo)
 ```sql
-businesses (id, slug, name, whatsapp_instance, owner_number, timezone, active, multi_professional)
-appointments (id, business_id, professional_id, fecha DATE, hora TIME, nombre, servicio, numero, estado, calendar_event_id, created_at, updated_at)
-users (id, email, password_hash, name, business_id, role, active, created_at) -- PENDIENTE
-professionals (id, business_id, name, active) -- PENDIENTE
+businesses (
+  id SERIAL PK,
+  slug TEXT,
+  name TEXT,
+  whatsapp_instance TEXT,
+  owner_number TEXT,
+  timezone TEXT,
+  active BOOLEAN,
+  multi_professional BOOLEAN DEFAULT false
+)
+
+appointments (
+  id SERIAL PK,
+  business_id INTEGER → businesses(id),
+  professional_id BIGINT → professionals(id) ON DELETE SET NULL,
+  fecha DATE,
+  hora TIME,
+  nombre TEXT,
+  servicio TEXT,
+  numero TEXT,
+  estado TEXT CHECK ('Pendiente','Confirmada','Cancelada','Completada'),
+  calendar_event_id TEXT,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ
+)
+
+users (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PK,
+  email TEXT UNIQUE (índice LOWER(email)),
+  password_hash TEXT,
+  name TEXT,
+  business_id INTEGER → businesses(id) ON DELETE RESTRICT,
+  role TEXT CHECK ('owner','employee','admin') DEFAULT 'owner',
+  active BOOLEAN DEFAULT true,
+  last_login_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ
+)
+
+professionals (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PK,
+  business_id INTEGER → businesses(id) ON DELETE RESTRICT,
+  name TEXT,
+  active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ
+)
 ```
 
-### Estados válidos de appointments
-`Pendiente` | `Confirmada` | `Cancelada` | `Completada`
+## Variables de entorno
 
-### Roles de users
-`owner` | `employee` | `admin`
-
-## Variables de entorno del VPS (/root/n8n/.env)
+### VPS — /root/n8n/.env
 ```
 EVOLUTION_API_KEY=...
 EVOLUTION_API_URL=http://178.104.27.180:8080
@@ -265,7 +230,30 @@ OWNER_NUMBER=573142556322
 POSTGRES_PASSWORD=...
 NODE_FUNCTION_ALLOW_ENV=...,EVOLUTION_API_URL,OWNER_NUMBER
 ```
-⚠️ GOOGLE_PRIVATE_KEY aún en texto plano — pendiente de limpiar
+⚠️ GOOGLE_PRIVATE_KEY aún en .env del VPS — pendiente limpiar
+
+### Dashboard — /root/meyer-bot/dashboard/.env.local
+```
+POSTGRES_HOST=127.0.0.1
+POSTGRES_PORT=5432
+POSTGRES_DB=meyer_db
+POSTGRES_USER=meyer_user
+POSTGRES_PASSWORD=...
+AUTH_SECRET=...
+NEXTAUTH_URL=https://dashboard.zyvenshop.com
+AUTH_TRUST_HOST=true
+```
+
+### Dashboard local — ~/Documents/meyer-bot/dashboard/.env.local
+```
+POSTGRES_HOST=localhost  (con túnel: ssh -L 5432:localhost:5432 root@VPS)
+POSTGRES_PORT=5432
+POSTGRES_DB=meyer_db
+POSTGRES_USER=meyer_user
+POSTGRES_PASSWORD=...
+AUTH_SECRET=...
+NEXTAUTH_URL=http://localhost:3000
+```
 
 ## Servicios y precios (Peluquería Meyer)
 - Corte dama: $35.000
@@ -287,62 +275,64 @@ NODE_FUNCTION_ALLOW_ENV=...,EVOLUTION_API_URL,OWNER_NUMBER
 - ✅ Filtro de grupos (solo mensajes directos)
 - ✅ Rate limit: 50 mensajes/hora por número
 - ✅ Memoria de conversación: últimos 10 mensajes por usuario
-- ✅ Cálculo automático de fechas con timezone Bogotá
+- ✅ Dashboard en producción: https://dashboard.zyvenshop.com
+- ✅ Login seguro con bcryptjs + JWT
+- ✅ Vista Hoy con stats en tiempo real
+- ✅ Vista Semana agrupada por día
+- ✅ Agendar, completar, cancelar, reagendar citas desde dashboard
+- ✅ Polling 30s — sincronización automática bot ↔ dashboard
+- ✅ Responsive mobile-first con bottom nav
 
 ## Backlog priorizado
 
-### 🔴 CRÍTICO
-1. **Sprint 3 — Dashboard V1** (SIGUIENTE — ver plan arriba)
+### 🔴 CRÍTICO (Sprint 4)
+1. Vista calendario con toggle semana/mes
+2. Multi-tenant: onboardear negocio 2 y 3
+3. Acceso Meta Business Suite para WhatsApp oficial
 
 ### 🟡 ALTA PRIORIDAD
-2. Google private key fuera del .env del VPS
-3. Reagendamiento por WhatsApp (buscar cita por número → UPDATE)
-4. Cancelación por WhatsApp (UPDATE estado = Cancelada)
-5. Mejora visual de horarios en WhatsApp
+4. Onboarding sin código (panel admin)
+5. Multi-barbero UI en dashboard
+6. Google private key fuera del .env del VPS
+7. Reagendamiento por WhatsApp (buscar cita por número → UPDATE)
+8. Cancelación por WhatsApp
 
 ### 🟠 MEDIA PRIORIDAD
-6. Migración a WhatsApp Cloud API oficial
-7. Reactivar Google Calendar con credentials nativas
-8. Timezone dinámico por negocio
-9. Horarios y servicios dinámicos por negocio (tablas en PostgreSQL)
+9. Migración a WhatsApp Cloud API oficial
+10. Timezone dinámico por negocio
+11. Horarios y servicios dinámicos por negocio (tablas en PostgreSQL)
+12. Mejora visual de horarios en WhatsApp
 
 ### 🟢 MEJORAS
-10. Rate limit en PostgreSQL (persistente vs static data)
-11. Multi-tenant real (business_id dinámico)
-12. Métricas automáticas para el dueño
-13. Sistema de onboarding sin tocar código
-14. Mapa Google Maps link en confirmación de cita por WhatsApp
-15. Facturación con Stripe/Wompi
+13. Rate limit en PostgreSQL (persistente vs static data)
+14. Google Calendar reactivar
+15. Métricas automáticas para el dueño
+16. Mapa Google Maps link en confirmación WhatsApp
+17. Facturación con Stripe/Wompi
 
-## Plan de reemplazo de n8n (cuando haya 30+ clientes)
+## Infraestructura VPS
 ```
-n8n actual → Backend propio Node.js + Express/Fastify
-           → Cola de mensajes BullMQ + Redis
-           → Workers de procesamiento
-           → Misma BD PostgreSQL
-           → Mismo schema, mismas queries
-```
-No hacer antes de 30 clientes. n8n aguanta 10-15 sin problemas.
+CONTAINER            IMAGE                   STATUS    PUERTO
+n8n-n8n-1            n8nio/n8n               Up        5678
+meyer_postgres       postgres:16-alpine      Up        127.0.0.1:5432
+evolution-api        evoapicloud/v2.3.7      Up        0.0.0.0:8080 ⚠️
+evolution-postgres   postgres:15             Up        interno
+redis:7-alpine       redis:7-alpine          Up        interno
+meyer-dashboard      PM2 (Next.js)           Up        127.0.0.1:3001
 
-## Infraestructura VPS al cierre
-```
-CONTAINER          IMAGE                STATUS
-n8n-n8n-1          n8nio/n8n            Up
-meyer_postgres     postgres:16-alpine   Up
-evolution-api      evoapicloud/v2.3.7   Up
-evolution-postgres postgres:15          Up (no tocar)
-redis:7-alpine                          Up
-
-VPS specs: 2 vCPU | 3.7GB RAM (2.5GB libre) | 38GB disco (21GB libre)
-nginx 1.24.0 instalado
+VPS specs: 2 vCPU | 3.7GB RAM | 38GB disco
+nginx 1.24.0 — proxies: n8n.zyvenshop.com, dashboard.zyvenshop.com
 DNS: Namecheap (zyvenshop.com)
 ```
+⚠️ evolution-api expuesto en 0.0.0.0:8080 — pendiente asegurar
 
 ## Reglas de seguridad
 - ✅ EVOLUTION_API_KEY en $env
 - ✅ EVOLUTION_API_URL en $env
 - ✅ OWNER_NUMBER en $env
+- ✅ meyer_postgres solo en 127.0.0.1:5432 (no público)
 - ⚠️ GOOGLE_PRIVATE_KEY aún en .env del VPS
+- ⚠️ evolution-api expuesto en 0.0.0.0:8080
 - NUNCA subir .env ni secrets/ a Git
 - Verificar con `git status` antes de cada commit
 
@@ -352,6 +342,7 @@ DNS: Namecheap (zyvenshop.com)
 - Cada decisión considera cómo funciona para el cliente 10 o 100
 - Documentar TODO: cada cambio actualiza CONTEXT.md
 - Commits descriptivos: `feat:`, `fix:`, `chore:`, `docs:`
-- Exportar workflow de n8n antes de cada commit
 - NO construir nada sin aprobación explícita del usuario
 - Preguntar primero, construir después
+- Usar Claude Code para ejecución, Claude.ai para orquestación y decisiones
+- Prompt corto para Claude Code: "meyer-bot dashboard. Next.js 16, Tailwind v4, shadcn. Producción: dashboard.zyvenshop.com. Repo: ~/Documents/meyer-bot/dashboard. Deploy: cd /root/meyer-bot && git pull origin main && cd dashboard && npm run build && pm2 restart meyer-dashboard"
