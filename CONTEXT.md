@@ -3,7 +3,7 @@
 ## Qué es este proyecto
 Plataforma SaaS de agentes WhatsApp con IA para negocios locales.
 Primer cliente: Peluquería Meyer — bot + dashboard en producción.
-Objetivo: escalar a más negocios locales (meta: 3 clientes esta semana).
+Objetivo: escalar a más negocios locales (meta: 5 clientes esta semana).
 
 ## Stack actual
 - **n8n** (n8n.zyvenshop.com) — orquestador de workflows (temporal, reemplazar con 30+ clientes)
@@ -41,13 +41,19 @@ meyer-bot/
 │   │   ├── (auth)/login/           # Pantalla de login
 │   │   ├── (dashboard)/            # Layout con sidebar + topbar
 │   │   │   ├── dashboard/          # Vista Hoy (/)
-│   │   │   └── semana/             # Vista Semana
-│   │   └── api/auth/               # NextAuth handlers
-│   ├── components/                 # Componentes UI
+│   │   │   └── semana/             # Vista Semana + Calendario
+│   │   └── api/
+│   │       ├── auth/               # NextAuth handlers
+│   │       └── appointments/
+│   │           └── month/          # GET /api/appointments/month
+│   ├── components/
+│   │   ├── ui/                     # shadcn/ui components
+│   │   ├── calendar-month-view.tsx # Vista calendario mes con puntos de estado
+│   │   └── day-appointments-sheet.tsx # Bottom sheet por día con acciones
 │   ├── lib/
 │   │   ├── db.ts                   # Pool PostgreSQL
 │   │   ├── auth.ts                 # NextAuth config
-│   │   └── appointments.ts         # Queries de citas
+│   │   └── appointments.ts         # Queries de citas (incl. getAppointmentsByMonth)
 │   ├── lib/actions.ts              # Server Actions (crear, cancelar, reagendar)
 │   └── middleware.ts               # Protección de rutas
 ├── infrastructure/
@@ -81,49 +87,63 @@ meyer-bot/
 - System prompt: mostrar solo día solicitado
 
 ## Sprint 3 — COMPLETADO ✅ (Mayo 25, 2026)
-
-### ✅ Schema nuevas tablas
 - `users` — usuarios del dashboard (BIGINT IDENTITY, índice LOWER(email), updated_at trigger)
 - `professionals` — peluqueros por negocio
 - `businesses.multi_professional` — flag para multi-barbero
 - `appointments.professional_id` — FK a professionals (ON DELETE SET NULL)
 - Estrategia sesión: JWT (migrar a Database sessions cuando haya empleados reales)
+- Dashboard en producción: https://dashboard.zyvenshop.com
+- Login seguro con bcryptjs + JWT
+- Vista Hoy con stats en tiempo real
+- Vista Semana agrupada por día
+- Agendar, completar, cancelar, reagendar citas desde dashboard
+- Polling 30s — sincronización automática bot ↔ dashboard
+- Responsive mobile-first con bottom nav
 
-### ✅ Dashboard en producción
+## Sprint 4 — EN CURSO (Junio 3, 2026)
+
+### ✅ Completado
+- Vista calendario en /semana (toggle Lista/Calendario)
+- date-fns instalada como dependencia del dashboard
+- `AppointmentRow` y `getAppointmentsByMonth()` añadidas a `lib/appointments.ts`
+- API route `GET /api/appointments/month?year=&month=`
+- `calendar-month-view.tsx` — grilla de mes custom, puntos de color por estado, conteo
+- `day-appointments-sheet.tsx` — bottom sheet con completar/cancelar/reagendar
+- `SemanaClient.tsx` — toggle con localStorage persistente
+
+### 🔧 Decisiones de arquitectura multi-tenant tomadas
+- sessionKey cambia a `{{ business_id }}_{{ numero }}_v3`
+- Tabla `customers`: id, business_id, nombre, numero, created_at
+- Columnas nuevas en `businesses`: services_text, prompt_name, schedule_text
+- Workflow genérico parametrizado (un solo workflow para todos los negocios)
+- Onboarding manual para primeros 5 negocios, luego panel admin
+
+### 🔴 En progreso
+- Workflow genérico multi-tenant
+- Migración SQL (customers + columnas businesses)
+- Onboarding primer negocio nuevo
+
+## Dashboard en producción
 - URL: https://dashboard.zyvenshop.com
 - Login con email + contraseña (NextAuth v5 JWT)
 - Vista "Hoy" — stats (total, pendientes, completadas, canceladas) + lista de citas
-- Vista "Semana" — citas agrupadas por día (lunes a domingo)
+- Vista "Semana" — toggle Lista/Calendario
+  - Lista: citas agrupadas por día (lunes a domingo)
+  - Calendario: grilla de mes, puntos morado/azul/verde/rojo por estado, navegación histórica
+  - Click en día → bottom sheet con lista de citas y acciones
 - Agendar cita manual — Bottom Sheet con nombre, teléfono, servicio, fecha, hora
-- Completar / Cancelar (con confirmación) / Reagendar
+- Completar / Cancelar (con confirmación 2 pasos) / Reagendar
 - Polling automático 30s — citas del bot aparecen sin recargar
 - Responsive mobile-first — sidebar oculto en móvil, bottom nav con Inicio/Semana
 - Deploy: PM2 puerto 3001 + nginx proxy + SSL certbot
 
-### ✅ Infraestructura dashboard
+## Infraestructura dashboard
 - Puerto meyer_postgres: 127.0.0.1:5432 (solo localhost, no público)
 - AUTH_TRUST_HOST=true en .env.local del dashboard
 - Deploy script: `/root/deploy-dashboard.sh`
   ```bash
   cd /root/meyer-bot && git pull origin main && cd dashboard && npm run build && pm2 restart meyer-dashboard
   ```
-
-### 🔧 Pendiente del Sprint 3
-- Vista calendario (semana/mes toggle con librería) — SIGUIENTE
-- Responsive: bottom sheet en móvil funciona, acciones (⋮) pendiente de probar en celular
-
-## Sprint 4 — PLANIFICADO (próximo)
-
-### Prioridades en orden
-1. **Vista calendario** — toggle semana/mes desde mismo botón, librería (no desde cero), mes muestra conteo de citas por día
-2. **Multi-tenant real** — onboardear negocios 2 y 3 (ahora todo hardcodeado a business_id=1)
-3. **WhatsApp Cloud API (Meta)** — cada negocio nuevo usará número oficial (pendiente acceso Meta Business)
-4. **Onboarding sin código** — panel de admin para crear negocios sin tocar BD manualmente
-5. **Multi-barbero UI** — cuando businesses.multi_professional = true, mostrar columnas por profesional
-
-### Bloqueantes externos
-- Meta Business Suite: necesario para WhatsApp oficial por negocio
-- Sin acceso a Meta → nuevos clientes usan Evolution API temporalmente
 
 ## Arquitectura del Workflow Principal (21 nodos)
 
@@ -180,6 +200,7 @@ businesses (
   timezone TEXT,
   active BOOLEAN,
   multi_professional BOOLEAN DEFAULT false
+  -- pendiente añadir: services_text, prompt_name, schedule_text
 )
 
 appointments (
@@ -217,6 +238,15 @@ professionals (
   active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ,
   updated_at TIMESTAMPTZ
+)
+
+-- pendiente crear:
+customers (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PK,
+  business_id INTEGER → businesses(id),
+  nombre TEXT,
+  numero TEXT,
+  created_at TIMESTAMPTZ
 )
 ```
 
@@ -282,25 +312,28 @@ NEXTAUTH_URL=http://localhost:3000
 - ✅ Agendar, completar, cancelar, reagendar citas desde dashboard
 - ✅ Polling 30s — sincronización automática bot ↔ dashboard
 - ✅ Responsive mobile-first con bottom nav
+- ✅ Vista Calendario en /semana con toggle Lista/Calendario
+- ✅ Grilla de mes con puntos de color por estado y conteo de citas
+- ✅ Bottom sheet por día con acciones (completar/cancelar/reagendar)
 
 ## Backlog priorizado
 
-### 🔴 CRÍTICO (Sprint 4)
-1. Vista calendario con toggle semana/mes
-2. Multi-tenant: onboardear negocio 2 y 3
-3. Acceso Meta Business Suite para WhatsApp oficial
+### 🔴 CRÍTICO (Sprint 4 — en curso)
+1. ✅ Vista calendario con toggle Lista/Calendario
+2. Workflow genérico multi-tenant (un solo workflow para todos los negocios)
+3. Migración SQL: tabla customers + columnas businesses
+4. Onboardear primeros 5 negocios nuevos
 
 ### 🟡 ALTA PRIORIDAD
-4. Onboarding sin código (panel admin)
-5. Multi-barbero UI en dashboard
-6. Google private key fuera del .env del VPS
-7. Reagendamiento por WhatsApp (buscar cita por número → UPDATE)
-8. Cancelación por WhatsApp
+5. Panel admin de onboarding (cuando sean 5+ negocios)
+6. Multi-barbero UI en dashboard
+7. Google private key fuera del .env del VPS
+8. Reagendamiento por WhatsApp (buscar cita por número → UPDATE)
+9. Cancelación por WhatsApp
 
 ### 🟠 MEDIA PRIORIDAD
-9. Migración a WhatsApp Cloud API oficial
-10. Timezone dinámico por negocio
-11. Horarios y servicios dinámicos por negocio (tablas en PostgreSQL)
+10. Migración a WhatsApp Cloud API oficial (bloqueado por Meta Business Suite)
+11. Timezone dinámico por negocio
 12. Mejora visual de horarios en WhatsApp
 
 ### 🟢 MEJORAS
@@ -346,3 +379,15 @@ DNS: Namecheap (zyvenshop.com)
 - Preguntar primero, construir después
 - Usar Claude Code para ejecución, Claude.ai para orquestación y decisiones
 - Prompt corto para Claude Code: "meyer-bot dashboard. Next.js 16, Tailwind v4, shadcn. Producción: dashboard.zyvenshop.com. Repo: ~/Documents/meyer-bot/dashboard. Deploy: cd /root/meyer-bot && git pull origin main && cd dashboard && npm run build && pm2 restart meyer-dashboard"
+
+## Key learnings y decisiones tomadas
+- **Supabase + Vercel rechazado** — dos bases de datos separadas hacen joins imposibles
+- **Polling sobre WebSockets** — correcto para el volumen actual
+- **`multi_professional` flag** — cuando false, bot no pregunta por barbero y dashboard oculta columna
+- **Timezone crítico** — PostgreSQL en UTC, negocio en Bogotá (UTC-5). Siempre usar `(NOW() AT TIME ZONE 'America/Bogota')::date`
+- **llama-3.3-70b** — requiere lenguaje "OBLIGATORIO" y datos de disponibilidad al inicio del prompt
+- **bcryptjs** sobre bcrypt — pure JS, sin compilación nativa
+- **AUTH_SECRET** no NEXTAUTH_SECRET en NextAuth v5
+- **n8n como SPOF** — reemplazar con Node.js + BullMQ + Redis a los 30+ clientes
+- **sessionKey multi-tenant** — debe ser `{{ business_id }}_{{ numero }}_v3` para aislar conversaciones entre negocios
+- **Workflow genérico** — un solo workflow parametrizado es la arquitectura correcta; duplicar por negocio no escala
