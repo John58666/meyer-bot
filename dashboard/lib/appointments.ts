@@ -64,6 +64,31 @@ export type WeekAppointment = Appointment & {
   fecha: string; // YYYY-MM-DD
 };
 
+export type AppointmentRow = {
+  id: number;
+  fecha: string;
+  hora: string;
+  nombre: string;
+  servicio: string;
+  numero: string;
+  estado: "Pendiente" | "Confirmada" | "Cancelada" | "Completada";
+};
+
+export async function getAppointmentsByMonth(
+  businessId: number,
+  year: number,
+  month: number
+): Promise<AppointmentRow[]> {
+  const { rows } = await pool.query(
+    `SELECT id, fecha::text, hora::text, nombre, servicio, numero, estado
+     FROM appointments WHERE business_id = $1
+     AND DATE_TRUNC('month', fecha) = DATE_TRUNC('month', make_date($2, $3, 1))
+     ORDER BY fecha, hora`,
+    [businessId, year, month]
+  );
+  return rows;
+}
+
 export async function getWeekAppointments(
   businessId: number
 ): Promise<Record<string, WeekAppointment[]>> {

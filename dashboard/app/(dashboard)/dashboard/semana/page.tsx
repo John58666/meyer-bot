@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getWeekAppointments } from "@/lib/appointments";
 import { WeekView } from "@/components/week-view";
 import { RefreshButton } from "@/components/refresh-button";
+import { SemanaClient } from "@/app/(dashboard)/semana/SemanaClient";
 
 export default async function SemanaPage() {
   const session = await auth();
@@ -27,7 +28,9 @@ export default async function SemanaPage() {
         <RefreshButton />
       </div>
 
-      <WeekView appointments={appointments} todayISO={todayISO} />
+      <SemanaClient>
+        <WeekView appointments={appointments} todayISO={todayISO} />
+      </SemanaClient>
     </div>
   );
 }
