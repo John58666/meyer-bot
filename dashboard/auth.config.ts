@@ -25,6 +25,7 @@ export const authConfig = {
       if (user) {
         token.id = user.id ?? "";
         token.businessId = ((user as { businessId?: number }).businessId) ?? 0;
+        token.businessName = ((user as { businessName?: string }).businessName) ?? "";
         token.role = ((user as { role?: string }).role) ?? "owner";
       }
       return token;
@@ -32,8 +33,9 @@ export const authConfig = {
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string;
-        (session.user as { businessId?: number }).businessId = token.businessId as number;
-        (session.user as { role?: string }).role = token.role as string;
+        session.user.businessId = token.businessId as number;
+        session.user.businessName = token.businessName as string;
+        session.user.role = token.role as string;
       }
       return session;
     },

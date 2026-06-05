@@ -47,6 +47,7 @@ interface TopbarProps {
   user: {
     name: string;
     email: string;
+    businessName: string;
   };
 }
 
@@ -60,8 +61,9 @@ export function Topbar({ user }: TopbarProps) {
 
   return (
     <header className="fixed top-0 left-0 right-0 h-[56px] bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] flex items-center justify-between px-4 z-50">
-      <div className="flex items-center gap-3">
-        <span className="text-white font-bold text-lg ml-1">Meyer</span>
+      <div className="flex items-center gap-2 ml-1">
+        <span className="text-[var(--color-accent)] text-lg">✂️</span>
+        <span className="text-white font-bold text-lg leading-tight">{user.businessName}</span>
       </div>
 
       <DropdownMenu>

@@ -20,9 +20,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         try {
           const result = await pool.query(
-            `SELECT id, email, password_hash, name, business_id, role
-             FROM users
-             WHERE LOWER(email) = LOWER($1) AND active = true`,
+            `SELECT u.id, u.email, u.password_hash, u.name, u.business_id, u.role,
+                    b.name AS business_name
+             FROM users u
+             LEFT JOIN businesses b ON b.id = u.business_id
+             WHERE LOWER(u.email) = LOWER($1) AND u.active = true`,
             [email]
           );
 
@@ -47,6 +49,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             email: user.email,
             name: user.name,
             businessId: user.business_id,
+            businessName: user.business_name ?? "",
             role: user.role,
           };
         } catch (err) {
