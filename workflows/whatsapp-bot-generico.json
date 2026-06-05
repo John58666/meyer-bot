@@ -4,13 +4,18 @@
     {
       "parameters": {
         "multipleMethods": true,
-        "httpMethod": ["POST"],
+        "httpMethod": [
+          "POST"
+        ],
         "path": "whatsapp-bot",
         "options": {}
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [-896, -2768],
+      "position": [
+        -896,
+        -2768
+      ],
       "id": "node-webhook",
       "name": "Webhook"
     },
@@ -28,23 +33,35 @@
               "id": "filter-group",
               "leftValue": "=={{ $json.body.data.key.remoteJid }}",
               "rightValue": "@g.us",
-              "operator": { "type": "string", "operation": "notContains" }
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
             },
             {
               "id": "filter-empty",
               "leftValue": "=={{ $json.body.data.message?.conversation || $json.body.data.message?.extendedTextMessage?.text }}",
               "rightValue": "",
-              "operator": { "type": "string", "operation": "notEmpty", "singleValue": true }
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
             }
           ],
           "combinator": "and"
         },
         "looseTypeValidation": true,
-        "options": { "ignoreCase": false }
+        "options": {
+          "ignoreCase": false
+        }
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [-688, -2768],
+      "position": [
+        -688,
+        -2768
+      ],
       "id": "node-if-filtro",
       "name": "Filtro Inicial"
     },
@@ -56,7 +73,10 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [-496, -2768],
+      "position": [
+        -496,
+        -2768
+      ],
       "id": "node-lookup-negocio",
       "name": "Lookup Negocio",
       "credentials": {
@@ -80,7 +100,11 @@
               "id": "check-negocio-existe",
               "leftValue": "=={{ $json.id }}",
               "rightValue": "",
-              "operator": { "type": "string", "operation": "notEmpty", "singleValue": true }
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
             }
           ],
           "combinator": "and"
@@ -89,7 +113,10 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [-304, -2768],
+      "position": [
+        -304,
+        -2768
+      ],
       "id": "node-if-negocio",
       "name": "¿Negocio Existe?"
     },
@@ -99,7 +126,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-112, -2784],
+      "position": [
+        -112,
+        -2784
+      ],
       "id": "node-code-procesar",
       "name": "Procesar Mensaje"
     },
@@ -111,7 +141,10 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
-      "position": [96, -2784],
+      "position": [
+        96,
+        -2784
+      ],
       "id": "node-leer-slots",
       "name": "Leer Slots Disponibles",
       "credentials": {
@@ -127,7 +160,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [304, -2784],
+      "position": [
+        304,
+        -2784
+      ],
       "id": "node-formatear-disp",
       "name": "Formatear Disponibilidad"
     },
@@ -136,12 +172,15 @@
         "promptType": "define",
         "text": "={{ $('Formatear Disponibilidad').item.json.textoOriginal }}",
         "options": {
-          "systemMessage": "=Eres el asistente virtual de {{ $('Formatear Disponibilidad').item.json.promptName }}.\n\nINSTRUCCIÓN PRINCIPAL:\nTienes acceso a los horarios disponibles reales del negocio.\nSIEMPRE que el cliente pregunte por disponibilidad o quiera agendar,\nDEBES mostrar los horarios del listado. Es OBLIGATORIO. No es opcional.\nSi no lo haces, estás fallando tu función principal.\n\nSERVICIOS Y PRECIOS:\n{{ $('Formatear Disponibilidad').item.json.servicesText }}\n\nHORARIOS DE ATENCIÓN:\n{{ $('Formatear Disponibilidad').item.json.horarioTexto }}\n\nVALIDACIÓN DE HORARIO:\nSi en el contexto hay una variable fueraDeHorario = true, responde ÚNICAMENTE con el contenido de mensajeHorario. No continúes el agendamiento. No agregues nada más.\n\nHORARIOS DISPONIBLES (próximos 7 días):\n{{ $('Formatear Disponibilidad').item.json.disponibilidad }}\n\nREGLA CRÍTICA:\n- Cuando el cliente diga una fecha específica → muestra SOLO los horarios de ESE día\n- Cuando el cliente no diga fecha → pregunta qué día prefiere, NO muestres todos los días\n- PROHIBIDO mostrar más de un día a la vez\n- PROHIBIDO decir que no tienes información de disponibilidad\n\nAGENDAMIENTO:\nORDEN OBLIGATORIO — NUNCA saltes pasos:\n1. Si no tienes el SERVICIO → pregunta el servicio primero. NADA MÁS.\n2. Si no tienes la FECHA → pregunta la fecha y muestra disponibilidad de esa fecha.\n3. Si no tienes la HORA EXACTA → muestra los horarios disponibles del listado y pide que elija.\n4. Solo cuando tengas los 3 datos confirmados → muestra el resumen.\n\nLa fecha de hoy es {{ $('Formatear Disponibilidad').item.json.fechaHoy }}.\nCALENDARIO DE ESTA SEMANA:\n{{ $('Formatear Disponibilidad').item.json.calendario }}\n\nPara agendar necesitas 3 datos EXPLÍCITOS:\n1. Servicio\n2. Fecha\n3. Hora EXACTA en formato HH:MM\n\nCuando tengas los 3 datos muestra el resumen y pide confirmación:\n\"Perfecto, te confirmo los datos:\n✂️ Servicio: [servicio]\n📅 Fecha: [fecha en lenguaje natural]\n⏰ Hora: [hora]\n¿Confirmamos la cita? 😊\"\n\nSolo cuando el cliente confirme con \"sí\", \"confirmo\", \"listo\", \"dale\" o cualquier expresión afirmativa, responde ÚNICAMENTE:\nCITA_CONFIRMADA|servicio|DD/MM/YYYY|HH:MM\n\nCRÍTICO — HORA EXACTA: Expresiones como \"en la tarde\", \"en la mañana\", \"más tarde\" NO son horas válidas. Muestra el listado y pide que elija una hora exacta del mismo.\nNUNCA confirmes una hora sin saber si es AM o PM.\n\nCANCELACIONES Y CAMBIOS: Responde con calidez y dile que el equipo lo contactará pronto.\n\nREGLAS GENERALES:\n- Responde SIEMPRE en español\n- Máximo 5 líneas por respuesta\n- En conversaciones normales termina con una pregunta\n- NUNCA termines con pregunta al confirmar una cita\n- FORMATO DE FECHA: Usa lenguaje natural. CORRECTO: \"el miércoles 8 de abril\". INCORRECTO: \"08/04/2026\"\n- ASESORÍA: Si el cliente pide recomendación, respóndela brevemente antes de continuar.\n- SERVICIOS: NUNCA menciones servicios fuera de tu lista. Si no existe responde: \"Lo sentimos, ese servicio no está disponible. Nuestros servicios son: {{ $('Formatear Disponibilidad').item.json.servicesText }}. ¿Puedo ayudarte con alguno? 😊\""
+          "systemMessage": "=Eres el asistente virtual de {{ $('Formatear Disponibilidad').item.json.promptName }}.\n\nINSTRUCCIÓN PRINCIPAL:\nTienes acceso a los horarios disponibles reales del negocio.\nSIEMPRE que el cliente pregunte por disponibilidad o quiera agendar,\nDEBES mostrar los horarios del listado. Es OBLIGATORIO. No es opcional.\nSi no lo haces, estás fallando tu función principal.\n\nSERVICIOS Y PRECIOS:\n{{ $('Formatear Disponibilidad').item.json.servicesText }}\n\nHORARIOS DE ATENCIÓN:\n{{ $('Formatear Disponibilidad').item.json.horarioTexto }}\n\nVALIDACIÓN DE HORARIO:\nSi en el contexto hay una variable fueraDeHorario = true, responde ÚNICAMENTE con el contenido de mensajeHorario. No continúes el agendamiento. No agregues nada más.\n\nHORARIOS DISPONIBLES (próximos 7 días):\n{{ $('Formatear Disponibilidad').item.json.disponibilidad }}\n\nREGLA CRÍTICA:\n- Cuando el cliente diga una fecha específica → muestra SOLO los horarios de ESE día\n- Cuando el cliente no diga fecha → pregunta qué día prefiere, NO muestres todos los días\n- PROHIBIDO mostrar más de un día a la vez\n- PROHIBIDO decir que no tienes información de disponibilidad\n\nAGENDAMIENTO:\nORDEN OBLIGATORIO — NUNCA saltes pasos:\n1. Si no tienes el SERVICIO → pregunta el servicio primero. NADA MÁS.\n2. Si no tienes la FECHA → pregunta la fecha y muestra disponibilidad de esa fecha.\n3. Si no tienes la HORA EXACTA → muestra los horarios disponibles del listado y pide que elija.\n4. Solo cuando tengas los 3 datos confirmados → muestra el resumen.\n\nLa fecha de hoy es {{ $('Formatear Disponibilidad').item.json.fechaHoy }}.\nCALENDARIO DE ESTA SEMANA:\n{{ $('Formatear Disponibilidad').item.json.calendario }}\n\nPara agendar necesitas 3 datos EXPLÍCITOS:\n1. Servicio\n2. Fecha\n3. Hora EXACTA en formato HH:MM\n\nCuando tengas los 3 datos muestra el resumen y pide confirmación:\n\"Perfecto, te confirmo los datos:\n✂️ Servicio: [servicio]\n📅 Fecha: [fecha en lenguaje natural]\n⏰ Hora: [hora]\n¿Confirmamos la cita? 😊\"\n\nSolo cuando el cliente confirme con \"sí\", \"confirmo\", \"listo\", \"dale\" o cualquier expresión afirmativa, responde ÚNICAMENTE:\nCITA_CONFIRMADA|servicio|DD/MM/YYYY|HH:MM\n\nREGLA DE CONFIRMACIÓN PARCIAL: Si el cliente confirma Y en el mismo mensaje pide algo adicional o quiere modificar algo (ej: \"sí, pero cámbiame el servicio\", \"dale, aunque tengo una pregunta\"), PRIMERO emite CITA_CONFIRMADA con los datos ya acordados. El cambio o pregunta adicional lo atiendes en el siguiente mensaje.\n\nCRÍTICO — HORA EXACTA: Expresiones como \"en la tarde\", \"en la mañana\", \"más tarde\" NO son horas válidas. Muestra el listado y pide que elija una hora exacta del mismo.\nNUNCA confirmes una hora sin saber si es AM o PM.\n\nCANCELACIONES Y CAMBIOS:\nDetecta intención de cancelar o reagendar aunque el cliente use palabras variadas:\ncancelar, anular, borrar, eliminar, no puedo ir, no voy a poder, quiero cambiar,\nreagendar, cambiar fecha, cambiar hora, mover mi cita, postergar.\n\nCuando detectes esta intención responde ÚNICAMENTE (sin texto adicional):\nGESTIONAR_CITA|cancelar     ← si quiere cancelar\nGESTIONAR_CITA|reagendar    ← si quiere reagendar\n\nNUNCA respondas que \"el equipo lo contactará\". Siempre emite el código de gestión.\n\nSELECCIÓN DE CITA:\nCuando el cliente responda eligiendo una cita para cancelar o reagendar:\n- Si cancela → responde ÚNICAMENTE: CANCELAR_CITA|ID_DE_LA_CITA\n- Si reagenda → responde ÚNICAMENTE: REAGENDAR_CITA|ID_DE_LA_CITA|DD/MM/YYYY|HH:MM\n  (para reagendar, primero muestra disponibilidad del negocio y pide nueva fecha/hora)\n\nREGLAS GENERALES:\n- Responde SIEMPRE en español\n- Máximo 5 líneas por respuesta\n- En conversaciones normales termina con una pregunta\n- NUNCA termines con pregunta al confirmar una cita\n- FORMATO DE FECHA: Usa lenguaje natural. CORRECTO: \"el miércoles 8 de abril\". INCORRECTO: \"08/04/2026\"\n- ASESORÍA: Si el cliente pide recomendación, respóndela brevemente antes de continuar.\n- SERVICIOS: NUNCA menciones servicios fuera de tu lista. Si no existe responde: \"Lo sentimos, ese servicio no está disponible. Nuestros servicios son: {{ $('Formatear Disponibilidad').item.json.servicesText }}. ¿Puedo ayudarte con alguno? 😊\""
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
-      "position": [512, -2784],
+      "position": [
+        512,
+        -2784
+      ],
       "id": "node-ai-agent",
       "name": "AI Agent"
     },
@@ -152,7 +191,10 @@
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
       "typeVersion": 1,
-      "position": [496, -2544],
+      "position": [
+        496,
+        -2544
+      ],
       "id": "node-groq",
       "name": "Groq Chat Model",
       "credentials": {
@@ -170,7 +212,10 @@
       },
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
-      "position": [624, -2528],
+      "position": [
+        624,
+        -2528
+      ],
       "id": "node-memory",
       "name": "Simple Memory"
     },
@@ -180,7 +225,10 @@
       },
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [816, -2768],
+      "position": [
+        816,
+        -2768
+      ],
       "id": "node-wait",
       "name": "Wait"
     },
@@ -198,7 +246,10 @@
               "id": "check-confirmada",
               "leftValue": "=={{ $('AI Agent').item.json.output }}",
               "rightValue": "=CITA_CONFIRMADA",
-              "operator": { "type": "string", "operation": "contains" }
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
             }
           ],
           "combinator": "and"
@@ -207,7 +258,10 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [1024, -2768],
+      "position": [
+        1024,
+        -2768
+      ],
       "id": "node-if1",
       "name": "¿CITA_CONFIRMADA?"
     },
@@ -219,7 +273,10 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1200, -2896],
+      "position": [
+        1200,
+        -2896
+      ],
       "id": "node-leer-disp",
       "name": "Leer Disponibilidad",
       "credentials": {
@@ -235,7 +292,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1392, -2896],
+      "position": [
+        1392,
+        -2896
+      ],
       "id": "node-verificar-slot",
       "name": "Verificar Slot"
     },
@@ -253,7 +313,11 @@
               "id": "check-disponible",
               "leftValue": "={{ $json.disponible }}",
               "rightValue": "",
-              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
             }
           ],
           "combinator": "and"
@@ -262,7 +326,10 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [1584, -2896],
+      "position": [
+        1584,
+        -2896
+      ],
       "id": "node-disponible",
       "name": "¿Disponible?"
     },
@@ -274,7 +341,10 @@
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1776, -2896],
+      "position": [
+        1776,
+        -2896
+      ],
       "id": "node-insertar-cita",
       "name": "Insertar Cita",
       "credentials": {
@@ -290,7 +360,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1968, -2896],
+      "position": [
+        1968,
+        -2896
+      ],
       "id": "node-construir-msgs",
       "name": "Construir Mensajes"
     },
@@ -301,8 +374,14 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey",        "value": "={{ $env.EVOLUTION_API_KEY }}" },
-            { "name": "Content-Type",  "value": "application/json" }
+            {
+              "name": "apikey",
+              "value": "={{ $env.EVOLUTION_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -313,7 +392,10 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [2160, -2896],
+      "position": [
+        2160,
+        -2896
+      ],
       "id": "node-notif-dueno",
       "name": "Notificar Dueño"
     },
@@ -324,8 +406,14 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey",        "value": "={{ $env.EVOLUTION_API_KEY }}" },
-            { "name": "Content-Type",  "value": "application/json" }
+            {
+              "name": "apikey",
+              "value": "={{ $env.EVOLUTION_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -336,7 +424,10 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [2352, -2896],
+      "position": [
+        2352,
+        -2896
+      ],
       "id": "node-confirm-cliente",
       "name": "Confirmar Cliente"
     },
@@ -347,8 +438,14 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey",        "value": "={{ $env.EVOLUTION_API_KEY }}" },
-            { "name": "Content-Type",  "value": "application/json" }
+            {
+              "name": "apikey",
+              "value": "={{ $env.EVOLUTION_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -368,7 +465,10 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1600, -2608],
+      "position": [
+        1600,
+        -2608
+      ],
       "id": "node-respuesta-normal",
       "name": "Respuesta Normal"
     },
@@ -386,7 +486,10 @@
               "id": "check-confirmada-2",
               "leftValue": "={{ $('AI Agent').item.json.output }}",
               "rightValue": "CITA_CONFIRMADA",
-              "operator": { "type": "string", "operation": "contains" }
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
             }
           ],
           "combinator": "and"
@@ -395,7 +498,10 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [1216, -2608],
+      "position": [
+        1216,
+        -2608
+      ],
       "id": "node-if2",
       "name": "¿Confirmar o Responder?"
     },
@@ -406,8 +512,14 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey",        "value": "={{ $env.EVOLUTION_API_KEY }}" },
-            { "name": "Content-Type",  "value": "application/json" }
+            {
+              "name": "apikey",
+              "value": "={{ $env.EVOLUTION_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -427,79 +539,238 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1792, -2640],
+      "position": [
+        1792,
+        -2640
+      ],
       "id": "node-slot-ocupado",
       "name": "Aviso Slot Ocupado"
     }
   ],
   "connections": {
     "Webhook": {
-      "main": [[{ "node": "Filtro Inicial", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Filtro Inicial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Filtro Inicial": {
-      "main": [[{ "node": "Lookup Negocio", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Lookup Negocio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Lookup Negocio": {
-      "main": [[{ "node": "¿Negocio Existe?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "¿Negocio Existe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "¿Negocio Existe?": {
       "main": [
-        [{ "node": "Procesar Mensaje", "type": "main", "index": 0 }],
+        [
+          {
+            "node": "Procesar Mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ],
         []
       ]
     },
     "Procesar Mensaje": {
-      "main": [[{ "node": "Leer Slots Disponibles", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Leer Slots Disponibles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Leer Slots Disponibles": {
-      "main": [[{ "node": "Formatear Disponibilidad", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Formatear Disponibilidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Formatear Disponibilidad": {
-      "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Groq Chat Model": {
-      "ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]]
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Simple Memory": {
-      "ai_memory": [[{ "node": "AI Agent", "type": "ai_memory", "index": 0 }]]
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
     },
     "AI Agent": {
-      "main": [[{ "node": "Wait", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Wait": {
-      "main": [[{ "node": "¿CITA_CONFIRMADA?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "¿CITA_CONFIRMADA?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "¿CITA_CONFIRMADA?": {
       "main": [
-        [{ "node": "Leer Disponibilidad", "type": "main", "index": 0 }],
-        [{ "node": "¿Confirmar o Responder?", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Leer Disponibilidad",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "¿Confirmar o Responder?",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Leer Disponibilidad": {
-      "main": [[{ "node": "Verificar Slot", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Verificar Slot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Verificar Slot": {
-      "main": [[{ "node": "¿Disponible?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "¿Disponible?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "¿Disponible?": {
       "main": [
-        [{ "node": "Insertar Cita", "type": "main", "index": 0 }],
-        [{ "node": "Aviso Slot Ocupado", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Insertar Cita",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aviso Slot Ocupado",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Insertar Cita": {
-      "main": [[{ "node": "Construir Mensajes", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Construir Mensajes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Construir Mensajes": {
-      "main": [[{ "node": "Notificar Dueño", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Notificar Dueño",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Notificar Dueño": {
-      "main": [[{ "node": "Confirmar Cliente", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Confirmar Cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "¿Confirmar o Responder?": {
       "main": [
         [],
-        [{ "node": "Respuesta Normal", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Respuesta Normal",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },
