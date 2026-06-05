@@ -12,6 +12,7 @@ export default async function DashboardPage() {
   if (!session) redirect("/login");
 
   const businessId = session.user.businessId;
+  const multiProfessional = session.user.multiProfessional;
 
   const [appointments, stats] = await Promise.all([
     getTodayAppointments(businessId),
@@ -49,7 +50,7 @@ export default async function DashboardPage() {
       <StatsCards stats={stats} />
 
       {/* Lista de citas */}
-      <AppointmentList appointments={appointments} />
+      <AppointmentList appointments={appointments} multiProfessional={multiProfessional} />
     </div>
   );
 }

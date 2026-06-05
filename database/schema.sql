@@ -18,8 +18,9 @@ CREATE TABLE IF NOT EXISTS businesses (
   whatsapp_instance VARCHAR(100) NOT NULL,             -- 'peluqueria-beta' (Evolution API)
   owner_number     VARCHAR(20) NOT NULL,               -- '573142556322' (sin @s.whatsapp.net)
   timezone         VARCHAR(50) DEFAULT 'America/Bogota',
-  active           BOOLEAN DEFAULT TRUE,
-  created_at       TIMESTAMPTZ DEFAULT NOW()
+  active               BOOLEAN DEFAULT TRUE,
+  multi_professional   BOOLEAN DEFAULT FALSE,   -- true: mostrar columna Profesional en el dashboard
+  created_at           TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- ============================================================

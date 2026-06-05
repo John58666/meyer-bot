@@ -10,6 +10,7 @@ export default async function SemanaPage() {
   if (!session) redirect("/login");
 
   const businessId = session.user.businessId;
+  const multiProfessional = session.user.multiProfessional;
   const appointments = await getWeekAppointments(businessId);
 
   const todayISO = new Date().toLocaleDateString("en-CA", {
@@ -28,8 +29,8 @@ export default async function SemanaPage() {
         <RefreshButton />
       </div>
 
-      <SemanaClient>
-        <WeekView appointments={appointments} todayISO={todayISO} />
+      <SemanaClient multiProfessional={multiProfessional}>
+        <WeekView appointments={appointments} todayISO={todayISO} multiProfessional={multiProfessional} />
       </SemanaClient>
     </div>
   );

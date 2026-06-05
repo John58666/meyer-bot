@@ -5,6 +5,7 @@ declare module "next-auth" {
   interface User {
     businessId?: number;
     businessName?: string;
+    multiProfessional?: boolean;
     role?: string;
   }
 
@@ -15,6 +16,7 @@ declare module "next-auth" {
       name: string;
       businessId: number;
       businessName: string;
+      multiProfessional: boolean;
       role: string;
     };
   }
@@ -25,6 +27,7 @@ declare module "next-auth/jwt" {
     id: string;
     businessId: number;
     businessName: string;
+    multiProfessional: boolean;
     role: string;
   }
 }

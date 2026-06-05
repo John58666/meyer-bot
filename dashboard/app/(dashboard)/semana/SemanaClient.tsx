@@ -10,12 +10,11 @@ type ViewMode = 'lista' | 'calendario'
 const STORAGE_KEY = 'meyer-semana-view'
 
 interface SemanaClientProps {
-  /** El JSX actual de la vista lista (server-rendered).
-   *  En page.tsx: <SemanaClient>{...contenido existente...}</SemanaClient> */
   children: React.ReactNode
+  multiProfessional: boolean
 }
 
-export function SemanaClient({ children }: SemanaClientProps) {
+export function SemanaClient({ children, multiProfessional }: SemanaClientProps) {
   const [mode, setMode] = useState<ViewMode>('lista')
 
   // Leer preferencia guardada solo en el cliente (evita hydration mismatch)
@@ -58,7 +57,7 @@ export function SemanaClient({ children }: SemanaClientProps) {
         // montados en DOM pero hidden con CSS para no perder el server render.
         <div>{children}</div>
       ) : (
-        <CalendarMonthView />
+        <CalendarMonthView multiProfessional={multiProfessional} />
       )}
     </div>
   )

@@ -4,6 +4,7 @@ import { AppointmentActions } from "@/components/appointment-actions";
 
 interface AppointmentListProps {
   appointments: Appointment[];
+  multiProfessional: boolean;
 }
 
 const statusConfig = {
@@ -30,7 +31,7 @@ function formatPhone(numero: string): string {
   return clean;
 }
 
-export function AppointmentList({ appointments }: AppointmentListProps) {
+export function AppointmentList({ appointments, multiProfessional }: AppointmentListProps) {
   if (appointments.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -76,6 +77,11 @@ export function AppointmentList({ appointments }: AppointmentListProps) {
               <p className="text-sm text-[var(--text-secondary)]">
                 {apt.servicio}
               </p>
+              {multiProfessional && (
+                <p className="text-xs text-[var(--text-muted)]">
+                  Profesional: {(apt as Appointment & { profesional?: string }).profesional ?? "—"}
+                </p>
+              )}
               <div className="flex items-center justify-between mt-1">
                 <p className="text-xs text-[var(--text-muted)]">
                   {formatPhone(apt.numero)}

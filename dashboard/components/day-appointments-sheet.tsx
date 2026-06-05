@@ -50,6 +50,7 @@ interface DayAppointmentsSheetProps {
   date: Date | null
   appointments: Appointment[]
   onActionComplete: () => void
+  multiProfessional: boolean
 }
 
 // ─── Componente ───────────────────────────────────────────────────────────────
@@ -60,6 +61,7 @@ export function DayAppointmentsSheet({
   date,
   appointments,
   onActionComplete,
+  multiProfessional,
 }: DayAppointmentsSheetProps) {
   const [loadingId, setLoadingId]         = useState<number | null>(null)
   const [reagendarId, setReagendarId]     = useState<number | null>(null)
@@ -174,6 +176,11 @@ export function DayAppointmentsSheet({
                           <span className="text-sm font-medium">{appt.nombre}</span>
                         </div>
                         <p className="text-xs text-muted-foreground pl-5">{appt.servicio}</p>
+                        {multiProfessional && (
+                          <p className="text-xs text-muted-foreground pl-5">
+                            Profesional: {(appt as Appointment & { profesional?: string }).profesional ?? "—"}
+                          </p>
+                        )}
                       </div>
                       <Badge
                         variant="outline"

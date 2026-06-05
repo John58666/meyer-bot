@@ -21,7 +21,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         try {
           const result = await pool.query(
             `SELECT u.id, u.email, u.password_hash, u.name, u.business_id, u.role,
-                    b.name AS business_name
+                    b.name AS business_name, b.multi_professional
              FROM users u
              LEFT JOIN businesses b ON b.id = u.business_id
              WHERE LOWER(u.email) = LOWER($1) AND u.active = true`,
@@ -50,6 +50,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             name: user.name,
             businessId: user.business_id,
             businessName: user.business_name ?? "",
+            multiProfessional: user.multi_professional ?? false,
             role: user.role,
           };
         } catch (err) {

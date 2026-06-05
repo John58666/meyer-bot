@@ -4,6 +4,7 @@ import { Calendar } from "lucide-react";
 interface WeekViewProps {
   appointments: Record<string, WeekAppointment[]>;
   todayISO: string;
+  multiProfessional: boolean;
 }
 
 const DAYS_ES: Record<number, string> = {
@@ -50,7 +51,7 @@ function getWeekDays(todayISO: string): string[] {
   });
 }
 
-export function WeekView({ appointments, todayISO }: WeekViewProps) {
+export function WeekView({ appointments, todayISO, multiProfessional }: WeekViewProps) {
   const weekDays = getWeekDays(todayISO);
   const totalSemana = Object.values(appointments).flat().length;
 
@@ -125,6 +126,11 @@ export function WeekView({ appointments, todayISO }: WeekViewProps) {
                         <p className="text-xs text-[var(--text-secondary)]">
                           {apt.servicio}
                         </p>
+                        {multiProfessional && (
+                          <p className="text-xs text-[var(--text-muted)]">
+                            {(apt as WeekAppointment & { profesional?: string }).profesional ?? "—"}
+                          </p>
+                        )}
                         <span
                           className={`text-xs font-medium px-2 py-0.5 rounded-full self-start mt-0.5 ${status.bg} ${status.text}`}
                         >

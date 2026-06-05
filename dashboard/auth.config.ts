@@ -26,6 +26,7 @@ export const authConfig = {
         token.id = user.id ?? "";
         token.businessId = ((user as { businessId?: number }).businessId) ?? 0;
         token.businessName = ((user as { businessName?: string }).businessName) ?? "";
+        token.multiProfessional = ((user as { multiProfessional?: boolean }).multiProfessional) ?? false;
         token.role = ((user as { role?: string }).role) ?? "owner";
       }
       return token;
@@ -35,6 +36,7 @@ export const authConfig = {
         session.user.id = token.id as string;
         session.user.businessId = token.businessId as number;
         session.user.businessName = token.businessName as string;
+        session.user.multiProfessional = token.multiProfessional as boolean;
         session.user.role = token.role as string;
       }
       return session;
