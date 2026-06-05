@@ -58,7 +58,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/peluqueria-beta",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $json.whatsapp_instance }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
