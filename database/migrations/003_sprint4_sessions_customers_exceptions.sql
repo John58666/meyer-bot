@@ -1,0 +1,3 @@
+-- Migración Sprint 4: sessions, customers, schedule_exceptions
+-- Ejecutada: 2026-06-11
+-- Ver SPRINT4_MIGRATION_SQL.md para documentación completa
