@@ -1,0 +1,1137 @@
+{
+  "name": "WhatsApp Bot - Genérico",
+  "nodes": [
+    {
+      "parameters": {
+        "multipleMethods": true,
+        "httpMethod": [
+          "POST"
+        ],
+        "path": "whatsapp-bot",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1824,
+        128
+      ],
+      "id": "76fd36be-4733-42a8-8b0a-ac0dbdc035ab",
+      "name": "Webhook",
+      "webhookId": "7a1a3b0a-9f4e-48e3-bcc9-54de8d19c7b1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "filter-group",
+              "leftValue": "=={{ $json.body.data.key.remoteJid }}",
+              "rightValue": "@g.us",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            },
+            {
+              "id": "filter-empty",
+              "leftValue": "=={{ $json.body.data.message?.conversation || $json.body.data.message?.extendedTextMessage?.text }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {
+          "ignoreCase": false
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1616,
+        128
+      ],
+      "id": "97593307-61ff-40ce-a5aa-a1e3fcdd50e7",
+      "name": "Filtro Inicial"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, name, whatsapp_instance, owner_number, timezone, prompt_name, services_text, schedule_text::text AS schedule_text FROM businesses WHERE whatsapp_instance = '{{ $json.body.instance }}' AND active = true LIMIT 1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -1424,
+        128
+      ],
+      "id": "6ac18066-0a6f-458e-8f12-84b4064d452c",
+      "name": "Lookup Negocio",
+      "credentials": {
+        "postgres": {
+          "id": "AkRs7Kx5gs6JnVMz",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "check-negocio-existe",
+              "leftValue": "=={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1232,
+        128
+      ],
+      "id": "a9d721e5-60bb-44a9-bc6c-cbaa7825d2c5",
+      "name": "¿Negocio Existe?"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ── FILTRO fromMe ──────────────────────────────────────────\nif ($('Webhook').item.json.body.data.key.fromMe === true) {\n  return [];\n}\n\n// ── DATOS DEL NEGOCIO desde Lookup ─────────────────────────\nconst negocio = $('Lookup Negocio').item.json;\nconst businessId        = negocio.id;\nconst whatsappInstance  = negocio.whatsapp_instance;\nconst ownerNumber       = negocio.owner_number;\nconst promptName        = negocio.prompt_name || negocio.name;\nconst servicesText      = negocio.services_text || '';\nconst timezone          = negocio.timezone || 'America/Bogota';\n\nlet scheduleText;\ntry {\n  scheduleText = JSON.parse(negocio.schedule_text || '{}');\n} catch(e) {\n  scheduleText = {};\n}\n\n// ── RATE LIMIT ─────────────────────────────────────────────\nconst numero = $('Webhook').item.json.body.data.key.remoteJid;\nconst ahora = Date.now();\nconst ventana = 60 * 60 * 1000;\nconst limite = 50;\n\nconst historialRaw = $getWorkflowStaticData('global');\nif (!historialRaw.rateLimits) historialRaw.rateLimits = {};\nconst rateLimitKey = `${businessId}_${numero}`;\nconst historial = historialRaw.rateLimits[rateLimitKey] || [];\nconst recientes = historial.filter(t => ahora - t < ventana);\n\nif (recientes.length >= limite) return [];\n\nrecientes.push(ahora);\nhistorialRaw.rateLimits[rateLimitKey] = recientes;\n\n// ── FECHA HOY ───────────────────────────────────────────────\nconst ahoraTZ = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }));\nconst dia  = String(ahoraTZ.getDate()).padStart(2, '0');\nconst mes  = String(ahoraTZ.getMonth() + 1).padStart(2, '0');\nconst anio = ahoraTZ.getFullYear();\nconst fechaHoy = `${dia}/${mes}/${anio}`;\n\n// ── CALENDARIO PRÓXIMOS 7 DÍAS ──────────────────────────────\nconst diasSemana = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];\nconst manana = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }));\nmanana.setDate(manana.getDate() + 1);\nlet calendario = `Mañana: ${String(manana.getDate()).padStart(2,'0')}/${String(manana.getMonth()+1).padStart(2,'0')}/${manana.getFullYear()}\\n`;\nfor (let i = 1; i <= 7; i++) {\n  const d = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }));\n  d.setDate(d.getDate() + i);\n  calendario += `${diasSemana[d.getDay()]}: ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}\\n`;\n}\n\n// ── HORARIO TEXTO PARA PROMPT ───────────────────────────────\nconst toAmPm = h => h < 12 ? `${h === 0 ? 12 : h}:00 AM` : `${h === 12 ? 12 : h-12}:00 PM`;\nlet horarioTextoPrompt = '';\nfor (let d = 0; d <= 6; d++) {\n  const key = String(d);\n  if (scheduleText[key]) {\n    const { open, close } = scheduleText[key];\n    horarioTextoPrompt += `${diasSemana[d]}: ${toAmPm(open)} - ${toAmPm(close)}\\n`;\n  } else {\n    horarioTextoPrompt += `${diasSemana[d]}: Cerrado\\n`;\n  }\n}\n\n// ── EXTRAER MENSAJE ─────────────────────────────────────────\nconst mensaje = $('Webhook').item.json.body.data.message?.conversation ||\n                $('Webhook').item.json.body.data.message?.extendedTextMessage?.text || '';\n\n// ── VALIDACIÓN DE HORARIO ───────────────────────────────────\nfunction detectarFueraDeHorario(texto, schedule, tzName) {\n  const t = (texto || '').toLowerCase()\n    .replace(/[áàä]/g,'a').replace(/[éèë]/g,'e')\n    .replace(/[íìï]/g,'i').replace(/[óòö]/g,'o')\n    .replace(/[úùü]/g,'u');\n\n  const nombresDiasNorm = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];\n  let diaIndex = null;\n  for (let i = 0; i < nombresDiasNorm.length; i++) {\n    if (t.includes(nombresDiasNorm[i])) { diaIndex = i; break; }\n  }\n  if (diaIndex === null) {\n    const mf = t.match(/\\b(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})\\b/);\n    if (mf) {\n      const dFecha = new Date(parseInt(mf[3]), parseInt(mf[2])-1, parseInt(mf[1]));\n      diaIndex = dFecha.getDay();\n    }\n  }\n  if (diaIndex === null) {\n    const hoyTZ = new Date(new Date().toLocaleString('en-US', { timeZone: tzName }));\n    diaIndex = hoyTZ.getDay();\n  }\n\n  const config = schedule[String(diaIndex)];\n  if (!config) return { fueraDeHorario: true, mensajeHorario: `Lo sentimos, ese día no atendemos. ¿Te puedo agendar en otro día? 😊` };\n\n  const abreH = config.open;\n  const cierraH = config.close;\n  let hora = null;\n\n  const mHHMM = t.match(/\\b(\\d{1,2}):(\\d{2})\\s*([ap]\\.?m\\.?)?/);\n  if (mHHMM) {\n    let h = parseInt(mHHMM[1]);\n    const m = parseInt(mHHMM[2]);\n    const suf = (mHHMM[3] || '').replace(/\\./g, '');\n    if (suf.startsWith('p') && h < 12) h += 12;\n    if (suf.startsWith('a') && h === 12) h = 0;\n    hora = h + m / 60;\n  }\n  if (hora === null) { const mPm = t.match(/\\b(\\d{1,2})\\s*p\\.?m\\.?\\b/); if (mPm) { let h = parseInt(mPm[1]); if (h < 12) h += 12; hora = h; } }\n  if (hora === null) { const mAm = t.match(/\\b(\\d{1,2})\\s*a\\.?m\\.?\\b/); if (mAm) { let h = parseInt(mAm[1]); if (h === 12) h = 0; hora = h; } }\n  if (hora === null) { const mT = t.match(/(?:a las|las)\\s+(\\d{1,2})(?:\\s+de la|\\s+en la)?\\s+(?:tarde|noche)/); if (mT) { let h = parseInt(mT[1]); if (h < 12) h += 12; hora = h; } }\n  if (hora === null) { const mM = t.match(/(?:a las|las)\\s+(\\d{1,2})(?:\\s+de la)?\\s+manana/); if (mM) { let h = parseInt(mM[1]); if (h === 12) h = 0; hora = h; } }\n\n  if (hora === null) return { fueraDeHorario: false };\n  if (hora >= abreH && hora < cierraH) return { fueraDeHorario: false };\n\n  return {\n    fueraDeHorario: true,\n    mensajeHorario: `Lo sentimos, esa hora está fuera de nuestro horario. Atendemos de ${toAmPm(abreH)} a ${toAmPm(cierraH)}. ¿Te puedo agendar en otro horario? 😊`\n  };\n}\n\nconst validacion = detectarFueraDeHorario(mensaje, scheduleText, timezone);\n\nif (!mensaje.trim()) return [];\n\n// ── NÚMERO LIMPIO ───────────────────────────────────────────\nconst numeroLimpio = numero.replace('@s.whatsapp.net', '').replace(/\\D/g, '');\n\nreturn [{\n  json: {\n    textoOriginal:    mensaje,\n    numero:           numero,\n    numeroLimpio:     numeroLimpio,\n    timestamp:        $('Webhook').item.json.body.data.messageTimestamp,\n    procesado:        true,\n    fechaHoy:         fechaHoy,\n    calendario:       calendario,\n    fueraDeHorario:   validacion.fueraDeHorario,\n    mensajeHorario:   validacion.mensajeHorario || null,\n    businessId:       businessId,\n    whatsappInstance: whatsappInstance,\n    ownerNumber:      ownerNumber,\n    promptName:       promptName,\n    servicesText:     servicesText,\n    horarioTexto:     horarioTextoPrompt\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1040,
+        112
+      ],
+      "id": "4a83acbc-de24-4136-9c09-c85f48a458c1",
+      "name": "Procesar Mensaje"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH horario AS (\n  SELECT\n    key::int                        AS dia_semana,\n    (value->>'open')::int           AS hora_open,\n    (value->>'close')::int - 1      AS hora_close_last\n  FROM businesses,\n       jsonb_each(schedule_text)\n  WHERE id = {{ $json.businessId }}\n),\nslots AS (\n  SELECT\n    d.fecha_slot,\n    generate_series(\n      d.fecha_slot + (h.hora_open  || ' hours')::interval,\n      d.fecha_slot + (h.hora_close_last || ' hours')::interval,\n      '1 hour'::interval\n    )::time AS hora\n  FROM (\n    SELECT\n      (NOW() AT TIME ZONE 'America/Bogota')::date + n AS fecha_slot\n    FROM generate_series(0, 7) AS n\n  ) d\n  JOIN horario h\n    ON EXTRACT(DOW FROM d.fecha_slot) = h.dia_semana\n)\nSELECT\n  s.fecha_slot::text                 AS fecha,\n  to_char(s.hora, 'HH12:MI AM')      AS slot\nFROM slots s\nWHERE s.hora NOT IN (\n  SELECT hora\n  FROM appointments\n  WHERE business_id = {{ $json.businessId }}\n    AND fecha = s.fecha_slot\n    AND estado != 'Cancelada'\n)\nORDER BY s.fecha_slot, s.hora",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -832,
+        112
+      ],
+      "id": "3cfa98bd-03fa-417e-8558-a7a4d9694387",
+      "name": "Leer Slots Disponibles",
+      "credentials": {
+        "postgres": {
+          "id": "AkRs7Kx5gs6JnVMz",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const slots = $input.all();\nconst diasSemana = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];\nconst meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];\n\nconst porFecha = {};\nfor (const item of slots) {\n  const fecha = item.json.fecha;\n  const slot  = item.json.slot;\n  if (!porFecha[fecha]) porFecha[fecha] = [];\n  porFecha[fecha].push(slot);\n}\n\nlet disponibilidad = '';\nfor (const [fecha, horas] of Object.entries(porFecha)) {\n  const d = new Date(fecha + 'T00:00:00');\n  const nombreDia = diasSemana[d.getUTCDay()];\n  const dia = d.getUTCDate();\n  const mes = meses[d.getUTCMonth()];\n  disponibilidad += `${nombreDia} ${dia} de ${mes}: ${horas.join(', ')}\\n`;\n}\n\n// Leer sesión activa si existe\nlet sesionContexto = '';\ntry {\n  const sesion = $('Leer Sesión Activa').item.json;\n  if (sesion && sesion.id) {\n    const citas = typeof sesion.citas === 'string' ? JSON.parse(sesion.citas) : sesion.citas;\n    if (citas && citas.length > 0) {\n      sesionContexto = `\\nSESIÓN ACTIVA — El cliente está en proceso de ${sesion.accion} una cita.\\nCITAS DISPONIBLES PARA SELECCIÓN:\\n`;\n      citas.forEach((c, i) => {\n        sesionContexto += `Opción ${i+1}: ID_CITA=${c.id} | ${c.servicio} | ${c.fecha} | ${c.hora}\\n`;\n      });\n      sesionContexto += `\\nCuando el cliente diga un número (1, 2, etc.), usa el ID_CITA correspondiente para emitir el código de acción.\\n`;\n    }\n  }\n} catch(e) {\n  sesionContexto = '';\n}\n\nconst prev = $('Procesar Mensaje').item.json;\nreturn [{\n  json: {\n    ...prev,\n    disponibilidad: disponibilidad || 'Sin disponibilidad en los próximos 7 días',\n    sesionContexto\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -624,
+        112
+      ],
+      "id": "60864986-fa73-4456-b05e-9ff8be011ffd",
+      "name": "Formatear Disponibilidad"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Formatear Disponibilidad').item.json.textoOriginal }}",
+        "options": {
+          "systemMessage": "=Eres el asistente virtual de {{ $('Formatear Disponibilidad').item.json.promptName }}.\n\nINSTRUCCIÓN PRINCIPAL:\nTienes acceso a los horarios disponibles reales del negocio.\nSIEMPRE que el cliente pregunte por disponibilidad o quiera agendar,\nDEBES mostrar los horarios del listado. Es OBLIGATORIO. No es opcional.\nSi no lo haces, estás fallando tu función principal.\n\nSERVICIOS Y PRECIOS:\n{{ $('Formatear Disponibilidad').item.json.servicesText }}\n\nHORARIOS DE ATENCIÓN:\n{{ $('Formatear Disponibilidad').item.json.horarioTexto }}\n\nVALIDACIÓN DE HORARIO:\nSi en el contexto hay una variable fueraDeHorario = true, responde ÚNICAMENTE con el contenido de mensajeHorario. No continúes el agendamiento. No agregues nada más.\n\nHORARIOS DISPONIBLES (próximos 7 días):\n{{ $('Formatear Disponibilidad').item.json.disponibilidad }}\n\nREGLA CRÍTICA:\n- Cuando el cliente diga una fecha específica → muestra SOLO los horarios de ESE día\n- Cuando el cliente no diga fecha → pregunta qué día prefiere, NO muestres todos los días\n- PROHIBIDO mostrar más de un día a la vez\n- PROHIBIDO decir que no tienes información de disponibilidad\n\nAGENDAMIENTO:\nORDEN OBLIGATORIO — NUNCA saltes pasos:\n1. Si no tienes el SERVICIO → pregunta el servicio primero. NADA MÁS.\n2. Si no tienes la FECHA → pregunta la fecha y muestra disponibilidad de esa fecha.\n3. Si no tienes la HORA EXACTA → muestra los horarios disponibles del listado y pide que elija.\n4. Solo cuando tengas los 3 datos confirmados → muestra el resumen.\n\nLa fecha de hoy es {{ $('Formatear Disponibilidad').item.json.fechaHoy }}.\nCALENDARIO DE ESTA SEMANA:\n{{ $('Formatear Disponibilidad').item.json.calendario }}\n\nPara agendar necesitas 3 datos EXPLÍCITOS:\n1. Servicio\n2. Fecha\n3. Hora EXACTA en formato HH:MM\n\nCuando tengas los 3 datos muestra el resumen y pide confirmación:\n\"Perfecto, te confirmo los datos:\n✂️ Servicio: [servicio]\n📅 Fecha: [fecha en lenguaje natural]\n⏰ Hora: [hora]\n¿Confirmamos la cita? 😊\"\n\nSolo cuando el cliente confirme con \"sí\", \"confirmo\", \"listo\", \"dale\" o cualquier expresión afirmativa, responde ÚNICAMENTE:\nCITA_CONFIRMADA|servicio|DD/MM/YYYY|HH:MM\n\nCRÍTICO — HORA EXACTA: Expresiones como \"en la tarde\", \"en la mañana\", \"más tarde\" NO son horas válidas. Muestra el listado y pide que elija una hora exacta del mismo.\nNUNCA confirmes una hora sin saber si es AM o PM.\n\nCANCELACIONES Y CAMBIOS: Responde con calidez y dile que el equipo lo contactará pronto.\n\nREGLAS GENERALES:\n- Responde SIEMPRE en español\n- Máximo 5 líneas por respuesta\n- En conversaciones normales termina con una pregunta\n- NUNCA termines con pregunta al confirmar una cita\n- FORMATO DE FECHA: Usa lenguaje natural. CORRECTO: \"el miércoles 8 de abril\". INCORRECTO: \"08/04/2026\"\n- ASESORÍA: Si el cliente pide recomendación, respóndela brevemente antes de continuar.\n- SERVICIOS: NUNCA menciones servicios fuera de tu lista. Si no existe responde: \"Lo sentimos, ese servicio no está disponible. Nuestros servicios son: {{ $('Formatear Disponibilidad').item.json.servicesText }}. ¿Puedo ayudarte con alguno? 😊\""
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -416,
+        112
+      ],
+      "id": "d613baf3-c1e3-44b5-a33c-2bb3f6e6376b",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -432,
+        352
+      ],
+      "id": "7f75482f-ec53-4284-9bba-4a72adc4f9ed",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "CJAed2xdCyRjPBAD",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Procesar Mensaje').item.json.businessId }}_{{ $('Procesar Mensaje').item.json.numero }}_v3",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -304,
+        368
+      ],
+      "id": "5670c7ae-1c50-40ea-af7f-dfd3fe405089",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -128,
+        128
+      ],
+      "id": "e415cb1e-91fe-4292-bdf5-24c699d5c124",
+      "name": "Wait",
+      "webhookId": "4ee81907-f6c4-43ea-a460-7503f3834d62"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT COUNT(*) as total FROM appointments WHERE business_id = {{ $('Procesar Mensaje').item.json.businessId }} AND fecha = TO_DATE('{{ $('AI Agent').item.json.output.split('|')[2] }}', 'DD/MM/YYYY') AND hora = '{{ $('AI Agent').item.json.output.split('|')[3].split('\\n')[0].trim() }}'::time AND estado != 'Cancelada'",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        400,
+        -288
+      ],
+      "id": "8605d7d2-82ab-4128-b13c-75f8403efd9e",
+      "name": "Leer Disponibilidad",
+      "credentials": {
+        "postgres": {
+          "id": "AkRs7Kx5gs6JnVMz",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const total  = $input.first().json.total;\nconst numero = ($('Procesar Mensaje').item.json.numero || '').replace(/@s\\.whatsapp\\.net/g, '').replace(/\\D/g, '');\nconst partes = $('AI Agent').item.json.output.split('|');\nreturn [{ json: {\n  disponible:        total == 0,\n  fechaDeseada:      partes[2]?.trim(),\n  horaDeseada:       partes[3]?.split('\\n')[0].trim(),\n  numero,\n  businessId:        $('Procesar Mensaje').item.json.businessId,\n  whatsappInstance:  $('Procesar Mensaje').item.json.whatsappInstance,\n  ownerNumber:       $('Procesar Mensaje').item.json.ownerNumber\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        -288
+      ],
+      "id": "7cee4cc5-e8da-423a-a07d-7f748d7d907d",
+      "name": "Verificar Slot"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "check-disponible",
+              "leftValue": "={{ $json.disponible }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        768,
+        -288
+      ],
+      "id": "62926b9b-4108-41bb-9024-fdc805f7cd66",
+      "name": "¿Disponible?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO appointments (business_id, fecha, hora, nombre, servicio, numero, estado) VALUES ({{ $('Verificar Slot').item.json.businessId }}, TO_DATE('{{ $('AI Agent').item.json.output.split('|')[2] }}', 'DD/MM/YYYY'), '{{ $('AI Agent').item.json.output.split('|')[3].split('\\n')[0].trim() }}'::time, '{{ $('Webhook').item.json.body.data.pushName }}', '{{ $('AI Agent').item.json.output.split('|')[1] }}', '{{ $('Procesar Mensaje').item.json.numero.replace('@s.whatsapp.net','') }}', 'Pendiente') RETURNING id, fecha::text, hora::text, nombre, servicio, numero, estado",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        960,
+        -288
+      ],
+      "id": "36366b43-e0d2-4793-a2d5-36a6e99be7a0",
+      "name": "Insertar Cita",
+      "credentials": {
+        "postgres": {
+          "id": "AkRs7Kx5gs6JnVMz",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const output  = $('AI Agent').item.json.output.split('|');\nconst servicio = output[1] || '';\nconst fecha    = output[2] || '';\nconst hora     = (output[3] || '').split('\\n')[0].trim();\nconst nombre   = $('Webhook').item.json.body.data.pushName || 'Cliente';\nconst numero   = ($('Procesar Mensaje').item.json.numero || '').replace('@s.whatsapp.net', '');\n\n// Datos del negocio — ya no viene de env vars\nconst ownerNumber      = $('Verificar Slot').item.json.ownerNumber;\nconst whatsappInstance = $('Verificar Slot').item.json.whatsappInstance;\nconst promptName       = $('Procesar Mensaje').item.json.promptName;\n\nconst textoDueno  = `🔔 *Nueva cita agendada*\\n\\n👤 *Cliente:* ${nombre}\\n📞 *Número:* ${numero}\\n✂️ *Servicio:* ${servicio}\\n📅 *Fecha:* ${fecha}\\n⏰ *Hora:* ${hora}\\n\\n_Estado: Pendiente_ ✅`;\nconst textoCliente = `✅ ¡Tu cita quedó confirmada!\\n\\n✂️ *Servicio:* ${servicio}\\n📅 *Fecha:* ${fecha}\\n⏰ *Hora:* ${hora}\\n\\n¡Te esperamos en ${promptName}! 💇‍♂️\\nCualquier cambio, escríbenos aquí mismo 😊`;\n\nreturn [{\n  json: {\n    ownerNumber,\n    whatsappInstance,\n    numeroCliente:  numero,\n    nombreCliente:  nombre,\n    servicio,\n    fecha,\n    hora,\n    textoDueno,\n    textoCliente,\n    bodyDueno:   JSON.stringify({ number: ownerNumber, text: textoDueno }),\n    bodyCliente: JSON.stringify({ number: numero,      text: textoCliente })\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1152,
+        -288
+      ],
+      "id": "46d15987-0712-4838-877e-e6c8bcb5ac3e",
+      "name": "Construir Mensajes"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $json.whatsappInstance }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.EVOLUTION_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.bodyDueno }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1344,
+        -288
+      ],
+      "id": "9535e15c-7bb8-47d3-a361-c0b999cf412e",
+      "name": "Notificar Dueño"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $('Construir Mensajes').item.json.whatsappInstance }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.EVOLUTION_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $('Construir Mensajes').item.json.bodyCliente }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1536,
+        -288
+      ],
+      "id": "23582b58-1d59-4d7d-90f1-e11e0db5d370",
+      "name": "Confirmar Cliente"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $('Procesar Mensaje').item.json.whatsappInstance }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.EVOLUTION_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "=={{ $('Webhook').item.json.body.data.key.remoteJid.split('@')[0] }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $('AI Agent').item.json.output.includes('CITA_CONFIRMADA') ? '✅ ¡Cita registrada! En breve recibirás la confirmación.' : $('AI Agent').item.json.output }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        560,
+        704
+      ],
+      "id": "f5220d47-a5b5-421e-8156-2fce49ed5bdb",
+      "name": "Respuesta Normal"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "check-confirmada-2",
+              "leftValue": "={{ $('AI Agent').item.json.output }}",
+              "rightValue": "CITA_CONFIRMADA",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        256,
+        672
+      ],
+      "id": "425764e9-634c-4059-97cb-6eee3649dbed",
+      "name": "¿Confirmar o Responder?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $('Verificar Slot').item.json.whatsappInstance }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.EVOLUTION_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.numero }}"
+            },
+            {
+              "name": "text",
+              "value": "Lo sentimos, ese horario ya está reservado. ¿Te gustaría elegir otra hora? 😊"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        976,
+        -96
+      ],
+      "id": "b12272c2-94b6-4bb9-82f0-76e29f32e1c7",
+      "name": "Aviso Slot Ocupado"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('AI Agent').item.json.output }}",
+                    "rightValue": "CITA_CONFIRMADA",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "e78c3dde-1595-4e7e-9d16-c1d897063f65"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Confirmar Cita"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "b6f6729a-2af9-4f4d-b953-348487df929d",
+                    "leftValue": "={{ $('AI Agent').item.json.output\n}}\n",
+                    "rightValue": "GESTIONAR_CITA",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Gestionar Cita"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "969ce437-2dfa-4304-ad84-4baba6387b4e",
+                    "leftValue": "={{ $('AI Agent').item.json.output }}",
+                    "rightValue": "CANCELAR_CITA",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Cancelar Cita"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "ebe2b4e7-37cf-4eb7-a3b4-f747cff22fb9",
+                    "leftValue": "={{ $('AI Agent').item.json.output }}",
+                    "rightValue": "REAGENDAR_CITA",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Reagendar Cita"
+            }
+          ]
+        },
+        "looseTypeValidation": "={{ false }}",
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        16,
+        80
+      ],
+      "id": "6123bb45-8bcd-4ae2-be15-8c335b2e5ded",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, fecha::text, hora::text, servicio, estado\nFROM appointments\nWHERE numero = '{{ $('Procesar Mensaje').item.json.numero.replace('@s.whatsapp.net','') }}'\n  AND business_id = {{ $('Procesar Mensaje').item.json.businessId }}\n  AND fecha >= (NOW() AT TIME ZONE 'America/Bogota')::date\n  AND estado IN ('Pendiente', 'Confirmada')\nORDER BY fecha ASC, hora ASC",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        400,
+        96
+      ],
+      "id": "3ece4452-575d-4b52-897f-1a6e36488160",
+      "name": "Leer Citas Cliente",
+      "credentials": {
+        "postgres": {
+          "id": "AkRs7Kx5gs6JnVMz",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const citas = $input.all();\nconst accion = $('AI Agent').item.json.output.split('|')[1]?.trim();\nconst numero = $('Procesar Mensaje').item.json.numeroLimpio;\nconst whatsappInstance = $('Procesar Mensaje').item.json.whatsappInstance;\nconst businessId = $('Procesar Mensaje').item.json.businessId;\n\nif (citas.length === 0) {\n  return [{ json: {\n    numero,\n    whatsappInstance,\n    businessId,\n    accion,\n    tieneCitas: false,\n    mensaje: 'No encontramos citas próximas agendadas a tu número. ¿Puedo ayudarte con algo más? 😊',\n    citasIds: []\n  }}];\n}\n\nconst diasSemana = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];\nconst meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];\n\nlet listaCitas = '';\nconst citasParaSession = [];\n\ncitas.forEach((item, i) => {\n  const c = item.json;\n  const d = new Date(c.fecha + 'T00:00:00');\n  const fechaNatural = `${diasSemana[d.getUTCDay()]} ${d.getUTCDate()} de ${meses[d.getUTCMonth()]}`;\n  const hora = c.hora.substring(0,5);\n  listaCitas += `${i+1}. ${c.servicio} — ${fechaNatural} a las ${hora}\\n`;\n  citasParaSession.push({ id: c.id, servicio: c.servicio, fecha: c.fecha, hora: hora });\n});\n\nconst verbo = accion === 'cancelar' ? 'cancelar' : 'reagendar';\nconst mensaje = citas.length === 1\n  ? `Encontré esta cita:\\n\\n${listaCitas}\\n¿Confirmas que deseas ${verbo}? Responde *sí* para confirmar. 😊`\n  : `Encontré estas citas próximas:\\n\\n${listaCitas}\\n¿Cuál deseas ${verbo}? Responde con el número (1, 2, etc.) 😊`;\n\nreturn [{ json: {\n  numero,\n  whatsappInstance,\n  businessId,\n  accion,\n  tieneCitas: true,\n  mensaje,\n  citasIds: citasParaSession,\n  citasJSON: JSON.stringify(citasParaSession)\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        96
+      ],
+      "id": "887bf77b-5689-4d3f-af0b-83b150750fe1",
+      "name": "Formatear Citas"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $json.whatsappInstance }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.EVOLUTION_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.numero }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.mensaje }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        816,
+        96
+      ],
+      "id": "838dd256-1afd-4829-91f0-1559744c4e21",
+      "name": "Enviar Lista de citas"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE appointments\nSET estado = 'Cancelada', updated_at = NOW()\nWHERE id = {{ $('AI Agent').item.json.output.split('|')[1] }}\n  AND business_id = {{ $('Procesar Mensaje').item.json.businessId }}\n  AND estado IN ('Pendiente', 'Confirmada')\nRETURNING id, fecha::text, hora::text, servicio, estado",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        384,
+        304
+      ],
+      "id": "9a1cc67e-41ac-4e94-84a9-bed063f1a34f",
+      "name": "Ejecutar Cancelación",
+      "credentials": {
+        "postgres": {
+          "id": "AkRs7Kx5gs6JnVMz",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE appointments\nSET fecha = TO_DATE('{{ $('AI Agent').item.json.output.split('|')[2] }}', 'DD/MM/YYYY'),\n    hora  = '{{ $('AI Agent').item.json.output.split('|')[3].split('\\n')[0].trim() }}'::time,\n    estado = 'Pendiente',\n    updated_at = NOW()\nWHERE id = {{ $('AI Agent').item.json.output.split('|')[1] }}\n  AND business_id = {{ $('Procesar Mensaje').item.json.businessId }}\n  AND estado IN ('Pendiente', 'Confirmada')\nRETURNING id, fecha::text, hora::text, servicio, estado",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        384,
+        496
+      ],
+      "id": "28b12741-c6dc-46c9-86ae-d7614a759398",
+      "name": "Ejecutar Reagendamiento",
+      "credentials": {
+        "postgres": {
+          "id": "AkRs7Kx5gs6JnVMz",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $('Procesar Mensaje').item.json.whatsappInstance }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.EVOLUTION_API_KEY }}"
+            },
+            {
+              "name": "Content-Type ",
+              "value": "=application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $('Procesar Mensaje').item.json.numero.replace('@s.whatsapp.net','').replace(/\\D/g,'') }}"
+            },
+            {
+              "name": "text",
+              "value": "=✅ ¡Listo! Tu cita de {{ $json.servicio }} quedó reagendada para el {{ $json.fecha }} a las {{ $json.hora.substring(0,5) }}. ¡Te esperamos! 😊"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        592,
+        496
+      ],
+      "id": "8eff6d4d-6615-4071-a35c-12161c632f91",
+      "name": "Confirmar Reagendamiento"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $('Procesar Mensaje').item.json.whatsappInstance }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.EVOLUTION_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "{{ $('Procesar Mensaje').item.json.numero.replace('@s.whatsapp.net','').replace(/\\D/g,'') }}"
+            },
+            {
+              "name": "text",
+              "value": "=✅ Tu cita de {{ $json.servicio }} del {{ $json.fecha }} a las {{ $json.hora.substring(0,5) }} ha sido cancelada. ¡Cuando quieras volver a agendar, aquí estamos! 😊"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        592,
+        304
+      ],
+      "id": "cac7f67f-27fe-430d-8a8c-74382fee3de8",
+      "name": "Confirmar Cancelación"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Filtro Inicial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtro Inicial": {
+      "main": [
+        [
+          {
+            "node": "Lookup Negocio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Negocio": {
+      "main": [
+        [
+          {
+            "node": "¿Negocio Existe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Negocio Existe?": {
+      "main": [
+        [
+          {
+            "node": "Procesar Mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Procesar Mensaje": {
+      "main": [
+        [
+          {
+            "node": "Leer Slots Disponibles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Slots Disponibles": {
+      "main": [
+        [
+          {
+            "node": "Formatear Disponibilidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Disponibilidad": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Disponibilidad": {
+      "main": [
+        [
+          {
+            "node": "Verificar Slot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Slot": {
+      "main": [
+        [
+          {
+            "node": "¿Disponible?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Disponible?": {
+      "main": [
+        [
+          {
+            "node": "Insertar Cita",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aviso Slot Ocupado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insertar Cita": {
+      "main": [
+        [
+          {
+            "node": "Construir Mensajes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construir Mensajes": {
+      "main": [
+        [
+          {
+            "node": "Notificar Dueño",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notificar Dueño": {
+      "main": [
+        [
+          {
+            "node": "Confirmar Cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Confirmar o Responder?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Respuesta Normal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Leer Disponibilidad",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Leer Citas Cliente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ejecutar Cancelación",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ejecutar Reagendamiento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "¿Confirmar o Responder?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Citas Cliente": {
+      "main": [
+        [
+          {
+            "node": "Formatear Citas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Citas": {
+      "main": [
+        [
+          {
+            "node": "Enviar Lista de citas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ejecutar Cancelación": {
+      "main": [
+        [
+          {
+            "node": "Confirmar Cancelación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ejecutar Reagendamiento": {
+      "main": [
+        [
+          {
+            "node": "Confirmar Reagendamiento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4c098274-9161-4532-ad22-4188ddae5a76",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "78865b14428b3461ac0504416eb2ba5903a5482f3190c606719f27159eed62fe"
+  },
+  "id": "tzFJ9m2pJX1AheI0",
+  "tags": []
+}
