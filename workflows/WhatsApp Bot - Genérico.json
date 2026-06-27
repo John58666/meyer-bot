@@ -13,10 +13,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -1824,
-        128
+        -432,
+        1328
       ],
-      "id": "76fd36be-4733-42a8-8b0a-ac0dbdc035ab",
+      "id": "9cc2425a-cf50-46da-ac81-458512c10d99",
       "name": "Webhook",
       "webhookId": "7a1a3b0a-9f4e-48e3-bcc9-54de8d19c7b1"
     },
@@ -60,10 +60,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -1616,
-        128
+        -224,
+        1328
       ],
-      "id": "97593307-61ff-40ce-a5aa-a1e3fcdd50e7",
+      "id": "6a484104-480f-4da3-ab14-ee4d1adda917",
       "name": "Filtro Inicial"
     },
     {
@@ -75,10 +75,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        -1424,
-        128
+        -32,
+        1328
       ],
-      "id": "6ac18066-0a6f-458e-8f12-84b4064d452c",
+      "id": "cfd0a5c1-2b7a-4569-8c93-7d39263a6458",
       "name": "Lookup Negocio",
       "credentials": {
         "postgres": {
@@ -115,10 +115,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -1232,
-        128
+        160,
+        1328
       ],
-      "id": "a9d721e5-60bb-44a9-bc6c-cbaa7825d2c5",
+      "id": "71029b2e-7f90-42a3-abe5-2665bb7cd8a9",
       "name": "¿Negocio Existe?"
     },
     {
@@ -128,25 +128,25 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1040,
-        112
+        352,
+        1312
       ],
-      "id": "4a83acbc-de24-4136-9c09-c85f48a458c1",
+      "id": "f1d4af36-f029-4b21-94c3-5cf516b8bc75",
       "name": "Procesar Mensaje"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "WITH horario AS (\n  SELECT\n    key::int                        AS dia_semana,\n    (value->>'open')::int           AS hora_open,\n    (value->>'close')::int - 1      AS hora_close_last\n  FROM businesses,\n       jsonb_each(schedule_text)\n  WHERE id = {{ $json.businessId }}\n),\nslots AS (\n  SELECT\n    d.fecha_slot,\n    generate_series(\n      d.fecha_slot + (h.hora_open  || ' hours')::interval,\n      d.fecha_slot + (h.hora_close_last || ' hours')::interval,\n      '1 hour'::interval\n    )::time AS hora\n  FROM (\n    SELECT\n      (NOW() AT TIME ZONE 'America/Bogota')::date + n AS fecha_slot\n    FROM generate_series(0, 7) AS n\n  ) d\n  JOIN horario h\n    ON EXTRACT(DOW FROM d.fecha_slot) = h.dia_semana\n)\nSELECT\n  s.fecha_slot::text                 AS fecha,\n  to_char(s.hora, 'HH12:MI AM')      AS slot\nFROM slots s\nWHERE s.hora NOT IN (\n  SELECT hora\n  FROM appointments\n  WHERE business_id = {{ $json.businessId }}\n    AND fecha = s.fecha_slot\n    AND estado != 'Cancelada'\n)\nORDER BY s.fecha_slot, s.hora",
+        "query": "WITH horario AS (\n  SELECT\n    key::int                        AS dia_semana,\n    (value->>'open')::int           AS hora_open,\n    (value->>'close')::int - 1      AS hora_close_last\n  FROM businesses,\n       jsonb_each(schedule_text)\n  WHERE id = {{ $('Procesar Mensaje').item.json.businessId }}\n),\nslots AS (\n  SELECT\n    d.fecha_slot,\n    generate_series(\n      d.fecha_slot + (h.hora_open  || ' hours')::interval,\n      d.fecha_slot + (h.hora_close_last || ' hours')::interval,\n      '1 hour'::interval\n    )::time AS hora\n  FROM (\n    SELECT\n      (NOW() AT TIME ZONE 'America/Bogota')::date + n AS fecha_slot\n    FROM generate_series(0, 7) AS n\n  ) d\n  JOIN horario h\n    ON EXTRACT(DOW FROM d.fecha_slot) = h.dia_semana\n)\nSELECT\n  s.fecha_slot::text                 AS fecha,\n  to_char(s.hora, 'HH12:MI AM')      AS slot\nFROM slots s\nWHERE s.hora NOT IN (\n  SELECT hora\n  FROM appointments\n  WHERE business_id = {{ $('Procesar Mensaje').item.json.businessId }}\n    AND fecha = s.fecha_slot\n    AND estado != 'Cancelada'\n)\nORDER BY s.fecha_slot, s.hora",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -832,
-        112
+        768,
+        1312
       ],
-      "id": "3cfa98bd-03fa-417e-8558-a7a4d9694387",
+      "id": "968e4cbf-4cb2-456c-9f7a-16e3084ec438",
       "name": "Leer Slots Disponibles",
       "credentials": {
         "postgres": {
@@ -157,68 +157,16 @@
     },
     {
       "parameters": {
-        "jsCode": "const slots = $input.all();\nconst diasSemana = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];\nconst meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];\n\nconst porFecha = {};\nfor (const item of slots) {\n  const fecha = item.json.fecha;\n  const slot  = item.json.slot;\n  if (!porFecha[fecha]) porFecha[fecha] = [];\n  porFecha[fecha].push(slot);\n}\n\nlet disponibilidad = '';\nfor (const [fecha, horas] of Object.entries(porFecha)) {\n  const d = new Date(fecha + 'T00:00:00');\n  const nombreDia = diasSemana[d.getUTCDay()];\n  const dia = d.getUTCDate();\n  const mes = meses[d.getUTCMonth()];\n  disponibilidad += `${nombreDia} ${dia} de ${mes}: ${horas.join(', ')}\\n`;\n}\n\n// Leer sesión activa si existe\nlet sesionContexto = '';\ntry {\n  const sesion = $('Leer Sesión Activa').item.json;\n  if (sesion && sesion.id) {\n    const citas = typeof sesion.citas === 'string' ? JSON.parse(sesion.citas) : sesion.citas;\n    if (citas && citas.length > 0) {\n      sesionContexto = `\\nSESIÓN ACTIVA — El cliente está en proceso de ${sesion.accion} una cita.\\nCITAS DISPONIBLES PARA SELECCIÓN:\\n`;\n      citas.forEach((c, i) => {\n        sesionContexto += `Opción ${i+1}: ID_CITA=${c.id} | ${c.servicio} | ${c.fecha} | ${c.hora}\\n`;\n      });\n      sesionContexto += `\\nCuando el cliente diga un número (1, 2, etc.), usa el ID_CITA correspondiente para emitir el código de acción.\\n`;\n    }\n  }\n} catch(e) {\n  sesionContexto = '';\n}\n\nconst prev = $('Procesar Mensaje').item.json;\nreturn [{\n  json: {\n    ...prev,\n    disponibilidad: disponibilidad || 'Sin disponibilidad en los próximos 7 días',\n    sesionContexto\n  }\n}];"
+        "jsCode": "const slots = $input.all();\nconst diasSemana = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];\nconst meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];\n\nconst porFecha = {};\nfor (const item of slots) {\n  const fecha = item.json.fecha;\n  const slot  = item.json.slot;\n  if (!porFecha[fecha]) porFecha[fecha] = [];\n  porFecha[fecha].push(slot);\n}\n\nlet disponibilidad = '';\nfor (const [fecha, horas] of Object.entries(porFecha)) {\n  const d = new Date(fecha + 'T00:00:00');\n  const nombreDia = diasSemana[d.getUTCDay()];\n  const dia = d.getUTCDate();\n  const mes = meses[d.getUTCMonth()];\n  disponibilidad += `${nombreDia} ${dia} de ${mes}: ${horas.join(', ')}\\n`;\n}\n\nlet sesionContexto = '';\nlet debugSesion = '';\ntry {\n  const sesion = $('Leer Sesión activa').first().json;\n  debugSesion = JSON.stringify(sesion);\n  if (sesion && sesion.id) {\n    const citas = Array.isArray(sesion.citas) ? sesion.citas : JSON.parse(sesion.citas);\n    if (citas && citas.length > 0) {\n      sesionContexto = `\\nSESIÓN ACTIVA — El cliente está en proceso de ${sesion.accion} una cita.\\nCITAS DISPONIBLES PARA SELECCIÓN:\\n`;\n      citas.forEach((c, i) => {\n        sesionContexto += `Opción ${i+1}: ID_CITA=${c.id} | ${c.servicio} | ${c.fecha} | ${c.hora}\\n`;\n      });\n      sesionContexto += `\\nCuando el cliente diga un número (1, 2, etc.), usa el ID_CITA correspondiente para emitir el código de acción.\\n`;\n    }\n  }\n} catch(e) {\n  debugSesion = 'error: ' + e.message;\n}\n\nconst prev = $('Procesar Mensaje').item.json;\nreturn [{\n  json: {\n    ...prev,\n    disponibilidad: disponibilidad || 'Sin disponibilidad en los próximos 7 días',\n    sesionContexto,\n    debugSesion\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -624,
-        112
+        976,
+        1312
       ],
-      "id": "60864986-fa73-4456-b05e-9ff8be011ffd",
+      "id": "c947680c-868e-4a75-a29d-3b33ec1e6111",
       "name": "Formatear Disponibilidad"
-    },
-    {
-      "parameters": {
-        "promptType": "define",
-        "text": "={{ $('Formatear Disponibilidad').item.json.textoOriginal }}",
-        "options": {
-          "systemMessage": "=Eres el asistente virtual de {{ $('Formatear Disponibilidad').item.json.promptName }}.\n\nINSTRUCCIÓN PRINCIPAL:\nTienes acceso a los horarios disponibles reales del negocio.\nSIEMPRE que el cliente pregunte por disponibilidad o quiera agendar,\nDEBES mostrar los horarios del listado. Es OBLIGATORIO. No es opcional.\nSi no lo haces, estás fallando tu función principal.\n\nSERVICIOS Y PRECIOS:\n{{ $('Formatear Disponibilidad').item.json.servicesText }}\n\nHORARIOS DE ATENCIÓN:\n{{ $('Formatear Disponibilidad').item.json.horarioTexto }}\n\nVALIDACIÓN DE HORARIO:\nSi en el contexto hay una variable fueraDeHorario = true, responde ÚNICAMENTE con el contenido de mensajeHorario. No continúes el agendamiento. No agregues nada más.\n\nHORARIOS DISPONIBLES (próximos 7 días):\n{{ $('Formatear Disponibilidad').item.json.disponibilidad }}\n\nREGLA CRÍTICA:\n- Cuando el cliente diga una fecha específica → muestra SOLO los horarios de ESE día\n- Cuando el cliente no diga fecha → pregunta qué día prefiere, NO muestres todos los días\n- PROHIBIDO mostrar más de un día a la vez\n- PROHIBIDO decir que no tienes información de disponibilidad\n\nAGENDAMIENTO:\nORDEN OBLIGATORIO — NUNCA saltes pasos:\n1. Si no tienes el SERVICIO → pregunta el servicio primero. NADA MÁS.\n2. Si no tienes la FECHA → pregunta la fecha y muestra disponibilidad de esa fecha.\n3. Si no tienes la HORA EXACTA → muestra los horarios disponibles del listado y pide que elija.\n4. Solo cuando tengas los 3 datos confirmados → muestra el resumen.\n\nLa fecha de hoy es {{ $('Formatear Disponibilidad').item.json.fechaHoy }}.\nCALENDARIO DE ESTA SEMANA:\n{{ $('Formatear Disponibilidad').item.json.calendario }}\n\nPara agendar necesitas 3 datos EXPLÍCITOS:\n1. Servicio\n2. Fecha\n3. Hora EXACTA en formato HH:MM\n\nCuando tengas los 3 datos muestra el resumen y pide confirmación:\n\"Perfecto, te confirmo los datos:\n✂️ Servicio: [servicio]\n📅 Fecha: [fecha en lenguaje natural]\n⏰ Hora: [hora]\n¿Confirmamos la cita? 😊\"\n\nSolo cuando el cliente confirme con \"sí\", \"confirmo\", \"listo\", \"dale\" o cualquier expresión afirmativa, responde ÚNICAMENTE:\nCITA_CONFIRMADA|servicio|DD/MM/YYYY|HH:MM\n\nCRÍTICO — HORA EXACTA: Expresiones como \"en la tarde\", \"en la mañana\", \"más tarde\" NO son horas válidas. Muestra el listado y pide que elija una hora exacta del mismo.\nNUNCA confirmes una hora sin saber si es AM o PM.\n\nCANCELACIONES Y CAMBIOS: Responde con calidez y dile que el equipo lo contactará pronto.\n\nREGLAS GENERALES:\n- Responde SIEMPRE en español\n- Máximo 5 líneas por respuesta\n- En conversaciones normales termina con una pregunta\n- NUNCA termines con pregunta al confirmar una cita\n- FORMATO DE FECHA: Usa lenguaje natural. CORRECTO: \"el miércoles 8 de abril\". INCORRECTO: \"08/04/2026\"\n- ASESORÍA: Si el cliente pide recomendación, respóndela brevemente antes de continuar.\n- SERVICIOS: NUNCA menciones servicios fuera de tu lista. Si no existe responde: \"Lo sentimos, ese servicio no está disponible. Nuestros servicios son: {{ $('Formatear Disponibilidad').item.json.servicesText }}. ¿Puedo ayudarte con alguno? 😊\""
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.agent",
-      "typeVersion": 3.1,
-      "position": [
-        -416,
-        112
-      ],
-      "id": "d613baf3-c1e3-44b5-a33c-2bb3f6e6376b",
-      "name": "AI Agent"
-    },
-    {
-      "parameters": {
-        "model": "llama-3.3-70b-versatile",
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
-      "typeVersion": 1,
-      "position": [
-        -432,
-        352
-      ],
-      "id": "7f75482f-ec53-4284-9bba-4a72adc4f9ed",
-      "name": "Groq Chat Model",
-      "credentials": {
-        "groqApi": {
-          "id": "CJAed2xdCyRjPBAD",
-          "name": "Groq account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "sessionIdType": "customKey",
-        "sessionKey": "={{ $('Procesar Mensaje').item.json.businessId }}_{{ $('Procesar Mensaje').item.json.numero }}_v3",
-        "contextWindowLength": 10
-      },
-      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
-      "typeVersion": 1.3,
-      "position": [
-        -304,
-        368
-      ],
-      "id": "5670c7ae-1c50-40ea-af7f-dfd3fe405089",
-      "name": "Simple Memory"
     },
     {
       "parameters": {
@@ -227,10 +175,10 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        -128,
-        128
+        1760,
+        1344
       ],
-      "id": "e415cb1e-91fe-4292-bdf5-24c699d5c124",
+      "id": "a9ace09f-63d9-4468-8ea7-07cf3f95230b",
       "name": "Wait",
       "webhookId": "4ee81907-f6c4-43ea-a460-7503f3834d62"
     },
@@ -243,10 +191,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        400,
-        -288
+        2288,
+        928
       ],
-      "id": "8605d7d2-82ab-4128-b13c-75f8403efd9e",
+      "id": "b0e8f8c5-30ae-432e-a8c1-dd24e3feec86",
       "name": "Leer Disponibilidad",
       "credentials": {
         "postgres": {
@@ -262,10 +210,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        576,
-        -288
+        2464,
+        928
       ],
-      "id": "7cee4cc5-e8da-423a-a07d-7f748d7d907d",
+      "id": "2c41d9a4-f69f-4458-a16c-7e99cc883394",
       "name": "Verificar Slot"
     },
     {
@@ -296,10 +244,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        768,
-        -288
+        2656,
+        928
       ],
-      "id": "62926b9b-4108-41bb-9024-fdc805f7cd66",
+      "id": "61bfff64-c7cb-4393-af93-1699f9a0b117",
       "name": "¿Disponible?"
     },
     {
@@ -311,10 +259,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        960,
-        -288
+        2848,
+        928
       ],
-      "id": "36366b43-e0d2-4793-a2d5-36a6e99be7a0",
+      "id": "49f71293-055f-42d1-b377-0607a9d1abcb",
       "name": "Insertar Cita",
       "credentials": {
         "postgres": {
@@ -325,15 +273,15 @@
     },
     {
       "parameters": {
-        "jsCode": "const output  = $('AI Agent').item.json.output.split('|');\nconst servicio = output[1] || '';\nconst fecha    = output[2] || '';\nconst hora     = (output[3] || '').split('\\n')[0].trim();\nconst nombre   = $('Webhook').item.json.body.data.pushName || 'Cliente';\nconst numero   = ($('Procesar Mensaje').item.json.numero || '').replace('@s.whatsapp.net', '');\n\n// Datos del negocio — ya no viene de env vars\nconst ownerNumber      = $('Verificar Slot').item.json.ownerNumber;\nconst whatsappInstance = $('Verificar Slot').item.json.whatsappInstance;\nconst promptName       = $('Procesar Mensaje').item.json.promptName;\n\nconst textoDueno  = `🔔 *Nueva cita agendada*\\n\\n👤 *Cliente:* ${nombre}\\n📞 *Número:* ${numero}\\n✂️ *Servicio:* ${servicio}\\n📅 *Fecha:* ${fecha}\\n⏰ *Hora:* ${hora}\\n\\n_Estado: Pendiente_ ✅`;\nconst textoCliente = `✅ ¡Tu cita quedó confirmada!\\n\\n✂️ *Servicio:* ${servicio}\\n📅 *Fecha:* ${fecha}\\n⏰ *Hora:* ${hora}\\n\\n¡Te esperamos en ${promptName}! 💇‍♂️\\nCualquier cambio, escríbenos aquí mismo 😊`;\n\nreturn [{\n  json: {\n    ownerNumber,\n    whatsappInstance,\n    numeroCliente:  numero,\n    nombreCliente:  nombre,\n    servicio,\n    fecha,\n    hora,\n    textoDueno,\n    textoCliente,\n    bodyDueno:   JSON.stringify({ number: ownerNumber, text: textoDueno }),\n    bodyCliente: JSON.stringify({ number: numero,      text: textoCliente })\n  }\n}];"
+        "jsCode": "const output = $('AI Agent').item.json.output.split('|');\nconst servicio = output[1] || '';\nconst fecha = output[2] || '';\nconst hora = (output[3] || '').split('\\n')[0].trim();\nconst nombre = $('Webhook').item.json.body.data.pushName || 'Cliente';\nconst numero = ($('Procesar Mensaje').item.json.numero || '').replace('@s.whatsapp.net', '');\n\nconst ownerNumber = $('Verificar Slot').item.json.ownerNumber;\nconst whatsappInstance = $('Verificar Slot').item.json.whatsappInstance;\nconst promptName = $('Procesar Mensaje').item.json.promptName;\n\n// Fecha DD/MM/YYYY → lenguaje natural\nconst diasSemana = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];\nconst meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];\nlet fechaNatural = fecha;\ntry {\n  const [dd, mm, yyyy] = fecha.split('/');\n  const d = new Date(parseInt(yyyy), parseInt(mm)-1, parseInt(dd));\n  fechaNatural = `${diasSemana[d.getDay()]} ${d.getDate()} de ${meses[d.getMonth()]}`;\n} catch(e) {}\n\n// Hora → AM/PM (maneja HH:MM y HH:MM AM/PM)\nlet horaAmPm = hora;\ntry {\n  const matchAmPm = hora.match(/^(\\d{1,2}):(\\d{2})\\s*(AM|PM)$/i);\n  if (matchAmPm) {\n    // Ya viene con AM/PM — normalizar formato\n    let h = Number(matchAmPm[1]);\n    const m = matchAmPm[2];\n    const suffix = matchAmPm[3].toUpperCase();\n    if (suffix === 'PM' && h !== 12) h += 12;\n    if (suffix === 'AM' && h === 12) h = 0;\n    const ampm2 = h < 12 ? 'AM' : 'PM';\n    const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;\n    horaAmPm = `${h12}:${m} ${ampm2}`;\n  } else {\n    // Formato 24h HH:MM\n    const [hh, min] = hora.split(':').map(Number);\n    const ampm = hh < 12 ? 'AM' : 'PM';\n    const h12 = hh === 0 ? 12 : hh > 12 ? hh - 12 : hh;\n    horaAmPm = `${h12}:${String(min).padStart(2,'0')} ${ampm}`;\n  }\n} catch(e) {}\n\nconst textoDueno = `🔔 *Nueva cita agendada*\\n\\n👤 *Cliente:* ${nombre}\\n📞 *Número:* ${numero}\\n✂️ *Servicio:* ${servicio}\\n📅 *Fecha:* ${fechaNatural}\\n⏰ *Hora:* ${horaAmPm}\\n\\n_Estado: Pendiente_ ✅`;\nconst textoCliente = `✅ ¡Tu cita quedó confirmada!\\n\\n✂️ *Servicio:* ${servicio}\\n📅 *Fecha:* ${fechaNatural}\\n⏰ *Hora:* ${horaAmPm}\\n\\n¡Te esperamos en ${promptName}! 💇‍♂️\\nCualquier cambio, escríbenos aquí mismo 😊`;\n\nreturn [{\n  json: {\n    ownerNumber,\n    whatsappInstance,\n    numeroCliente: numero,\n    nombreCliente: nombre,\n    servicio,\n    fecha,\n    hora,\n    textoDueno,\n    textoCliente,\n    bodyDueno: JSON.stringify({ number: ownerNumber, text: textoDueno }),\n    bodyCliente: JSON.stringify({ number: numero, text: textoCliente })\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1152,
-        -288
+        3040,
+        928
       ],
-      "id": "46d15987-0712-4838-877e-e6c8bcb5ac3e",
+      "id": "022154dc-c2ac-499c-aa77-669a8441db10",
       "name": "Construir Mensajes"
     },
     {
@@ -362,10 +310,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        1344,
-        -288
+        3232,
+        928
       ],
-      "id": "9535e15c-7bb8-47d3-a361-c0b999cf412e",
+      "id": "1ced8958-6a47-4afb-a8d0-aa898eb23301",
       "name": "Notificar Dueño"
     },
     {
@@ -394,10 +342,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        1536,
-        -288
+        3424,
+        928
       ],
-      "id": "23582b58-1d59-4d7d-90f1-e11e0db5d370",
+      "id": "ff6c7585-14f8-44c8-8122-3658dad2a480",
       "name": "Confirmar Cliente"
     },
     {
@@ -435,10 +383,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        560,
-        704
+        2448,
+        1920
       ],
-      "id": "f5220d47-a5b5-421e-8156-2fce49ed5bdb",
+      "id": "c8b05be0-829a-413b-b38f-d2c854aa034f",
       "name": "Respuesta Normal"
     },
     {
@@ -468,10 +416,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        256,
-        672
+        2144,
+        1888
       ],
-      "id": "425764e9-634c-4059-97cb-6eee3649dbed",
+      "id": "7465be0f-0721-4234-baae-3f8504d1b299",
       "name": "¿Confirmar o Responder?"
     },
     {
@@ -509,10 +457,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        976,
-        -96
+        3280,
+        1120
       ],
-      "id": "b12272c2-94b6-4bb9-82f0-76e29f32e1c7",
+      "id": "73d18b6f-f607-4422-a702-b38180c9183a",
       "name": "Aviso Slot Ocupado"
     },
     {
@@ -625,10 +573,10 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        16,
-        80
+        1904,
+        1296
       ],
-      "id": "6123bb45-8bcd-4ae2-be15-8c335b2e5ded",
+      "id": "a6bbb0a7-ad68-45ff-b82a-aec4d77e12ec",
       "name": "Switch"
     },
     {
@@ -640,11 +588,12 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        400,
-        96
+        2288,
+        1312
       ],
-      "id": "3ece4452-575d-4b52-897f-1a6e36488160",
+      "id": "141f3618-48d6-4ccf-86cc-ce2b578a9868",
       "name": "Leer Citas Cliente",
+      "alwaysOutputData": true,
       "credentials": {
         "postgres": {
           "id": "AkRs7Kx5gs6JnVMz",
@@ -654,21 +603,21 @@
     },
     {
       "parameters": {
-        "jsCode": "const citas = $input.all();\nconst accion = $('AI Agent').item.json.output.split('|')[1]?.trim();\nconst numero = $('Procesar Mensaje').item.json.numeroLimpio;\nconst whatsappInstance = $('Procesar Mensaje').item.json.whatsappInstance;\nconst businessId = $('Procesar Mensaje').item.json.businessId;\n\nif (citas.length === 0) {\n  return [{ json: {\n    numero,\n    whatsappInstance,\n    businessId,\n    accion,\n    tieneCitas: false,\n    mensaje: 'No encontramos citas próximas agendadas a tu número. ¿Puedo ayudarte con algo más? 😊',\n    citasIds: []\n  }}];\n}\n\nconst diasSemana = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];\nconst meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];\n\nlet listaCitas = '';\nconst citasParaSession = [];\n\ncitas.forEach((item, i) => {\n  const c = item.json;\n  const d = new Date(c.fecha + 'T00:00:00');\n  const fechaNatural = `${diasSemana[d.getUTCDay()]} ${d.getUTCDate()} de ${meses[d.getUTCMonth()]}`;\n  const hora = c.hora.substring(0,5);\n  listaCitas += `${i+1}. ${c.servicio} — ${fechaNatural} a las ${hora}\\n`;\n  citasParaSession.push({ id: c.id, servicio: c.servicio, fecha: c.fecha, hora: hora });\n});\n\nconst verbo = accion === 'cancelar' ? 'cancelar' : 'reagendar';\nconst mensaje = citas.length === 1\n  ? `Encontré esta cita:\\n\\n${listaCitas}\\n¿Confirmas que deseas ${verbo}? Responde *sí* para confirmar. 😊`\n  : `Encontré estas citas próximas:\\n\\n${listaCitas}\\n¿Cuál deseas ${verbo}? Responde con el número (1, 2, etc.) 😊`;\n\nreturn [{ json: {\n  numero,\n  whatsappInstance,\n  businessId,\n  accion,\n  tieneCitas: true,\n  mensaje,\n  citasIds: citasParaSession,\n  citasJSON: JSON.stringify(citasParaSession)\n}}];"
+        "jsCode": "const citas = $input.all();\nconst outputRaw = $('AI Agent').item.json.output;\nconst matchAccion = outputRaw.match(/GESTIONAR_CITA\\|(cancelar|reagendar)/);\nconst accion = matchAccion ? matchAccion[1] : 'cancelar';\nconst numero = $('Procesar Mensaje').item.json.numeroLimpio;\nconst whatsappInstance = $('Procesar Mensaje').item.json.whatsappInstance;\nconst businessId = $('Procesar Mensaje').item.json.businessId;\n\nconst diasSemana = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];\nconst meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];\n\nlet listaCitas = '';\nconst citasParaSession = [];\n\ncitas.forEach((item, i) => {\n  const c = item.json;\n  if (!c || !c.hora || !c.fecha || !c.id) return;\n  const d = new Date(c.fecha + 'T00:00:00');\n  const fechaNatural = `${diasSemana[d.getUTCDay()]} ${d.getUTCDate()} de ${meses[d.getUTCMonth()]}`;\n  const hora = c.hora.substring(0, 5);\n  const [hh, mm] = hora.split(':').map(Number);\n  const ampm = hh < 12 ? 'AM' : 'PM';\n  const h12 = hh === 0 ? 12 : hh > 12 ? hh - 12 : hh;\n  const horaAmPm = `${h12}:${String(mm).padStart(2,'0')} ${ampm}`;\n  listaCitas += `${i + 1}. ${c.servicio} — ${fechaNatural} a las ${horaAmPm}\\n`;\n  citasParaSession.push({ id: c.id, servicio: c.servicio, fecha: c.fecha, hora });\n});\n\nlet mensaje = '';\nif (citasParaSession.length === 0) {\n  mensaje = `No encontramos citas próximas agendadas a tu número. ¿Puedo ayudarte con algo más? 😊`;\n} else if (citasParaSession.length === 1) {\n  const verbo = accion === 'cancelar' ? 'cancelar' : 'reagendar';\n  mensaje = `Encontré esta cita:\\n\\n${listaCitas}\\n¿Confirmas que deseas ${verbo}? Responde *sí* o con *1* para confirmar 😊`;\n} else {\n  if (accion === 'cancelar') {\n    mensaje = `Encontré estas citas próximas:\\n\\n${listaCitas}\\nResponde con el número de la cita que deseas cancelar 😊`;\n  } else {\n    mensaje = `Encontré estas citas próximas:\\n\\n${listaCitas}\\nResponde con el número de la cita que deseas reagendar y te ayudo a elegir el nuevo horario 😊`;\n  }\n}\n\nreturn [{ json: {\n  numero,\n  whatsappInstance,\n  businessId,\n  accion,\n  tieneCitas: citasParaSession.length > 0,\n  mensaje,\n  citasIds: citasParaSession,\n  citasJSON: JSON.stringify(citasParaSession)\n}}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        592,
-        96
+        2480,
+        1312
       ],
-      "id": "887bf77b-5689-4d3f-af0b-83b150750fe1",
+      "id": "a0ef77b6-a586-4db0-b709-58df21ed6618",
       "name": "Formatear Citas"
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $json.whatsappInstance }}",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $('Formatear Citas').item.json.whatsappInstance }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -687,11 +636,11 @@
           "parameters": [
             {
               "name": "number",
-              "value": "={{ $json.numero }}"
+              "value": "={{ $('Formatear Citas').item.json.numero }}"
             },
             {
               "name": "text",
-              "value": "={{ $json.mensaje }}"
+              "value": "={{ $('Formatear Citas').item.json.mensaje }}"
             }
           ]
         },
@@ -700,10 +649,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        816,
-        96
+        3104,
+        1408
       ],
-      "id": "838dd256-1afd-4829-91f0-1559744c4e21",
+      "id": "56ccb664-7713-4166-ae3b-3379d7131d73",
       "name": "Enviar Lista de citas"
     },
     {
@@ -715,10 +664,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        384,
-        304
+        2272,
+        1520
       ],
-      "id": "9a1cc67e-41ac-4e94-84a9-bed063f1a34f",
+      "id": "db167155-1059-4356-af27-765c7607d2e3",
       "name": "Ejecutar Cancelación",
       "credentials": {
         "postgres": {
@@ -736,10 +685,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        384,
-        496
+        2272,
+        1712
       ],
-      "id": "28b12741-c6dc-46c9-86ae-d7614a759398",
+      "id": "4bc4605a-ece9-4f5c-9e2a-ca1f291ba16a",
       "name": "Ejecutar Reagendamiento",
       "credentials": {
         "postgres": {
@@ -761,6 +710,166 @@
             },
             {
               "name": "Content-Type ",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $('Procesar Mensaje').item.json.numero.replace('@s.whatsapp.net','').replace(/\\D/g,'') }}"
+            },
+            {
+              "name": "text",
+              "value": "={{   (function() {    const row = $json;    const servicio = row.servicio || '';    const hora = row.hora ? row.hora.substring(0,5) : '';    const [hh, mm] = hora.split(':').map(Number);    const ampm = hh < 12 ? 'AM' : 'PM';    const h12 = hh === 0 ? 12 : hh > 12 ? hh - 12 : hh;    const horaAmPm = `${h12}:${String(mm).padStart(2,'0')} ${ampm}`;    const diasSemana = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];    const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];    const d = new Date(row.fecha + 'T00:00:00');    const fechaNatural = `${diasSemana[d.getUTCDay()]} ${d.getUTCDate()} de ${meses[d.getUTCMonth()]}`;    return `✅ ¡Listo! Tu cita de ${servicio} quedó reagendada para el ${fechaNatural} a las ${horaAmPm}. ¡Te esperamos! 😊`;  })()}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2480,
+        1712
+      ],
+      "id": "2ad3d009-667c-4179-864e-ec4a1dd73b91",
+      "name": "Confirmar Reagendamiento"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, accion, citas\nFROM sessions\nWHERE business_id = {{ $json.businessId }}\n  AND numero = '{{ $json.numeroLimpio }}'\n  AND expires_at > NOW()\nORDER BY created_at DESC\nLIMIT 1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        560,
+        1312
+      ],
+      "id": "c8d6ef55-1093-418d-8c39-6248def92077",
+      "name": "Leer Sesión activa",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "AkRs7Kx5gs6JnVMz",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM sessions\nWHERE business_id = {{ $json.businessId }}\n  AND numero = '{{ $json.numero }}';\n\nINSERT INTO sessions (business_id, numero, accion, citas)\nVALUES (\n  {{ $json.businessId }},\n  '{{ $json.numero }}',\n  '{{ $json.accion }}',\n  '{{ $json.citasJSON }}'::jsonb\n);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2928,
+        1248
+      ],
+      "id": "5cbb98f2-f94c-4257-8bd5-a7a3ca6da7ed",
+      "name": "Guardar Sesión",
+      "credentials": {
+        "postgres": {
+          "id": "AkRs7Kx5gs6JnVMz",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM sessions\nWHERE business_id = {{ $('Procesar Mensaje').item.json.businessId }}\n  AND numero = '{{ $('Procesar Mensaje').item.json.numeroLimpio }}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2688,
+        1520
+      ],
+      "id": "a2d66efa-887e-406e-8018-6ee925e3d8d9",
+      "name": "Limpiar Sesión Cancelación",
+      "credentials": {
+        "postgres": {
+          "id": "AkRs7Kx5gs6JnVMz",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM sessions\nWHERE business_id = {{ $('Procesar Mensaje').item.json.businessId }}\n  AND numero = '{{ $('Procesar Mensaje').item.json.numeroLimpio }}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2688,
+        1712
+      ],
+      "id": "bd5d3186-07ef-443c-b6ae-fc1f36fbfd94",
+      "name": "Limpiar Sesión Reagendamiento",
+      "credentials": {
+        "postgres": {
+          "id": "AkRs7Kx5gs6JnVMz",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b0edff82-65f5-41ff-ac61-7fd37a495cbd",
+              "leftValue": "={{ $json.tieneCitas }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2688,
+        1312
+      ],
+      "id": "5d0e60c9-563f-4942-8f9a-dd9638f7d0c6",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $('Procesar Mensaje').item.json.whatsappInstance }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "=={{ $env.EVOLUTION_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
               "value": "=application/json"
             }
           ]
@@ -774,7 +883,7 @@
             },
             {
               "name": "text",
-              "value": "=✅ ¡Listo! Tu cita de {{ $json.servicio }} quedó reagendada para el {{ $json.fecha }} a las {{ $json.hora.substring(0,5) }}. ¡Te esperamos! 😊"
+              "value": "=={{\n  (function() {\n    const row = $json;\n    const servicio = row.servicio || '';\n    const hora = row.hora ? row.hora.substring(0,5) : '';\n    const [hh, mm] = hora.split(':').map(Number);\n    const ampm = hh < 12 ? 'AM' : 'PM';\n    const h12 = hh === 0 ? 12 : hh > 12 ? hh - 12 : hh;\n    const horaAmPm = `${h12}:${String(mm).padStart(2,'0')} ${ampm}`;\n    const diasSemana = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];\n    const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];\n    const d = new Date(row.fecha + 'T00:00:00');\n    const fechaNatural = `${diasSemana[d.getUTCDay()]} ${d.getUTCDate()} de ${meses[d.getUTCMonth()]}`;\n    return `✅ Tu cita de ${servicio} del ${fechaNatural} a las ${horaAmPm} ha sido cancelada. ¡Cuando quieras volver a agendar, aquí estamos! 😊`;\n  })()\n}}"
             }
           ]
         },
@@ -783,52 +892,67 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        592,
-        496
+        2464,
+        1504
       ],
-      "id": "8eff6d4d-6615-4071-a35c-12161c632f91",
-      "name": "Confirmar Reagendamiento"
+      "id": "6787d24e-3c82-4ad9-b86c-c972c29f042f",
+      "name": "Confirmar Cancelación"
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $('Procesar Mensaje').item.json.whatsappInstance }}",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "apikey",
-              "value": "={{ $env.EVOLUTION_API_KEY }}"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "number",
-              "value": "{{ $('Procesar Mensaje').item.json.numero.replace('@s.whatsapp.net','').replace(/\\D/g,'') }}"
-            },
-            {
-              "name": "text",
-              "value": "=✅ Tu cita de {{ $json.servicio }} del {{ $json.fecha }} a las {{ $json.hora.substring(0,5) }} ha sido cancelada. ¡Cuando quieras volver a agendar, aquí estamos! 😊"
-            }
-          ]
-        },
+        "operation": "executeQuery",
+        "query": "SELECT messages\nFROM conversation_history\nWHERE business_id = {{ $json.businessId }}\n  AND numero = '{{ $json.numeroLimpio }}'\n  AND expires_at > NOW()\nLIMIT 1",
         "options": {}
       },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
       "position": [
-        592,
-        304
+        1216,
+        1312
       ],
-      "id": "cac7f67f-27fe-430d-8a8c-74382fee3de8",
-      "name": "Confirmar Cancelación"
+      "id": "f04e7c88-665b-43d3-a0bd-52e9e390a274",
+      "name": "Leer Historial",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "AkRs7Kx5gs6JnVMz",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO conversation_history (business_id, numero, messages, updated_at, expires_at)\nVALUES (\n  {{ $('AI Agent').item.json.businessId }},\n  '{{ $('AI Agent').item.json.numeroLimpio }}',\n  '{{ $('AI Agent').item.json.historyJSON }}'::jsonb,\n  NOW(),\n  NOW() + INTERVAL '2 hours'\n)\nON CONFLICT (business_id, numero)\nDO UPDATE SET\n  messages   = EXCLUDED.messages,\n  updated_at = EXCLUDED.updated_at,\n  expires_at = EXCLUDED.expires_at;\n\nDELETE FROM conversation_history WHERE expires_at < NOW();",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1632,
+        1344
+      ],
+      "id": "9ade5eb5-60cc-4186-a567-bdbb78e8c9ef",
+      "name": "Guardar Historial",
+      "credentials": {
+        "postgres": {
+          "id": "AkRs7Kx5gs6JnVMz",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// AI Agent — LLM Orquestador\n// Fallback chain: Gemini 2.5 Flash-Lite → Cerebras gpt-oss-120b → Groq gpt-oss-120b\n// Reemplaza: AI Agent (langchain) + Groq Chat Model + Simple Memory\n// Modo: Run Once for All Items\n// El nodo se llama \"AI Agent\" a propósito: ~13 nodos downstream leen\n// $('AI Agent').item.json.output — renombrarlo evita tocar el Switch y las ramas.\n// ============================================================\n\nconst d = $('Formatear Disponibilidad').first().json;\n\n// Historial previo (de Leer Historial; Postgres JSONB ya viene parseado a array JS)\nlet prior = [];\ntry {\n  const raw = $('Leer Historial').first().json.messages;\n  prior = Array.isArray(raw) ? raw : (raw ? JSON.parse(raw) : []);\n} catch (e) { prior = []; }\nconst priorEsc = JSON.stringify(prior).replace(/'/g, \"''\"); // safe para embeber en '...'::jsonb\n\n// ── 0. SHORT-CIRCUIT FUERA DE HORARIO ───────────────────────\n// [DECISIÓN DE INGENIERÍA AÑADIDA — NO estaba en el diseño aprobado]\n// fueraDeHorario es booleano y determinista. Resolverlo en código evita una\n// llamada al LLM y corrige un bug latente: el prompt original referenciaba\n// \"Si fueraDeHorario = true...\" pero el modelo NUNCA recibía el valor real del\n// booleano, así que no podía cumplir la regla de forma fiable.\n// >>> Si NO quieres este comportamiento, borra este bloque completo. <<<\nif (d.fueraDeHorario === true && d.mensajeHorario) {\n  return [{ json: {\n    output: d.mensajeHorario,\n    rawOutput: d.mensajeHorario,\n    provider: 'short-circuit-horario',\n    reasoning: null,\n    debugError: null,\n    businessId: d.businessId,\n    numeroLimpio: d.numeroLimpio,\n    historyJSON: priorEsc            // no añadimos turnos en un short-circuit\n  }}];\n}\n\n// ── 1. SYSTEM PROMPT (transcrito del AI Agent original) ─────\nconst systemPrompt =\n`Eres el asistente virtual de ${d.promptName}.\n\nINSTRUCCIÓN PRINCIPAL:\nTienes acceso a los horarios disponibles reales del negocio.\nSOLO muestra horarios cuando el cliente indique una fecha específica.\nSi no hay fecha → pregunta primero qué día prefiere. NUNCA muestres todos los días disponibles sin que el cliente haya dicho un día.\n\nSERVICIOS Y PRECIOS:\n${d.servicesText}\n\nHORARIOS DE ATENCIÓN:\n${d.horarioTexto}\n\nVALIDACIÓN DE HORARIO:\nSi fueraDeHorario = true, responde ÚNICAMENTE con el contenido de mensajeHorario. No continúes. No agregues nada más.\n\n${d.sesionContexto}\n\nREGLA DE SESIÓN INTERNA — CRÍTICO:\nEl bloque SESIÓN ACTIVA y CITAS DISPONIBLES PARA SELECCIÓN es información INTERNA. NUNCA lo muestres al cliente. NUNCA menciones IDs, ID_CITA, ni ningún número interno. Al cliente solo muéstrale una lista numerada limpia con servicio, día en lenguaje natural y hora en formato AM/PM.\n\nSELECCIÓN DE CITA — CRÍTICO:\nCuando el cliente responda con un número (1, 2, 3, etc.) Y hay una SESIÓN ACTIVA en el contexto:\n\nSi la acción es CANCELAR:\n- Identifica el ID_CITA correspondiente al número elegido\n- Responde ÚNICAMENTE sin texto adicional: CANCELAR_CITA|ID_CITA\n- NUNCA pidas confirmación adicional — el número es suficiente\n\nSi la acción es REAGENDAR — TRES PASOS OBLIGATORIOS, NO SALTARSE NINGUNO:\nPASO 1 — Cuando el cliente dice el número (ej: \"1\"):\n  → Identifica internamente el ID_CITA y el servicio de esa opción\n  → Responde al cliente: \"Perfecto, vamos a reagendar tu cita de [servicio] del [fecha en lenguaje natural]. ¿Para qué día prefieres el nuevo horario? 😊\"\n  → NO emitas ningún código todavía. NO muestres disponibilidad todavía.\nPASO 2 — Cuando el cliente dice el día:\n  → Muestra SOLO los horarios disponibles de ese día en formato limpio: \"09:00 AM, 10:00 AM, 11:00 AM\"\n  → Pide que elija una hora exacta\nPASO 3 — Cuando el cliente elige la hora exacta:\n  → Responde ÚNICAMENTE sin texto adicional: REAGENDAR_CITA|ID_CITA|DD/MM/YYYY|HH:MM\n\nPROHIBIDO en reagendamiento: emitir REAGENDAR_CITA sin tener fecha y hora confirmadas por el cliente en este mismo flujo.\n\nHORARIOS DISPONIBLES (próximos 7 días):\n${d.disponibilidad}\n\nREGLA CRÍTICA DE DISPONIBILIDAD:\n- Cliente dice fecha específica → muestra SOLO los horarios de ESE día en formato limpio sin numeración: \"09:00 AM, 10:00 AM, 11:00 AM\"\n- Cliente NO dice fecha → pregunta qué día prefiere. PROHIBIDO mostrar horarios sin fecha confirmada.\n- PROHIBIDO mostrar más de un día a la vez\n- PROHIBIDO decir que no tienes información de disponibilidad\n\nAGENDAMIENTO:\nORDEN OBLIGATORIO — NUNCA saltes pasos:\n1. Si no tienes el SERVICIO → pregunta el servicio primero. NADA MÁS.\n2. Si no tienes la FECHA → pregunta qué día prefiere. Espera respuesta.\n3. Cuando diga el día → muestra SOLO los horarios disponibles de ese día en formato limpio: \"09:00 AM, 10:00 AM, 11:00 AM\"\n4. Si no tienes la HORA EXACTA → pide que elija del listado.\n5. Solo cuando tengas los 3 datos confirmados → muestra el resumen.\n\nLa fecha de hoy es ${d.fechaHoy}.\nCALENDARIO DE ESTA SEMANA:\n${d.calendario}\n\nPara agendar necesitas 3 datos EXPLÍCITOS:\n1. Servicio\n2. Fecha\n3. Hora EXACTA en formato HH:MM\n\nCuando tengas los 3 datos muestra el resumen y pide confirmación:\n\"Perfecto, te confirmo los datos:\n✂️ Servicio: [servicio]\n📅 Fecha: [fecha en lenguaje natural]\n⏰ Hora: [hora en formato AM/PM]\n¿Confirmamos la cita? 😊\"\n\nCONFIRMACIÓN DE AGENDAMIENTO:\nCuando el cliente confirme con \"sí\", \"si\", \"confirmo\", \"listo\", \"dale\", \"va\", \"ok\", \"claro\", \"obvio\", \"listo pues\", \"hagale\", \"le doy\", o cualquier expresión afirmativa en español incluyendo jerga colombiana, responde ÚNICAMENTE:\nCITA_CONFIRMADA|servicio|DD/MM/YYYY|HH:MM\n\nREGLA DE CONFIRMACIÓN PARCIAL — CRÍTICO:\nSi el cliente confirma Y en el mismo mensaje pregunta algo adicional o pide un cambio:\nPRIMERO emite CITA_CONFIRMADA con los datos ya acordados.\nEl tema adicional lo atiendes en el siguiente mensaje.\nNUNCA ignores una confirmación por culpa de texto adicional.\n\nCRÍTICO — HORA EXACTA: \"en la tarde\", \"en la mañana\", \"más tarde\" NO son horas válidas. Muestra el listado y pide que elija una hora exacta.\nNUNCA confirmes una hora sin saber si es AM o PM.\n\nCANCELACIONES Y REAGENDAMIENTO:\nDetecta intención aunque el cliente use palabras variadas o jerga:\ncancelar, anular, borrar, no puedo ir, no voy, quitar la cita, cancelar el turno,\nreagendar, cambiar, mover, postergar, no puedo asistir, necesito cambiar la hora.\n\nCuando detectes cancelación → responde ÚNICAMENTE sin texto adicional:\nGESTIONAR_CITA|cancelar\n\nCuando detectes reagendamiento → responde ÚNICAMENTE sin texto adicional:\nGESTIONAR_CITA|reagendar\n\nNUNCA respondas que el equipo lo contactará. Siempre emite el código.\n\nTONO Y LENGUAJE:\n- Responde SIEMPRE en español\n- Acepta y entiende jerga colombiana: parce, loca, marica, mi amor, papi, mami, listo pues, hagale, le doy, chévere, bacano, pilas, entre otros. Nunca te ofendas ni corrijas al cliente.\n- Responde con calidez y naturalidad, como si fuera una persona real del negocio\n- Máximo 5 líneas por respuesta\n- En conversaciones normales termina con una pregunta\n- NUNCA termines con pregunta al confirmar una cita o al emitir un código de acción\n- FORMATO DE FECHA: Usa lenguaje natural. CORRECTO: \"el miércoles 8 de abril\". INCORRECTO: \"08/04/2026\"\n- ASESORÍA: Si el cliente pide recomendación, respóndela brevemente antes de continuar.\n- SERVICIOS: NUNCA menciones servicios fuera de tu lista. Si no existe: \"Lo sentimos, ese servicio no está disponible. Nuestros servicios son: ${d.servicesText}. ¿Puedo ayudarte con alguno? 😊\"`;\n\n// ── 2. CONSTRUIR MESSAGES (system + historial limpio + user nuevo) ──\nconst priorClean = prior\n  .filter(m => m && m.role && m.content)\n  .map(m => ({ role: m.role, content: String(m.content) })); // strip reasoning/provider antes de reenviar\n\nconst messages = [\n  { role: 'system', content: systemPrompt },\n  ...priorClean,\n  { role: 'user', content: String(d.textoOriginal || '') }\n];\n\n// ── 3. FALLBACK CHAIN ───────────────────────────────────────\n// Criterio de fallo (→ siguiente proveedor): non-200, timeout >10s,\n// response sin choices, content vacío/null. Patrón \"multiple fallbacks +\n// graceful degradation\".\nconst providers = [\n  { name: 'gemini',   url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', key: $env.GEMINI_API_KEY,   model: 'gemini-2.5-flash-lite' },\n  { name: 'cerebras', url: 'https://api.cerebras.ai/v1/chat/completions',                                key: $env.CEREBRAS_API_KEY, model: 'gpt-oss-120b' },\n  { name: 'groq',     url: 'https://api.groq.com/openai/v1/chat/completions',                            key: $env.GROQ_API_KEY,     model: 'openai/gpt-oss-120b' } // prefijo \"openai/\" obligatorio en Groq\n];\n\nlet result = null, usedProvider = 'none', lastError = '';\n\nfor (const p of providers) {\n  if (!p.key) { lastError += `[${p.name}: sin API key] `; continue; }\n  try {\n    const resp = await this.helpers.httpRequest({\n      method: 'POST',\n      url: p.url,\n      headers: { 'Authorization': `Bearer ${p.key}`, 'Content-Type': 'application/json' },\n      body: { model: p.model, messages, temperature: 0.4, max_tokens: 2048 },\n      json: true,\n      timeout: 10000,            // timeout >10s lanza → cae al catch → siguiente proveedor\n      returnFullResponse: true\n    });\n    if (resp.statusCode !== 200) throw new Error(`status ${resp.statusCode}`);\n    const choice = resp.body && resp.body.choices && resp.body.choices[0];\n    if (!choice || !choice.message) throw new Error('sin choices');\n    const content = choice.message.content;\n    if (content == null || String(content).trim() === '') throw new Error('content vacio');\n    result = { content: String(content), reasoning: choice.message.reasoning || null };\n    usedProvider = p.name;\n    break;\n  } catch (e) {\n    lastError += `[${p.name}: ${e.message}] `;\n    continue;\n  }\n}\n\n// ── 4. DEGRADACIÓN GRÁCIL (ningún proveedor respondió) ──────\n// Tres horizontes: NO exponer el error al cliente. Mensaje amable + reintento.\n// No envenenamos el historial: lo dejamos igual (sin turnos nuevos).\nif (!result) {\n  return [{ json: {\n    output: 'Disculpa, estoy teniendo un problemita técnico en este momento 🙏 ¿Puedes escribirme de nuevo en un minutico?',\n    rawOutput: '',\n    provider: 'none',\n    reasoning: null,\n    debugError: lastError,\n    businessId: d.businessId,\n    numeroLimpio: d.numeroLimpio,\n    historyJSON: priorEsc\n  }}];\n}\n\n// ── 5. NORMALIZACIÓN DE SALIDA (regex → código limpio) ──────\n// Gemini/gpt-oss pueden anteponer texto o envolver en backticks. Extraemos el\n// código EXACTO con segmentos acotados (no greedy hasta EOL) para que los\n// split('|') downstream caigan perfecto. Si no hay código → texto conversacional.\nfunction normalizar(raw) {\n  let t = String(raw).trim().replace(/```[a-zA-Z]*\\n?/g, '').replace(/```/g, '').trim();\n  const horaSeg = '\\\\d{1,2}:\\\\d{2}(?:\\\\s?[AaPp]\\\\.?[Mm]\\\\.?)?';\n  const patrones = [\n    new RegExp(`CITA_CONFIRMADA\\\\|[^|\\\\n]+\\\\|\\\\d{1,2}\\\\/\\\\d{1,2}\\\\/\\\\d{4}\\\\|${horaSeg}`),\n    new RegExp(`REAGENDAR_CITA\\\\|\\\\d+\\\\|\\\\d{1,2}\\\\/\\\\d{1,2}\\\\/\\\\d{4}\\\\|${horaSeg}`),\n    /CANCELAR_CITA\\|\\s*\\d+/,\n    /GESTIONAR_CITA\\|\\s*(?:cancelar|reagendar)/i\n  ];\n  for (const p of patrones) {\n    const m = t.match(p);\n    if (m) return m[0].trim();\n  }\n  return t;\n}\nconst cleaned = normalizar(result.content);\n\n// ── 6. ACTUALIZAR HISTORIAL (máx 20 mensajes = 10 turnos) ───\n// Guardamos reasoning + provider en el turno assistant para debug; se strip-ean\n// al reenviar (paso 2). El system prompt NO se guarda (se reconstruye cada turno).\nconst updated = [\n  ...prior,\n  { role: 'user',      content: String(d.textoOriginal || '') },\n  { role: 'assistant', content: result.content, reasoning: result.reasoning, provider: usedProvider }\n].slice(-20);\n\nreturn [{ json: {\n  output: cleaned,                 // ← lo que leen Switch y las ramas\n  rawOutput: result.content,       // debug\n  provider: usedProvider,          // debug\n  reasoning: result.reasoning,     // debug\n  debugError: lastError || null,\n  businessId: d.businessId,\n  numeroLimpio: d.numeroLimpio,\n  historyJSON: JSON.stringify(updated).replace(/'/g, \"''\")\n}}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1408,
+        1312
+      ],
+      "id": "a9dd9c6a-cf90-4b6f-ab28-4b616eb0cb87",
+      "name": "AI Agent"
     }
   ],
   "pinData": {},
@@ -881,7 +1005,7 @@
       "main": [
         [
           {
-            "node": "Leer Slots Disponibles",
+            "node": "Leer Sesión activa",
             "type": "main",
             "index": 0
           }
@@ -903,40 +1027,7 @@
       "main": [
         [
           {
-            "node": "AI Agent",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Groq Chat Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Simple Memory": {
-      "ai_memory": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_memory",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "AI Agent": {
-      "main": [
-        [
-          {
-            "node": "Wait",
+            "node": "Leer Historial",
             "type": "main",
             "index": 0
           }
@@ -1093,7 +1184,7 @@
       "main": [
         [
           {
-            "node": "Enviar Lista de citas",
+            "node": "If",
             "type": "main",
             "index": 0
           }
@@ -1121,13 +1212,108 @@
           }
         ]
       ]
+    },
+    "Leer Sesión activa": {
+      "main": [
+        [
+          {
+            "node": "Leer Slots Disponibles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Sesión": {
+      "main": [
+        [
+          {
+            "node": "Enviar Lista de citas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confirmar Reagendamiento": {
+      "main": [
+        [
+          {
+            "node": "Limpiar Sesión Reagendamiento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Guardar Sesión",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar Lista de citas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confirmar Cancelación": {
+      "main": [
+        [
+          {
+            "node": "Limpiar Sesión Cancelación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Historial": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Guardar Historial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Historial": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "4c098274-9161-4532-ad22-4188ddae5a76",
+  "versionId": "6151c856-1284-47cc-8a4d-ccfd4e1c3bd5",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "78865b14428b3461ac0504416eb2ba5903a5482f3190c606719f27159eed62fe"
