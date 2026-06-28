@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { getTodayAppointments, getTodayStats } from "@/lib/appointments";
+import { pool } from "@/lib/db";
 import { StatsCards } from "@/components/stats-cards";
 import { AppointmentList } from "@/components/appointment-list";
 import { RefreshButton } from "@/components/refresh-button";
@@ -14,10 +15,13 @@ export default async function DashboardPage() {
   const businessId = session.user.businessId;
   const multiProfessional = session.user.multiProfessional;
 
-  const [appointments, stats] = await Promise.all([
-    getTodayAppointments(businessId),
-    getTodayStats(businessId),
+  const [[appointments, stats], bizRows] = await Promise.all([
+    Promise.all([getTodayAppointments(businessId), getTodayStats(businessId)]),
+    pool
+      .query("SELECT services_text FROM businesses WHERE id = $1", [businessId])
+      .then((r) => r.rows),
   ]);
+  const servicesText: string = bizRows[0]?.services_text ?? "";
 
   // Fecha de hoy en español para el header
   const fechaHoy = new Date().toLocaleDateString("es-CO", {
@@ -41,7 +45,7 @@ export default async function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <NewAppointmentSheet />
+          <NewAppointmentSheet servicesText={servicesText} />
           <RefreshButton />
         </div>
       </div>

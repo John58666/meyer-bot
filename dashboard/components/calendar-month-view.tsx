@@ -55,7 +55,7 @@ function buildGrid(month: Date): Array<Array<Date | null>> {
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 
-export function CalendarMonthView({ multiProfessional }: { multiProfessional: boolean }) {
+export function CalendarMonthView({ multiProfessional, servicesText }: { multiProfessional: boolean; servicesText: string }) {
   const [currentMonth, setCurrentMonth] = useState<Date>(() => {
     const now = new Date()
     return new Date(now.getFullYear(), now.getMonth(), 1)
@@ -101,8 +101,6 @@ export function CalendarMonthView({ multiProfessional }: { multiProfessional: bo
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
   const handleDayClick = (date: Date) => {
-    const key = format(date, 'yyyy-MM-dd')
-    if (!appointmentsByDate[key]?.length) return
     setSelectedDate(date)
     setSheetOpen(true)
   }
@@ -181,9 +179,7 @@ export function CalendarMonthView({ multiProfessional }: { multiProfessional: bo
                   className={cn(
                     'h-[72px] border-r border-b border-border p-1.5',
                     'flex flex-col items-center',
-                    hasAppts
-                      ? 'cursor-pointer hover:bg-accent/40 active:bg-accent/60 transition-colors'
-                      : 'cursor-default',
+                    'cursor-pointer hover:bg-accent/40 active:bg-accent/60 transition-colors',
                   )}
                 >
                   {/* Número del día */}
@@ -243,6 +239,7 @@ export function CalendarMonthView({ multiProfessional }: { multiProfessional: bo
         appointments={selectedAppointments}
         onActionComplete={() => fetchMonth(currentMonth)}
         multiProfessional={multiProfessional}
+        servicesText={servicesText}
       />
     </>
   )

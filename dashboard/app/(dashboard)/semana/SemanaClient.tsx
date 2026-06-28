@@ -12,9 +12,10 @@ const STORAGE_KEY = 'meyer-semana-view'
 interface SemanaClientProps {
   children: React.ReactNode
   multiProfessional: boolean
+  servicesText: string
 }
 
-export function SemanaClient({ children, multiProfessional }: SemanaClientProps) {
+export function SemanaClient({ children, multiProfessional, servicesText }: SemanaClientProps) {
   const [mode, setMode] = useState<ViewMode>('lista')
 
   // Leer preferencia guardada solo en el cliente (evita hydration mismatch)
@@ -57,7 +58,7 @@ export function SemanaClient({ children, multiProfessional }: SemanaClientProps)
         // montados en DOM pero hidden con CSS para no perder el server render.
         <div>{children}</div>
       ) : (
-        <CalendarMonthView multiProfessional={multiProfessional} />
+        <CalendarMonthView multiProfessional={multiProfessional} servicesText={servicesText} />
       )}
     </div>
   )

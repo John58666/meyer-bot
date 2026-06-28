@@ -3,6 +3,7 @@
 
 import { useState } from 'react'
 import { format } from 'date-fns'
+import { NewAppointmentSheet } from '@/components/new-appointment-sheet'
 import { es } from 'date-fns/locale'
 import { CheckCircle2, XCircle, CalendarRange, Clock3 } from 'lucide-react'
 import {
@@ -37,11 +38,6 @@ const ESTADO_BADGE: Record<string, string> = {
   Cancelada:  'bg-red-100    text-red-700    border-red-200     dark:bg-red-900/30    dark:text-red-300',
 }
 
-// Slots horarios disponibles para reagendar (9:00 → 18:00, cada hora)
-const HOURLY_SLOTS = Array.from({ length: 10 }, (_, i) =>
-  `${String(9 + i).padStart(2, '0')}:00`,
-)
-
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface DayAppointmentsSheetProps {
@@ -51,6 +47,7 @@ interface DayAppointmentsSheetProps {
   appointments: Appointment[]
   onActionComplete: () => void
   multiProfessional: boolean
+  servicesText: string
 }
 
 // ─── Componente ───────────────────────────────────────────────────────────────
@@ -62,6 +59,7 @@ export function DayAppointmentsSheet({
   appointments,
   onActionComplete,
   multiProfessional,
+  servicesText,
 }: DayAppointmentsSheetProps) {
   const [loadingId, setLoadingId]         = useState<number | null>(null)
   const [reagendarId, setReagendarId]     = useState<number | null>(null)
@@ -70,6 +68,13 @@ export function DayAppointmentsSheet({
   const [confirmCancelId, setConfirmCancelId] = useState<number | null>(null)
 
   if (!date) return null
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const selectedDay = new Date(date)
+  selectedDay.setHours(0, 0, 0, 0)
+  const isPast = selectedDay < today
+  const canBook = !isPast
 
   const canAct = (estado: string) =>
     estado !== 'Cancelada' && estado !== 'Completada'
@@ -127,7 +132,7 @@ export function DayAppointmentsSheet({
     setNewHora('')
   }
 
-  const today = format(new Date(), 'yyyy-MM-dd')
+  const todayStr = format(new Date(), 'yyyy-MM-dd')
 
   // ── Render ───────────────────────────────────────────────────────────────────
 
@@ -148,9 +153,22 @@ export function DayAppointmentsSheet({
 
         <div className="space-y-3">
           {appointments.length === 0 ? (
-            <p className="text-center text-muted-foreground text-sm py-6">
-              Sin citas para este día
-            </p>
+            <div className="flex flex-col items-center gap-3 py-8">
+              <p className="text-sm text-muted-foreground text-center">
+                {isPast ? 'No hubo citas este día' : 'Sin citas agendadas para este día'}
+              </p>
+              {canBook && (
+                <NewAppointmentSheet
+                  fecha={format(date, 'yyyy-MM-dd')}
+                  servicesText={servicesText}
+                  trigger={
+                    <button className="flex items-center gap-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium px-4 py-2 hover:opacity-90 transition-opacity">
+                      + Agendar cita
+                    </button>
+                  }
+                />
+              )}
+            </div>
           ) : (
             appointments
               .slice()
@@ -273,7 +291,7 @@ export function DayAppointmentsSheet({
                             <label className="text-[11px] text-muted-foreground">Fecha</label>
                             <input
                               type="date"
-                              min={today}
+                              min={todayStr}
                               value={newFecha}
                               onChange={e => setNewFecha(e.target.value)}
                               className={cn(
@@ -285,7 +303,8 @@ export function DayAppointmentsSheet({
                           </div>
                           <div className="space-y-1">
                             <label className="text-[11px] text-muted-foreground">Hora</label>
-                            <select
+                            <input
+                              type="time"
                               value={newHora}
                               onChange={e => setNewHora(e.target.value)}
                               className={cn(
@@ -293,12 +312,7 @@ export function DayAppointmentsSheet({
                                 'text-sm bg-background text-foreground',
                                 'focus:outline-none focus:ring-2 focus:ring-ring',
                               )}
-                            >
-                              <option value="">-- hora --</option>
-                              {HOURLY_SLOTS.map(h => (
-                                <option key={h} value={h}>{h}</option>
-                              ))}
-                            </select>
+                            />
                           </div>
                         </div>
                         <div className="flex gap-2 pt-1">
@@ -325,6 +339,17 @@ export function DayAppointmentsSheet({
                   </div>
                 )
               })
+          )}
+          {appointments.length > 0 && canBook && (
+            <NewAppointmentSheet
+              fecha={format(date, 'yyyy-MM-dd')}
+              servicesText={servicesText}
+              trigger={
+                <button className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-border text-sm text-muted-foreground hover:bg-accent hover:text-foreground py-2.5 transition-colors mt-1">
+                  + Agendar otra cita
+                </button>
+              }
+            />
           )}
         </div>
       </SheetContent>

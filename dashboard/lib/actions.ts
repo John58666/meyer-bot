@@ -14,6 +14,7 @@ export async function createAppointment(formData: FormData) {
   const servicio = formData.get("servicio") as string;
   const fecha = formData.get("fecha") as string; // YYYY-MM-DD
   const hora = formData.get("hora") as string;   // HH:MM
+  const forceOverride = formData.get("forceOverride") === "true";
   const businessId = session.user.businessId;
 
   if (!nombre || !numero || !servicio || !fecha || !hora) {
@@ -21,6 +22,15 @@ export async function createAppointment(formData: FormData) {
   }
 
   try {
+    if (!forceOverride) {
+      const { rows } = await pool.query(
+        `SELECT id FROM appointments
+         WHERE business_id = $1 AND fecha = $2 AND hora = $3::time AND estado != 'Cancelada'`,
+        [businessId, fecha, hora],
+      );
+      if (rows.length > 0) return { conflict: true };
+    }
+
     await pool.query(
       `INSERT INTO appointments (business_id, fecha, hora, nombre, servicio, numero, estado)
        VALUES ($1, $2, $3::time, $4, $5, $6, 'Pendiente')`,
