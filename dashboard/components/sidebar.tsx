@@ -11,7 +11,7 @@ const navItems = [
 ];
 
 const bottomItems = [
-  { icon: Settings, href: "/dashboard/settings", label: "Configuración" },
+  { icon: Settings, href: "/dashboard/configuracion", label: "Configuración" },
   { icon: HelpCircle, href: "/dashboard/help", label: "Ayuda" },
 ];
 

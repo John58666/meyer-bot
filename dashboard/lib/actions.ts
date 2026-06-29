@@ -301,3 +301,22 @@ export async function deleteBloqueo(id: number, businessId: number) {
   revalidatePath('/dashboard/semana/bloqueos')
   return { ok: true }
 }
+
+export async function updateServicesText(businessId: number, servicesText: string) {
+  const entries = servicesText.split(',').map(s => s.trim()).filter(Boolean)
+
+  if (entries.length === 0)
+    return { error: 'Agrega al menos un servicio' }
+
+  for (const entry of entries) {
+    if (!entry.match(/^.+\s*\$[0-9.,]+$/))
+      return { error: `Formato inválido: "${entry}". Usa: Nombre $precio` }
+  }
+
+  await pool.query(
+    `UPDATE businesses SET services_text = $1 WHERE id = $2`,
+    [entries.join(', '), businessId]
+  )
+  revalidatePath('/dashboard/configuracion')
+  return { ok: true }
+}

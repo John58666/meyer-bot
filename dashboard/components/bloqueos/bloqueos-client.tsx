@@ -54,6 +54,15 @@ export function BloqueosClient({ businessId, initialBloqueos }: BloqueosClientPr
   const [horaFin, setHoraFin] = useState('')
   const [motivo, setMotivo] = useState('')
 
+  // Estado edición
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editFecha, setEditFecha] = useState('')
+  const [editTipo, setEditTipo] = useState<'cerrado' | 'horario_especial'>('cerrado')
+  const [editHoraInicio, setEditHoraInicio] = useState('')
+  const [editHoraFin, setEditHoraFin] = useState('')
+  const [editMotivo, setEditMotivo] = useState('')
+  const [editError, setEditError] = useState('')
+
   function resetForm() {
     setFecha('')
     setTipo('cerrado')
@@ -86,6 +95,50 @@ export function BloqueosClient({ businessId, initialBloqueos }: BloqueosClientPr
         setError(result.error)
       } else {
         resetForm()
+        router.refresh()
+      }
+    })
+  }
+
+  function openEdit(b: Bloqueo) {
+    setEditingId(b.id)
+    setEditFecha(b.fecha)
+    setEditTipo(b.tipo)
+    setEditHoraInicio(b.hora_inicio ? b.hora_inicio.substring(0, 5) : '')
+    setEditHoraFin(b.hora_fin ? b.hora_fin.substring(0, 5) : '')
+    setEditMotivo(b.motivo ?? '')
+    setEditError('')
+    setConfirmDeleteId(null)
+  }
+
+  function cancelEdit() {
+    setEditingId(null)
+    setEditError('')
+  }
+
+  function handleEdit(id: number) {
+    setEditError('')
+    if (editTipo === 'horario_especial' && (!editHoraInicio || !editHoraFin)) {
+      setEditError('Ingresa hora de inicio y fin'); return
+    }
+    if (editTipo === 'horario_especial' && editHoraInicio >= editHoraFin) {
+      setEditError('La hora de inicio debe ser menor que la de fin'); return
+    }
+
+    startTransition(async () => {
+      await deleteBloqueo(id, businessId)
+      const result = await createBloqueo({
+        businessId,
+        fecha: editFecha,
+        tipo: editTipo,
+        hora_inicio: editHoraInicio || undefined,
+        hora_fin: editHoraFin || undefined,
+        motivo: editMotivo || undefined,
+      })
+      if (result?.error) {
+        setEditError(result.error)
+      } else {
+        setEditingId(null)
         router.refresh()
       }
     })
@@ -210,45 +263,144 @@ export function BloqueosClient({ businessId, initialBloqueos }: BloqueosClientPr
           initialBloqueos.map(b => (
             <div
               key={b.id}
-              className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-subtle)] px-4 py-3 flex items-start justify-between gap-3"
+              className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-subtle)] px-4 py-3"
             >
-              <div className="space-y-0.5">
-                <p className="text-sm font-medium text-white capitalize">
-                  {fechaNatural(b.fecha)}
-                </p>
-                <p className="text-xs text-[var(--text-secondary)]">
-                  {b.tipo === 'cerrado'
-                    ? 'Día cerrado'
-                    : `Horario especial: ${toAmPm(b.hora_inicio!.substring(0,5))} – ${toAmPm(b.hora_fin!.substring(0,5))}`}
-                </p>
-                {b.motivo && (
-                  <p className="text-xs text-[var(--text-muted)]">{b.motivo}</p>
-                )}
-              </div>
+              {editingId === b.id ? (
+                // ── Modo edición ──
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide">
+                    Editando bloqueo
+                  </p>
 
-              {confirmDeleteId === b.id ? (
-                <div className="flex gap-1.5 shrink-0">
-                  <button
-                    onClick={() => handleDelete(b.id)}
-                    disabled={isPending}
-                    className="rounded-lg bg-[var(--color-danger)] text-white text-xs font-semibold px-3 py-1.5 hover:opacity-90 transition-opacity"
-                  >
-                    Eliminar
-                  </button>
-                  <button
-                    onClick={() => setConfirmDeleteId(null)}
-                    className="rounded-lg border border-[var(--border-subtle)] text-xs text-[var(--text-secondary)] px-3 py-1.5 hover:bg-[var(--bg-primary)] transition-colors"
-                  >
-                    No
-                  </button>
+                  {/* Fecha */}
+                  <div className="space-y-1">
+                    <label className="text-xs text-[var(--text-secondary)]">Fecha</label>
+                    <input
+                      type="date"
+                      min={todayISO()}
+                      value={editFecha}
+                      onChange={e => setEditFecha(e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+
+                  {/* Tipo */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {(['cerrado', 'horario_especial'] as const).map(t => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setEditTipo(t)}
+                        className={cn(
+                          'rounded-lg border py-2 text-sm font-medium transition-colors',
+                          editTipo === t
+                            ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/10 text-[var(--color-accent)]'
+                            : 'border-[var(--border-subtle)] text-[var(--text-secondary)] hover:border-[var(--color-accent)]/50'
+                        )}
+                      >
+                        {t === 'cerrado' ? 'Día cerrado' : 'Horario especial'}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Horas */}
+                  {editTipo === 'horario_especial' && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-xs text-[var(--text-secondary)]">Abre</label>
+                        <input
+                          type="time"
+                          value={editHoraInicio}
+                          onChange={e => setEditHoraInicio(e.target.value)}
+                          className={inputClass}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs text-[var(--text-secondary)]">Cierra</label>
+                        <input
+                          type="time"
+                          value={editHoraFin}
+                          onChange={e => setEditHoraFin(e.target.value)}
+                          className={inputClass}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Motivo */}
+                  <input
+                    type="text"
+                    placeholder="Motivo (opcional)"
+                    value={editMotivo}
+                    onChange={e => setEditMotivo(e.target.value)}
+                    className={inputClass}
+                  />
+
+                  {editError && (
+                    <p className="text-xs text-[var(--color-danger)]">{editError}</p>
+                  )}
+
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      onClick={() => handleEdit(b.id)}
+                      disabled={isPending}
+                      className="flex-1 rounded-full h-9 text-sm font-semibold text-white bg-[var(--color-accent)] hover:opacity-90 transition-opacity disabled:opacity-50"
+                    >
+                      {isPending ? 'Guardando...' : 'Guardar'}
+                    </button>
+                    <button
+                      onClick={cancelEdit}
+                      className="flex-1 rounded-full h-9 text-sm border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <button
-                  onClick={() => setConfirmDeleteId(b.id)}
-                  className="shrink-0 text-[var(--text-muted)] hover:text-[var(--color-danger)] transition-colors p-1"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                // ── Modo lectura ──
+                <div className="flex items-start justify-between gap-3">
+                  <button
+                    onClick={() => openEdit(b)}
+                    className="flex-1 text-left space-y-0.5 hover:opacity-80 transition-opacity"
+                  >
+                    <p className="text-sm font-medium text-white capitalize">
+                      {fechaNatural(b.fecha)}
+                    </p>
+                    <p className="text-xs text-[var(--text-secondary)]">
+                      {b.tipo === 'cerrado'
+                        ? 'Día cerrado'
+                        : `Horario especial: ${toAmPm(b.hora_inicio!.substring(0, 5))} – ${toAmPm(b.hora_fin!.substring(0, 5))}`}
+                    </p>
+                    {b.motivo && (
+                      <p className="text-xs text-[var(--text-muted)]">{b.motivo}</p>
+                    )}
+                  </button>
+
+                  {confirmDeleteId === b.id ? (
+                    <div className="flex gap-1.5 shrink-0">
+                      <button
+                        onClick={() => handleDelete(b.id)}
+                        disabled={isPending}
+                        className="rounded-lg bg-[var(--color-danger)] text-white text-xs font-semibold px-3 py-1.5 hover:opacity-90 transition-opacity"
+                      >
+                        Eliminar
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteId(null)}
+                        className="rounded-lg border border-[var(--border-subtle)] text-xs text-[var(--text-secondary)] px-3 py-1.5 hover:bg-[var(--bg-primary)] transition-colors"
+                      >
+                        No
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmDeleteId(b.id)}
+                      className="shrink-0 text-[var(--text-muted)] hover:text-[var(--color-danger)] transition-colors p-1"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           ))
