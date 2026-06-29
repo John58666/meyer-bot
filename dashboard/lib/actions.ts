@@ -241,3 +241,63 @@ export async function getMetricas(
     return { data: null, error: 'Error cargando métricas' };
   }
 }
+
+// ─── Bloqueos de agenda ───────────────────────────────────────────────────────
+
+export async function getBloqueos(businessId: number) {
+  const { rows } = await pool.query(
+    `SELECT id, fecha::text, tipo, hora_inicio::text, hora_fin::text, motivo
+     FROM schedule_exceptions
+     WHERE business_id = $1
+       AND professional_id IS NULL
+       AND fecha >= (NOW() AT TIME ZONE 'America/Bogota')::date
+     ORDER BY fecha ASC`,
+    [businessId]
+  )
+  return rows
+}
+
+export async function createBloqueo(data: {
+  businessId: number
+  fecha: string
+  tipo: 'cerrado' | 'horario_especial'
+  hora_inicio?: string
+  hora_fin?: string
+  motivo?: string
+}) {
+  const { businessId, fecha, tipo, hora_inicio, hora_fin, motivo } = data
+
+  if (tipo === 'horario_especial') {
+    if (!hora_inicio || !hora_fin)
+      return { error: 'Horario especial requiere hora de inicio y fin' }
+    if (hora_inicio >= hora_fin)
+      return { error: 'La hora de inicio debe ser menor que la hora de fin' }
+  }
+
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' })
+  if (fecha < today) return { error: 'No se pueden bloquear fechas pasadas' }
+
+  await pool.query(
+    `INSERT INTO schedule_exceptions (business_id, fecha, tipo, hora_inicio, hora_fin, motivo)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+    [
+      businessId,
+      fecha,
+      tipo,
+      tipo === 'horario_especial' ? hora_inicio : null,
+      tipo === 'horario_especial' ? hora_fin : null,
+      motivo || null,
+    ]
+  )
+  revalidatePath('/dashboard/semana/bloqueos')
+  return { ok: true }
+}
+
+export async function deleteBloqueo(id: number, businessId: number) {
+  await pool.query(
+    `DELETE FROM schedule_exceptions WHERE id = $1 AND business_id = $2`,
+    [id, businessId]
+  )
+  revalidatePath('/dashboard/semana/bloqueos')
+  return { ok: true }
+}

@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getWeekAppointments } from "@/lib/appointments";
 import { pool } from "@/lib/db";
 import { WeekView } from "@/components/week-view";
@@ -33,7 +34,15 @@ export default async function SemanaPage() {
             Vista semanal de citas
           </p>
         </div>
-        <RefreshButton />
+        <div className="flex items-center gap-2">
+          <Link
+            href="/dashboard/semana/bloqueos"
+            className="text-xs text-[var(--text-secondary)] hover:text-white border border-[var(--border-subtle)] rounded-lg px-3 py-1.5 transition-colors hover:border-[var(--color-accent)]/50"
+          >
+            Bloqueos
+          </Link>
+          <RefreshButton />
+        </div>
       </div>
 
       <SemanaClient multiProfessional={multiProfessional} servicesText={servicesText}>
