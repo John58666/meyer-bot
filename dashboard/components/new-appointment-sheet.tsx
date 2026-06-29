@@ -29,7 +29,7 @@ function parseServices(text: string): string[] {
   if (!text?.trim()) return [];
   return text
     .split(",")
-    .map((s) => s.replace(/\$[\d.,]+/, "").trim())
+    .map((s) => s.trim())
     .filter(Boolean);
 }
 
