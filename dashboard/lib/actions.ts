@@ -320,3 +320,111 @@ export async function updateServicesText(businessId: number, servicesText: strin
   revalidatePath('/dashboard/configuracion')
   return { ok: true }
 }
+
+// ─── CRM — Clientes ──────────────────────────────────────────────────────────
+
+export interface Cliente {
+  id: number;
+  numero: string;
+  nombre: string;
+  total_visitas: number;
+  ultima_visita: string | null;
+  primera_visita: string | null;
+  ultimo_servicio: string | null;
+}
+
+export interface ClienteHistorialItem {
+  id: number;
+  fecha: string;
+  hora: string;
+  servicio: string;
+  estado: string;
+}
+
+export async function getClientes(
+  businessId: number,
+  search?: string
+): Promise<{ clientes: Cliente[]; error: string | null }> {
+  try {
+    const params: (string | number)[] = [businessId];
+    const searchFilter =
+      search && search.trim().length > 0
+        ? ` AND (c.nombre ILIKE $2 OR c.numero ILIKE $2)`
+        : "";
+    if (search && search.trim().length > 0) {
+      params.push(`%${search.trim()}%`);
+    }
+
+    const { rows } = await pool.query<Cliente>(
+      `SELECT
+         c.id,
+         c.numero,
+         c.nombre,
+         c.total_visitas,
+         c.ultima_visita::text,
+         c.primera_visita::text,
+         (
+           SELECT a.servicio
+           FROM appointments a
+           WHERE a.business_id = c.business_id
+             AND a.numero = c.numero
+             AND a.estado = 'Completada'
+           ORDER BY a.fecha DESC, a.hora DESC
+           LIMIT 1
+         ) AS ultimo_servicio
+       FROM customers c
+       WHERE c.business_id = $1
+         ${searchFilter}
+       ORDER BY c.ultima_visita DESC NULLS LAST`,
+      params
+    );
+
+    return { clientes: rows, error: null };
+  } catch (e) {
+    console.error("[getClientes]", e);
+    return { clientes: [], error: "Error cargando clientes" };
+  }
+}
+
+export async function getClienteHistorial(
+  businessId: number,
+  clienteId: number
+): Promise<{
+  cliente: Omit<Cliente, "ultimo_servicio"> | null;
+  historial: ClienteHistorialItem[];
+  error: string | null;
+}> {
+  try {
+    const { rows: clienteRows } = await pool.query(
+      `SELECT id, numero, nombre, total_visitas,
+              ultima_visita::text, primera_visita::text
+       FROM customers
+       WHERE id = $1 AND business_id = $2
+       LIMIT 1`,
+      [clienteId, businessId]
+    );
+
+    if (clienteRows.length === 0) {
+      return { cliente: null, historial: [], error: "Cliente no encontrado" };
+    }
+
+    const { rows: historialRows } = await pool.query<ClienteHistorialItem>(
+      `SELECT id, fecha::text, hora::text, servicio, estado
+       FROM appointments
+       WHERE business_id = $1
+         AND numero = $2
+       ORDER BY fecha DESC, hora DESC
+       LIMIT 50`,
+      [businessId, clienteRows[0].numero]
+    );
+
+    return {
+      cliente: clienteRows[0],
+      historial: historialRows,
+      error: null,
+    };
+  } catch (e) {
+    console.error("[getClienteHistorial]", e);
+    return { cliente: null, historial: [], error: "Error cargando historial" };
+  }
+}
