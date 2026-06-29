@@ -63,10 +63,19 @@ export function ServiciosClient({ businessId, initialServicesText }: ServiciosCl
           )}
         />
         {invalidEntries.length > 0 && (
-          <p className="text-xs text-[var(--color-danger)] flex items-center gap-1">
-            <AlertCircle className="h-3 w-3" />
-            Formato inválido en: {invalidEntries.map(e => `"${e}"`).join(', ')}
-          </p>
+          <div className="text-xs text-[var(--color-danger)] space-y-1">
+            {invalidEntries.map((e, i) => (
+              <p key={i} className="flex items-start gap-1">
+                <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
+                <span>
+                  <span className="font-medium">"{e}"</span>
+                  {!e.includes('$')
+                    ? ' — falta el símbolo $. Ej: ' + e.trim() + ' $10.000'
+                    : ' — el precio debe ser solo números. Ej: ' + e.trim().split('$')[0].trim() + ' $10.000'}
+                </span>
+              </p>
+            ))}
+          </div>
         )}
       </div>
 

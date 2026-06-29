@@ -2,7 +2,7 @@
 
 import { signOut } from "next-auth/react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -10,12 +10,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, Home, Calendar, BarChart2 } from "lucide-react";
+import { LogOut, Home, Calendar, BarChart2, Users, Settings } from "lucide-react";
 
 const bottomNavItems = [
-  { icon: Home, href: "/dashboard", label: "Inicio" },
-  { icon: Calendar, href: "/dashboard/semana", label: "Agenda" },
+  { icon: Home,      href: "/dashboard",          label: "Inicio"   },
+  { icon: Calendar,  href: "/dashboard/semana",   label: "Agenda"   },
   { icon: BarChart2, href: "/dashboard/metricas", label: "Métricas" },
+  { icon: Users,     href: "/dashboard/clientes", label: "Clientes" },
 ];
 
 export function BottomNav() {
@@ -53,6 +54,7 @@ interface TopbarProps {
 }
 
 export function Topbar({ user }: TopbarProps) {
+  const router = useRouter();
   const initials = user.name
     .split(" ")
     .map((n) => n[0])
@@ -85,6 +87,13 @@ export function Topbar({ user }: TopbarProps) {
             <p className="text-sm font-medium">{user.name}</p>
             <p className="text-xs text-[var(--text-muted)]">{user.email}</p>
           </div>
+          <DropdownMenuItem
+            onClick={() => router.push('/dashboard/configuracion')}
+            className="cursor-pointer focus:bg-white/5"
+          >
+            <Settings size={16} className="mr-2" />
+            Configuración
+          </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="text-[var(--color-danger)] cursor-pointer focus:text-[var(--color-danger)] focus:bg-white/5"
