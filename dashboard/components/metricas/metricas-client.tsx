@@ -179,7 +179,7 @@ export default function MetricasClient({
 
   return (
     <div
-      className={`px-4 pb-24 pt-4 max-w-lg mx-auto transition-opacity duration-200 ${
+      className={`px-4 pb-24 pt-4 max-w-lg sm:max-w-none sm:px-8 mx-auto transition-opacity duration-200 ${
         isPending ? 'opacity-50' : 'opacity-100'
       }`}
     >
