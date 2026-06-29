@@ -13,8 +13,8 @@ appointments (id, business_id, professional_id, fecha, hora, nombre, servicio,
               numero, estado, calendar_event_id, created_at, updated_at)
 
 users (id, email, password_hash, name, business_id, role, active,
-       last_login_at, created_at, updated_at)
--- ⚠️ PENDIENTE Sprint 7: ALTER TABLE users ADD COLUMN professional_id INTEGER REFERENCES professionals(id);
+       last_login_at, created_at, updated_at, professional_id)
+-- professional_id agregado en migración 005 (Sprint 7). Nullable.
 
 professionals (id, business_id, name, active, created_at, updated_at)
 
@@ -34,6 +34,8 @@ conversation_history (business_id, numero, messages JSONB, updated_at, expires_a
 - `schedule_text` JSONB: `{"0":{"open":10,"close":17},"1":{"open":9,"close":19},...}`. Clave = día semana 0-6 (domingo=0). Día sin clave = cerrado. Portable a Redis.
 - `services_text` formato: `"Nombre $precio, Nombre2 $precio2"`. Coma como separador. **La coma NO se usa en nombres de servicios.** Parseado en dashboard con split+regex. A futuro: tabla `services` normalizada.
 - `professional_id` en `users`: nullable. NULL = dueño/admin (ve todo). Con valor = barbero (ve solo lo suyo).
+- `schedule_exceptions`: `professional_id IS NULL` = bloqueo del negocio completo. `professional_id = N` = bloqueo del barbero N. El SQL del bot filtra `professional_id IS NULL` hasta implementar multi-barbero.
+- `schedule_exceptions.tipo = 'horario_especial'`: define el rango en que el negocio **ABRE** ese día (no el rango bloqueado). Los slots fuera de ese rango quedan excluidos.
 
 ## Principios no negociables
 - **Una sola DB PostgreSQL** — Supabase+Vercel rechazado por DB separadas.
@@ -56,7 +58,7 @@ conversation_history (business_id, numero, messages JSONB, updated_at, expires_a
 ### Fase 2: Procesamiento
 5. **Procesar Mensaje** → filtro fromMe, filtro multimedia (audio/imagen/video/sticker/doc/ubicación responde mensaje amable y corta), rate limit 50msg/hora, fechas, validación horario, numeroLimpio
 6. **Leer Sesión activa** → lee `sessions` activas (Always Output Data ON)
-7. **Leer Slots Disponibles** → generate_series con schedule_text JSONB; filtra slots pasados; usa `$('Procesar Mensaje').item.json.businessId`. **⚠️ NO consulta `schedule_exceptions` — pendiente implementar.**
+7. **Leer Slots Disponibles** → generate_series con schedule_text JSONB; slots cada **30 minutos** (`hora_close_last_min = close * 60 - 30`); filtra slots pasados; JOIN con `schedule_exceptions` para días cerrados y horarios especiales (`professional_id IS NULL`).
 8. **Formatear Disponibilidad** → agrupa slots + inyecta sesionContexto con fecha/hora PRECALCULADAS
 
 ### Fase 3: IA
@@ -83,14 +85,14 @@ conversation_history (business_id, numero, messages JSONB, updated_at, expires_a
 - **Bottom nav definitivo (4 ítems, no cambiar sin aprobación):**
   - Inicio `/dashboard` ✅
   - Agenda `/dashboard/semana` ✅
-  - Métricas `/dashboard/metricas` (Sprint 7)
+  - Métricas `/dashboard/metricas` ✅ Sprint 7
   - Clientes `/dashboard/clientes` (Sprint CRM)
 
 ### Auth — instancia única
 - Instancia canónica: `@/auth` (dashboard/auth.ts con authorize + JOIN businesses).
 - `dashboard/lib/auth.ts` es re-export limpio de `@/auth`. NO crear segunda instancia.
 - `services_text` NO está en el JWT — se fetcha desde DB en cada page server component que lo necesite, en paralelo con otras queries.
-- JWT contiene: `userId`, `email`, `name`, `businessId`, `businessName`, `multiProfessional`, `role`. **Pendiente Sprint 7:** `professionalId` (nullable).
+- JWT contiene: `userId`, `email`, `name`, `businessId`, `businessName`, `multiProfessional`, `role`. **Pendiente Sprint RBAC:** `professionalId` (nullable).
 
 ### Métricas (Sprint 7) — decisiones de diseño
 - Vista nueva `/dashboard/metricas` (no integrar en Hoy ni en Semana).
@@ -100,13 +102,23 @@ conversation_history (business_id, numero, messages JSONB, updated_at, expires_a
 - Exportación CSV incluida (botón en la vista). Sin integración con Excel/Sheets — CSV es universal.
 - Parser de precio como función utilitaria compartida: `match(/\$[\d.,]+/)`.
 
+### Bloqueo de agenda — IMPLEMENTADO Sprint 8 ✅
+- UI en `/dashboard/semana/bloqueos` — crear y eliminar excepciones (edición en Sprint 9).
+- `Leer Slots Disponibles` hace JOIN con `schedule_exceptions WHERE professional_id IS NULL`.
+- `tipo = 'cerrado'`: ese día no aparece en disponibilidad.
+- `tipo = 'horario_especial'`: ese día solo muestra slots dentro del rango `[hora_inicio, hora_fin)`. Define cuándo ABRE, no qué bloquea.
+- Slots cada 30 minutos desde Sprint 8 (antes 1 hora).
+- Multi-barbero: cuando se implemente, filtrar por `professional_id` del barbero. El schema ya lo soporta.
+- **⚠️ Limitación conocida:** si un `horario_especial` amplía el horario más allá del `schedule_text`, los slots extra no se generan — el `generate_series` parte del horario base. Para MVP (recortes, no ampliaciones) es correcto.
+
 ### RBAC — pendiente, prerrequisito de multi-barbero
 **Estado actual:** `role` viaja en JWT pero nadie lo lee. Un barbero con login puede hacer todo lo que hace el dueño dentro del mismo negocio.
 
 **Orden de sprints obligatorio:**
-1. Sprint 7: Métricas (con `professional_id` en users/JWT preparado)
-2. Sprint RBAC: middleware de rol + filtros en actions + UI condicional por role
-3. Sprint multi-barbero: feature completo
+1. ✅ Sprint 7: Métricas (con `professional_id` en users/JWT preparado)
+2. ✅ Sprint 8: Bloqueos de agenda
+3. Sprint RBAC: middleware de rol + filtros en actions + UI condicional por role
+4. Sprint multi-barbero: feature completo
 
 **Sin RBAC no lanzar multi-barbero.**
 
@@ -120,27 +132,20 @@ conversation_history (business_id, numero, messages JSONB, updated_at, expires_a
 ### Multi-barbero — diseño pendiente
 Un negocio con N barberos = N agendas independientes bajo un mismo techo.
 
-**Ya resuelto:** tabla `professionals` ✅ · `professional_id` en `appointments` ✅ · flag `multi_professional` en JWT/UI ✅ · tabla `schedule_exceptions` ✅
+**Ya resuelto:** tabla `professionals` ✅ · `professional_id` en `appointments` ✅ · flag `multi_professional` en JWT/UI ✅ · tabla `schedule_exceptions` ✅ · bloqueos por `professional_id` soportados en SQL del bot ✅
 
 **Falta diseñar:**
-1. Columna `professional_id` en `users` (qué barbero soy yo) — Sprint 7
-2. `professionalId` en JWT — Sprint 7
-3. Query de disponibilidad por `professional_id`
-4. Flujo de selección de barbero en el bot (2 turnos extra)
-5. UI de agenda por barbero en dashboard
-6. UI de `schedule_exceptions` (barbero bloquea días/horas)
-7. Métricas por barbero
+1. `professionalId` en JWT (columna en `users` ya existe)
+2. Query de disponibilidad por `professional_id`
+3. Flujo de selección de barbero en el bot (2 turnos extra)
+4. UI de agenda por barbero en dashboard
+5. UI de `schedule_exceptions` por barbero (el dueño bloquea días de cada barbero; el barbero bloquea los suyos)
+6. Métricas por barbero
 
 **Bot multi-barbero (1 número WhatsApp por negocio):**
 1. Cliente dice servicio
 2. Bot: "¿Tienes barbero de preferencia? Si no, te asigno el primero disponible 😊"
 3. Si elige → disponibilidad de ese barbero. Si no → slots donde haya al menos un barbero libre.
-
-### Bloqueo de agenda — feature crítica pendiente
-Tabla `schedule_exceptions` ya existe. **El workflow `Leer Slots Disponibles` NO la consulta.** Para implementar:
-1. UI en dashboard para crear excepciones por fecha/rango.
-2. Modificar SQL de `Leer Slots Disponibles` para JOIN/exclusión con `schedule_exceptions`.
-Feature que cruza dashboard + n8n. Sprint dedicado. Alta prioridad de venta.
 
 ### Deploy seguro — protocolo
 ```
@@ -163,6 +168,7 @@ Estrategia de cambio seguro:
 3. Probar ahí
 4. Copiar cambios al workflow real
 5. Exportar JSON antes de tocar nada — rollback = reimportar JSON anterior
+6. **SQL de n8n no verificable via API REST con auth básica — verificar visualmente en la UI.**
 
 ### Exportación de datos
 - CSV en vista de métricas y futura vista de clientes.

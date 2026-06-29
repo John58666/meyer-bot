@@ -104,3 +104,39 @@ Vista nueva con selector de rango Hoy/Semana/Mes via URL params (`?rango=hoy|sem
 - Los componentes de página NO agregan `max-w` ni `mx-auto` propios — el `<main>` del layout maneja el espaciado con `p-6`.
 - DB en Docker: nombre `meyer_db`, usuario `meyer_user`. Conectar: `docker exec -i meyer_postgres su -s /bin/sh postgres -c "psql -U meyer_user -d meyer_db"`.
 - Migración renombrada a `005` porque `004_conversation_history.sql` ya existía — verificar siempre el último número antes de nombrar una migración.
+
+---
+
+## Sprint 8 (Bloqueos de agenda + Slots 30min) — COMPLETADO ✅ (Junio 29, 2026)
+
+### Bloqueos de agenda operativos ✅
+
+**UI en `/dashboard/semana/bloqueos`:**
+- Accesible desde botón "Bloqueos" junto al RefreshButton en `/dashboard/semana`.
+- Crear bloqueo: picker de fecha, toggle Día cerrado / Horario especial, horas si aplica (medias horas), motivo opcional.
+- Listar bloqueos futuros del negocio con fecha en lenguaje natural, tipo, horas AM/PM, motivo.
+- Eliminar con confirmación de un click.
+- Edición pendiente Sprint 9 — workaround: delete + recrear.
+
+**Bot respeta `schedule_exceptions`:**
+- `tipo = 'cerrado'`: día excluido completamente de disponibilidad.
+- `tipo = 'horario_especial'`: solo slots dentro del rango `[hora_inicio, hora_fin)` aparecen. Define cuándo ABRE ese día, no qué bloquea.
+- Filtro `professional_id IS NULL` — multi-barbero pendiente Sprint RBAC+multi-barbero.
+
+**Slots cada 30 minutos:**
+- `generate_series` cambiado de `1 hour` a `30 minutes`.
+- `hora_close_last_min = close * 60 - 30` (en minutos, no horas).
+- Sin impacto en anti-doble-booking ni en parseo de hora del LLM.
+
+**Archivos modificados:**
+- `dashboard/lib/actions.ts` — `getBloqueos`, `createBloqueo`, `deleteBloqueo`
+- `dashboard/components/bloqueos/bloqueos-client.tsx` — nuevo
+- `dashboard/app/(dashboard)/dashboard/semana/bloqueos/page.tsx` — nuevo
+- `dashboard/app/(dashboard)/dashboard/semana/page.tsx` — link a bloqueos
+- n8n nodo `Leer Slots Disponibles` — SQL actualizado manualmente en UI
+
+### Lecciones técnicas Sprint 8
+- SQL de n8n no verificable via API REST con auth básica (`/root/n8n/.env` tiene las credenciales pero la API devuelve `{"message":"..."}` con el endpoint de workflow). Verificar visualmente en la UI.
+- `schedule_exceptions.tipo = 'horario_especial'` define cuándo ABRE, no qué bloquea — documentar bien para evitar confusión en onboarding.
+- Prueba del SQL directamente en psql antes de aplicar en n8n — ahorra un ciclo de debugging.
+- Claude Code puede empezar pasos de código mientras se hacen pruebas manuales en paralelo, siempre que los pasos no dependan entre sí.

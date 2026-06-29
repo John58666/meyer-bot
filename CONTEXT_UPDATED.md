@@ -1,6 +1,6 @@
 # CONTEXT.md — meyer-bot
 
-> Última actualización: 29 de junio de 2026 (post Sprint 7 — Métricas dashboard).
+> Última actualización: 29 de junio de 2026 (post Sprint 8 — Bloqueos de agenda).
 > Documento maestro CORTO. Cualquier chat nuevo lee esto primero.
 > Para profundidad: ver docs/ (ARCHITECTURE.md, SPRINTS.md, RUNBOOK.md, KEY_LEARNINGS.md)
 
@@ -14,8 +14,8 @@ Expansión: Colombia → España, México, EEUU.
 
 ## Estado del producto
 - **Vendible HOY** para negocios de un solo barbero. E2E completo (agendar/cancelar/reagendar).
-- **Dashboard operativo:** título dinámico, calendario clickeable, agendar manual, servicios dinámicos con precios, hora libre, anti-doble-booking, **métricas con selector de rango Hoy/Semana/Mes**.
-- **Bot robusto:** fallback chain multi-LLM, historial conversacional, filtro de audios/multimedia, scope off-topic, rate limit.
+- **Dashboard operativo:** título dinámico, calendario clickeable, agendar manual, servicios dinámicos con precios, hora libre, anti-doble-booking, métricas con selector de rango Hoy/Semana/Mes, **bloqueos de agenda (días cerrados y horarios especiales)**.
+- **Bot robusto:** fallback chain multi-LLM, historial conversacional, filtro de audios/multimedia, scope off-topic, rate limit. **Slots cada 30 minutos. Respeta `schedule_exceptions`.**
 - **NO vendible aún** para multi-barbero (ver ARCHITECTURE.md).
 - Brayan Study (business_id=3, 1 barbero) es el primer cliente real. Operativo.
 
@@ -66,19 +66,21 @@ Contiene: `userId`, `email`, `name`, `businessId`, `businessName`, `multiProfess
 | 👥 | Clientes | `/dashboard/clientes` | Sprint CRM |
 
 ## Archivos clave del dashboard
-- `dashboard/lib/parse-services.ts` — `parsePrice()` y `parseServices()`: parsean `services_text` a Map/array con precios. Función compartida, usar en cualquier feature que necesite precios.
-- `dashboard/lib/actions.ts` — server actions: `createAppointment`, `updateAppointmentStatus`, `rescheduleAppointment`, `getMetricas`.
+- `dashboard/lib/parse-services.ts` — `parsePrice()` y `parseServices()`: parsean `services_text` a Map/array con precios.
+- `dashboard/lib/actions.ts` — server actions: `createAppointment`, `updateAppointmentStatus`, `rescheduleAppointment`, `getMetricas`, `getBloqueos`, `createBloqueo`, `deleteBloqueo`.
 - `dashboard/components/metricas/metricas-client.tsx` — client component métricas con recharts. URL params para rango (`?rango=hoy|semana|mes`).
-- `dashboard/app/(dashboard)/layout.tsx` — layout shell. `<main>` con `ml-0 sm:ml-[56px] mt-[56px] pb-[56px] sm:pb-0 p-6`. Los componentes de página NO deben agregar `max-w` ni `mx-auto` propios — el layout ya maneja el espaciado.
+- `dashboard/components/bloqueos/bloqueos-client.tsx` — client component bloqueos de agenda.
+- `dashboard/app/(dashboard)/dashboard/semana/bloqueos/page.tsx` — página bloqueos, accesible desde botón en `/dashboard/semana`.
+- `dashboard/app/(dashboard)/layout.tsx` — layout shell. `<main>` con `ml-0 sm:ml-[56px] mt-[56px] pb-[56px] sm:pb-0 p-6`. Los componentes de página NO deben agregar `max-w` ni `mx-auto` propios.
 
 ## Backlog priorizado
 
-### 🔴 SPRINT 8 (próximo)
-1. **Bloqueo de agenda** — UI dashboard para crear `schedule_exceptions` + JOIN en `Leer Slots Disponibles` de n8n para respetarlas. Cruza dashboard + n8n. Alta prioridad de venta (dueños lo preguntan activamente).
-2. **Edición de servicios desde dashboard** — UI + validación formato `"Nombre $precio, ..."`. El bot ya lee `services_text` desde DB en cada turno, no requiere cambios en n8n. Usar `parseServices()` de `lib/parse-services.ts`.
+### 🔴 SPRINT 9 (próximo)
+1. **Edición de servicios desde dashboard** — UI + validación formato `"Nombre $precio, ..."`. El bot ya lee `services_text` desde DB, no requiere cambios en n8n. Usar `parseServices()` de `lib/parse-services.ts`.
+2. **Edición de bloqueos** — click en bloqueo existente abre form inline con valores precargados. Delete + recrear es el workaround actual.
 
 ### 🟡 DESPUÉS
-3. **Sprint RBAC** — middleware de rol + `professionalId` en JWT + filtros en actions + UI condicional. **Prerrequisito de multi-barbero.** Sin esto, un barbero con login puede ver/modificar todo el negocio.
+3. **Sprint RBAC** — middleware de rol + `professionalId` en JWT + filtros en actions + UI condicional. **Prerrequisito de multi-barbero.**
 4. **CRM** — upsert automático en `customers` al agendar por WhatsApp + UI `/dashboard/clientes`.
 5. **Fix 3** — verificar sync cancelación WhatsApp → dashboard en producción.
 6. **Notificación al dueño con nombre del cliente** — lookup en `customers` en `Construir Mensajes`.
@@ -87,7 +89,7 @@ Contiene: `userId`, `email`, `name`, `businessId`, `businessName`, `multiProfess
 9. **Password fuerte con Bitwarden.**
 
 ### 🟠 ALTA PRIORIDAD
-10. **Multi-barbero completo** — sprint dedicado DESPUÉS de RBAC (ver ARCHITECTURE.md).
+10. **Multi-barbero completo** — sprint dedicado DESPUÉS de RBAC. Bloqueos por `professional_id` ya soportados en schema y SQL del bot.
 11. **`Confirmar Reagendamiento` → Raw body** — deuda técnica (hoy usa IIFE en bodyParameters).
 12. Gestión de no-shows: cron que auto-completa citas pasadas sin marcar.
 13. `reminder_config` JSONB en businesses: recordatorios configurables por negocio.
@@ -116,16 +118,14 @@ Contiene: `userId`, `email`, `name`, `businessId`, `businessName`, `multiProfess
 - Flujo: claude.ai diseña → Johnander aprueba → Claude Code ejecuta → claude.ai revisa.
 - `/model sonnet` para archivos simples. `/model opus` para lógica compleja.
 - `/clear` en Claude Code entre pasos mayores.
-- **Contradecir si hay error** — en Sprint 6 claude.ai tuvo error de diagnóstico en `revalidatePath` que Claude Code siguió sin verificar. Claude Code verifica rutas/hechos reales antes de asumir que el diagnóstico es correcto.
+- **Contradecir si hay error** — Claude Code verifica rutas/hechos reales antes de asumir que el diagnóstico es correcto.
 - Deploy seguro: migración DB ANTES del deploy de código. Ver RUNBOOK.md y ARCHITECTURE.md.
 
-## Lecciones aprendidas Sprint 7
-- `npm run build` se corre desde `dashboard/`, no desde la raíz del repo. El `package.json` está en `dashboard/`.
-- `git pull` en VPS siempre ANTES de ejecutar la migración — el archivo SQL viaja en el repo.
-- Si VPS tiene cambios locales sin commitear (ej: `package-lock.json` modificado por `npm install`), hacer `git checkout -- <archivo>` antes del pull.
-- `recharts` instalado en Mac via `npm install` — el VPS necesita su propio `npm install` antes del build si el paquete es nuevo.
-- Los componentes de página no deben agregar `max-w` ni `mx-auto` propios — el `<main>` del layout ya maneja el espaciado con `p-6`.
-- DB: nombre es `meyer_db`, usuario `meyer_user`. Conectar via `docker exec -i meyer_postgres su -s /bin/sh postgres -c "psql -U meyer_user -d meyer_db"`.
+## Lecciones aprendidas Sprint 8
+- SQL de n8n no verificable via API REST con auth básica — verificar visualmente en la UI.
+- `schedule_exceptions` con `tipo = 'horario_especial'` define el rango en que el negocio ABRE ese día, no el rango bloqueado.
+- Slots del bot ahora cada 30 minutos. `hora_close_last_min = close * 60 - 30` en minutos para el `generate_series`.
+- Bloqueos `professional_id IS NULL` = negocio completo. Con `professional_id = N` = barbero específico (multi-barbero, pendiente).
 
 ## Seguridad pendiente
 - ⚠️ GOOGLE_PRIVATE_KEY aún en .env del VPS
@@ -136,6 +136,6 @@ Contiene: `userId`, `email`, `name`, `businessId`, `businessName`, `multiProfess
 
 ## Docs de referencia
 - `docs/ARCHITECTURE.md` — schema DB, principios, decisiones arquitectónicas, RBAC, multi-barbero
-- `docs/SPRINTS.md` — historial completo Sprint 0-7
+- `docs/SPRINTS.md` — historial completo Sprint 0-8
 - `docs/RUNBOOK.md` — deploy, psql, n8n, Evolution API, variables de entorno, túnel SSH
 - `docs/KEY_LEARNINGS.md` — lecciones técnicas acumuladas n8n + LLM + Next.js + infra
