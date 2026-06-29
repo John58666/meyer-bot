@@ -63,3 +63,44 @@ Bloque RECOMENDACIONES: puede responder brevemente si el cliente pregunta qué s
 
 ### Fix 3 — Sync cancelación WhatsApp → dashboard
 **En pausa.** El polling 30s + `revalidatePath` ya parecen manejarlo. Pendiente verificación en producción.
+
+---
+
+## Sprint 7 (Métricas Dashboard) — COMPLETADO ✅ (Junio 29, 2026)
+
+### Métricas operativas en `/dashboard/metricas` ✅
+Vista nueva con selector de rango Hoy/Semana/Mes via URL params (`?rango=hoy|semana|mes`).
+
+**KPIs:**
+- Ingresos del período (solo citas `Completada`, parseando precio desde `services_text`)
+- Total citas + cuántas completadas
+- Tasa de cancelación (%)
+- Hora pico (hora con más citas activas)
+
+**Distribución:** barras Completadas / Pendientes / Canceladas con porcentaje visual.
+
+**Historial por día:** BarChart de recharts — muestra ingresos si hay citas Completadas, citas totales si no. Tooltip interactivo. Responsive automático.
+
+**Decisiones de diseño:**
+- Sin género — tabla `customers` existe pero upsert automático no está implementado. Se agrega cuando CRM esté activo.
+- Sin export CSV en MVP — backlog, se agrega sin tocar arquitectura.
+- Ingresos = solo `Completada`. Pendientes no inflan el número. El dueño aprende a marcar citas.
+- Cálculo 100% en JS sobre filas planas — SQL devuelve raw, JS agrega. Más fácil de extender.
+- Query con `($4::int IS NULL OR professional_id = $4)` preparado para multi-barbero/RBAC.
+
+**Archivos creados:**
+- `database/migrations/005_sprint7.sql` — `ALTER TABLE users ADD COLUMN IF NOT EXISTS professional_id INTEGER REFERENCES professionals(id)`
+- `dashboard/lib/parse-services.ts` — `parsePrice()` y `parseServices()` como funciones compartidas
+- `dashboard/lib/actions.ts` — `getMetricas(businessId, rango, professionalId?)` agregado al final
+- `dashboard/app/(dashboard)/dashboard/metricas/page.tsx` — server component con URL params
+- `dashboard/components/metricas/metricas-client.tsx` — client component con recharts
+- Bottom nav y sidebar desktop: ítem Métricas agregado (`BarChart2` de lucide-react)
+
+### Lecciones técnicas Sprint 7
+- `npm run build` se ejecuta desde `dashboard/`, NO desde la raíz del repo.
+- `git pull` en VPS ANTES de ejecutar la migración — el archivo SQL viaja en el repo.
+- Si VPS tiene cambios locales sin commitear (`package-lock.json` por `npm install`): `git checkout -- <archivo>` antes del pull.
+- `recharts` instalado en Mac — VPS necesita `npm install` propio antes del build si el paquete es nuevo.
+- Los componentes de página NO agregan `max-w` ni `mx-auto` propios — el `<main>` del layout maneja el espaciado con `p-6`.
+- DB en Docker: nombre `meyer_db`, usuario `meyer_user`. Conectar: `docker exec -i meyer_postgres su -s /bin/sh postgres -c "psql -U meyer_user -d meyer_db"`.
+- Migración renombrada a `005` porque `004_conversation_history.sql` ya existía — verificar siempre el último número antes de nombrar una migración.
