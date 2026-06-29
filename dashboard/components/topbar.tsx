@@ -81,15 +81,15 @@ export function Topbar({ user }: TopbarProps) {
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align="end"
-          className="bg-[var(--bg-card)] border-[var(--border-subtle)] text-white"
+          className="bg-[var(--bg-card)] border-[var(--border-subtle)] text-white min-w-[180px]"
         >
           <div className="px-3 py-2 border-b border-[var(--border-subtle)]">
             <p className="text-sm font-medium">{user.name}</p>
-            <p className="text-xs text-[var(--text-muted)]">{user.email}</p>
+            <p className="text-xs text-[var(--text-muted)]">{user.businessName}</p>
           </div>
           <DropdownMenuItem
             onClick={() => router.push('/dashboard/configuracion')}
-            className="cursor-pointer focus:bg-white/5"
+            className="sm:hidden cursor-pointer focus:bg-white/5"
           >
             <Settings size={16} className="mr-2" />
             Configuración

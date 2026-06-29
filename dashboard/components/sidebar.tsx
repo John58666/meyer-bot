@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Calendar, BarChart2, Settings, HelpCircle } from "lucide-react";
+import { Home, Calendar, BarChart2, Users, Settings, HelpCircle } from "lucide-react";
 
 const navItems = [
-  { icon: Home, href: "/dashboard", label: "Inicio" },
-  { icon: Calendar, href: "/dashboard/semana", label: "Agenda" },
+  { icon: Home,      href: "/dashboard",          label: "Inicio"   },
+  { icon: Calendar,  href: "/dashboard/semana",   label: "Agenda"   },
   { icon: BarChart2, href: "/dashboard/metricas", label: "Métricas" },
+  { icon: Users,     href: "/dashboard/clientes", label: "Clientes" },
 ];
 
 const bottomItems = [
