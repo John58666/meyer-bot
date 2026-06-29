@@ -10,11 +10,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, Home, Calendar } from "lucide-react";
+import { LogOut, Home, Calendar, BarChart2 } from "lucide-react";
 
 const bottomNavItems = [
   { icon: Home, href: "/dashboard", label: "Inicio" },
-  { icon: Calendar, href: "/dashboard/semana", label: "Semana" },
+  { icon: Calendar, href: "/dashboard/semana", label: "Agenda" },
+  { icon: BarChart2, href: "/dashboard/metricas", label: "Métricas" },
 ];
 
 export function BottomNav() {
