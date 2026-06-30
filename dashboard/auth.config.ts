@@ -19,7 +19,20 @@ export const authConfig = {
         return true;
       }
 
-      return isLoggedIn;
+      if (!isLoggedIn) return false;
+
+      const role = auth?.user?.role;
+      const path = nextUrl.pathname;
+
+      if (path.startsWith("/dashboard/configuracion") && role === "barbero") {
+        return Response.redirect(new URL("/dashboard", nextUrl));
+      }
+
+      if (path.startsWith("/dashboard/equipo") && role !== "owner") {
+        return Response.redirect(new URL("/dashboard", nextUrl));
+      }
+
+      return true;
     },
     async jwt({ token, user }) {
       if (user) {
