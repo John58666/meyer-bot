@@ -507,7 +507,7 @@ export async function createMiembroEquipo(data: {
 
     if (role === "profesional") {
       const count = await client.query(
-        `SELECT COUNT(*) FROM professionals WHERE business_id = $1 AND active = true`,
+        `SELECT COUNT(*) FROM users WHERE business_id = $1 AND role = 'profesional' AND active = true`,
         [businessId]
       );
       if (parseInt(count.rows[0].count) >= max_professionals) {
