@@ -82,43 +82,60 @@ conversation_history (business_id, numero, messages JSONB, updated_at, expires_a
 - URL base: `https://dashboard.zyvenshop.com`
 - Route group `(dashboard)` es invisible en URLs. `app/(dashboard)/dashboard/semana/page.tsx` → URL `/dashboard/semana`.
 - `revalidatePath("/dashboard/semana")` ES CORRECTO. No cambiar a `/semana`.
-- **Bottom nav definitivo (4 ítems, no cambiar sin aprobación):**
-  - Inicio `/dashboard` ✅
-  - Agenda `/dashboard/semana` ✅
-  - Métricas `/dashboard/metricas` ✅ Sprint 7
-  - Clientes `/dashboard/clientes` (Sprint CRM)
+
+### Navegación — arquitectura definitiva
+**Bottom nav móvil (4 ítems fijos, no cambiar sin aprobación):**
+- Inicio `/dashboard` ✅
+- Agenda `/dashboard/semana` ✅
+- Métricas `/dashboard/metricas` ✅
+- Clientes `/dashboard/clientes` ✅ (404 hasta Sprint CRM)
+
+**Sidebar PC:**
+- Nav principal: Inicio, Agenda, Métricas, Clientes
+- Bottom: ⚙️ Configuración, ❓ Ayuda
+
+**Configuración:** accesible desde sidebar PC (engranaje) + dropdown avatar en móvil (`sm:hidden`).
+**Ayuda:** sidebar PC únicamente. En móvil: dentro de `/dashboard/configuracion`.
+**Patrón investigado (Material Design 3, 2026):** bottom nav 3-5 ítems primarios. Config y Ayuda son secundarios → no en bottom nav.
 
 ### Auth — instancia única
 - Instancia canónica: `@/auth` (dashboard/auth.ts con authorize + JOIN businesses).
 - `dashboard/lib/auth.ts` es re-export limpio de `@/auth`. NO crear segunda instancia.
-- `services_text` NO está en el JWT — se fetcha desde DB en cada page server component que lo necesite, en paralelo con otras queries.
+- `services_text` NO está en el JWT — se fetcha desde DB en cada page server component que lo necesite.
 - JWT contiene: `userId`, `email`, `name`, `businessId`, `businessName`, `multiProfessional`, `role`. **Pendiente Sprint RBAC:** `professionalId` (nullable).
+
+### Configuración del negocio — `/dashboard/configuracion`
+- Primer ítem: Servicios (edición de `services_text` con preview en tiempo real).
+- Estructura preparada para crecer: Horarios (`schedule_text`), Datos del negocio, Profesionales (multi-barbero).
+- Validación de formato en cliente Y en servidor (`updateServicesText`).
+- `services_text` formato estricto: `"Nombre $precio, ..."`. Coma = separador. Sin coma en nombres.
 
 ### Métricas (Sprint 7) — decisiones de diseño
 - Vista nueva `/dashboard/metricas` (no integrar en Hoy ni en Semana).
 - Ingresos = solo citas con estado `Completada`. No inflar con Pendientes.
 - Sin métrica de género en MVP — dato no existe hasta implementar upsert de `customers`.
-- Queries con filtro `professional_id` opcional desde el inicio: `AND (professional_id = Y OR Y IS NULL)`. Dueño → Y=NULL → ve todo. Barbero → Y=su ID → ve solo lo suyo.
-- Exportación CSV incluida (botón en la vista). Sin integración con Excel/Sheets — CSV es universal.
+- Queries con filtro `professional_id` opcional desde el inicio: `AND (professional_id = Y OR Y IS NULL)`.
 - Parser de precio como función utilitaria compartida: `match(/\$[\d.,]+/)`.
 
 ### Bloqueo de agenda — IMPLEMENTADO Sprint 8 ✅
-- UI en `/dashboard/semana/bloqueos` — crear y eliminar excepciones (edición en Sprint 9).
+- UI en `/dashboard/semana/bloqueos` — crear, editar inline y eliminar excepciones.
 - `Leer Slots Disponibles` hace JOIN con `schedule_exceptions WHERE professional_id IS NULL`.
 - `tipo = 'cerrado'`: ese día no aparece en disponibilidad.
 - `tipo = 'horario_especial'`: ese día solo muestra slots dentro del rango `[hora_inicio, hora_fin)`. Define cuándo ABRE, no qué bloquea.
 - Slots cada 30 minutos desde Sprint 8 (antes 1 hora).
 - Multi-barbero: cuando se implemente, filtrar por `professional_id` del barbero. El schema ya lo soporta.
-- **⚠️ Limitación conocida:** si un `horario_especial` amplía el horario más allá del `schedule_text`, los slots extra no se generan — el `generate_series` parte del horario base. Para MVP (recortes, no ampliaciones) es correcto.
+- **⚠️ Limitación conocida:** si un `horario_especial` amplía el horario más allá del `schedule_text`, los slots extra no se generan. Para MVP (recortes) es correcto.
 
 ### RBAC — pendiente, prerrequisito de multi-barbero
-**Estado actual:** `role` viaja en JWT pero nadie lo lee. Un barbero con login puede hacer todo lo que hace el dueño dentro del mismo negocio.
+**Estado actual:** `role` viaja en JWT pero nadie lo lee.
 
 **Orden de sprints obligatorio:**
-1. ✅ Sprint 7: Métricas (con `professional_id` en users/JWT preparado)
+1. ✅ Sprint 7: Métricas
 2. ✅ Sprint 8: Bloqueos de agenda
-3. Sprint RBAC: middleware de rol + filtros en actions + UI condicional por role
-4. Sprint multi-barbero: feature completo
+3. ✅ Sprint 9: Configuración + Nav
+4. Sprint RBAC: middleware de rol + filtros en actions + UI condicional
+5. Sprint CRM: tabla customers + UI clientes
+6. Sprint multi-barbero: feature completo
 
 **Sin RBAC no lanzar multi-barbero.**
 
@@ -130,8 +147,6 @@ conversation_history (business_id, numero, messages JSONB, updated_at, expires_a
 | barbero | Solo sus citas y métricas | Marcar completada/cancelada sus citas, bloquear sus propios días |
 
 ### Multi-barbero — diseño pendiente
-Un negocio con N barberos = N agendas independientes bajo un mismo techo.
-
 **Ya resuelto:** tabla `professionals` ✅ · `professional_id` en `appointments` ✅ · flag `multi_professional` en JWT/UI ✅ · tabla `schedule_exceptions` ✅ · bloqueos por `professional_id` soportados en SQL del bot ✅
 
 **Falta diseñar:**
@@ -139,7 +154,7 @@ Un negocio con N barberos = N agendas independientes bajo un mismo techo.
 2. Query de disponibilidad por `professional_id`
 3. Flujo de selección de barbero en el bot (2 turnos extra)
 4. UI de agenda por barbero en dashboard
-5. UI de `schedule_exceptions` por barbero (el dueño bloquea días de cada barbero; el barbero bloquea los suyos)
+5. UI de `schedule_exceptions` por barbero
 6. Métricas por barbero
 
 **Bot multi-barbero (1 número WhatsApp por negocio):**
@@ -158,11 +173,16 @@ Un negocio con N barberos = N agendas independientes bajo un mismo techo.
 ```
 Cuando haya 10+ clientes: usar `pm2 reload` (zero-downtime) en vez de `pm2 restart`.
 
+### Git — reglas de higiene
+- **Nunca `git add -A` sin revisar `git status` primero** — puede incluir archivos huérfanos en la raíz.
+- Siempre verificar con `git diff --staged --name-only` antes de commitear.
+- Commits desde Mac únicamente. Nunca desde VPS.
+- Archivos de documentos temporales (FIX_*.md, etc.) no van al repo — eliminar antes del commit.
+
 ### Staging
 No existe hoy (VPS sin recursos). Implementar cuando se haga upgrade a 4 vCPU / 8GB.
 
 ### n8n — workflow sin staging
-Estrategia de cambio seguro:
 1. Duplicar workflow activo con nombre "TEST - WhatsApp Bot"
 2. Conectar a instancia de prueba (negocio-prueba, business_id=2)
 3. Probar ahí
@@ -170,16 +190,10 @@ Estrategia de cambio seguro:
 5. Exportar JSON antes de tocar nada — rollback = reimportar JSON anterior
 6. **SQL de n8n no verificable via API REST con auth básica — verificar visualmente en la UI.**
 
-### Exportación de datos
-- CSV en vista de métricas y futura vista de clientes.
-- Sin integración directa con Excel/Sheets/Google por ahora — CSV es universal y sin complejidad.
-- Feature aditiva: no modifica tablas, no cambia schema, se agrega en cualquier momento.
-
 ### CRM
 - Tabla `customers` ya existe.
 - Upsert automático al agendar por WhatsApp: actualiza `ultima_visita`, `total_visitas`, `nombre`.
-- UI en dashboard: vista de clientes con historial, notas editables, métricas.
-- Cuando CRM esté activo, agregar métrica de género (la columna `genero` ya existe en `customers`).
+- UI en dashboard: vista `/dashboard/clientes` — activa el botón del nav que hoy apunta a 404.
 
 ### Onboarding de nuevo negocio (proceso manual actual)
 1. SQL INSERT en `businesses` con `schedule_text` JSONB y `services_text` en formato `"Nombre $precio, ..."`
@@ -187,4 +201,4 @@ Estrategia de cambio seguro:
 3. Webhook: `POST /webhook/set/{instance}` → `https://n8n.zyvenshop.com/webhook/whatsapp-bot`
 4. Conectar número escaneando QR en el manager
 5. Crear usuario: `node database/seeds/create-user.js --email=X --password=X --name=X --business_id=N --role=owner`
-6. Título del dashboard, servicios del formulario y UI multi-barbero son automáticos — no requieren código por cliente.
+6. El dueño puede editar servicios desde `/dashboard/configuracion` sin intervención técnica.

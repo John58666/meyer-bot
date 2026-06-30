@@ -35,108 +35,87 @@
 ## Sprint 6 (Fixes Dashboard + Bot hardening) — COMPLETADO ✅ (Junio 28-29, 2026)
 
 ### Fix 1 — Título de pestaña sincronizado ✅
-**Causa raíz:** `app/layout.tsx` importaba `auth` desde `@/lib/auth` (segunda instancia de NextAuth). Dos instancias resuelven la sesión distinto → solo el `<title>` se desincronizaba.
+**Causa raíz:** `app/layout.tsx` importaba `auth` desde `@/lib/auth` (segunda instancia de NextAuth).
 **Fix:** unificación a `@/auth`. `lib/auth.ts` colapsado a re-export limpio.
-**Archivos:** `dashboard/app/layout.tsx`, `dashboard/lib/auth.ts`
 
 ### Fix 2+4 — Calendario clickeable + Agendar cita manual ✅
 - Todos los días reales del calendario son clickeables.
-- Sheet decide según fecha: con citas + hoy/futuro → lista + CTA agendar; vacío + hoy/futuro → empty state + CTA; pasado → sin CTA.
-- `NewAppointmentSheet`: servicios dinámicos con precio desde `services_text`, fecha precargada, hora libre `<input type="time">`, anti-doble-booking con warning suave + override.
-- `services_text` fetchado desde DB en cada page server component en paralelo con otras queries.
-- `revalidatePath("/dashboard/semana")` ES CORRECTO (carpeta `dashboard` es real, `(dashboard)` es route group invisible).
-**Archivos:** `calendar-month-view.tsx`, `day-appointments-sheet.tsx`, `new-appointment-sheet.tsx`, `lib/actions.ts`, `semana/page.tsx`, `semana/SemanaClient.tsx`, `dashboard/page.tsx`
+- `NewAppointmentSheet`: servicios dinámicos con precio desde `services_text`, fecha precargada, hora libre, anti-doble-booking con warning suave + override.
+- `revalidatePath("/dashboard/semana")` ES CORRECTO.
 
 ### Fix — Precios en selector de servicios ✅
-Parser `parseServices` muestra nombre + precio en cada opción. Útil para métricas de ingresos.
-
 ### Fix — Filtro mensajes no-texto ✅
-`Procesar Mensaje` detecta audio/ptt/imagen/video/sticker/documento/ubicación/liveLocation y responde "Solo proceso mensajes de texto 😊 Escríbeme lo que necesitas." Corta el flujo sin pasar por el LLM.
-
 ### Fix — Scope off-topic en system prompt ✅
-Bloque SCOPE: redirige en 1 línea si el mensaje no tiene relación con citas/servicios/horarios/precios.
-Bloque RECOMENDACIONES: puede responder brevemente si el cliente pregunta qué servicio le conviene, basándose ÚNICAMENTE en el catálogo del negocio.
-
-### Correcciones de datos en DB ✅
-- `businesses.name` de Meyer estaba corrupto ("Barbería Brayan") → corregido a "Peluquería Meyer"
-- `businesses.services_text` de Meyer y Brayan tenían formato con guiones → corregido a formato coma-separado
-
-### Fix 3 — Sync cancelación WhatsApp → dashboard
-**En pausa.** El polling 30s + `revalidatePath` ya parecen manejarlo. Pendiente verificación en producción.
+### Fix 3 — Sync cancelación WhatsApp → dashboard — En pausa, pendiente verificación.
 
 ---
 
 ## Sprint 7 (Métricas Dashboard) — COMPLETADO ✅ (Junio 29, 2026)
 
 ### Métricas operativas en `/dashboard/metricas` ✅
-Vista nueva con selector de rango Hoy/Semana/Mes via URL params (`?rango=hoy|semana|mes`).
-
-**KPIs:**
-- Ingresos del período (solo citas `Completada`, parseando precio desde `services_text`)
-- Total citas + cuántas completadas
-- Tasa de cancelación (%)
-- Hora pico (hora con más citas activas)
-
-**Distribución:** barras Completadas / Pendientes / Canceladas con porcentaje visual.
-
-**Historial por día:** BarChart de recharts — muestra ingresos si hay citas Completadas, citas totales si no. Tooltip interactivo. Responsive automático.
-
-**Decisiones de diseño:**
-- Sin género — tabla `customers` existe pero upsert automático no está implementado. Se agrega cuando CRM esté activo.
-- Sin export CSV en MVP — backlog, se agrega sin tocar arquitectura.
-- Ingresos = solo `Completada`. Pendientes no inflan el número. El dueño aprende a marcar citas.
-- Cálculo 100% en JS sobre filas planas — SQL devuelve raw, JS agrega. Más fácil de extender.
-- Query con `($4::int IS NULL OR professional_id = $4)` preparado para multi-barbero/RBAC.
-
-**Archivos creados:**
-- `database/migrations/005_sprint7.sql` — `ALTER TABLE users ADD COLUMN IF NOT EXISTS professional_id INTEGER REFERENCES professionals(id)`
-- `dashboard/lib/parse-services.ts` — `parsePrice()` y `parseServices()` como funciones compartidas
-- `dashboard/lib/actions.ts` — `getMetricas(businessId, rango, professionalId?)` agregado al final
-- `dashboard/app/(dashboard)/dashboard/metricas/page.tsx` — server component con URL params
-- `dashboard/components/metricas/metricas-client.tsx` — client component con recharts
-- Bottom nav y sidebar desktop: ítem Métricas agregado (`BarChart2` de lucide-react)
-
-### Lecciones técnicas Sprint 7
-- `npm run build` se ejecuta desde `dashboard/`, NO desde la raíz del repo.
-- `git pull` en VPS ANTES de ejecutar la migración — el archivo SQL viaja en el repo.
-- Si VPS tiene cambios locales sin commitear (`package-lock.json` por `npm install`): `git checkout -- <archivo>` antes del pull.
-- `recharts` instalado en Mac — VPS necesita `npm install` propio antes del build si el paquete es nuevo.
-- Los componentes de página NO agregan `max-w` ni `mx-auto` propios — el `<main>` del layout maneja el espaciado con `p-6`.
-- DB en Docker: nombre `meyer_db`, usuario `meyer_user`. Conectar: `docker exec -i meyer_postgres su -s /bin/sh postgres -c "psql -U meyer_user -d meyer_db"`.
-- Migración renombrada a `005` porque `004_conversation_history.sql` ya existía — verificar siempre el último número antes de nombrar una migración.
+- Selector Hoy/Semana/Mes via URL params
+- KPIs: Ingresos, Total citas, Tasa cancelación, Hora pico
+- BarChart recharts con historial por día
+- Migración 005: `ALTER TABLE users ADD COLUMN professional_id`
+- `dashboard/lib/parse-services.ts` — funciones compartidas `parsePrice()` y `parseServices()`
 
 ---
 
 ## Sprint 8 (Bloqueos de agenda + Slots 30min) — COMPLETADO ✅ (Junio 29, 2026)
 
 ### Bloqueos de agenda operativos ✅
+- UI en `/dashboard/semana/bloqueos` — crear y eliminar excepciones
+- Bot respeta `schedule_exceptions` — `tipo='cerrado'` excluye día, `tipo='horario_especial'` recorta horario
+- Slots del bot cada 30 minutos (`generate_series` 30min, `hora_close_last_min = close * 60 - 30`)
+- Filtro `professional_id IS NULL` — multi-barbero pendiente
 
-**UI en `/dashboard/semana/bloqueos`:**
-- Accesible desde botón "Bloqueos" junto al RefreshButton en `/dashboard/semana`.
-- Crear bloqueo: picker de fecha, toggle Día cerrado / Horario especial, horas si aplica (medias horas), motivo opcional.
-- Listar bloqueos futuros del negocio con fecha en lenguaje natural, tipo, horas AM/PM, motivo.
-- Eliminar con confirmación de un click.
-- Edición pendiente Sprint 9 — workaround: delete + recrear.
-
-**Bot respeta `schedule_exceptions`:**
-- `tipo = 'cerrado'`: día excluido completamente de disponibilidad.
-- `tipo = 'horario_especial'`: solo slots dentro del rango `[hora_inicio, hora_fin)` aparecen. Define cuándo ABRE ese día, no qué bloquea.
-- Filtro `professional_id IS NULL` — multi-barbero pendiente Sprint RBAC+multi-barbero.
-
-**Slots cada 30 minutos:**
-- `generate_series` cambiado de `1 hour` a `30 minutes`.
-- `hora_close_last_min = close * 60 - 30` (en minutos, no horas).
-- Sin impacto en anti-doble-booking ni en parseo de hora del LLM.
-
-**Archivos modificados:**
-- `dashboard/lib/actions.ts` — `getBloqueos`, `createBloqueo`, `deleteBloqueo`
-- `dashboard/components/bloqueos/bloqueos-client.tsx` — nuevo
-- `dashboard/app/(dashboard)/dashboard/semana/bloqueos/page.tsx` — nuevo
-- `dashboard/app/(dashboard)/dashboard/semana/page.tsx` — link a bloqueos
-- n8n nodo `Leer Slots Disponibles` — SQL actualizado manualmente en UI
+**Archivos:** `dashboard/lib/actions.ts` (+3 actions), `dashboard/components/bloqueos/bloqueos-client.tsx`, `dashboard/app/(dashboard)/dashboard/semana/bloqueos/page.tsx`, `dashboard/app/(dashboard)/dashboard/semana/page.tsx`, n8n nodo `Leer Slots Disponibles` (SQL manual)
 
 ### Lecciones técnicas Sprint 8
-- SQL de n8n no verificable via API REST con auth básica (`/root/n8n/.env` tiene las credenciales pero la API devuelve `{"message":"..."}` con el endpoint de workflow). Verificar visualmente en la UI.
-- `schedule_exceptions.tipo = 'horario_especial'` define cuándo ABRE, no qué bloquea — documentar bien para evitar confusión en onboarding.
-- Prueba del SQL directamente en psql antes de aplicar en n8n — ahorra un ciclo de debugging.
-- Claude Code puede empezar pasos de código mientras se hacen pruebas manuales en paralelo, siempre que los pasos no dependan entre sí.
+- SQL de n8n no verificable via API REST — verificar visualmente en la UI.
+- `horario_especial` define cuándo ABRE, no qué bloquea.
+- Probar SQL directamente en psql antes de aplicar en n8n.
+
+---
+
+## Sprint 9 (Configuración servicios + Nav responsive) — COMPLETADO ✅ (Junio 29, 2026)
+
+### Configuración de servicios en `/dashboard/configuracion` ✅
+- Textarea con formato `"Nombre $precio, ..."` + preview en tiempo real con `parseServices()`
+- Validación inline: error por línea con mensaje contextual y ejemplo corregido
+- Botón "Guardar cambios" deshabilitado si hay errores de formato
+- Server action `updateServicesText` con validación servidor
+- Estructura de página preparada para crecer (Horarios, Datos del negocio en sprints futuros)
+
+### Edición inline de bloqueos ✅
+- Click en bloqueo existente → form inline precargado con sus valores
+- Guardar = delete + insert (más simple que UPDATE, mismo resultado)
+- Cancelar restaura el card de solo lectura
+
+### Nav responsive completo ✅
+**Bottom nav móvil — 4 ítems:** Inicio | Agenda | Métricas | Clientes
+- Clientes apunta a `/dashboard/clientes` (404 hasta Sprint CRM)
+
+**Sidebar PC — sin cambios en estructura:**
+- Nav: Inicio, Agenda, Métricas, Clientes
+- Bottom: ⚙️ Configuración, ❓ Ayuda
+
+**Dropdown avatar:**
+- Muestra nombre + nombre del negocio (quitado email)
+- Configuración visible solo en móvil (`sm:hidden`)
+- `min-w-[180px]` para evitar texto cortado
+- Navegación con `router.push` (client-side, no hard navigation)
+
+**Archivos modificados:**
+- `dashboard/lib/actions.ts` — `updateServicesText`
+- `dashboard/components/configuracion/servicios-client.tsx` — nuevo
+- `dashboard/app/(dashboard)/dashboard/configuracion/page.tsx` — nuevo
+- `dashboard/components/bloqueos/bloqueos-client.tsx` — edición inline
+- `dashboard/components/sidebar.tsx` — Clientes en navItems
+- `dashboard/components/topbar.tsx` — 4 ítems bottom nav, dropdown limpio
+
+### Lecciones técnicas Sprint 9
+- `git add -A` en raíz del repo incluye archivos huérfanos. Siempre revisar `git status` y `git diff --staged --name-only` antes de commitear.
+- `window.location.href` funciona pero hace hard navigation. Usar `router.push` de `useRouter`.
+- `sm:hidden` oculta en ≥640px y muestra en móvil — patrón correcto para ítems solo móvil.
+- Bottom nav con ítem a 404 es preferible a slot vacío — el usuario ve el nav completo.
