@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { pool } from "@/lib/db";
 import { auth } from "@/auth";
 import { parsePrice } from "@/lib/parse-services";
+import bcrypt from "bcryptjs";
 
 // ── Crear cita manual ─────────────────────────────────────────
 export async function createAppointment(formData: FormData) {
@@ -425,6 +426,154 @@ export async function getClientes(
   } catch (e) {
     console.error("[getClientes]", e);
     return { clientes: [], error: "Error cargando clientes" };
+  }
+}
+
+// ─── Equipo — Gestión de usuarios (solo owner) ────────────────────────────────
+
+export interface MiembroEquipo {
+  id: number;
+  email: string;
+  name: string;
+  role: string;
+  active: boolean;
+  professional_id: number | null;
+  professional_name: string | null;
+  created_at: string;
+}
+
+export async function getEquipo(
+  businessId: number
+): Promise<{ miembros: MiembroEquipo[]; error: string | null }> {
+  try {
+    const { rows } = await pool.query<MiembroEquipo>(
+      `SELECT u.id, u.email, u.name, u.role, u.active, u.professional_id,
+              p.name AS professional_name, u.created_at::text
+       FROM users u
+       LEFT JOIN professionals p ON p.id = u.professional_id
+       WHERE u.business_id = $1
+       ORDER BY
+         CASE u.role WHEN 'owner' THEN 0 WHEN 'admin' THEN 1 ELSE 2 END,
+         u.name ASC`,
+      [businessId]
+    );
+    return { miembros: rows, error: null };
+  } catch (e) {
+    console.error("[getEquipo]", e);
+    return { miembros: [], error: "Error cargando el equipo" };
+  }
+}
+
+export async function createMiembroEquipo(data: {
+  businessId: number;
+  email: string;
+  password: string;
+  name: string;
+  role: "admin" | "barbero";
+}) {
+  const session = await auth();
+  if (!session || session.user.role !== "owner") {
+    return { error: "No autorizado" };
+  }
+
+  const { businessId, email, password, name, role } = data;
+
+  if (!email || !password || !name) {
+    return { error: "Todos los campos son obligatorios" };
+  }
+  if (password.length < 8) {
+    return { error: "La contraseña debe tener al menos 8 caracteres" };
+  }
+  if (!["admin", "barbero"].includes(role)) {
+    return { error: "Role inválido" };
+  }
+
+  const client = await pool.connect();
+  try {
+    const existing = await client.query(
+      `SELECT id FROM users WHERE LOWER(email) = LOWER($1)`,
+      [email]
+    );
+    if (existing.rows.length > 0) {
+      return { error: "Ya existe un usuario con ese email" };
+    }
+
+    const passwordHash = await bcrypt.hash(password, 12);
+
+    await client.query("BEGIN");
+
+    let professionalId: number | null = null;
+
+    if (role === "barbero") {
+      const profResult = await client.query(
+        `INSERT INTO professionals (business_id, name, active)
+         VALUES ($1, $2, true)
+         RETURNING id`,
+        [businessId, name.trim()]
+      );
+      professionalId = profResult.rows[0].id;
+    }
+
+    await client.query(
+      `INSERT INTO users (email, password_hash, name, business_id, role, professional_id, active)
+       VALUES ($1, $2, $3, $4, $5, $6, true)`,
+      [email.toLowerCase().trim(), passwordHash, name.trim(), businessId, role, professionalId]
+    );
+
+    await client.query("COMMIT");
+    revalidatePath("/dashboard/equipo");
+    return { ok: true };
+  } catch (e) {
+    await client.query("ROLLBACK");
+    console.error("[createMiembroEquipo]", e);
+    return { error: "Error creando el usuario" };
+  } finally {
+    client.release();
+  }
+}
+
+export async function toggleMiembroActivo(userId: number, businessId: number, active: boolean) {
+  const session = await auth();
+  if (!session || session.user.role !== "owner") {
+    return { error: "No autorizado" };
+  }
+
+  try {
+    await pool.query(
+      `UPDATE users SET active = $1, updated_at = NOW() WHERE id = $2 AND business_id = $3`,
+      [active, userId, businessId]
+    );
+    revalidatePath("/dashboard/equipo");
+    return { ok: true };
+  } catch (e) {
+    console.error("[toggleMiembroActivo]", e);
+    return { error: "Error actualizando el usuario" };
+  }
+}
+
+export async function updateMiembroRole(
+  userId: number,
+  businessId: number,
+  role: "admin" | "barbero"
+) {
+  const session = await auth();
+  if (!session || session.user.role !== "owner") {
+    return { error: "No autorizado" };
+  }
+  if (!["admin", "barbero"].includes(role)) {
+    return { error: "Role inválido" };
+  }
+
+  try {
+    await pool.query(
+      `UPDATE users SET role = $1, updated_at = NOW() WHERE id = $2 AND business_id = $3`,
+      [role, userId, businessId]
+    );
+    revalidatePath("/dashboard/equipo");
+    return { ok: true };
+  } catch (e) {
+    console.error("[updateMiembroRole]", e);
+    return { error: "Error actualizando el role" };
   }
 }
 
