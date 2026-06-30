@@ -498,6 +498,37 @@ export async function createMiembroEquipo(data: {
       return { error: "Ya existe un usuario con ese email" };
     }
 
+    // ── Validación de límite de plan ──────────────────────────
+    const limits = await client.query(
+      `SELECT max_professionals, max_admins FROM businesses WHERE id = $1`,
+      [businessId]
+    );
+    const { max_professionals, max_admins } = limits.rows[0];
+
+    if (role === "barbero") {
+      const count = await client.query(
+        `SELECT COUNT(*) FROM professionals WHERE business_id = $1 AND active = true`,
+        [businessId]
+      );
+      if (parseInt(count.rows[0].count) >= max_professionals) {
+        return {
+          error: `Tu plan permite hasta ${max_professionals} barberos. Contacta a soporte para ampliar tu plan.`,
+        };
+      }
+    }
+
+    if (role === "admin") {
+      const count = await client.query(
+        `SELECT COUNT(*) FROM users WHERE business_id = $1 AND role = 'admin' AND active = true`,
+        [businessId]
+      );
+      if (parseInt(count.rows[0].count) >= max_admins) {
+        return {
+          error: `Tu plan permite hasta ${max_admins} administrador${max_admins !== 1 ? "es" : ""}. Contacta a soporte para ampliar tu plan.`,
+        };
+      }
+    }
+
     const passwordHash = await bcrypt.hash(password, 12);
 
     await client.query("BEGIN");
