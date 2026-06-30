@@ -28,6 +28,7 @@ export const authConfig = {
         token.businessName = ((user as { businessName?: string }).businessName) ?? "";
         token.multiProfessional = ((user as { multiProfessional?: boolean }).multiProfessional) ?? false;
         token.role = ((user as { role?: string }).role) ?? "owner";
+        token.professionalId = ((user as { professionalId?: number | null }).professionalId) ?? null;
       }
       return token;
     },
@@ -38,6 +39,7 @@ export const authConfig = {
         session.user.businessName = token.businessName as string;
         session.user.multiProfessional = token.multiProfessional as boolean;
         session.user.role = token.role as string;
+        session.user.professionalId = token.professionalId as number | null;
       }
       return session;
     },

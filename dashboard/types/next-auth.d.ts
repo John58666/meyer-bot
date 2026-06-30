@@ -7,6 +7,7 @@ declare module "next-auth" {
     businessName?: string;
     multiProfessional?: boolean;
     role?: string;
+    professionalId?: number | null;
   }
 
   interface Session {
@@ -18,6 +19,7 @@ declare module "next-auth" {
       businessName: string;
       multiProfessional: boolean;
       role: string;
+      professionalId: number | null;
     };
   }
 }
@@ -29,5 +31,6 @@ declare module "next-auth/jwt" {
     businessName: string;
     multiProfessional: boolean;
     role: string;
+    professionalId: number | null;
   }
 }

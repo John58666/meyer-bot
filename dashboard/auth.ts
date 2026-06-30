@@ -20,7 +20,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         try {
           const result = await pool.query(
-            `SELECT u.id, u.email, u.password_hash, u.name, u.business_id, u.role,
+            `SELECT u.id, u.email, u.password_hash, u.name, u.business_id, u.role, u.professional_id,
                     b.name AS business_name, b.multi_professional
              FROM users u
              LEFT JOIN businesses b ON b.id = u.business_id
@@ -52,6 +52,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             businessName: user.business_name ?? "",
             multiProfessional: user.multi_professional ?? false,
             role: user.role,
+            professionalId: user.professional_id ?? null,
           };
         } catch (err) {
           console.error("Auth error:", err);
