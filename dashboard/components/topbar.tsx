@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, Home, Calendar, BarChart2, Users, Settings } from "lucide-react";
+import { LogOut, Home, Calendar, BarChart2, Users, Settings, UserCog } from "lucide-react";
 
 const bottomNavItems = [
   { icon: Home,      href: "/dashboard",          label: "Inicio"   },
@@ -51,9 +51,10 @@ interface TopbarProps {
     email: string;
     businessName: string;
   };
+  role: string;
 }
 
-export function Topbar({ user }: TopbarProps) {
+export function Topbar({ user, role }: TopbarProps) {
   const router = useRouter();
   const initials = user.name
     .split(" ")
@@ -87,13 +88,24 @@ export function Topbar({ user }: TopbarProps) {
             <p className="text-sm font-medium">{user.name}</p>
             <p className="text-xs text-[var(--text-muted)]">{user.businessName}</p>
           </div>
-          <DropdownMenuItem
-            onClick={() => router.push('/dashboard/configuracion')}
-            className="sm:hidden cursor-pointer focus:bg-white/5"
-          >
-            <Settings size={16} className="mr-2" />
-            Configuración
-          </DropdownMenuItem>
+          {role !== "barbero" && (
+            <DropdownMenuItem
+              onClick={() => router.push('/dashboard/configuracion')}
+              className="sm:hidden cursor-pointer focus:bg-white/5"
+            >
+              <Settings size={16} className="mr-2" />
+              Configuración
+            </DropdownMenuItem>
+          )}
+          {role === "owner" && (
+            <DropdownMenuItem
+              onClick={() => router.push('/dashboard/equipo')}
+              className="sm:hidden cursor-pointer focus:bg-white/5"
+            >
+              <UserCog size={16} className="mr-2" />
+              Equipo
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="text-[var(--color-danger)] cursor-pointer focus:text-[var(--color-danger)] focus:bg-white/5"

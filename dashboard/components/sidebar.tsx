@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Calendar, BarChart2, Users, Settings, HelpCircle } from "lucide-react";
+import { Home, Calendar, BarChart2, Users, Settings, HelpCircle, UserCog } from "lucide-react";
 
 const navItems = [
   { icon: Home,      href: "/dashboard",          label: "Inicio"   },
@@ -11,13 +11,22 @@ const navItems = [
   { icon: Users,     href: "/dashboard/clientes", label: "Clientes" },
 ];
 
-const bottomItems = [
-  { icon: Settings, href: "/dashboard/configuracion", label: "Configuración" },
-  { icon: HelpCircle, href: "/dashboard/help", label: "Ayuda" },
-];
+interface SidebarProps {
+  role: string;
+}
 
-export function Sidebar() {
+export function Sidebar({ role }: SidebarProps) {
   const pathname = usePathname();
+
+  const bottomItems = [
+    ...(role !== "barbero"
+      ? [{ icon: Settings, href: "/dashboard/configuracion", label: "Configuración" }]
+      : []),
+    ...(role === "owner"
+      ? [{ icon: UserCog, href: "/dashboard/equipo", label: "Equipo" }]
+      : []),
+    { icon: HelpCircle, href: "/dashboard/help", label: "Ayuda" },
+  ];
 
   return (
     <aside className="hidden sm:flex fixed left-0 top-[56px] bottom-0 w-[56px] bg-[var(--bg-sidebar)] border-r border-[var(--border-subtle)] flex-col items-center py-3 z-40 overflow-hidden">
