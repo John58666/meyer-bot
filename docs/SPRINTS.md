@@ -20,7 +20,7 @@
 - Polling 30s, responsive mobile-first
 
 ## Sprint 4 — COMPLETADO ✅ (Junio 12, 2026)
-**Dashboard:** Vista Calendario en /semana (toggle Lista/Calendario), grilla de mes con puntos de color por estado, bottom sheet por día con acciones, nombre del negocio dinámico en topbar, multi-barbero UI condicional por flag `multi_professional`, script `create-user.js`.
+**Dashboard:** Vista Calendario en /semana (toggle Lista/Calendario), grilla de mes con puntos de color por estado, bottom sheet por día con acciones, nombre del negocio dinámico en topbar, multi-profesional UI condicional por flag `multi_professional`, script `create-user.js`.
 **Workflows:** workflow genérico multi-tenant, cancelación/reagendamiento E2E con tabla `sessions`, recordatorios 24h multi-tenant.
 **DB:** columnas `services_text`, `prompt_name`, `schedule_text JSONB` en `businesses`; tablas `sessions`, `customers`, `schedule_exceptions`.
 
@@ -67,7 +67,7 @@
 - UI en `/dashboard/semana/bloqueos` — crear y eliminar excepciones
 - Bot respeta `schedule_exceptions` — `tipo='cerrado'` excluye día, `tipo='horario_especial'` recorta horario
 - Slots del bot cada 30 minutos (`generate_series` 30min, `hora_close_last_min = close * 60 - 30`)
-- Filtro `professional_id IS NULL` — multi-barbero pendiente
+- Filtro `professional_id IS NULL` — multi-profesional pendiente
 
 **Archivos:** `dashboard/lib/actions.ts` (+3 actions), `dashboard/components/bloqueos/bloqueos-client.tsx`, `dashboard/app/(dashboard)/dashboard/semana/bloqueos/page.tsx`, `dashboard/app/(dashboard)/dashboard/semana/page.tsx`, n8n nodo `Leer Slots Disponibles` (SQL manual)
 

@@ -36,8 +36,8 @@
 - **NextAuth v5 con dos instancias** rompe la sesión silenciosamente. Una sola instancia canónica: `@/auth`. `lib/auth.ts` como re-export limpio si se necesita por compatibilidad.
 - **`services_text`** no está en el JWT. Fetcharlo desde DB en cada page server component que lo necesite, en paralelo con otras queries (`Promise.all`).
 - **bcryptjs** sobre bcrypt (pure JS, sin compilación nativa). **AUTH_SECRET** no NEXTAUTH_SECRET en NextAuth v5.
-- **`professional_id` en queries de métricas:** diseñar con filtro opcional `AND (professional_id = Y OR Y IS NULL)` desde el inicio. Dueño → Y=NULL → ve todo. Barbero → Y=su ID. Una sola query, dos vistas.
-- **RBAC no existe hoy.** `role` viaja en JWT pero nadie lo lee. Prerrequisito de multi-barbero.
+- **`professional_id` en queries de métricas:** diseñar con filtro opcional `AND (professional_id = Y OR Y IS NULL)` desde el inicio. Dueño → Y=NULL → ve todo. Profesional → Y=su ID. Una sola query, dos vistas.
+- **RBAC implementado en Sprint 11.** Roles: owner, admin, profesional. Prerrequisito de multi-profesional cumplido.
 
 ## PostgreSQL
 

@@ -387,7 +387,7 @@ export async function getClientes(
       params.push(`%${search.trim()}%`);
     }
 
-    // Barbero: solo clientes con al menos una cita atendida por él
+    // Profesional: solo clientes con al menos una cita atendida por él
     const profFilter = professionalId != null
       ? ` AND EXISTS (
            SELECT 1 FROM appointments a
@@ -469,7 +469,7 @@ export async function createMiembroEquipo(data: {
   email: string;
   password: string;
   name: string;
-  role: "admin" | "barbero";
+  role: "admin" | "profesional";
 }) {
   const session = await auth();
   if (!session || session.user.role !== "owner") {
@@ -484,7 +484,7 @@ export async function createMiembroEquipo(data: {
   if (password.length < 8) {
     return { error: "La contraseña debe tener al menos 8 caracteres" };
   }
-  if (!["admin", "barbero"].includes(role)) {
+  if (!["admin", "profesional"].includes(role)) {
     return { error: "Role inválido" };
   }
 
@@ -505,14 +505,14 @@ export async function createMiembroEquipo(data: {
     );
     const { max_professionals, max_admins } = limits.rows[0];
 
-    if (role === "barbero") {
+    if (role === "profesional") {
       const count = await client.query(
         `SELECT COUNT(*) FROM professionals WHERE business_id = $1 AND active = true`,
         [businessId]
       );
       if (parseInt(count.rows[0].count) >= max_professionals) {
         return {
-          error: `Tu plan permite hasta ${max_professionals} barberos. Contacta a soporte para ampliar tu plan.`,
+          error: `Tu plan permite hasta ${max_professionals} profesionales. Contacta a soporte para ampliar tu plan.`,
         };
       }
     }
@@ -535,7 +535,7 @@ export async function createMiembroEquipo(data: {
 
     let professionalId: number | null = null;
 
-    if (role === "barbero") {
+    if (role === "profesional") {
       const profResult = await client.query(
         `INSERT INTO professionals (business_id, name, active)
          VALUES ($1, $2, true)
@@ -585,13 +585,13 @@ export async function toggleMiembroActivo(userId: number, businessId: number, ac
 export async function updateMiembroRole(
   userId: number,
   businessId: number,
-  role: "admin" | "barbero"
+  role: "admin" | "profesional"
 ) {
   const session = await auth();
   if (!session || session.user.role !== "owner") {
     return { error: "No autorizado" };
   }
-  if (!["admin", "barbero"].includes(role)) {
+  if (!["admin", "profesional"].includes(role)) {
     return { error: "Role inválido" };
   }
 

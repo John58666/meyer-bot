@@ -18,7 +18,7 @@ interface Props {
 const ROLE_LABELS: Record<string, string> = {
   owner: "Dueño",
   admin: "Administrador",
-  barbero: "Barbero",
+  profesional: "Profesional",
 };
 
 export function EquipoClient({ miembros: initialMiembros, businessId }: Props) {
@@ -31,7 +31,7 @@ export function EquipoClient({ miembros: initialMiembros, businessId }: Props) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState("");
-  const [role, setRole] = useState<"admin" | "barbero">("barbero");
+  const [role, setRole] = useState<"admin" | "profesional">("profesional");
 
   // ── Edición inline ──────────────────────────────────────────
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -73,7 +73,7 @@ export function EquipoClient({ miembros: initialMiembros, businessId }: Props) {
     setEmail("");
     setPassword("");
     setName("");
-    setRole("barbero");
+    setRole("profesional");
     setShowForm(false);
     window.location.reload();
   }
@@ -113,7 +113,7 @@ export function EquipoClient({ miembros: initialMiembros, businessId }: Props) {
     );
   }
 
-  async function handleRoleChange(userId: number, newRole: "admin" | "barbero") {
+  async function handleRoleChange(userId: number, newRole: "admin" | "profesional") {
     await updateMiembroRole(userId, businessId, newRole);
     setMiembros((prev) =>
       prev.map((m) => (m.id === userId ? { ...m, role: newRole } : m))
@@ -184,10 +184,10 @@ export function EquipoClient({ miembros: initialMiembros, businessId }: Props) {
             <label className="text-xs text-[var(--text-secondary)] block mb-1">Role</label>
             <select
               value={role}
-              onChange={(e) => setRole(e.target.value as "admin" | "barbero")}
+              onChange={(e) => setRole(e.target.value as "admin" | "profesional")}
               className="w-full px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-white text-sm focus:outline-none focus:border-[var(--color-accent)]/60"
             >
-              <option value="barbero">Barbero</option>
+              <option value="profesional">Profesional</option>
               <option value="admin">Administrador</option>
             </select>
           </div>
@@ -235,10 +235,10 @@ export function EquipoClient({ miembros: initialMiembros, businessId }: Props) {
                     ) : (
                       <select
                         value={m.role}
-                        onChange={(e) => handleRoleChange(m.id, e.target.value as "admin" | "barbero")}
+                        onChange={(e) => handleRoleChange(m.id, e.target.value as "admin" | "profesional")}
                         className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1 text-white text-xs"
                       >
-                        <option value="barbero">Barbero</option>
+                        <option value="profesional">Profesional</option>
                         <option value="admin">Administrador</option>
                       </select>
                     )}

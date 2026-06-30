@@ -13,11 +13,11 @@ Expansión: Colombia → España, México, EEUU.
 > **Naming:** "meyer-bot" es el repo interno. "Meyer" es también un negocio real (business_id=1). Pendiente desacoplar branding (ver Backlog).
 
 ## Estado del producto
-- **Vendible HOY** para negocios de un solo barbero. E2E completo (agendar/cancelar/reagendar).
+- **Vendible HOY** para negocios de un solo profesional. E2E completo (agendar/cancelar/reagendar).
 - **Dashboard operativo:** título dinámico, calendario clickeable, agendar manual, servicios dinámicos con precios, hora libre, anti-doble-booking, métricas con selector de rango Hoy/Semana/Mes, bloqueos de agenda (días cerrados y horarios especiales), edición de servicios desde dashboard, nav responsive móvil 4 ítems, **CRM /dashboard/clientes operativo**.
 - **Bot robusto:** fallback chain multi-LLM, historial conversacional, filtro de audios/multimedia, scope off-topic, rate limit. Slots cada 30 minutos. Respeta `schedule_exceptions`. **Upsert automático en `customers` al agendar.**
-- **NO vendible aún** para multi-barbero (ver ARCHITECTURE.md).
-- Brayan Study (business_id=3, 1 barbero) es el primer cliente real. Operativo.
+- **NO vendible aún** para multi-profesional (ver ARCHITECTURE.md).
+- Brayan Study (business_id=3, 1 profesional) es el primer cliente real. Operativo.
 
 ## Stack
 - **n8n 2.10.3** self-hosted — orquestador workflows. Migrar a Node.js+BullMQ+Redis antes de 30 clientes.
@@ -103,10 +103,10 @@ Contiene: `userId`, `email`, `name`, `businessId`, `businessName`, `multiProfess
 ## Backlog priorizado
 
 ### 🔴 SPRINT 11 (próximo)
-1. **RBAC** — middleware de rol + `professionalId` en JWT + filtros en actions + UI condicional. **Prerrequisito de multi-barbero. Implementar justo antes del primer cliente multi-barbero.**
+1. **RBAC** — middleware de rol + `professionalId` en JWT + filtros en actions + UI condicional. **Prerrequisito de multi-profesional. Implementar justo antes del primer cliente multi-profesional.**
 
 ### 🟡 DESPUÉS
-2. **Multi-barbero completo** — sprint dedicado DESPUÉS de RBAC.
+2. **Multi-profesional completo** — sprint dedicado DESPUÉS de RBAC.
 3. **Fix 3** — verificar sync cancelación WhatsApp → dashboard en producción.
 4. **Notificación al dueño con nombre del cliente** — lookup en `customers` en `Construir Mensajes`.
 5. **Quitar branding "Meyer"** del producto.
@@ -170,7 +170,7 @@ Contiene: `userId`, `email`, `name`, `businessId`, `businessName`, `multiProfess
 - NUNCA subir .env ni secrets a Git
 
 ## Docs de referencia
-- `docs/ARCHITECTURE.md` — schema DB, principios, decisiones arquitectónicas, RBAC, multi-barbero
+- `docs/ARCHITECTURE.md` — schema DB, principios, decisiones arquitectónicas, RBAC, multi-profesional
 - `docs/SPRINTS.md` — historial completo Sprint 0-10
 - `docs/RUNBOOK.md` — deploy, psql, n8n, Evolution API, variables de entorno, túnel SSH
 - `docs/KEY_LEARNINGS.md` — lecciones técnicas acumuladas n8n + LLM + Next.js + infra

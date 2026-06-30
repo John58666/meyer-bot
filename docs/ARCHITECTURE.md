@@ -33,8 +33,8 @@ conversation_history (business_id, numero, messages JSONB, updated_at, expires_a
 ### Notas de schema
 - `schedule_text` JSONB: `{"0":{"open":10,"close":17},"1":{"open":9,"close":19},...}`. Clave = día semana 0-6 (domingo=0). Día sin clave = cerrado. Portable a Redis.
 - `services_text` formato: `"Nombre $precio, Nombre2 $precio2"`. Coma como separador. **La coma NO se usa en nombres de servicios.** Parseado en dashboard con split+regex. A futuro: tabla `services` normalizada.
-- `professional_id` en `users`: nullable. NULL = dueño/admin (ve todo). Con valor = barbero (ve solo lo suyo).
-- `schedule_exceptions`: `professional_id IS NULL` = bloqueo del negocio completo. `professional_id = N` = bloqueo del barbero N. El SQL del bot filtra `professional_id IS NULL` hasta implementar multi-barbero.
+- `professional_id` en `users`: nullable. NULL = dueño/admin (ve todo). Con valor = profesional (ve solo lo suyo).
+- `schedule_exceptions`: `professional_id IS NULL` = bloqueo del negocio completo. `professional_id = N` = bloqueo del profesional N. El SQL del bot filtra `professional_id IS NULL` hasta implementar multi-profesional.
 - `schedule_exceptions.tipo = 'horario_especial'`: define el rango en que el negocio **ABRE** ese día (no el rango bloqueado). Los slots fuera de ese rango quedan excluidos.
 
 ## Principios no negociables
@@ -106,7 +106,7 @@ conversation_history (business_id, numero, messages JSONB, updated_at, expires_a
 
 ### Configuración del negocio — `/dashboard/configuracion`
 - Primer ítem: Servicios (edición de `services_text` con preview en tiempo real).
-- Estructura preparada para crecer: Horarios (`schedule_text`), Datos del negocio, Profesionales (multi-barbero).
+- Estructura preparada para crecer: Horarios (`schedule_text`), Datos del negocio, Profesionales (multi-profesional).
 - Validación de formato en cliente Y en servidor (`updateServicesText`).
 - `services_text` formato estricto: `"Nombre $precio, ..."`. Coma = separador. Sin coma en nombres.
 
@@ -123,10 +123,10 @@ conversation_history (business_id, numero, messages JSONB, updated_at, expires_a
 - `tipo = 'cerrado'`: ese día no aparece en disponibilidad.
 - `tipo = 'horario_especial'`: ese día solo muestra slots dentro del rango `[hora_inicio, hora_fin)`. Define cuándo ABRE, no qué bloquea.
 - Slots cada 30 minutos desde Sprint 8 (antes 1 hora).
-- Multi-barbero: cuando se implemente, filtrar por `professional_id` del barbero. El schema ya lo soporta.
+- Multi-profesional: cuando se implemente, filtrar por `professional_id` del profesional. El schema ya lo soporta.
 - **⚠️ Limitación conocida:** si un `horario_especial` amplía el horario más allá del `schedule_text`, los slots extra no se generan. Para MVP (recortes) es correcto.
 
-### RBAC — pendiente, prerrequisito de multi-barbero
+### RBAC — pendiente, prerrequisito de multi-profesional
 **Estado actual:** `role` viaja en JWT pero nadie lo lee.
 
 **Orden de sprints obligatorio:**
@@ -135,32 +135,32 @@ conversation_history (business_id, numero, messages JSONB, updated_at, expires_a
 3. ✅ Sprint 9: Configuración + Nav
 4. Sprint RBAC: middleware de rol + filtros en actions + UI condicional
 5. Sprint CRM: tabla customers + UI clientes
-6. Sprint multi-barbero: feature completo
+6. Sprint multi-profesional: feature completo
 
-**Sin RBAC no lanzar multi-barbero.**
+**Sin RBAC no lanzar multi-profesional.**
 
 **Modelo de permisos a implementar:**
 | Role | Ve | Puede hacer |
 |------|-----|-------------|
 | owner | Todo el negocio | Configurar servicios, horarios, profesionales, bloquear cualquier agenda |
 | admin | Todo el negocio | Lo mismo excepto configuración de precios/horarios |
-| barbero | Solo sus citas y métricas | Marcar completada/cancelada sus citas, bloquear sus propios días |
+| profesional | Solo sus citas y métricas | Marcar completada/cancelada sus citas, bloquear sus propios días |
 
-### Multi-barbero — diseño pendiente
+### Multi-profesional — diseño pendiente
 **Ya resuelto:** tabla `professionals` ✅ · `professional_id` en `appointments` ✅ · flag `multi_professional` en JWT/UI ✅ · tabla `schedule_exceptions` ✅ · bloqueos por `professional_id` soportados en SQL del bot ✅
 
 **Falta diseñar:**
 1. `professionalId` en JWT (columna en `users` ya existe)
 2. Query de disponibilidad por `professional_id`
-3. Flujo de selección de barbero en el bot (2 turnos extra)
-4. UI de agenda por barbero en dashboard
-5. UI de `schedule_exceptions` por barbero
-6. Métricas por barbero
+3. Flujo de selección de profesional en el bot (2 turnos extra)
+4. UI de agenda por profesional en dashboard
+5. UI de `schedule_exceptions` por profesional
+6. Métricas por profesional
 
-**Bot multi-barbero (1 número WhatsApp por negocio):**
+**Bot multi-profesional (1 número WhatsApp por negocio):**
 1. Cliente dice servicio
-2. Bot: "¿Tienes barbero de preferencia? Si no, te asigno el primero disponible 😊"
-3. Si elige → disponibilidad de ese barbero. Si no → slots donde haya al menos un barbero libre.
+2. Bot: "¿Tienes profesional de preferencia? Si no, te asigno el primero disponible 😊"
+3. Si elige → disponibilidad de ese profesional. Si no → slots donde haya al menos un profesional libre.
 
 ### Deploy seguro — protocolo
 ```

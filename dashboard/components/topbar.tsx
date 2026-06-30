@@ -88,7 +88,7 @@ export function Topbar({ user, role }: TopbarProps) {
             <p className="text-sm font-medium">{user.name}</p>
             <p className="text-xs text-[var(--text-muted)]">{user.businessName}</p>
           </div>
-          {role !== "barbero" && (
+          {role !== "profesional" && (
             <DropdownMenuItem
               onClick={() => router.push('/dashboard/configuracion')}
               className="sm:hidden cursor-pointer focus:bg-white/5"

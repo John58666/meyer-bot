@@ -19,7 +19,7 @@ export function Sidebar({ role }: SidebarProps) {
   const pathname = usePathname();
 
   const bottomItems = [
-    ...(role !== "barbero"
+    ...(role !== "profesional"
       ? [{ icon: Settings, href: "/dashboard/configuracion", label: "Configuración" }]
       : []),
     ...(role === "owner"

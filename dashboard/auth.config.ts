@@ -24,7 +24,7 @@ export const authConfig = {
       const role = auth?.user?.role;
       const path = nextUrl.pathname;
 
-      if (path.startsWith("/dashboard/configuracion") && role === "barbero") {
+      if (path.startsWith("/dashboard/configuracion") && role === "profesional") {
         return Response.redirect(new URL("/dashboard", nextUrl));
       }
 
