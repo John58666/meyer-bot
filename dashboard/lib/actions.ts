@@ -37,6 +37,19 @@ export async function createAppointment(formData: FormData) {
        VALUES ($1, $2, $3::time, $4, $5, $6, 'Pendiente')`,
       [businessId, fecha, hora, nombre.trim(), servicio, numero.trim()]
     );
+
+    await pool.query(
+      `INSERT INTO customers (business_id, numero, nombre, primera_visita, ultima_visita, total_visitas)
+       VALUES ($1, $2, $3, NOW(), NOW(), 1)
+       ON CONFLICT (business_id, numero)
+       DO UPDATE SET
+         nombre        = EXCLUDED.nombre,
+         ultima_visita = NOW(),
+         total_visitas = customers.total_visitas + 1,
+         updated_at    = NOW()`,
+      [businessId, numero.trim(), nombre.trim()]
+    );
+
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/semana");
     return { success: true };
