@@ -19,7 +19,8 @@ export async function GET(request: Request) {
   }
 
   const businessId = session.user.businessId
+  const professionalId = session.user.professionalId
 
-  const appointments = await getAppointmentsByMonth(businessId, year, month)
+  const appointments = await getAppointmentsByMonth(businessId, year, month, professionalId)
   return NextResponse.json({ appointments })
 }

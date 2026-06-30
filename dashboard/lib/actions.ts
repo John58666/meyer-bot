@@ -67,13 +67,23 @@ export async function updateAppointmentStatus(
   const session = await auth();
   if (!session) throw new Error("No autenticado");
 
+  const professionalId = session.user.professionalId;
+  const params: (string | number)[] = [estado, id, session.user.businessId];
+  const profFilter = professionalId != null
+    ? ` AND professional_id = $${params.push(professionalId)}`
+    : '';
+
   try {
-    await pool.query(
+    const { rowCount } = await pool.query(
       `UPDATE appointments
        SET estado = $1, updated_at = NOW()
-       WHERE id = $2 AND business_id = $3`,
-      [estado, id, session.user.businessId]
+       WHERE id = $2 AND business_id = $3
+       ${profFilter}`,
+      params
     );
+    if (rowCount === 0) {
+      return { error: "No tienes permiso para modificar esta cita" };
+    }
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/semana");
     return { success: true };
@@ -257,15 +267,20 @@ export async function getMetricas(
 
 // ─── Bloqueos de agenda ───────────────────────────────────────────────────────
 
-export async function getBloqueos(businessId: number) {
+export async function getBloqueos(businessId: number, professionalId?: number | null) {
+  const params: number[] = [businessId];
+  const profCondition = professionalId != null
+    ? `professional_id = $${params.push(professionalId)}`
+    : `professional_id IS NULL`;
+
   const { rows } = await pool.query(
     `SELECT id, fecha::text, tipo, hora_inicio::text, hora_fin::text, motivo
      FROM schedule_exceptions
      WHERE business_id = $1
-       AND professional_id IS NULL
+       AND ${profCondition}
        AND fecha >= (NOW() AT TIME ZONE 'America/Bogota')::date
      ORDER BY fecha ASC`,
-    [businessId]
+    params
   )
   return rows
 }
@@ -277,8 +292,9 @@ export async function createBloqueo(data: {
   hora_inicio?: string
   hora_fin?: string
   motivo?: string
+  professionalId?: number | null
 }) {
-  const { businessId, fecha, tipo, hora_inicio, hora_fin, motivo } = data
+  const { businessId, fecha, tipo, hora_inicio, hora_fin, motivo, professionalId } = data
 
   if (tipo === 'horario_especial') {
     if (!hora_inicio || !hora_fin)
@@ -291,8 +307,8 @@ export async function createBloqueo(data: {
   if (fecha < today) return { error: 'No se pueden bloquear fechas pasadas' }
 
   await pool.query(
-    `INSERT INTO schedule_exceptions (business_id, fecha, tipo, hora_inicio, hora_fin, motivo)
-     VALUES ($1, $2, $3, $4, $5, $6)`,
+    `INSERT INTO schedule_exceptions (business_id, fecha, tipo, hora_inicio, hora_fin, motivo, professional_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
     [
       businessId,
       fecha,
@@ -300,6 +316,7 @@ export async function createBloqueo(data: {
       tipo === 'horario_especial' ? hora_inicio : null,
       tipo === 'horario_especial' ? hora_fin : null,
       motivo || null,
+      professionalId ?? null,
     ]
   )
   revalidatePath('/dashboard/semana/bloqueos')
@@ -356,17 +373,28 @@ export interface ClienteHistorialItem {
 
 export async function getClientes(
   businessId: number,
-  search?: string
+  search?: string,
+  professionalId?: number | null
 ): Promise<{ clientes: Cliente[]; error: string | null }> {
   try {
     const params: (string | number)[] = [businessId];
     const searchFilter =
       search && search.trim().length > 0
-        ? ` AND (c.nombre ILIKE $2 OR c.numero ILIKE $2)`
+        ? ` AND (c.nombre ILIKE $${params.length + 1} OR c.numero ILIKE $${params.length + 1})`
         : "";
     if (search && search.trim().length > 0) {
       params.push(`%${search.trim()}%`);
     }
+
+    // Barbero: solo clientes con al menos una cita atendida por él
+    const profFilter = professionalId != null
+      ? ` AND EXISTS (
+           SELECT 1 FROM appointments a
+           WHERE a.business_id = c.business_id
+             AND a.numero = c.numero
+             AND a.professional_id = $${params.push(professionalId)}
+         )`
+      : "";
 
     const { rows } = await pool.query<Cliente>(
       `SELECT
@@ -388,6 +416,7 @@ export async function getClientes(
        FROM customers c
        WHERE c.business_id = $1
          ${searchFilter}
+         ${profFilter}
        ORDER BY c.ultima_visita DESC NULLS LAST`,
       params
     );

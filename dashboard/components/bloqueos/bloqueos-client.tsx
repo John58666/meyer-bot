@@ -38,10 +38,11 @@ type Bloqueo = {
 
 interface BloqueosClientProps {
   businessId: number
+  professionalId?: number | null
   initialBloqueos: Bloqueo[]
 }
 
-export function BloqueosClient({ businessId, initialBloqueos }: BloqueosClientProps) {
+export function BloqueosClient({ businessId, professionalId, initialBloqueos }: BloqueosClientProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
@@ -85,6 +86,7 @@ export function BloqueosClient({ businessId, initialBloqueos }: BloqueosClientPr
     startTransition(async () => {
       const result = await createBloqueo({
         businessId,
+        professionalId,
         fecha,
         tipo,
         hora_inicio: horaInicio || undefined,
@@ -129,6 +131,7 @@ export function BloqueosClient({ businessId, initialBloqueos }: BloqueosClientPr
       await deleteBloqueo(id, businessId)
       const result = await createBloqueo({
         businessId,
+        professionalId,
         fecha: editFecha,
         tipo: editTipo,
         hora_inicio: editHoraInicio || undefined,

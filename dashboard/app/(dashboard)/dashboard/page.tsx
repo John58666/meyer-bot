@@ -13,10 +13,14 @@ export default async function DashboardPage() {
   if (!session) redirect("/login");
 
   const businessId = session.user.businessId;
+  const professionalId = session.user.professionalId;
   const multiProfessional = session.user.multiProfessional;
 
   const [[appointments, stats], bizRows] = await Promise.all([
-    Promise.all([getTodayAppointments(businessId), getTodayStats(businessId)]),
+    Promise.all([
+      getTodayAppointments(businessId, professionalId),
+      getTodayStats(businessId, professionalId),
+    ]),
     pool
       .query("SELECT services_text FROM businesses WHERE id = $1", [businessId])
       .then((r) => r.rows),

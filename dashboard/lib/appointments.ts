@@ -25,23 +25,36 @@ function getTodayBogota(): string {
 }
 
 export async function getTodayAppointments(
-  businessId: number
+  businessId: number,
+  professionalId?: number | null
 ): Promise<Appointment[]> {
   const today = getTodayBogota();
+  const params: (string | number)[] = [today, businessId];
+  const profFilter = professionalId != null
+    ? ` AND professional_id = $${params.push(professionalId)}`
+    : '';
+
   const { rows } = await pool.query(
     `SELECT id, hora::text, nombre, servicio, numero, estado, created_at::text
      FROM appointments
      WHERE fecha = $1 AND business_id = $2
+     ${profFilter}
      ORDER BY hora ASC`,
-    [today, businessId]
+    params
   );
   return rows;
 }
 
 export async function getTodayStats(
-  businessId: number
+  businessId: number,
+  professionalId?: number | null
 ): Promise<TodayStats> {
   const today = getTodayBogota();
+  const params: (string | number)[] = [today, businessId];
+  const profFilter = professionalId != null
+    ? ` AND professional_id = $${params.push(professionalId)}`
+    : '';
+
   const { rows } = await pool.query(
     `SELECT
        COUNT(*)                                    AS total,
@@ -49,8 +62,9 @@ export async function getTodayStats(
        COUNT(*) FILTER (WHERE estado = 'Completada')  AS completadas,
        COUNT(*) FILTER (WHERE estado = 'Cancelada')   AS canceladas
      FROM appointments
-     WHERE fecha = $1 AND business_id = $2`,
-    [today, businessId]
+     WHERE fecha = $1 AND business_id = $2
+     ${profFilter}`,
+    params
   );
   return {
     total:       parseInt(rows[0].total),
@@ -77,20 +91,28 @@ export type AppointmentRow = {
 export async function getAppointmentsByMonth(
   businessId: number,
   year: number,
-  month: number
+  month: number,
+  professionalId?: number | null
 ): Promise<AppointmentRow[]> {
+  const params: number[] = [businessId, year, month];
+  const profFilter = professionalId != null
+    ? ` AND professional_id = $${params.push(professionalId)}`
+    : '';
+
   const { rows } = await pool.query(
     `SELECT id, fecha::text, hora::text, nombre, servicio, numero, estado
      FROM appointments WHERE business_id = $1
      AND DATE_TRUNC('month', fecha) = DATE_TRUNC('month', make_date($2, $3, 1))
+     ${profFilter}
      ORDER BY fecha, hora`,
-    [businessId, year, month]
+    params
   );
   return rows;
 }
 
 export async function getWeekAppointments(
-  businessId: number
+  businessId: number,
+  professionalId?: number | null
 ): Promise<Record<string, WeekAppointment[]>> {
   // Lunes de esta semana en Bogotá
   const nowBogota = new Date(
@@ -107,13 +129,19 @@ export async function getWeekAppointments(
 
   const toISO = (d: Date) => d.toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
 
+  const params: (string | number)[] = [toISO(monday), toISO(sunday), businessId];
+  const profFilter = professionalId != null
+    ? ` AND professional_id = $${params.push(professionalId)}`
+    : '';
+
   const { rows } = await pool.query(
     `SELECT id, fecha::text, hora::text, nombre, servicio, numero, estado, created_at::text
      FROM appointments
      WHERE fecha BETWEEN $1 AND $2
        AND business_id = $3
+       ${profFilter}
      ORDER BY fecha ASC, hora ASC`,
-    [toISO(monday), toISO(sunday), businessId]
+    params
   );
 
   // Agrupar por fecha

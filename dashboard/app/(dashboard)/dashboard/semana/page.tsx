@@ -12,8 +12,9 @@ export default async function SemanaPage() {
   if (!session) redirect("/login");
 
   const businessId = session.user.businessId;
+  const professionalId = session.user.professionalId;
   const multiProfessional = session.user.multiProfessional;
-  const appointments = await getWeekAppointments(businessId);
+  const appointments = await getWeekAppointments(businessId, professionalId);
 
   const { rows: bizRows } = await pool.query(
     "SELECT services_text FROM businesses WHERE id = $1",

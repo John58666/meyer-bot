@@ -19,8 +19,9 @@ export default async function MetricasPage({ searchParams }: Props) {
       : 'semana';
 
   const businessId = Number(session.user.businessId);
+  const professionalId = session.user.professionalId;
 
-  const { data, error } = await getMetricas(businessId, rango);
+  const { data, error } = await getMetricas(businessId, rango, professionalId);
 
   return (
     <MetricasClient

@@ -8,7 +8,8 @@ export default async function ClientesPage() {
   if (!session) redirect("/login");
 
   const businessId = session.user.businessId;
-  const { clientes, error } = await getClientes(businessId);
+  const professionalId = session.user.professionalId;
+  const { clientes, error } = await getClientes(businessId, undefined, professionalId);
 
   return (
     <div>

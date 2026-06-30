@@ -10,7 +10,8 @@ export default async function BloqueosPage() {
   if (!session) redirect('/login')
 
   const businessId = session.user.businessId
-  const bloqueos = await getBloqueos(businessId)
+  const professionalId = session.user.professionalId
+  const bloqueos = await getBloqueos(businessId, professionalId)
 
   return (
     <div>
@@ -29,7 +30,7 @@ export default async function BloqueosPage() {
         </div>
       </div>
 
-      <BloqueosClient businessId={businessId} initialBloqueos={bloqueos} />
+      <BloqueosClient businessId={businessId} professionalId={professionalId} initialBloqueos={bloqueos} />
     </div>
   )
 }
