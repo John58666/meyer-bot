@@ -577,6 +577,78 @@ export async function updateMiembroRole(
   }
 }
 
+export async function updateMiembroCredenciales(data: {
+  userId: number;
+  businessId: number;
+  name: string;
+  email: string;
+  password?: string;
+}) {
+  const session = await auth();
+  if (!session || session.user.role !== "owner") {
+    return { error: "No autorizado" };
+  }
+
+  const { userId, businessId, name, email, password } = data;
+
+  if (!name?.trim() || !email?.trim()) {
+    return { error: "Nombre y email son obligatorios" };
+  }
+  if (password && password.length < 8) {
+    return { error: "La contraseña debe tener al menos 8 caracteres" };
+  }
+
+  try {
+    const existing = await pool.query(
+      `SELECT id FROM users WHERE LOWER(email) = LOWER($1) AND id != $2`,
+      [email, userId]
+    );
+    if (existing.rows.length > 0) {
+      return { error: "Ese email ya está en uso por otro usuario" };
+    }
+
+    const target = await pool.query(
+      `SELECT role, professional_id FROM users WHERE id = $1 AND business_id = $2`,
+      [userId, businessId]
+    );
+    if (target.rows.length === 0) {
+      return { error: "Usuario no encontrado" };
+    }
+    if (target.rows[0].role === "owner") {
+      return { error: "No se puede editar al dueño desde aquí" };
+    }
+
+    if (password) {
+      const passwordHash = await bcrypt.hash(password, 12);
+      await pool.query(
+        `UPDATE users SET name = $1, email = $2, password_hash = $3, updated_at = NOW()
+         WHERE id = $4 AND business_id = $5`,
+        [name.trim(), email.toLowerCase().trim(), passwordHash, userId, businessId]
+      );
+    } else {
+      await pool.query(
+        `UPDATE users SET name = $1, email = $2, updated_at = NOW()
+         WHERE id = $3 AND business_id = $4`,
+        [name.trim(), email.toLowerCase().trim(), userId, businessId]
+      );
+    }
+
+    const professionalId = target.rows[0].professional_id;
+    if (professionalId) {
+      await pool.query(
+        `UPDATE professionals SET name = $1, updated_at = NOW() WHERE id = $2`,
+        [name.trim(), professionalId]
+      );
+    }
+
+    revalidatePath("/dashboard/equipo");
+    return { ok: true };
+  } catch (e) {
+    console.error("[updateMiembroCredenciales]", e);
+    return { error: "Error actualizando el usuario" };
+  }
+}
+
 export async function getClienteHistorial(
   businessId: number,
   clienteId: number

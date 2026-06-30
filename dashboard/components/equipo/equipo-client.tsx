@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { useState, Fragment } from "react";
+import { Eye, EyeOff, Pencil, X } from "lucide-react";
 import {
   createMiembroEquipo,
   toggleMiembroActivo,
   updateMiembroRole,
+  updateMiembroCredenciales,
   type MiembroEquipo,
 } from "@/lib/actions";
 
@@ -32,6 +33,29 @@ export function EquipoClient({ miembros: initialMiembros, businessId }: Props) {
   const [name, setName] = useState("");
   const [role, setRole] = useState<"admin" | "barbero">("barbero");
 
+  // ── Edición inline ──────────────────────────────────────────
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editPassword, setEditPassword] = useState("");
+  const [editShowPassword, setEditShowPassword] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [editSubmitting, setEditSubmitting] = useState(false);
+
+  function startEdit(m: MiembroEquipo) {
+    setEditingId(m.id);
+    setEditName(m.name);
+    setEditEmail(m.email);
+    setEditPassword("");
+    setEditShowPassword(false);
+    setEditError(null);
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditError(null);
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setFormError(null);
@@ -52,6 +76,34 @@ export function EquipoClient({ miembros: initialMiembros, businessId }: Props) {
     setRole("barbero");
     setShowForm(false);
     window.location.reload();
+  }
+
+  async function handleEditSubmit(e: React.FormEvent, userId: number) {
+    e.preventDefault();
+    setEditError(null);
+    setEditSubmitting(true);
+
+    const result = await updateMiembroCredenciales({
+      userId,
+      businessId,
+      name: editName,
+      email: editEmail,
+      password: editPassword || undefined,
+    });
+
+    setEditSubmitting(false);
+
+    if (result.error) {
+      setEditError(result.error);
+      return;
+    }
+
+    setMiembros((prev) =>
+      prev.map((m) =>
+        m.id === userId ? { ...m, name: editName, email: editEmail } : m
+      )
+    );
+    setEditingId(null);
   }
 
   async function handleToggleActive(userId: number, current: boolean) {
@@ -160,47 +212,143 @@ export function EquipoClient({ miembros: initialMiembros, businessId }: Props) {
               <th className="text-left px-4 py-3 text-[var(--text-secondary)] font-medium hidden sm:table-cell">Email</th>
               <th className="text-left px-4 py-3 text-[var(--text-secondary)] font-medium">Role</th>
               <th className="text-left px-4 py-3 text-[var(--text-secondary)] font-medium">Estado</th>
+              <th className="text-left px-4 py-3 text-[var(--text-secondary)] font-medium"></th>
             </tr>
           </thead>
           <tbody>
             {miembros.map((m, i) => (
-              <tr
-                key={m.id}
-                className={i !== miembros.length - 1 ? "border-b border-[var(--border-subtle)]" : ""}
-              >
-                <td className="px-4 py-3 text-white font-medium">{m.name}</td>
-                <td className="px-4 py-3 text-[var(--text-secondary)] hidden sm:table-cell">{m.email}</td>
-                <td className="px-4 py-3">
-                  {m.role === "owner" ? (
-                    <span className="text-[var(--text-secondary)]">{ROLE_LABELS[m.role]}</span>
-                  ) : (
-                    <select
-                      value={m.role}
-                      onChange={(e) => handleRoleChange(m.id, e.target.value as "admin" | "barbero")}
-                      className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1 text-white text-xs"
-                    >
-                      <option value="barbero">Barbero</option>
-                      <option value="admin">Administrador</option>
-                    </select>
-                  )}
-                </td>
-                <td className="px-4 py-3">
-                  {m.role === "owner" ? (
-                    <span className="text-green-400 text-xs">Activo</span>
-                  ) : (
-                    <button
-                      onClick={() => handleToggleActive(m.id, m.active)}
-                      className={`text-xs px-2 py-0.5 rounded-full font-medium transition-colors ${
-                        m.active
-                          ? "bg-green-500/10 text-green-400 hover:bg-green-500/20"
-                          : "bg-red-500/10 text-red-400 hover:bg-red-500/20"
-                      }`}
-                    >
-                      {m.active ? "Activo" : "Inactivo"}
-                    </button>
-                  )}
-                </td>
-              </tr>
+              <Fragment key={m.id}>
+                <tr
+                  className={
+                    editingId === m.id
+                      ? "border-b border-[var(--border-subtle)]"
+                      : i !== miembros.length - 1
+                      ? "border-b border-[var(--border-subtle)]"
+                      : ""
+                  }
+                >
+                  <td className="px-4 py-3 text-white font-medium">{m.name}</td>
+                  <td className="px-4 py-3 text-[var(--text-secondary)] hidden sm:table-cell">{m.email}</td>
+                  <td className="px-4 py-3">
+                    {m.role === "owner" ? (
+                      <span className="text-[var(--text-secondary)]">{ROLE_LABELS[m.role]}</span>
+                    ) : (
+                      <select
+                        value={m.role}
+                        onChange={(e) => handleRoleChange(m.id, e.target.value as "admin" | "barbero")}
+                        className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1 text-white text-xs"
+                      >
+                        <option value="barbero">Barbero</option>
+                        <option value="admin">Administrador</option>
+                      </select>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {m.role === "owner" ? (
+                      <span className="text-green-400 text-xs">Activo</span>
+                    ) : (
+                      <button
+                        onClick={() => handleToggleActive(m.id, m.active)}
+                        className={`text-xs px-2 py-0.5 rounded-full font-medium transition-colors ${
+                          m.active
+                            ? "bg-green-500/10 text-green-400 hover:bg-green-500/20"
+                            : "bg-red-500/10 text-red-400 hover:bg-red-500/20"
+                        }`}
+                      >
+                        {m.active ? "Activo" : "Inactivo"}
+                      </button>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {m.role !== "owner" && (
+                      <button
+                        onClick={() => (editingId === m.id ? cancelEdit() : startEdit(m))}
+                        className="text-[var(--text-secondary)] hover:text-white transition-colors"
+                        title="Editar credenciales"
+                      >
+                        {editingId === m.id ? <X size={16} /> : <Pencil size={16} />}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+                {editingId === m.id && (
+                  <tr className="border-b border-[var(--border-subtle)] bg-[var(--bg-card)]/50">
+                    <td colSpan={5} className="px-4 py-4">
+                      <form
+                        onSubmit={(e) => handleEditSubmit(e, m.id)}
+                        className="space-y-3 max-w-md"
+                      >
+                        <p className="text-xs text-[var(--text-secondary)]">
+                          Editando credenciales de <strong>{m.name}</strong>. El historial de
+                          citas y clientes asociado se conserva — solo cambian nombre, email
+                          y opcionalmente la contraseña.
+                        </p>
+                        <div>
+                          <label className="text-xs text-[var(--text-secondary)] block mb-1">Nombre</label>
+                          <input
+                            type="text"
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            required
+                            className="w-full px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-white text-sm focus:outline-none focus:border-[var(--color-accent)]/60"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-[var(--text-secondary)] block mb-1">Email</label>
+                          <input
+                            type="email"
+                            value={editEmail}
+                            onChange={(e) => setEditEmail(e.target.value)}
+                            required
+                            className="w-full px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-white text-sm focus:outline-none focus:border-[var(--color-accent)]/60"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-[var(--text-secondary)] block mb-1">
+                            Nueva contraseña (opcional — dejar vacío para no cambiarla)
+                          </label>
+                          <div className="relative">
+                            <input
+                              type={editShowPassword ? "text" : "password"}
+                              value={editPassword}
+                              onChange={(e) => setEditPassword(e.target.value)}
+                              minLength={8}
+                              className="w-full px-3 py-2 pr-10 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-white text-sm focus:outline-none focus:border-[var(--color-accent)]/60"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setEditShowPassword(!editShowPassword)}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] hover:text-white transition-colors"
+                              tabIndex={-1}
+                            >
+                              {editShowPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                          </div>
+                        </div>
+
+                        {editError && <p className="text-red-400 text-xs">{editError}</p>}
+
+                        <div className="flex gap-2">
+                          <button
+                            type="submit"
+                            disabled={editSubmitting}
+                            className="px-4 py-2 rounded-lg bg-[var(--color-accent)] text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                          >
+                            {editSubmitting ? "Guardando..." : "Guardar cambios"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={cancelEdit}
+                            className="px-4 py-2 rounded-lg border border-[var(--border-subtle)] text-[var(--text-secondary)] text-sm hover:text-white transition-colors"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </form>
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
             ))}
           </tbody>
         </table>
