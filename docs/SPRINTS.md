@@ -20,7 +20,7 @@
 - Polling 30s, responsive mobile-first
 
 ## Sprint 4 — COMPLETADO ✅ (Junio 12, 2026)
-**Dashboard:** Vista Calendario en /semana (toggle Lista/Calendario), grilla de mes con puntos de color por estado, bottom sheet por día con acciones, nombre del negocio dinámico en topbar, multi-profesional UI condicional por flag `multi_professional`, script `create-user.js`.
+**Dashboard:** Vista Calendario en /semana, grilla de mes con puntos de color, bottom sheet por día, nombre dinámico en topbar, multi-profesional UI condicional por flag `multi_professional`, script `create-user.js`.
 **Workflows:** workflow genérico multi-tenant, cancelación/reagendamiento E2E con tabla `sessions`, recordatorios 24h multi-tenant.
 **DB:** columnas `services_text`, `prompt_name`, `schedule_text JSONB` en `businesses`; tablas `sessions`, `customers`, `schedule_exceptions`.
 
@@ -30,92 +30,106 @@
 - E2E bloques 1-6 todos pasados
 - 9 bugs corregidos (slots pasados, hora ambigua, `==` en n8n, jerga colombiana, día de semana incorrecto, etc.)
 - Brayan Study conectado (QR escaneado, bot operativo)
-- Credenciales rotadas, repo sincronizado
 
 ## Sprint 6 (Fixes Dashboard + Bot hardening) — COMPLETADO ✅ (Junio 28-29, 2026)
-
-### Fix 1 — Título de pestaña sincronizado ✅
-**Causa raíz:** `app/layout.tsx` importaba `auth` desde `@/lib/auth` (segunda instancia de NextAuth).
-**Fix:** unificación a `@/auth`. `lib/auth.ts` colapsado a re-export limpio.
-
-### Fix 2+4 — Calendario clickeable + Agendar cita manual ✅
-- Todos los días reales del calendario son clickeables.
-- `NewAppointmentSheet`: servicios dinámicos con precio desde `services_text`, fecha precargada, hora libre, anti-doble-booking con warning suave + override.
-- `revalidatePath("/dashboard/semana")` ES CORRECTO.
-
-### Fix — Precios en selector de servicios ✅
-### Fix — Filtro mensajes no-texto ✅
-### Fix — Scope off-topic en system prompt ✅
-### Fix 3 — Sync cancelación WhatsApp → dashboard — En pausa, pendiente verificación.
-
----
+- Fix título de pestaña: unificación instancia NextAuth a `@/auth`
+- Calendario clickeable + agendar cita manual con anti-doble-booking
+- Filtro mensajes no-texto en bot
+- Scope off-topic en system prompt
+- Fix 3 (sync cancelación WhatsApp → dashboard) — en pausa, pendiente verificación
 
 ## Sprint 7 (Métricas Dashboard) — COMPLETADO ✅ (Junio 29, 2026)
-
-### Métricas operativas en `/dashboard/metricas` ✅
-- Selector Hoy/Semana/Mes via URL params
+- `/dashboard/metricas` con selector Hoy/Semana/Mes
 - KPIs: Ingresos, Total citas, Tasa cancelación, Hora pico
 - BarChart recharts con historial por día
 - Migración 005: `ALTER TABLE users ADD COLUMN professional_id`
 - `dashboard/lib/parse-services.ts` — funciones compartidas `parsePrice()` y `parseServices()`
 
----
-
 ## Sprint 8 (Bloqueos de agenda + Slots 30min) — COMPLETADO ✅ (Junio 29, 2026)
-
-### Bloqueos de agenda operativos ✅
-- UI en `/dashboard/semana/bloqueos` — crear y eliminar excepciones
+- UI en `/dashboard/semana/bloqueos` — crear, editar inline y eliminar excepciones
 - Bot respeta `schedule_exceptions` — `tipo='cerrado'` excluye día, `tipo='horario_especial'` recorta horario
-- Slots del bot cada 30 minutos (`generate_series` 30min, `hora_close_last_min = close * 60 - 30`)
+- Slots del bot cada 30 minutos
 - Filtro `professional_id IS NULL` — multi-profesional pendiente
 
-**Archivos:** `dashboard/lib/actions.ts` (+3 actions), `dashboard/components/bloqueos/bloqueos-client.tsx`, `dashboard/app/(dashboard)/dashboard/semana/bloqueos/page.tsx`, `dashboard/app/(dashboard)/dashboard/semana/page.tsx`, n8n nodo `Leer Slots Disponibles` (SQL manual)
-
-### Lecciones técnicas Sprint 8
-- SQL de n8n no verificable via API REST — verificar visualmente en la UI.
-- `horario_especial` define cuándo ABRE, no qué bloquea.
-- Probar SQL directamente en psql antes de aplicar en n8n.
-
----
-
 ## Sprint 9 (Configuración servicios + Nav responsive) — COMPLETADO ✅ (Junio 29, 2026)
+- `/dashboard/configuracion` con edición de `services_text` + preview en tiempo real
+- Edición inline de bloqueos
+- Bottom nav móvil 4 ítems: Inicio | Agenda | Métricas | Clientes
+- Dropdown avatar limpio con Configuración solo en móvil
+- `router.push` en vez de `window.location.href` para client-side routing
 
-### Configuración de servicios en `/dashboard/configuracion` ✅
-- Textarea con formato `"Nombre $precio, ..."` + preview en tiempo real con `parseServices()`
-- Validación inline: error por línea con mensaje contextual y ejemplo corregido
-- Botón "Guardar cambios" deshabilitado si hay errores de formato
-- Server action `updateServicesText` con validación servidor
-- Estructura de página preparada para crecer (Horarios, Datos del negocio en sprints futuros)
+## Sprint 10 (CRM) — COMPLETADO ✅ (Junio 29, 2026)
+- Nodo `Upsert Customer` en n8n entre `Insertar Cita` y `Construir Mensajes`
+- Upsert en `createAppointment` del dashboard (citas manuales también registran cliente)
+- `/dashboard/clientes` — lista con búsqueda client-side, visitas, último servicio, última visita
+- `/dashboard/clientes/[id]` — historial completo por cliente (50 citas)
+- Nav de Clientes activo (dejó de ser 404)
+- `ultimo_servicio` = última cita `Completada`. NULL → "—"
 
-### Edición inline de bloqueos ✅
-- Click en bloqueo existente → form inline precargado con sus valores
-- Guardar = delete + insert (más simple que UPDATE, mismo resultado)
-- Cancelar restaura el card de solo lectura
+### Lecciones Sprint 10
+- Upsert de `customers` debe implementarse en TODOS los puntos de creación de cita (bot + dashboard).
+- `params` en Next.js 16 App Router es `Promise<{id: string}>` — siempre `await params`.
+- Filtrado client-side con `useMemo` suficiente con ≤200 clientes.
 
-### Nav responsive completo ✅
-**Bottom nav móvil — 4 ítems:** Inicio | Agenda | Métricas | Clientes
-- Clientes apunta a `/dashboard/clientes` (404 hasta Sprint CRM)
+## Sprint 11 (RBAC + Equipo + Límites de plan) — COMPLETADO ✅ (Junio 30, 2026)
 
-**Sidebar PC — sin cambios en estructura:**
-- Nav: Inicio, Agenda, Métricas, Clientes
-- Bottom: ⚙️ Configuración, ❓ Ayuda
+### A — professionalId en JWT/session
+- `u.professional_id` agregado al SELECT en `auth.ts`
+- `token.professionalId` en callback `jwt`, `session.user.professionalId` en callback `session`
+- Tipos extendidos en `next-auth.d.ts`: `professionalId: number | null`
 
-**Dropdown avatar:**
-- Muestra nombre + nombre del negocio (quitado email)
-- Configuración visible solo en móvil (`sm:hidden`)
-- `min-w-[180px]` para evitar texto cortado
-- Navegación con `router.push` (client-side, no hard navigation)
+### B — Middleware de rutas por role
+- `/dashboard/configuracion` bloqueado para `profesional` (redirige a `/dashboard`)
+- `/dashboard/equipo` bloqueado para no-owner (redirige a `/dashboard`)
+- Lógica en `authConfig.callbacks.authorized` — no se toca `middleware.ts`
 
-**Archivos modificados:**
-- `dashboard/lib/actions.ts` — `updateServicesText`
-- `dashboard/components/configuracion/servicios-client.tsx` — nuevo
-- `dashboard/app/(dashboard)/dashboard/configuracion/page.tsx` — nuevo
-- `dashboard/components/bloqueos/bloqueos-client.tsx` — edición inline
-- `dashboard/components/sidebar.tsx` — Clientes en navItems
-- `dashboard/components/topbar.tsx` — 4 ítems bottom nav, dropdown limpio
+### C — Filtros server-side por professional_id
+- `getTodayAppointments`, `getTodayStats`, `getAppointmentsByMonth`, `getWeekAppointments` — parámetro opcional `professionalId`
+- `getClientes` — filtro EXISTS contra appointments (profesional ve solo clientes que atendió)
+- `getBloqueos` / `createBloqueo` — scope por professional_id
+- `updateAppointmentStatus` — profesional solo edita sus propias citas (rowCount=0 → error)
+- Todos los callers actualizados: dashboard/page, semana/page, metricas/page, clientes/page, bloqueos/page, api/appointments/month
 
-### Lecciones técnicas Sprint 9
-- `git add -A` en raíz del repo incluye archivos huérfanos. Siempre revisar `git status` y `git diff --staged --name-only` antes de commitear.
-- `window.location.href` funciona pero hace hard navigation. Usar `router.push` de `useRouter`.
-- `sm:hidden` oculta en ≥640px y muestra en móvil — patrón correcto para ítems solo móvil.
-- Bottom nav con ítem a 404 es preferible a slot vacío — el usuario ve el nav completo.
+### D — UI condicional por role
+- `layout.tsx` pasa `role` como prop a `Sidebar` y `Topbar`
+- Sidebar: "Configuración" oculto para `profesional`, "Equipo" solo para `owner`
+- Topbar dropdown: mismo criterio, ambos con `sm:hidden` en móvil
+
+### E — /dashboard/equipo
+- Server action `getEquipo` con JOIN a `professionals`
+- `createMiembroEquipo`: crea fila en `professionals` (si role=profesional) + `users` en transacción
+- `toggleMiembroActivo`: toggle `active` en `users`
+- `updateMiembroRole`: cambia `role` en `users`
+- UI: tabla con toggle inline de estado, cambio de role con select, form colapsable para crear
+
+### F — Editar credenciales de usuario existente
+- `updateMiembroCredenciales`: actualiza name/email + opcionalmente password_hash
+- Sincroniza `professionals.name` si el usuario tiene `professional_id`
+- Password opcional en edición (vacío = no cambia)
+- Edición inline en tabla: fila expandible con formulario precargado
+
+### G — Límites de plan
+- `ALTER TABLE businesses ADD COLUMN max_professionals INT NOT NULL DEFAULT 3`
+- `ALTER TABLE businesses ADD COLUMN max_admins INT NOT NULL DEFAULT 1`
+- Validación en `createMiembroEquipo` antes del BEGIN de la transacción
+- Mensaje: "Tu plan permite hasta N profesionales. Contacta a soporte para ampliar tu plan."
+
+### H — Rename barbero → profesional
+- Constraint DB actualizado: `role IN ('owner', 'admin', 'profesional')` — `'barbero'` eliminado
+- Orden correcto: ampliar constraint → UPDATE datos → cerrar constraint
+- 5 archivos TypeScript actualizados, 4 archivos markdown actualizados
+- `professionals` tabla y `professional_id` columna NO cambiaron (ya estaban bien nombradas)
+
+### I — Fix conteo de profesionales para límite de plan
+- Conteo cambiado de `professionals WHERE active=true` a `users WHERE role='profesional' AND active=true`
+- Razón: tabla `professionals` puede tener filas huérfanas de owner/admin
+- Datos sucios limpiados: professional id=1 (Meyer/owner) y id=9 (Juliana/admin) desactivados
+- `users.professional_id` de Juliana (admin) limpiado a NULL
+
+### Lecciones Sprint 11
+- Al agregar nuevo role en DB, verificar constraint existente antes de intentar INSERT.
+- Orden para rename de role con constraint: (1) ampliar a ambos valores, (2) UPDATE datos, (3) cerrar. Al revés da error de constraint.
+- Conteo de límite de plan debe usar `users.role`, NO tabla `professionals` (puede tener filas huérfanas de owner/admin que contaminan el conteo).
+- Owner y admin no tienen agenda propia — solo `profesional` tiene `professional_id` activo.
+- Cambiar role profesional→admin deja fila en `professionals` activa pero ya no afecta límite (conteo es en `users.role`).
+- `lib/auth.config.ts` en `dashboard/lib/` es huérfano — el middleware usa `dashboard/auth.config.ts` (raíz de dashboard). Verificar con `cat middleware.ts | head -5` antes de editar.

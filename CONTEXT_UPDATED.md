@@ -1,26 +1,25 @@
 # CONTEXT.md — meyer-bot
 
-> Última actualización: 29 de junio de 2026 (post Sprint 10 — CRM: upsert customers + UI /dashboard/clientes).
+> Última actualización: 30 de junio de 2026 (post Sprint 11 — RBAC completo + gestión de equipo).
 > Documento maestro CORTO. Cualquier chat nuevo lee esto primero.
 > Para profundidad: ver docs/ (ARCHITECTURE.md, SPRINTS.md, RUNBOOK.md, KEY_LEARNINGS.md)
 
 ## Qué es este proyecto
-SaaS WhatsApp-native de agendamiento para barberías y salones en LATAM.
+SaaS WhatsApp-native de agendamiento para cualquier negocio que gestione citas (barberías, salones, spas, consultorios, etc.) en LATAM. Expansión planificada a España, México, USA y Canadá.
 Bot conversacional WhatsApp + dashboard de gestión + CRM operativo.
 Diferenciador: WhatsApp-native (Fresha/Booksy/SimplyBook obligan a salir de WhatsApp).
-Expansión: Colombia → España, México, EEUU.
 
 > **Naming:** "meyer-bot" es el repo interno. "Meyer" es también un negocio real (business_id=1). Pendiente desacoplar branding (ver Backlog).
 
 ## Estado del producto
 - **Vendible HOY** para negocios de un solo profesional. E2E completo (agendar/cancelar/reagendar).
-- **Dashboard operativo:** título dinámico, calendario clickeable, agendar manual, servicios dinámicos con precios, hora libre, anti-doble-booking, métricas con selector de rango Hoy/Semana/Mes, bloqueos de agenda (días cerrados y horarios especiales), edición de servicios desde dashboard, nav responsive móvil 4 ítems, **CRM /dashboard/clientes operativo**.
-- **Bot robusto:** fallback chain multi-LLM, historial conversacional, filtro de audios/multimedia, scope off-topic, rate limit. Slots cada 30 minutos. Respeta `schedule_exceptions`. **Upsert automático en `customers` al agendar.**
+- **Dashboard operativo:** título dinámico, calendario clickeable, agendar manual, servicios dinámicos con precios, hora libre, anti-doble-booking, métricas con selector de rango Hoy/Semana/Mes, bloqueos de agenda, edición de servicios, nav responsive móvil 4 ítems, CRM /dashboard/clientes, **RBAC completo (Sprint 11)**, **gestión de equipo /dashboard/equipo**.
+- **Bot robusto:** fallback chain multi-LLM, historial conversacional, filtro de audios/multimedia, scope off-topic, rate limit. Slots cada 30 minutos. Respeta `schedule_exceptions`. Upsert automático en `customers` al agendar.
 - **NO vendible aún** para multi-profesional (ver ARCHITECTURE.md).
 - Brayan Study (business_id=3, 1 profesional) es el primer cliente real. Operativo.
 
 ## Stack
-- **n8n 2.10.3** self-hosted — orquestador workflows. Migrar a Node.js+BullMQ+Redis antes de 30 clientes.
+- **n8n 2.10.3** self-hosted — orquestador workflows. Migrar a Node.js+BullMQ+Redis antes de 30 clientes (adelantar a Sprint 14 por i18n multi-región).
 - **Evolution API v2.3.7** — conexión WhatsApp. Migrar a WA Cloud API oficial por cliente.
 - **LLM fallback chain:** Gemini 2.5 Flash-Lite → Cerebras gpt-oss-120b → Groq gpt-oss-120b
 - **PostgreSQL 16 Alpine** (Docker: `meyer_postgres`, DB: `meyer_db`, usuario: `meyer_user`) — única DB.
@@ -34,143 +33,140 @@ Expansión: Colombia → España, México, EEUU.
 - Local Mac: `~/Documents/meyer-bot`
 - VPS: `/root/meyer-bot` — el dashboard vive en `/root/meyer-bot/dashboard/`
 - Deploy: `git push` Mac → `git pull` VPS → `cd dashboard && npm run build` → `pm2 restart meyer-dashboard`
-- ⚠️ `npm run build` se ejecuta desde `/root/meyer-bot/dashboard/`, NO desde la raíz del repo.
+- `npm run build` se ejecuta desde `/root/meyer-bot/dashboard/`, NO desde la raíz del repo.
 - Commits siempre desde Mac, nunca desde VPS.
-- Ver RUNBOOK.md para comandos completos.
 
 ## Negocios en producción
 
 | id | name | whatsapp_instance | owner_number | estado |
 |----|------|-------------------|--------------|--------|
-| 1 | Peluquería Meyer | peluqueria-beta | 573142556322 | ✅ activo |
+| 1 | Peluquería Meyer | peluqueria-beta | 573142556322 | activo |
 | 2 | Negocio Prueba | negocio-prueba | 57XXXXXXXXXX | pruebas |
-| 3 | Brayan Study | brayan-study | 573136053693 | ✅ activo |
+| 3 | Brayan Study | brayan-study | 573136053693 | activo |
 
-**Brayan Study:**
-- Medina, Cundinamarca. Primer cliente real.
-- Servicios en DB: `Corte caballero $18.000, Corte+barba $22.000, Barba $10.000, Cejas $5.000`
-- ⚠️ Pendiente confirmar nombres reales con Brayan y aplicar UPDATE (ver Backlog).
-- Horarios: Lun 12PM-7PM | Mar-Sáb 7AM-7PM | Dom 7AM-4PM
-- Dashboard: `brayanvaca84@gmail.com`, business_id=3
+**Brayan Study:** Medina, Cundinamarca. Primer cliente real. Dashboard: `brayanvaca84@gmail.com`, business_id=3. Pendiente confirmar services_text real con Brayan.
 
 ## JWT actual
-Contiene: `userId`, `email`, `name`, `businessId`, `businessName`, `multiProfessional`, `role`.
-`professional_id` en tabla `users` existe (migración 005 ejecutada). **Pendiente Sprint RBAC:** agregar `professionalId` al JWT con middleware de rol.
+Contiene: `userId`, `email`, `name`, `businessId`, `businessName`, `multiProfessional`, `role`, `professionalId`.
+`professionalId` es `null` para owner/admin (ven todo), tiene valor numérico para `profesional` (ve solo lo suyo).
+
+## Roles del sistema
+| Role | Ve | Puede |
+|------|-----|-------|
+| owner | Todo el negocio | Todo incluyendo gestión de usuarios y cuenta |
+| admin | Todo el negocio | Todo excepto crear/eliminar usuarios y gestión de cuenta |
+| profesional | Solo sus citas/métricas/clientes | Marcar sus citas, bloquear sus propios días |
+
+Owner y admin NO tienen agenda propia — agendan a nombre de los profesionales registrados.
+Solo `profesional` cuenta contra `max_professionals` del plan.
+
+## Planes (sin nombre formal todavía)
+| Tier | max_professionals | max_admins |
+|------|------------------|------------|
+| Plan 1 | 3 | 1 |
+| Plan 2 | 8 | 1 |
+| Plan 3 | 20 | 2 |
+
+Asignados manualmente por SQL al onboardear. Sistema formal con Stripe/Wompi en backlog futuro.
 
 ## Navegación — estado actual
 
 ### Bottom nav móvil (4 ítems fijos)
 | Ícono | Label | Ruta | Estado |
 |-------|-------|------|--------|
-| 🏠 | Inicio | `/dashboard` | ✅ |
-| 📅 | Agenda | `/dashboard/semana` | ✅ |
-| 📊 | Métricas | `/dashboard/metricas` | ✅ |
-| 👥 | Clientes | `/dashboard/clientes` | ✅ |
+| Inicio | `/dashboard` | ✅ |
+| Agenda | `/dashboard/semana` | ✅ |
+| Métricas | `/dashboard/metricas` | ✅ |
+| Clientes | `/dashboard/clientes` | ✅ |
 
 ### Sidebar PC
-- Nav principal: Inicio, Agenda, Métricas, Clientes
-- Bottom: ⚙️ Configuración (`/dashboard/configuracion`), ❓ Ayuda
-- Configuración también accesible desde dropdown del avatar en móvil (oculto en PC con `sm:hidden`)
-
-### Dropdown avatar
-- Muestra: nombre del usuario + nombre del negocio
-- Ítems: Configuración (solo móvil, `sm:hidden`), Cerrar sesión
+- Nav: Inicio, Agenda, Métricas, Clientes
+- Bottom: Configuración (oculto para `profesional`), Equipo (solo `owner`), Ayuda
+- Configuración y Equipo también en dropdown avatar móvil (sm:hidden)
 
 ## Archivos clave del dashboard
-- `dashboard/lib/parse-services.ts` — `parsePrice()` y `parseServices()`: parsean `services_text` a Map/array con precios.
-- `dashboard/lib/actions.ts` — server actions: `createAppointment`, `updateAppointmentStatus`, `rescheduleAppointment`, `getMetricas`, `getBloqueos`, `createBloqueo`, `deleteBloqueo`, `updateServicesText`, **`getClientes`, `getClienteHistorial`**.
-- `dashboard/components/metricas/metricas-client.tsx` — client component métricas con recharts.
-- `dashboard/components/bloqueos/bloqueos-client.tsx` — client component bloqueos (crear, editar inline, eliminar).
-- `dashboard/components/configuracion/servicios-client.tsx` — client component edición de servicios con preview en tiempo real.
-- `dashboard/components/clientes/clientes-client.tsx` — client component lista de clientes con búsqueda client-side.
-- `dashboard/components/clientes/cliente-historial-client.tsx` — client component historial de citas por cliente.
-- `dashboard/app/(dashboard)/dashboard/semana/bloqueos/page.tsx` — página bloqueos.
-- `dashboard/app/(dashboard)/dashboard/configuracion/page.tsx` — página configuración (primer ítem: Servicios).
-- `dashboard/app/(dashboard)/dashboard/clientes/page.tsx` — página lista clientes (server component).
-- `dashboard/app/(dashboard)/dashboard/clientes/[id]/page.tsx` — página historial cliente (server component).
-- `dashboard/app/(dashboard)/layout.tsx` — layout shell. `<main>` con `ml-0 sm:ml-[56px] mt-[56px] pb-[56px] sm:pb-0 p-6`.
-- `dashboard/components/sidebar.tsx` — sidebar PC con 4 ítems nav + 2 bottom (Config, Ayuda).
-- `dashboard/components/topbar.tsx` — topbar con bottom nav móvil 4 ítems + dropdown avatar.
+- `dashboard/lib/actions.ts` — todas las server actions (appointments, métricas, bloqueos, servicios, CRM, equipo).
+- `dashboard/lib/appointments.ts` — queries de citas con filtro opcional `professionalId`.
+- `dashboard/auth.ts` — NextAuth con `professional_id` en SELECT y JWT.
+- `dashboard/auth.config.ts` — callbacks JWT/session + bloqueo de rutas por role.
+- `dashboard/types/next-auth.d.ts` — tipos extendidos con `professionalId: number | null`.
+- `dashboard/components/equipo/equipo-client.tsx` — gestión de usuarios.
+- `dashboard/components/clientes/clientes-client.tsx` — lista + búsqueda.
+- `dashboard/app/(dashboard)/layout.tsx` — pasa `role` a Sidebar y Topbar.
+- `dashboard/components/sidebar.tsx` y `topbar.tsx` — nav condicional por role.
 
-## CRM — estado Sprint 10
-- `customers` table operativa (migración 003, Sprint 4). UNIQUE (business_id, numero) confirmado.
-- Upsert automático en dos puntos: nodo `Upsert Customer` en n8n (bot) + `createAppointment` en dashboard.
-- UI read-only: lista con nombre, número, visitas, último servicio, última visita + búsqueda client-side.
-- Detalle por cliente: stats (total visitas, primera/última visita) + historial de citas (50 registros, todos los estados).
-- `ultimo_servicio` = última cita con estado `Completada`. NULL se muestra como "—".
-- Edición de notas/género/preferencias: Sprint posterior (no Sprint 10).
+## CRM — estado
+- Upsert automático en `customers` desde bot (n8n) y desde `createAppointment` (dashboard).
+- UI read-only: lista + búsqueda + detalle con historial de 50 citas.
+
+## RBAC — Sprint 11 completo
+- `professionalId` en JWT, middleware de rutas, filtros server-side en todas las queries.
+- `/dashboard/equipo`: crear/editar usuarios, toggle activo/inactivo, cambiar role.
+- Límites de plan: `max_professionals` y `max_admins` en `businesses`.
+- Constraint DB: `role IN ('owner', 'admin', 'profesional')`.
 
 ## Backlog priorizado
 
-### 🔴 SPRINT 11 (próximo)
-1. **RBAC** — middleware de rol + `professionalId` en JWT + filtros en actions + UI condicional. **Prerrequisito de multi-profesional. Implementar justo antes del primer cliente multi-profesional.**
+### SPRINT 12 (próximo)
+1. **Multi-profesional completo** — selección de profesional en bot (2 turnos extra), disponibilidad por `professional_id`, UI agenda paralela, métricas por profesional para owner/admin.
 
-### 🟡 DESPUÉS
-2. **Multi-profesional completo** — sprint dedicado DESPUÉS de RBAC.
-3. **Fix 3** — verificar sync cancelación WhatsApp → dashboard en producción.
-4. **Notificación al dueño con nombre del cliente** — lookup en `customers` en `Construir Mensajes`.
-5. **Quitar branding "Meyer"** del producto.
-6. **Confirmar services_text de Brayan** con el cliente y aplicar UPDATE.
-7. **Password fuerte con Bitwarden.**
-8. **Horarios desde dashboard** — editar `schedule_text` JSONB (hoy solo via SQL manual).
-9. **Datos del negocio desde dashboard** — nombre, teléfono owner, timezone.
-10. **Edición de notas/género/preferencias en CRM** — Sprint posterior a 10.
+### SPRINT 13
+2. **Auditoría** — tabla `audit_log`, instrumentación de actions, UI de consulta para owner/admin.
 
-### 🟠 ALTA PRIORIDAD
-11. **`Confirmar Reagendamiento` → Raw body** — deuda técnica (hoy usa IIFE en bodyParameters).
-12. Gestión de no-shows: cron que auto-completa citas pasadas sin marcar.
-13. `reminder_config` JSONB en businesses: recordatorios configurables por negocio.
-14. Panel admin Johnander (todos los negocios, métricas agregadas).
-15. Google private key fuera del .env del VPS.
-16. Evolution API en 0.0.0.0:8080 — asegurar con firewall.
-17. **`pm2 reload`** en vez de `pm2 restart` cuando haya 10+ clientes (zero-downtime).
-18. Staging environment cuando se haga upgrade de VPS.
-19. `middleware.ts` deprecation warning — renombrar a convención `proxy` en Next.js futuro.
+### SPRINT 14
+3. **i18n completo** — dashboard multi-idioma + bot multi-idioma/multi-jerga por región (Colombia, México, España, USA/Canadá). Requiere system prompt configurable por negocio. Probable adelanto de migración n8n → Node.js+BullMQ+Redis.
 
-### 🟢 FUTURO
-20. WhatsApp Cloud API oficial.
-21. Prompt caching.
-22. Timezone dinámico por negocio.
-23. Mover DNS a Cloudflare.
-24. Rate limit persistente en PostgreSQL.
-25. Facturación Stripe/Wompi.
-26. Migración n8n → Node.js + BullMQ + Redis (30+ clientes).
-27. Upgrade VPS Hetzner (4 vCPU / 8GB) a los 8-10 clientes.
-28. Tabla `services` normalizada (reemplaza `services_text`).
-29. Expansión regional.
-30. Exportación CSV clientes/métricas.
+### SPRINT 15
+4. **Cumplimiento protección de datos** — GDPR (España), Ley 1581 Colombia (ya aplica HOY), LFPDPPP México.
+
+### FIXES PENDIENTES
+5. **Servicios nuevos no reflejados en bot** — al guardar desde configuración, bot puede usar services_text anterior. Investigar orden en system prompt vs timing del lookup. Fix probable: mover servicios al inicio del system prompt del AI Agent.
+6. Fix 3 — sync cancelación WhatsApp → dashboard, pendiente verificación.
+7. `Confirmar Reagendamiento` → Raw body (deuda técnica, usa IIFE hoy).
+8. `updateMiembroRole` profesional→admin no valida `max_admins` — caso borde bajo riesgo.
+9. `lib/auth.config.ts` huérfano — eliminar en sprint de limpieza.
+10. Notificación al dueño con nombre del cliente (lookup en `customers` en Construir Mensajes).
+11. Quitar branding "Meyer" del producto.
+12. Confirmar services_text de Brayan y aplicar UPDATE.
+13. Horarios desde dashboard (editar `schedule_text` sin SQL).
+14. Datos del negocio desde dashboard (nombre, teléfono, timezone).
+15. Gestión de no-shows: cron que auto-completa citas pasadas.
+16. `reminder_config` JSONB configurable por negocio.
+17. Panel admin Johnander (todos los negocios, métricas agregadas).
+18. `pm2 reload` en vez de `pm2 restart` a 10+ clientes.
+
+### FUTURO
+19. Sistema de planes formal con Stripe/Wompi.
+20. Documentación operativa centralizada (guía de tareas repetitivas).
+21. WhatsApp Cloud API oficial por cliente.
+22. Migración n8n → Node.js+BullMQ+Redis (adelantar a Sprint 14 si i18n lo requiere).
+23. Upgrade VPS Hetzner (4 vCPU / 8GB) a los 8-10 clientes.
+24. Tabla `services` normalizada.
+25. Mover DNS a Cloudflare, staging environment, rate limit en PostgreSQL.
+26. Expansión regional, exportación CSV.
 
 ## Reglas de trabajo (no negociables)
-- **claude.ai:** arquitectura, decisiones, documentos de implementación numerados.
-- **Claude Code:** ejecución en repo local únicamente. Nunca commitea sin aprobación de diff.
-- Flujo: claude.ai diseña → Johnander aprueba → Claude Code ejecuta → claude.ai revisa diff → Johnander aprueba → commit.
-- `/model sonnet` para archivos simples. `/model opus` para lógica compleja.
-- `/clear` en Claude Code entre pasos mayores.
-- **Claude Code nunca hace `git add -A` sin que Johnander revise `git status` primero** — puede incluir archivos huérfanos.
-- **Contradecir si hay error** — Claude Code verifica rutas/hechos reales antes de asumir que el diagnóstico es correcto.
-- Deploy seguro: migración DB ANTES del deploy de código. Ver RUNBOOK.md y ARCHITECTURE.md.
+- **claude.ai:** arquitectura, documentos de implementación como archivos descargables.
+- **Claude Code:** ejecución local únicamente. Nunca commitea sin aprobación de diff.
+- Nunca `git add -A` sin revisar `git status` primero.
+- Deploy: migración DB ANTES del código. Commits desde Mac, nunca desde VPS.
+- No construir sin aprobación explícita.
 
-## Lecciones aprendidas Sprint 10
-- Upsert de `customers` debe implementarse en TODOS los puntos de creación de cita (bot n8n + dashboard), no solo en uno. El bot y el dashboard son dos flujos independientes.
-- `ultimo_servicio` en CRM se calcula con subconsulta en la query de `getClientes` — no se persiste en `customers`. Correcto para MVP; si el volumen crece, considerar columna desnormalizada.
-- Filtrado client-side con `useMemo` es suficiente con ≤200 clientes. La action `getClientes` acepta `search` param para migrar a server-side sin cambiar firma.
-- `params` en Next.js 16 App Router es `Promise<{id: string}>` — siempre `await params` antes de leer propiedades.
-
-## Lecciones aprendidas Sprint 9
-- `git add -A` en la raíz del repo incluye archivos huérfanos. Siempre revisar `git status` y `git diff --staged --name-only` antes de commitear.
-- `window.location.href` en Next.js client component hace hard navigation. Usar `router.push` de `useRouter`.
-- `sm:hidden` en Tailwind oculta en `sm` (≥640px) — patrón correcto para ítems solo móvil.
-- Bottom nav de 4 ítems con Clientes apuntando a 404 es preferible a un slot vacío.
+## Lecciones aprendidas Sprint 11
+- Al agregar nuevo role en DB, verificar constraint existente antes de insertar datos.
+- Orden para rename de role con constraint: (1) ampliar constraint para aceptar ambos, (2) UPDATE datos, (3) cerrar constraint. Al revés da error.
+- Conteo de límite de plan debe usar `users WHERE role='profesional'`, NO tabla `professionals` (puede tener filas huérfanas).
+- Owner y admin no tienen agenda propia. Solo `profesional` tiene `professional_id` activo.
 
 ## Seguridad pendiente
-- ⚠️ GOOGLE_PRIVATE_KEY aún en .env del VPS
-- ⚠️ Evolution API expuesta en 0.0.0.0:8080
-- ⚠️ Password meyer_user débil (pendiente Bitwarden)
-- ⚠️ RBAC no implementado — role viaja en JWT pero nadie lo lee
+- GOOGLE_PRIVATE_KEY aún en .env del VPS
+- Evolution API expuesta en 0.0.0.0:8080
+- Password meyer_user débil (pendiente Bitwarden)
+- Sin aviso de tratamiento de datos personales (Ley 1581 Colombia ya aplica)
 - NUNCA subir .env ni secrets a Git
 
 ## Docs de referencia
 - `docs/ARCHITECTURE.md` — schema DB, principios, decisiones arquitectónicas, RBAC, multi-profesional
-- `docs/SPRINTS.md` — historial completo Sprint 0-10
+- `docs/SPRINTS.md` — historial completo Sprint 0-11
 - `docs/RUNBOOK.md` — deploy, psql, n8n, Evolution API, variables de entorno, túnel SSH
-- `docs/KEY_LEARNINGS.md` — lecciones técnicas acumuladas n8n + LLM + Next.js + infra
+- `docs/KEY_LEARNINGS.md` — lecciones técnicas acumuladas
