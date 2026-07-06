@@ -1,8 +1,9 @@
 # CONTEXT.md — meyer-bot
 
-> Última actualización: 30 de junio de 2026 (post Sprint 11 — RBAC completo + gestión de equipo).
+> Última actualización: 6 julio 2026 (auditoría de seguridad inicial — ver SECURITY_AUDIT.md).
 > Documento maestro CORTO. Cualquier chat nuevo lee esto primero.
-> Para profundidad: ver docs/ (ARCHITECTURE.md, SPRINTS.md, RUNBOOK.md, KEY_LEARNINGS.md)
+> **⚠️ ANTES de tocar NADA: leer `docs/SECURITY_AUDIT.md`** — reporte maestro de seguridad, hallazgos activos y plan de remediación.
+> Para profundidad: ver docs/ (ARCHITECTURE.md, SPRINTS.md, RUNBOOK.md, KEY_LEARNINGS.md, SECURITY_AUDIT.md)
 
 ## Qué es este proyecto
 SaaS WhatsApp-native de agendamiento para cualquier negocio que gestione citas (barberías, salones, spas, consultorios, etc.) en LATAM. Expansión planificada a España, México, USA y Canadá.
@@ -159,14 +160,24 @@ Asignados manualmente por SQL al onboardear. Sistema formal con Stripe/Wompi en 
 - Owner y admin no tienen agenda propia. Solo `profesional` tiene `professional_id` activo.
 
 ## Seguridad pendiente
-- GOOGLE_PRIVATE_KEY aún en .env del VPS
-- Evolution API expuesta en 0.0.0.0:8080
-- Password meyer_user débil (pendiente Bitwarden)
-- Sin aviso de tratamiento de datos personales (Ley 1581 Colombia ya aplica)
-- NUNCA subir .env ni secrets a Git
+> Reporte completo y plan de remediación: **`docs/SECURITY_AUDIT.md`** (leer primero).
+>
+> Estado al 6 julio 2026:
+> - 🔴 6 leaks de Google Private Key en git history (gitleaks)
+> - 🟡 2 leaks de Evolution API Key en git history (gitleaks)
+> - 🔴 Evolution API expuesta en 0.0.0.0:8080 (sin firewall)
+> - 🔴 Password meyer_user débil en PostgreSQL
+> - 🟡 GOOGLE_PRIVATE_KEY en .env del VPS
+> - ✅ Bitwarden Cloud Free configurado como gestor de secrets
+> - ✅ npm audit fix aplicado en local (commit `4a302ef`, no deployado)
+> - ✅ 1 vuln moderate (postcss) queda — requiere upgrade Next.js
+> - ⏳ Pendiente: rotar keys, firewall VPS, limpiar git history, compliance Ley 1581
+>
+> NUNCA subir .env ni secrets a Git.
 
 ## Docs de referencia
 - `docs/ARCHITECTURE.md` — schema DB, principios, decisiones arquitectónicas, RBAC, multi-profesional
 - `docs/SPRINTS.md` — historial completo Sprint 0-11
 - `docs/RUNBOOK.md` — deploy, psql, n8n, Evolution API, variables de entorno, túnel SSH
 - `docs/KEY_LEARNINGS.md` — lecciones técnicas acumuladas
+- `docs/SECURITY_AUDIT.md` — ⚠️ auditoría de seguridad, leaks, plan de remediación, políticas
