@@ -1,0 +1,72 @@
+{
+  "name": "Rotar Evolution API Key — Temporal",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// Node: EVOLUTION — Rotar API Key\n// POST /instance/create para regenerar la key\nconst evolutionUrl = 'http://localhost:8080/instance/create';
+const apiKeyActual = $env.EVOLUTION_API_KEY;
+
+// Instancia Peluquería Meyer
+const instanceName = 'peluqueria-beta';
+
+const payload = {
+  instanceName,
+  qrcode: {
+    generate: false,
+    read: false
+  }
+};
+
+try {
+  // POST /instance/create
+  const response = await this.helpers.httpRequest({
+    url: evolutionUrl,
+    method: 'POST',
+    body: payload,
+    headers: {
+      'apikey': apiKeyActual,
+      'Content-Type': 'application/json'
+    }
+  });
+
+  // Manejar response
+  if (response?.newApiKey) {
+    const nuevaKey = response.newApiKey;
+    return [{ json: { success: true, newApiKey: nuevaKey, message: `🔑 Key rotada OK. Nueva key: ${nuevaKey}`, oldApiKey: '***REMOVED-EVOLUTION-API-KEY***' } }];
+
+  } else if (response?.message === \"instance already exists\") {
+    // PUT /instance/reload/peluqueria-beta
+    const reloadUrl = `http://localhost:8080/instance/reload/${instanceName}`;
+    const reloadRes = await this.helpers.httpRequest({
+      url: reloadUrl,
+      method: 'PUT',
+      headers: {
+        'apikey': apiKeyActual,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (reloadRes?.status === true) {
+      return [{ json: { success: true, newApiKey: apiKeyActual, message: `🎁 Instancia '${instanceName}' recargada. La key sigue igual pero el manager debería notarla.` } }];
+    }
+  }
+  
+  throw new Error(`Respuesta inesperada: ${JSON.stringify(response)}`);
+
+} catch (error) {
+  return [{ json: { success: false, error: error.message, message: `❌ Error: ${error.message}` } }];
+}"
+      },
+      "name": "Rotar API Key",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        200
+      ],
+      "id": "rotar-api-key"
+    }
+  ],
+  "connections": {},
+  "settings": {}
+}
