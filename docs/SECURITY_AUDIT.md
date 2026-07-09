@@ -298,19 +298,30 @@ Pre-requisito: Haber completado Fase 1 con backup en Bitwarden.
 
 Si este chat se corta o inicia una nueva sesión, el modelo debe:
 
+### Reglas de trabajo (no negociables)
+
+1. **Nunca tocar producción sin preguntar** — preguntar antes de cualquier cambio que afecte VPS, DB, o clientes.
+2. **Trabajo en conjunto** — actuar como ingeniero/arquitecto con criterio, pero siempre validar con el dueño antes de ejecutar cambios destructivos.
+3. **Actualizar .MD** — solo cuando el dueño lo solicite. No sobrescribir docs sin aprobación.
+4. **Usar MCPs + skills disponibles** — n8n-mcp, github-mcp, filesystem-mcp, fetch, memory, y skills (Web Security, code-review, db-sculptor, etc.)
+5. **Fixes activos** — ver backlog en CONTEXT_UPDATED.md. No aplicar fixes sin preguntar.
+6. **FIX_RESPONSIVE.md** — archivo trackeado en el repo, pero el fix ya está aplicado (commit `3c9c8eb`). Archivo pendiente de eliminar según convención (no va al repo). Preguntar antes de borrarlo.
+
 ### Estado actual
 
 | Item | Estado | Detalle |
 |---|---|---|
-| **Commits pendientes de push** | ⚠️ 3 commits locales sin push | `4a302ef`, `2596311`, `3643d6c`, `c3b0e59` |
+| **Commits pendientes de push** | ⚠️ 5 commits locales sin push | `4a302ef`, `2596311`, `3643d6c`, `c3b0e59`, `e3f7b8c` |
 | **Google Private Key** | ✅ Revocada | Inutilizada desde Google Cloud Console (6 jul 2026) |
 | **npm audit fix** | ✅ Aplicado local | Commit `4a302ef` — NO deployado al VPS |
 | **migrate-from-sheets.js** | ✅ Archivado | Movido a `database/archive/` (commit `3643d6c`) |
 | **Evolution API** | ❌ **No corre en VPS** | Puerto 8080 sin respuesta. `docker ps` no lo muestra. |
 | **VPS contenedores activos** | Solo `n8n-n8n-1` + `meyer_postgres` | Verificado vía SSH 9 julio 2026 |
-| **SSH Mac → VPS** | ✅ Funciona con password | Password compartida en session anterior (NO guardar en .md) |
+| **SSH Mac → VPS** | ✅ Funciona con password | Password compartida en session anterior (NO guardar en .md). **Urgente rotar.** |
 | **Bitwarden** | ✅ Setup completado | 3 Secure Notes creadas |
 | **Workflow rotación Evolution** | ✅ Creado | `workflows/rotar-evolution-api-key.json` — NO ejecutado |
+| **FIX_RESPONSIVE aplicado** | ✅ | Commit `3c9c8eb`. Archivo `FIX_RESPONSIVE.md` pendiente de limpieza. |
+| **Sprint actual** | Sprint 12 planificado (multi-profesional) | Ver backlog en `docs/CONTEXT_UPDATED.md` |
 
 ### 🔴 Pendiente PRÓXIMA SESIÓN
 
@@ -320,19 +331,19 @@ Si este chat se corta o inicia una nueva sesión, el modelo debe:
 - Si no existe el contenedor → reinstalar Evolution API
 - Después rotar key con workflow `rotar-evolution-api-key.json`
 
-**2. Hacer git push de commits locales**
-- 3 commits pendientes: npm audit fix + docs security + archive
-- `git push origin main` desde Mac
-
-**3. Password SSH** — La password actual (`1003523243Jhon`) está comprometida (compartida en chat)
+**2. Password SSH** — La password actual está comprometida (compartida en chat)
 - **Urgente**: cambiar password SSH del VPS y guardar en Bitwarden
-- O en su defecto: configurar `ssh-copy-id` con la key `id_ed25519` para acceso sin password
+- O configurar `ssh-copy-id` con la key `id_ed25519` para acceso sin password
+
+**3. Hacer git push de commits locales**
 
 **4. Continuar Fase 3 — Hardening VPS**
 - Firewall (ufw/iptables) para Evolution API
 - Cambiar password meyer_user PostgreSQL
 
-**5. Seguir con gitleaks clean history (Fase 4)**
+**5. Limpiar git history con filter-repo (Fase 4)**
+
+**6. Sprint 12** — Multi-profesional completo (cuando Fases 2-4 estén resueltas)
 
 ### Log de SSH exitoso (9 julio 2026)
 
@@ -341,6 +352,7 @@ Sistema: Ubuntu 24.04.4 LTS | 2 vCPU | 3.7GB RAM | 38GB disco
 System load: 0.02 | RAM: 20% | Disco: 46% usado
 Contenedores: n8n-n8n-1 (Up 22h) + meyer_postgres (Up 22h)
 Puerto 8080: NADA escuchando. Container evolution-api AUSENTE.
+SSH password: compartida en sesión anterior (rotar urgente)
 ```
 
 ---
