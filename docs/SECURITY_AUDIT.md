@@ -51,17 +51,17 @@ Confirmado con `gitleaks --no-git` sobre `workflows/` y `docs/`:
 |---|---|---|---|---|---|---|
 | 1 | API Key (Evolution API) | `CONTEXT.md` | 263 | `a573d9c` | 🟡 MEDIA | Pendiente rotación |
 | 2 | API Key (Evolution API) | `CONTEXT_UPDATED.md` | 235 | `c827b95` | 🟡 MEDIA | Pendiente rotación |
-| 3 | Private Key (Google Service Account) | `docs/pendientes-seguridad.md` | 42 | `ff0ad79` | 🔴 CRÍTICA | Pendiente rotación |
-| 4 | Private Key (Google Service Account) | `workflows/peluqueria-beta.json` | 434 | `025df4a` | 🔴 CRÍTICA | Pendiente rotación |
-| 5 | Private Key (Google Service Account) | `workflows/peluqueria-beta.json` | 1292 | `de8fe2a` | 🔴 CRÍTICA | Pendiente rotación |
-| 6 | Private Key (Google Service Account) | `workflows/peluqueria-beta.json` | 1292 | `526b57c` | 🔴 CRÍTICA | Pendiente rotación |
-| 7 | Private Key (Google Service Account) | `workflows/peluqueria-beta.json` | 440 | `089e8bf` | 🔴 CRÍTICA | Pendiente rotación |
-| 8 | Private Key (Google Service Account) | `workflows/peluqueria-beta.json` | 1291 | `089e8bf` | 🔴 CRÍTICA | Pendiente rotación |
+| 3 | Private Key (Google Service Account) | `docs/pendientes-seguridad.md` | 42 | `ff0ad79` | 🔴 CRÍTICA | ✅ Revocada |
+| 4 | Private Key (Google Service Account) | `workflows/peluqueria-beta.json` | 434 | `025df4a` | 🔴 CRÍTICA | ✅ Revocada |
+| 5 | Private Key (Google Service Account) | `workflows/peluqueria-beta.json` | 1292 | `de8fe2a` | 🔴 CRÍTICA | ✅ Revocada |
+| 6 | Private Key (Google Service Account) | `workflows/peluqueria-beta.json` | 1292 | `526b57c` | 🔴 CRÍTICA | ✅ Revocada |
+| 7 | Private Key (Google Service Account) | `workflows/peluqueria-beta.json` | 440 | `089e8bf` | 🔴 CRÍTICA | ✅ Revocada |
+| 8 | Private Key (Google Service Account) | `workflows/peluqueria-beta.json` | 1291 | `089e8bf` | 🔴 CRÍTICA | ✅ Revocada |
 
 ### Valor de los secrets (redacted en este doc)
 
-- **Google Private Key** — Service Account de Google Cloud. Acceso a Calendar API, Drive, etc. 6 apariciones en 4 commits (abril 2026 - mayo 2026).
-- **Evolution API Key**: `***REMOVED-EVOLUTION-API-KEY***` — permite enviar mensajes WhatsApp desde el número del negocio. 2 apariciones en 2 commits (junio 2026).
+- **Google Private Key** — Service Account de Google Cloud. Acceso a Calendar API, Drive, etc. 6 apariciones en 4 commits (abril 2026 - mayo 2026). **⚠️ Estado: REVOCADA** desde Google Cloud Console (6 julio 2026). La key en el git history ya no es válida, pero permanece físicamente hasta la limpieza del history (Fase 4).
+- **Evolution API Key**: `***REMOVED-EVOLUTION-API-KEY***` — permite enviar mensajes WhatsApp desde el número del negocio. 2 apariciones en 2 commits (junio 2026). **⚠️ Pendiente rotación**.
 
 ### Ubicación de los secrets (current state)
 
@@ -151,18 +151,12 @@ Confirmado con `gitleaks --no-git` sobre `workflows/` y `docs/`:
 
 Pre-requisito: Haber completado Fase 1 con backup en Bitwarden.
 
-- [x] **Google Private Key — Decision: revocar key, conservar Service Account**
-      - **Contexto**: Las credenciales de Google ya NO se usan en producción. El dashboard tiene su propio calendario. El script one-shot `migrate-from-sheets.js` (única referencia) ya cumplió su función en Sprint 1.
-      - **Integración Google Calendar futura**: pendiente como feature/mejora. Si se implementa, se crea nueva key en la misma Service Account conservada.
-      - **Acción TÚ (Google Cloud Console)**:
-        1. Google Cloud Console → IAM & Admin → Service Accounts
-        2. Identificar la service account usada en meyer-bot
-        3. Pestaña **Keys**
-        4. **REVOCAR** (Delete) la key existente — la del git history queda inservible
-        5. **NO crear nueva key** (no se usa en producción)
-        6. Conservar la Service Account para uso futuro (Google Calendar integration)
-      - **Acción YO (working tree)**: ✅ `database/migrate-from-sheets.js` movido a `database/archive/` (commit pendiente)
-      - **Backup**: la key vieja está en Bitwarden Secure Note `meyer-bot — Google Service Account JSON` (solo para referencia histórica; ya revocada no sirve)
+- [x] **Google Private Key — Revocada ✅**
+      - **Acción TÚ**: key inabilitada desde Google Cloud Console.
+      - **NO estaba en Bitwarden** (no se había guardado durante setup). Para futuro: registrar nueva key cuando se implemente integración Google Calendar.
+      - **Service Account conservada** para uso futuro (Google Calendar integration).
+      - **Acción YO (working tree)**: ✅ `database/migrate-from-sheets.js` movido a `database/archive/` (commit `3643d6c`)
+      - ⚠️ La key vieja sigue en el git history pero **ya no es válida** — acceso mitigado. Limpieza del history en Fase 4.
 
 - [ ] **Rotar Evolution API Key**
       1. Evolution API manager UI (`http://178.104.27.180:8080/manager`)

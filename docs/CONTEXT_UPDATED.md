@@ -145,6 +145,7 @@ Asignados manualmente por SQL al onboardear. Sistema formal con Stripe/Wompi en 
 24. Tabla `services` normalizada.
 25. Mover DNS a Cloudflare, staging environment, rate limit en PostgreSQL.
 26. Expansión regional, exportación CSV.
+27. **Integración Google Calendar en el dashboard** — Sync bidireccional entre el calendario del dashboard y Google Calendar del usuario, para facilitar gestión. Service Account conservada en Google Cloud Console (key revocada el 6 julio 2026 — crear nueva key cuando se implemente). **OAuth flow recomendado** (no Service Account JSON) para que cada usuario conecte su propio Google Calendar. Ver `docs/SECURITY_AUDIT.md` → "Pendiente como feature futura".
 
 ## Reglas de trabajo (no negociables)
 - **claude.ai:** arquitectura, documentos de implementación como archivos descargables.
