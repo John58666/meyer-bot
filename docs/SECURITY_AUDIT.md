@@ -151,17 +151,18 @@ Confirmado con `gitleaks --no-git` sobre `workflows/` y `docs/`:
 
 Pre-requisito: Haber completado Fase 1 con backup en Bitwarden.
 
-- [ ] **Rotar Google Private Key**
-      1. Google Cloud Console → IAM & Admin → Service Accounts
-      2. Buscar la service account que tiene la key expuesta
-      3. **REVOCAR** la key vieja (la del git history)
-      4. **CREAR** nueva key (JSON format)
-      5. Descargar el nuevo JSON
-      6. Subir a Bitwarden como Secure Note nueva
-      7. Actualizar `secrets/google-credentials.json` (Mac)
-      8. Copiar al VPS: `scp secrets/google-credentials.json root@178.104.27.180:/root/meyer-bot/secrets/`
-      9. Actualizar `.env` del VPS si hace falta
-      10. Reiniciar contenedores relevantes (`docker compose down && docker compose up -d` para n8n)
+- [x] **Google Private Key — Decision: revocar key, conservar Service Account**
+      - **Contexto**: Las credenciales de Google ya NO se usan en producción. El dashboard tiene su propio calendario. El script one-shot `migrate-from-sheets.js` (única referencia) ya cumplió su función en Sprint 1.
+      - **Integración Google Calendar futura**: pendiente como feature/mejora. Si se implementa, se crea nueva key en la misma Service Account conservada.
+      - **Acción TÚ (Google Cloud Console)**:
+        1. Google Cloud Console → IAM & Admin → Service Accounts
+        2. Identificar la service account usada en meyer-bot
+        3. Pestaña **Keys**
+        4. **REVOCAR** (Delete) la key existente — la del git history queda inservible
+        5. **NO crear nueva key** (no se usa en producción)
+        6. Conservar la Service Account para uso futuro (Google Calendar integration)
+      - **Acción YO (working tree)**: ✅ `database/migrate-from-sheets.js` movido a `database/archive/` (commit pendiente)
+      - **Backup**: la key vieja está en Bitwarden Secure Note `meyer-bot — Google Service Account JSON` (solo para referencia histórica; ya revocada no sirve)
 
 - [ ] **Rotar Evolution API Key**
       1. Evolution API manager UI (`http://178.104.27.180:8080/manager`)
@@ -173,6 +174,13 @@ Pre-requisito: Haber completado Fase 1 con backup en Bitwarden.
       7. Actualizar `/root/n8n/.env` del VPS: `EVOLUTION_API_KEY=<nueva>`
       8. En n8n UI → nodo `Confirmar Cancelación` cambiar header `apikey` a la nueva (modo Expression: `={{ $env.EVOLUTION_API_KEY }}`)
       9. Reiniciar n8n: `docker compose down && docker compose up -d` para releer `.env`
+
+### Pendiente como feature futura
+
+- [ ] **Integración Google Calendar en el dashboard** (no Sprint actual)
+      - Cuando se implemente, crear nueva key en la Service Account conservada
+      - OAuth flow recomendado (no Service Account JSON) para usuarios que conecten su propio Google Calendar
+      - Documentar en `docs/ARCHITECTURE.md` cuando se diseñe
 
 ### Fase 3 — Hardening del VPS (URGENTE, pre-Sprint 12)
 
