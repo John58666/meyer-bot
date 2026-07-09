@@ -163,16 +163,18 @@ Asignados manualmente por SQL al onboardear. Sistema formal con Stripe/Wompi en 
 ## Seguridad pendiente
 > Reporte completo y plan de remediación: **`docs/SECURITY_AUDIT.md`** (leer primero).
 >
-> Estado al 6 julio 2026:
-> - 🔴 6 leaks de Google Private Key en git history (gitleaks)
-> - 🟡 2 leaks de Evolution API Key en git history (gitleaks)
-> - 🔴 Evolution API expuesta en 0.0.0.0:8080 (sin firewall)
+> Estado al 9 julio 2026:
+> - 🔴 6 leaks de Google Private Key en git history — ✅ **key revocada** en Google Cloud Console (inservible)
+> - 🟡 2 leaks de Evolution API Key en git history — ⛔ **BLOQUEADO** Evolution API no corre en VPS
+> - 🔴 **Evolution API caído/ausente** en VPS (no está en `docker ps`, puerto 8080 vacío)
+> - 🔴 Password SSH compartida en sesión anterior — **URGENTE rotar**
 > - 🔴 Password meyer_user débil en PostgreSQL
-> - 🟡 GOOGLE_PRIVATE_KEY en .env del VPS
+> - 🟡 GOOGLE_PRIVATE_KEY en .env del VPS (key revocada, pero limpiar .env)
 > - ✅ Bitwarden Cloud Free configurado como gestor de secrets
 > - ✅ npm audit fix aplicado en local (commit `4a302ef`, no deployado)
 > - ✅ 1 vuln moderate (postcss) queda — requiere upgrade Next.js
-> - ⏳ Pendiente: rotar keys, firewall VPS, limpiar git history, compliance Ley 1581
+> - ⏳ Pendiente: reinstalar Evolution API en VPS, rotar key Evolution, cambiar password SSH, firewall VPS, limpiar git history, compliance Ley 1581
+> - VPS conectado vía SSH (9 jul): solo 2 contenedores activos (n8n, postgres)
 >
 > NUNCA subir .env ni secrets a Git.
 
