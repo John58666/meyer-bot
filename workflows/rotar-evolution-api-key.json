@@ -1,0 +1,120 @@
+{
+  "name": "Rotar Evolution API Key — Temporal",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// Node: EVOLUTION — Rotar API Key\n// POST /instance/create para regenerar la key\nconst evolutionUrl = 'http://178.104.27.180:8080/instance/create';
+const apiKeyActual = $env.EVOLUTION_API_KEY;
+
+// Instancia dados de Peluquería Meyer (business_id = 1)
+// Revisar lista de instancias con GET /instance/list si hay dudas
+const instanceName = 'peluqueria-beta';
+
+const payload = {
+  instanceName,
+  // Configuración mínima para rotar API key. Datos de config vienen de la instancia existente.
+  qrcode: {
+    // Estos datos son ignorados al crear key nueva, pero el endpoint los requiere
+    generate: false,
+    read: false
+  }
+};
+
+try {
+  // Primer intento: Rotar key (POST /instance/create)
+  const response = await this.helpers.httpRequest({
+    url: evolutionUrl,
+    method: 'POST',
+    body: payload,
+    headers: {
+      'apikey': apiKeyActual,
+      'Content-Type': 'application/json'
+    },
+    timeout: 15000
+  });
+
+  // Si el endpoint retorna {status:true} o {newApiKey:\"[new_key]\"}, marcó éxito
+  if (response?.status === true || response?.newApiKey) {
+    // Extraer la nueva key
+    const nuevaKey = response.newApiKey || apiKeyActual;  // fallback a la actual si no retorna key
+    return [
+      {
+        json: {
+          success: true,
+          newApiKey: nuevaKey,
+          message: `🔑 Key rotada OK. Nueva key: ${nuevaKey}`,
+          oldApiKey: '***REMOVED-EVOLUTION-API-KEY***'
+        }
+      }
+    ];
+  } else if (response?.message === "instance already exists") {
+    // La instancia ya existe, pero podemos forzar regeneración de la key
+    // Usamos PUT /instance/reload para reiniciar la instancia
+    const reloadUrl = `http://178.104.27.180:8080/instance/reload/${instanceName}`;
+    const reloadResponse = await this.helpers.httpRequest({
+      url: reloadUrl,
+      method: 'PUT',
+      headers: {
+        'apikey': apiKeyActual,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (reloadResponse?.status === true) {
+      const methodsUrl = `http://178.104.27.180:8080/instance/info/${instanceName}`;
+      const infoResponse = await this.helpers.httpRequest({
+        url: methodsUrl,
+        method: 'GET',
+        headers: {
+          'apikey': apiKeyActual,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      // Si el reload no regenera la key, conservamos la actual
+      return [
+        {
+          json: {
+            success: true,
+            newApiKey: apiKeyActual,
+            message: `🔁 Instancia '${instanceName}' ya existe. Se reinició la instancia pero la key sigue igual: ${apiKeyActual}. Debes actualizar /root/n8n/.env del VPS manualmente a la nueva key.`,
+            oldApiKey: '***REMOVED-EVOLUTION-API-KEY***'
+          }
+        }
+      ];
+    }
+    throw new Error(`PUT /instance/reload falló. Response: ${JSON.stringify(reloadResponse)}`);
+  } else {
+    throw new Error(`Respuesta inesperada: ${JSON.stringify(response)}`);
+  }
+} catch (error) {
+  return [
+    {
+      json: {
+        success: false,
+        error: error.message,
+        message: `❌ Error: ${error.message}`,
+        stack: error.stack
+      }
+    }
+  ];
+}"
+      },
+      "name": "Rotar API Key",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        200
+      ],
+      "id": "rotar-api-key"
+    }
+  ],
+  "connections": {},
+  "settings": {
+    "errorWorkflow": ""
+  },
+  "staticData": {
+    "documentation": "Workflow temporal para rotar Evolution API Key.\nUsar si el manager UI no responde (como en nuestro caso).\nCorrer UNA VEZ — guardar la nueva key en Bitwarden y actualizar .env del VPS."
+  }
+}

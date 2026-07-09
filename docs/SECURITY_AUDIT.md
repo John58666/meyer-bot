@@ -2,7 +2,7 @@
 
 > **Leer al inicio de cada sesión.** Este documento es el reporte maestro de seguridad del proyecto.
 > Contiene hallazgos activos, plan de remediación y lineamientos no negociables.
-> Última actualización: 6 julio 2026 (auditoría inicial).
+> Última actualización: 9 julio 2026 (sesión 2 — VPS diagnosticado vía SSH, Evolution API caído, audit_log iniciado).
 
 ---
 
@@ -31,8 +31,22 @@ CONTEXT_OBLIGATORIO:
 |---|---|---|---|
 | **gitleaks 8.30.1** | Secrets en git history | ⚠️ 8 leaks en history viejo | ver sección "Leaks gitleaks" |
 | **npm audit** | Vulnerabilidades en dependencias | ⚠️ 2 vulns moderate | ver sección "npm audit" |
-| **hadolint** | Malas prácticas en Dockerfiles | pendiente | TBD |
-| **Revisión manual de código** | OWASP Top 10 | pendiente | TBD |
+| **hadolint** | Malas prácticas en Dockerfiles | Pendiente | TBD |
+| **Revisión manual de código** | OWASP Top 10 | Pendiente | TBD |
+
+### Diagnóstico VPS (9 julio 2026 - vía SSH)
+
+| Verificación | Resultado |
+|---|---|
+| **Contenedores activos** | `n8n-n8n-1` (Up 22h) + `meyer_postgres` (Up 22h) |
+| **System load** | 0.02 / 20% RAM / 46% disco |
+| **Evolución API en puerto 8080** | ❌ **Nada escuchando.** Container evolution-api no está corriendo. |
+| **Manager HTTP en localhost:8080** | Retorna HTTP 000 (sin respuesta) |
+| **SSH desde Mac** | ✅ Funciona con password |
+| **Puerto 22 abierto** | ✅ |
+| **UFW/iptables** | Pendiente revisar |
+
+**Conclusión**: **Evolution API está caído/removido**. El puerto 8080 no tiene nada. Desde el VPS local tampoco responde. Habrá que reinstalar/reiniciar el contenedor de Evolution API para rotar la key.
 
 ### Working tree actual — LIMPIO ✅
 
@@ -152,11 +166,18 @@ Confirmado con `gitleaks --no-git` sobre `workflows/` y `docs/`:
 Pre-requisito: Haber completado Fase 1 con backup en Bitwarden.
 
 - [x] **Google Private Key — Revocada ✅**
-      - **Acción TÚ**: key inabilitada desde Google Cloud Console.
-      - **NO estaba en Bitwarden** (no se había guardado durante setup). Para futuro: registrar nueva key cuando se implemente integración Google Calendar.
-      - **Service Account conservada** para uso futuro (Google Calendar integration).
+      - **Acción TÚ**: key inabilitada desde Google Cloud Console (6 julio 2026).
+      - **Service Account conservada** para integración Google Calendar futura.
       - **Acción YO (working tree)**: ✅ `database/migrate-from-sheets.js` movido a `database/archive/` (commit `3643d6c`)
-      - ⚠️ La key vieja sigue en el git history pero **ya no es válida** — acceso mitigado. Limpieza del history en Fase 4.
+      - ⚠️ La key vieja sigue en el git history pero **ya no es válida** — acceso mitigado.
+
+- [ ] **Rotar Evolution API Key** — BLOQUEADO ⛔
+      - **Problema diagnosticado (9 julio 2026 vía SSH)**: Evolution API no está corriendo en el VPS.
+      - `docker ps` muestra solo 2 contenedores: `n8n-n8n-1` + `meyer_postgres`. Evolution API ausente.
+      - Puerto 8080 no responde ni desde localhost ni desde fuera.
+      - **Acción necesaria previa**: Verificar si el contenedor evolution-api existe pero está detenido (`docker ps -a`), o si hubo migración/movida.
+      - **Workflow creado**: `workflows/rotar-evolution-api-key.json` para regenerar key cuando Evolution API esté activo.
+      - **Instrucciones detalladas** en sección "Rotación Evolution API Key" abajo.
 
 - [ ] **Rotar Evolution API Key**
       1. Evolution API manager UI (`http://178.104.27.180:8080/manager`)
@@ -273,6 +294,57 @@ Pre-requisito: Haber completado Fase 1 con backup en Bitwarden.
 
 ---
 
+## 🔄 Session Continuation (9 julio 2026)
+
+Si este chat se corta o inicia una nueva sesión, el modelo debe:
+
+### Estado actual
+
+| Item | Estado | Detalle |
+|---|---|---|
+| **Commits pendientes de push** | ⚠️ 3 commits locales sin push | `4a302ef`, `2596311`, `3643d6c`, `c3b0e59` |
+| **Google Private Key** | ✅ Revocada | Inutilizada desde Google Cloud Console (6 jul 2026) |
+| **npm audit fix** | ✅ Aplicado local | Commit `4a302ef` — NO deployado al VPS |
+| **migrate-from-sheets.js** | ✅ Archivado | Movido a `database/archive/` (commit `3643d6c`) |
+| **Evolution API** | ❌ **No corre en VPS** | Puerto 8080 sin respuesta. `docker ps` no lo muestra. |
+| **VPS contenedores activos** | Solo `n8n-n8n-1` + `meyer_postgres` | Verificado vía SSH 9 julio 2026 |
+| **SSH Mac → VPS** | ✅ Funciona con password | Password compartida en session anterior (NO guardar en .md) |
+| **Bitwarden** | ✅ Setup completado | 3 Secure Notes creadas |
+| **Workflow rotación Evolution** | ✅ Creado | `workflows/rotar-evolution-api-key.json` — NO ejecutado |
+
+### 🔴 Pendiente PRÓXIMA SESIÓN
+
+**1. Rotar Evolution API Key** — BLOQUEADO ⛔
+- Evolution API no está corriendo en VPS
+- Diagnosticar con `docker ps -a` y `docker logs` (desde VPS vía SSH)
+- Si no existe el contenedor → reinstalar Evolution API
+- Después rotar key con workflow `rotar-evolution-api-key.json`
+
+**2. Hacer git push de commits locales**
+- 3 commits pendientes: npm audit fix + docs security + archive
+- `git push origin main` desde Mac
+
+**3. Password SSH** — La password actual (`1003523243Jhon`) está comprometida (compartida en chat)
+- **Urgente**: cambiar password SSH del VPS y guardar en Bitwarden
+- O en su defecto: configurar `ssh-copy-id` con la key `id_ed25519` para acceso sin password
+
+**4. Continuar Fase 3 — Hardening VPS**
+- Firewall (ufw/iptables) para Evolution API
+- Cambiar password meyer_user PostgreSQL
+
+**5. Seguir con gitleaks clean history (Fase 4)**
+
+### Log de SSH exitoso (9 julio 2026)
+
+```
+Sistema: Ubuntu 24.04.4 LTS | 2 vCPU | 3.7GB RAM | 38GB disco
+System load: 0.02 | RAM: 20% | Disco: 46% usado
+Contenedores: n8n-n8n-1 (Up 22h) + meyer_postgres (Up 22h)
+Puerto 8080: NADA escuchando. Container evolution-api AUSENTE.
+```
+
+---
+
 ## 📌 Referencia rápida de archivos
 
 - `docs/SECURITY_AUDIT.md` — este archivo (leer primero)
@@ -289,3 +361,4 @@ Pre-requisito: Haber completado Fase 1 con backup en Bitwarden.
 | Fecha | Cambio |
 |---|---|
 | 6 julio 2026 | Creación: auditoría inicial (gitleaks + npm audit), plan de remediación completo |
+| 9 julio 2026 | VPS diagnosticado vía SSH: Evolution API caído, solo 2 contenedores activos. Session continuation agregado. |

@@ -137,15 +137,15 @@ NEXTAUTH_URL=http://localhost:3000
 
 ## Infraestructura VPS
 ```
-CONTAINER            IMAGE                    STATUS    PUERTO
+CONTAINER            IMAGE                    STATUS    PUERTO (verificado 9 jul 2026 vía SSH)
 n8n-n8n-1            n8nio/n8n (2.10.3)       Up        5678
 meyer_postgres       postgres:16-alpine       Up        127.0.0.1:5432
-evolution-api        evoapicloud/v2.3.7       Up        0.0.0.0:8080 ⚠️
-evolution-postgres   postgres:15              Up        interno
-redis:7-alpine       redis:7-alpine           Up        interno
-meyer-dashboard      PM2 (Next.js)            Up        127.0.0.1:3001
+⚠️ evolution-api        evoapicloud — NO CORRIENDO (no aparece en docker ps)
+⚠️ evolution-postgres   postgres:15 — NO CORRIENDO
+⚠️ redis:7-alpine       — NO CORRIENDO
+⚠️ meyer-dashboard      — NO CORRIENDO como contenedor (probablemente PM2 en host)
 
-VPS specs: 2 vCPU | 3.7GB RAM | 38GB disco
+System: Ubuntu 24.04.4 LTS | 2 vCPU | 3.7GB RAM | 38GB disco (46% usado)
 nginx 1.24.0 — proxies: n8n.zyvenshop.com, dashboard.zyvenshop.com
 DNS: Namecheap (zyvenshop.com) — migrar a Cloudflare
 ```
