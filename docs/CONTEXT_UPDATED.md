@@ -64,7 +64,7 @@ Solo `profesional` cuenta contra `max_professionals` del plan.
 ## Planes (sin nombre formal todavía)
 | Tier | max_professionals | max_admins |
 |------|------------------|------------|
-| Plan 1 | 3 | 1 |
+| Plan 1 | 5 | 1 |
 | Plan 2 | 8 | 1 |
 | Plan 3 | 20 | 2 |
 

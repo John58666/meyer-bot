@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { getTodayAppointments, getTodayStats } from "@/lib/appointments";
+import { getActiveProfessionals } from "@/lib/actions";
 import { pool } from "@/lib/db";
 import { StatsCards } from "@/components/stats-cards";
 import { AppointmentList } from "@/components/appointment-list";
@@ -16,7 +17,7 @@ export default async function DashboardPage() {
   const professionalId = session.user.professionalId;
   const multiProfessional = session.user.multiProfessional;
 
-  const [[appointments, stats], bizRows] = await Promise.all([
+  const [[appointments, stats], bizRows, professionals] = await Promise.all([
     Promise.all([
       getTodayAppointments(businessId, professionalId),
       getTodayStats(businessId, professionalId),
@@ -24,6 +25,7 @@ export default async function DashboardPage() {
     pool
       .query("SELECT services_text FROM businesses WHERE id = $1", [businessId])
       .then((r) => r.rows),
+    getActiveProfessionals(businessId),
   ]);
   const servicesText: string = bizRows[0]?.services_text ?? "";
 
@@ -49,7 +51,11 @@ export default async function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <NewAppointmentSheet servicesText={servicesText} />
+          <NewAppointmentSheet
+            servicesText={servicesText}
+            professionals={professionals}
+            multiProfessional={multiProfessional}
+          />
           <RefreshButton />
         </div>
       </div>

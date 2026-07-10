@@ -39,16 +39,25 @@ function todayISO() {
   });
 }
 
+interface Professional {
+  id: number;
+  name: string;
+}
+
 interface NewAppointmentSheetProps {
   fecha?: string;          // YYYY-MM-DD — precarga la fecha si viene del calendario
   servicesText?: string;   // "Nombre $precio, ..." — si no viene usa lista hardcodeada
   trigger?: React.ReactNode; // botón custom desde el calendario
+  professionals?: Professional[]; // lista de profesionales activos del negocio
+  multiProfessional?: boolean;    // si el negocio tiene multi-profesional activado
 }
 
 export function NewAppointmentSheet({
   fecha: fechaProp,
   servicesText,
   trigger,
+  professionals = [],
+  multiProfessional = false,
 }: NewAppointmentSheetProps = {}) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -175,6 +184,30 @@ export function NewAppointmentSheet({
               ))}
             </select>
           </div>
+
+          {/* Profesional — solo negocios multi-profesional con profesionales activos */}
+          {multiProfessional && professionals.length > 0 && (
+            <div className="space-y-1.5">
+              <Label htmlFor="professionalId" className="text-[var(--text-secondary)] text-sm">
+                Profesional
+              </Label>
+              <select
+                id="professionalId"
+                name="professionalId"
+                defaultValue=""
+                className="w-full h-10 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-primary)] text-white px-3 text-sm focus:outline-none focus:border-[var(--color-accent)]"
+              >
+                <option value="" className="bg-[var(--bg-card)]">
+                  Cualquiera disponible
+                </option>
+                {professionals.map((p) => (
+                  <option key={p.id} value={p.id} className="bg-[var(--bg-card)]">
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Fecha */}
           <div className="space-y-1.5">

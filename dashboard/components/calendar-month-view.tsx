@@ -55,7 +55,12 @@ function buildGrid(month: Date): Array<Array<Date | null>> {
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 
-export function CalendarMonthView({ multiProfessional, servicesText }: { multiProfessional: boolean; servicesText: string }) {
+interface Professional {
+  id: number
+  name: string
+}
+
+export function CalendarMonthView({ multiProfessional, servicesText, professionals = [] }: { multiProfessional: boolean; servicesText: string; professionals?: Professional[] }) {
   const [currentMonth, setCurrentMonth] = useState<Date>(() => {
     const now = new Date()
     return new Date(now.getFullYear(), now.getMonth(), 1)
@@ -240,6 +245,7 @@ export function CalendarMonthView({ multiProfessional, servicesText }: { multiPr
         onActionComplete={() => fetchMonth(currentMonth)}
         multiProfessional={multiProfessional}
         servicesText={servicesText}
+        professionals={professionals}
       />
     </>
   )

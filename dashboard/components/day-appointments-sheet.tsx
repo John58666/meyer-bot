@@ -40,6 +40,11 @@ const ESTADO_BADGE: Record<string, string> = {
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
+interface Professional {
+  id: number
+  name: string
+}
+
 interface DayAppointmentsSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -48,6 +53,7 @@ interface DayAppointmentsSheetProps {
   onActionComplete: () => void
   multiProfessional: boolean
   servicesText: string
+  professionals?: Professional[]
 }
 
 // ─── Componente ───────────────────────────────────────────────────────────────
@@ -60,6 +66,7 @@ export function DayAppointmentsSheet({
   onActionComplete,
   multiProfessional,
   servicesText,
+  professionals = [],
 }: DayAppointmentsSheetProps) {
   const [loadingId, setLoadingId]         = useState<number | null>(null)
   const [reagendarId, setReagendarId]     = useState<number | null>(null)
@@ -161,6 +168,8 @@ export function DayAppointmentsSheet({
                 <NewAppointmentSheet
                   fecha={format(date, 'yyyy-MM-dd')}
                   servicesText={servicesText}
+                  professionals={professionals}
+                  multiProfessional={multiProfessional}
                   trigger={
                     <button className="flex items-center gap-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium px-4 py-2 hover:opacity-90 transition-opacity">
                       + Agendar cita
@@ -344,6 +353,8 @@ export function DayAppointmentsSheet({
             <NewAppointmentSheet
               fecha={format(date, 'yyyy-MM-dd')}
               servicesText={servicesText}
+              professionals={professionals}
+              multiProfessional={multiProfessional}
               trigger={
                 <button className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-border text-sm text-muted-foreground hover:bg-accent hover:text-foreground py-2.5 transition-colors mt-1">
                   + Agendar otra cita

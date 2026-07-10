@@ -6,6 +6,17 @@ import { auth } from "@/auth";
 import { parsePrice } from "@/lib/parse-services";
 import bcrypt from "bcryptjs";
 
+// ── Listar profesionales activos (para selector al agendar) ───
+export async function getActiveProfessionals(businessId: number) {
+  const { rows } = await pool.query<{ id: number; name: string }>(
+    `SELECT id, name FROM professionals
+     WHERE business_id = $1 AND active = true
+     ORDER BY name`,
+    [businessId],
+  );
+  return rows;
+}
+
 // ── Crear cita manual ─────────────────────────────────────────
 export async function createAppointment(formData: FormData) {
   const session = await auth();
@@ -17,6 +28,8 @@ export async function createAppointment(formData: FormData) {
   const fecha = formData.get("fecha") as string; // YYYY-MM-DD
   const hora = formData.get("hora") as string;   // HH:MM
   const forceOverride = formData.get("forceOverride") === "true";
+  const professionalIdRaw = formData.get("professionalId") as string | null;
+  const professionalId = professionalIdRaw ? parseInt(professionalIdRaw, 10) : null;
   const businessId = session.user.businessId;
 
   if (!nombre || !numero || !servicio || !fecha || !hora) {
@@ -25,18 +38,26 @@ export async function createAppointment(formData: FormData) {
 
   try {
     if (!forceOverride) {
+      // Si se eligió un profesional específico, el choque solo aplica contra
+      // ESE profesional (dos barberos pueden atender a la misma hora).
+      // Si no se eligió (negocio de 1 profesional, o "cualquiera"), se
+      // mantiene el chequeo global por horario como antes.
+      const params: (string | number)[] = [businessId, fecha, hora];
+      const profFilter = professionalId != null
+        ? ` AND professional_id = $${params.push(professionalId)}`
+        : '';
       const { rows } = await pool.query(
         `SELECT id FROM appointments
-         WHERE business_id = $1 AND fecha = $2 AND hora = $3::time AND estado != 'Cancelada'`,
-        [businessId, fecha, hora],
+         WHERE business_id = $1 AND fecha = $2 AND hora = $3::time AND estado != 'Cancelada'${profFilter}`,
+        params,
       );
       if (rows.length > 0) return { conflict: true };
     }
 
     await pool.query(
-      `INSERT INTO appointments (business_id, fecha, hora, nombre, servicio, numero, estado)
-       VALUES ($1, $2, $3::time, $4, $5, $6, 'Pendiente')`,
-      [businessId, fecha, hora, nombre.trim(), servicio, numero.trim()]
+      `INSERT INTO appointments (business_id, fecha, hora, nombre, servicio, numero, estado, professional_id)
+       VALUES ($1, $2, $3::time, $4, $5, $6, 'Pendiente', $7)`,
+      [businessId, fecha, hora, nombre.trim(), servicio, numero.trim(), professionalId]
     );
 
     await pool.query(

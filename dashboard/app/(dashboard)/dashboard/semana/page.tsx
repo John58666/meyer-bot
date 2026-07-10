@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getWeekAppointments } from "@/lib/appointments";
+import { getActiveProfessionals } from "@/lib/actions";
 import { pool } from "@/lib/db";
 import { WeekView } from "@/components/week-view";
 import { RefreshButton } from "@/components/refresh-button";
@@ -21,6 +22,7 @@ export default async function SemanaPage() {
     [businessId],
   );
   const servicesText: string = bizRows[0]?.services_text ?? "";
+  const professionals = await getActiveProfessionals(businessId);
 
   const todayISO = new Date().toLocaleDateString("en-CA", {
     timeZone: "America/Bogota",
@@ -46,7 +48,7 @@ export default async function SemanaPage() {
         </div>
       </div>
 
-      <SemanaClient multiProfessional={multiProfessional} servicesText={servicesText}>
+      <SemanaClient multiProfessional={multiProfessional} servicesText={servicesText} professionals={professionals}>
         <WeekView appointments={appointments} todayISO={todayISO} multiProfessional={multiProfessional} />
       </SemanaClient>
     </div>
