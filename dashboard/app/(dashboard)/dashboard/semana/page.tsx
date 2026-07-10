@@ -14,7 +14,6 @@ export default async function SemanaPage() {
 
   const businessId = session.user.businessId;
   const professionalId = session.user.professionalId;
-  const multiProfessional = session.user.multiProfessional;
   // Solo owner/admin ven el selector con TODOS los profesionales al agendar.
   const isOwnerOrAdmin = professionalId == null;
   const appointments = await getWeekAppointments(businessId, professionalId);
@@ -24,7 +23,10 @@ export default async function SemanaPage() {
     [businessId],
   );
   const servicesText: string = bizRows[0]?.services_text ?? "";
-  const professionals = isOwnerOrAdmin ? await getActiveProfessionals(businessId) : [];
+  const allProfessionals = await getActiveProfessionals(businessId);
+  // Calculado en vivo — no depende de ningún flag manual en `businesses`.
+  const multiProfessional = allProfessionals.length > 0;
+  const professionals = isOwnerOrAdmin ? allProfessionals : [];
 
   const todayISO = new Date().toLocaleDateString("en-CA", {
     timeZone: "America/Bogota",

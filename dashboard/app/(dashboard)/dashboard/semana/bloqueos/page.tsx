@@ -11,16 +11,15 @@ export default async function BloqueosPage() {
 
   const businessId = session.user.businessId
   const professionalId = session.user.professionalId
-  const multiProfessional = session.user.multiProfessional
-  // owner/admin (professionalId null) en negocio multi-profesional: pueden
-  // elegir bloquear a un profesional específico o todo el negocio.
+  // owner/admin (professionalId null): pueden elegir bloquear a un
+  // profesional específico o todo el negocio — pero solo si el negocio
+  // REALMENTE tiene profesionales activos (calculado en vivo, sin flag manual).
   const isOwnerOrAdmin = professionalId == null
-  const showProfessionalPicker = isOwnerOrAdmin && multiProfessional
+  const allProfessionals = isOwnerOrAdmin ? await getActiveProfessionals(businessId) : []
+  const showProfessionalPicker = isOwnerOrAdmin && allProfessionals.length > 0
 
-  const [bloqueos, professionals] = await Promise.all([
-    getBloqueos(businessId, professionalId, showProfessionalPicker),
-    showProfessionalPicker ? getActiveProfessionals(businessId) : Promise.resolve([]),
-  ])
+  const bloqueos = await getBloqueos(businessId, professionalId, showProfessionalPicker)
+  const professionals = allProfessionals
 
   return (
     <div>
