@@ -34,15 +34,30 @@ type Bloqueo = {
   hora_inicio: string | null
   hora_fin: string | null
   motivo: string | null
+  professional_id?: number | null
+  professional_name?: string | null
+}
+
+type Professional = {
+  id: number
+  name: string
 }
 
 interface BloqueosClientProps {
   businessId: number
   professionalId?: number | null
   initialBloqueos: Bloqueo[]
+  professionals?: Professional[]
+  showProfessionalPicker?: boolean
 }
 
-export function BloqueosClient({ businessId, professionalId, initialBloqueos }: BloqueosClientProps) {
+export function BloqueosClient({
+  businessId,
+  professionalId,
+  initialBloqueos,
+  professionals = [],
+  showProfessionalPicker = false,
+}: BloqueosClientProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
@@ -54,6 +69,8 @@ export function BloqueosClient({ businessId, professionalId, initialBloqueos }: 
   const [horaInicio, setHoraInicio] = useState('')
   const [horaFin, setHoraFin] = useState('')
   const [motivo, setMotivo] = useState('')
+  // '' = Todo el negocio (professional_id NULL). Solo relevante si showProfessionalPicker.
+  const [targetProfessionalId, setTargetProfessionalId] = useState('')
 
   // Estado edición
   const [editingId, setEditingId] = useState<number | null>(null)
@@ -62,6 +79,7 @@ export function BloqueosClient({ businessId, professionalId, initialBloqueos }: 
   const [editHoraInicio, setEditHoraInicio] = useState('')
   const [editHoraFin, setEditHoraFin] = useState('')
   const [editMotivo, setEditMotivo] = useState('')
+  const [editTargetProfessionalId, setEditTargetProfessionalId] = useState('')
   const [editError, setEditError] = useState('')
 
   function resetForm() {
@@ -70,6 +88,7 @@ export function BloqueosClient({ businessId, professionalId, initialBloqueos }: 
     setHoraInicio('')
     setHoraFin('')
     setMotivo('')
+    setTargetProfessionalId('')
     setError('')
   }
 
@@ -83,10 +102,14 @@ export function BloqueosClient({ businessId, professionalId, initialBloqueos }: 
       setError('La hora de inicio debe ser menor que la de fin'); return
     }
 
+    const effectiveProfessionalId = showProfessionalPicker
+      ? (targetProfessionalId ? parseInt(targetProfessionalId, 10) : null)
+      : professionalId
+
     startTransition(async () => {
       const result = await createBloqueo({
         businessId,
-        professionalId,
+        professionalId: effectiveProfessionalId,
         fecha,
         tipo,
         hora_inicio: horaInicio || undefined,
@@ -109,6 +132,7 @@ export function BloqueosClient({ businessId, professionalId, initialBloqueos }: 
     setEditHoraInicio(b.hora_inicio ? b.hora_inicio.substring(0, 5) : '')
     setEditHoraFin(b.hora_fin ? b.hora_fin.substring(0, 5) : '')
     setEditMotivo(b.motivo ?? '')
+    setEditTargetProfessionalId(b.professional_id != null ? String(b.professional_id) : '')
     setEditError('')
     setConfirmDeleteId(null)
   }
@@ -127,11 +151,15 @@ export function BloqueosClient({ businessId, professionalId, initialBloqueos }: 
       setEditError('La hora de inicio debe ser menor que la de fin'); return
     }
 
+    const effectiveProfessionalId = showProfessionalPicker
+      ? (editTargetProfessionalId ? parseInt(editTargetProfessionalId, 10) : null)
+      : professionalId
+
     startTransition(async () => {
       await deleteBloqueo(id, businessId)
       const result = await createBloqueo({
         businessId,
-        professionalId,
+        professionalId: effectiveProfessionalId,
         fecha: editFecha,
         tipo: editTipo,
         hora_inicio: editHoraInicio || undefined,
@@ -200,6 +228,23 @@ export function BloqueosClient({ businessId, professionalId, initialBloqueos }: 
             ))}
           </div>
         </div>
+
+        {/* Bloquear para: todo el negocio o un profesional específico */}
+        {showProfessionalPicker && (
+          <div className="space-y-1.5">
+            <label className="text-xs text-[var(--text-secondary)]">Bloquear para</label>
+            <select
+              value={targetProfessionalId}
+              onChange={e => setTargetProfessionalId(e.target.value)}
+              className={inputClass}
+            >
+              <option value="">Todo el negocio</option>
+              {professionals.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Horas (solo horario especial) */}
         {tipo === 'horario_especial' && (
@@ -306,6 +351,23 @@ export function BloqueosClient({ businessId, professionalId, initialBloqueos }: 
                     ))}
                   </div>
 
+                  {/* Bloquear para */}
+                  {showProfessionalPicker && (
+                    <div className="space-y-1">
+                      <label className="text-xs text-[var(--text-secondary)]">Bloquear para</label>
+                      <select
+                        value={editTargetProfessionalId}
+                        onChange={e => setEditTargetProfessionalId(e.target.value)}
+                        className={inputClass}
+                      >
+                        <option value="">Todo el negocio</option>
+                        {professionals.map(p => (
+                          <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
                   {/* Horas */}
                   {editTipo === 'horario_especial' && (
                     <div className="grid grid-cols-2 gap-3">
@@ -366,9 +428,21 @@ export function BloqueosClient({ businessId, professionalId, initialBloqueos }: 
                     onClick={() => openEdit(b)}
                     className="flex-1 text-left space-y-0.5 hover:opacity-80 transition-opacity"
                   >
-                    <p className="text-sm font-medium text-white capitalize">
-                      {fechaNatural(b.fecha)}
-                    </p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-medium text-white capitalize">
+                        {fechaNatural(b.fecha)}
+                      </p>
+                      {showProfessionalPicker && (
+                        <span className={cn(
+                          'text-[10px] font-semibold px-2 py-0.5 rounded-full',
+                          b.professional_id != null
+                            ? 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]'
+                            : 'bg-white/10 text-[var(--text-secondary)]'
+                        )}>
+                          {b.professional_id != null ? (b.professional_name ?? 'Profesional') : 'Todo el negocio'}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-[var(--text-secondary)]">
                       {b.tipo === 'cerrado'
                         ? 'Día cerrado'

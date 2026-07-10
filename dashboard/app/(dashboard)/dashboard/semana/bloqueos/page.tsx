@@ -2,7 +2,7 @@ import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
-import { getBloqueos } from '@/lib/actions'
+import { getBloqueos, getActiveProfessionals } from '@/lib/actions'
 import { BloqueosClient } from '@/components/bloqueos/bloqueos-client'
 
 export default async function BloqueosPage() {
@@ -11,7 +11,16 @@ export default async function BloqueosPage() {
 
   const businessId = session.user.businessId
   const professionalId = session.user.professionalId
-  const bloqueos = await getBloqueos(businessId, professionalId)
+  const multiProfessional = session.user.multiProfessional
+  // owner/admin (professionalId null) en negocio multi-profesional: pueden
+  // elegir bloquear a un profesional específico o todo el negocio.
+  const isOwnerOrAdmin = professionalId == null
+  const showProfessionalPicker = isOwnerOrAdmin && multiProfessional
+
+  const [bloqueos, professionals] = await Promise.all([
+    getBloqueos(businessId, professionalId, showProfessionalPicker),
+    showProfessionalPicker ? getActiveProfessionals(businessId) : Promise.resolve([]),
+  ])
 
   return (
     <div>
@@ -30,7 +39,13 @@ export default async function BloqueosPage() {
         </div>
       </div>
 
-      <BloqueosClient businessId={businessId} professionalId={professionalId} initialBloqueos={bloqueos} />
+      <BloqueosClient
+        businessId={businessId}
+        professionalId={professionalId}
+        initialBloqueos={bloqueos}
+        professionals={professionals}
+        showProfessionalPicker={showProfessionalPicker}
+      />
     </div>
   )
 }

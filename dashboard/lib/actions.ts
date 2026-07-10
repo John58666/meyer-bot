@@ -289,7 +289,28 @@ export async function getMetricas(
 
 // ─── Bloqueos de agenda ───────────────────────────────────────────────────────
 
-export async function getBloqueos(businessId: number, professionalId?: number | null) {
+export async function getBloqueos(
+  businessId: number,
+  professionalId?: number | null,
+  viewAll = false,
+) {
+  // viewAll: para owner/admin — trae TODOS los bloqueos del negocio
+  // (propios de cada profesional + los de "todo el negocio"), con el
+  // nombre del profesional para mostrarlo en la UI.
+  if (viewAll) {
+    const { rows } = await pool.query(
+      `SELECT se.id, se.fecha::text, se.tipo, se.hora_inicio::text, se.hora_fin::text,
+              se.motivo, se.professional_id, p.name AS professional_name
+       FROM schedule_exceptions se
+       LEFT JOIN professionals p ON p.id = se.professional_id
+       WHERE se.business_id = $1
+         AND se.fecha >= (NOW() AT TIME ZONE 'America/Bogota')::date
+       ORDER BY se.fecha ASC`,
+      [businessId]
+    )
+    return rows
+  }
+
   const params: number[] = [businessId];
   const profCondition = professionalId != null
     ? `professional_id = $${params.push(professionalId)}`
@@ -590,16 +611,33 @@ export async function toggleMiembroActivo(userId: number, businessId: number, ac
     return { error: "No autorizado" };
   }
 
+  const client = await pool.connect();
   try {
-    await pool.query(
-      `UPDATE users SET active = $1, updated_at = NOW() WHERE id = $2 AND business_id = $3`,
+    await client.query("BEGIN");
+    const { rows } = await client.query(
+      `UPDATE users SET active = $1, updated_at = NOW()
+       WHERE id = $2 AND business_id = $3
+       RETURNING professional_id`,
       [active, userId, businessId]
     );
+    // Mantiene sincronizado professionals.active con el estado del usuario,
+    // para que no siga apareciendo disponible en el selector de agenda.
+    const professionalId = rows[0]?.professional_id;
+    if (professionalId != null) {
+      await client.query(
+        `UPDATE professionals SET active = $1, updated_at = NOW() WHERE id = $2`,
+        [active, professionalId]
+      );
+    }
+    await client.query("COMMIT");
     revalidatePath("/dashboard/equipo");
     return { ok: true };
   } catch (e) {
+    await client.query("ROLLBACK");
     console.error("[toggleMiembroActivo]", e);
     return { error: "Error actualizando el usuario" };
+  } finally {
+    client.release();
   }
 }
 
@@ -616,16 +654,62 @@ export async function updateMiembroRole(
     return { error: "Role inválido" };
   }
 
+  const client = await pool.connect();
   try {
-    await pool.query(
-      `UPDATE users SET role = $1, updated_at = NOW() WHERE id = $2 AND business_id = $3`,
-      [role, userId, businessId]
-    );
+    await client.query("BEGIN");
+
+    if (role === "profesional") {
+      // Si se está promoviendo a "profesional" y todavía no tiene un
+      // professional_id enlazado, hay que crearlo — de lo contrario queda
+      // huérfano (role='profesional' pero professional_id=NULL) y no
+      // aparece en ningún selector ni filtro de agenda.
+      const current = await client.query(
+        `SELECT name, professional_id FROM users WHERE id = $1 AND business_id = $2`,
+        [userId, businessId]
+      );
+      const row = current.rows[0];
+      if (row && row.professional_id == null) {
+        const profResult = await client.query(
+          `INSERT INTO professionals (business_id, name, active)
+           VALUES ($1, $2, true)
+           RETURNING id`,
+          [businessId, row.name]
+        );
+        await client.query(
+          `UPDATE users SET role = $1, professional_id = $2, updated_at = NOW()
+           WHERE id = $3 AND business_id = $4`,
+          [role, profResult.rows[0].id, userId, businessId]
+        );
+      } else {
+        // Ya tenía professional_id (p.ej. admin que antes fue profesional) —
+        // solo aseguramos que la fila professionals esté activa de nuevo.
+        if (row?.professional_id != null) {
+          await client.query(
+            `UPDATE professionals SET active = true WHERE id = $1`,
+            [row.professional_id]
+          );
+        }
+        await client.query(
+          `UPDATE users SET role = $1, updated_at = NOW() WHERE id = $2 AND business_id = $3`,
+          [role, userId, businessId]
+        );
+      }
+    } else {
+      await client.query(
+        `UPDATE users SET role = $1, updated_at = NOW() WHERE id = $2 AND business_id = $3`,
+        [role, userId, businessId]
+      );
+    }
+
+    await client.query("COMMIT");
     revalidatePath("/dashboard/equipo");
     return { ok: true };
   } catch (e) {
+    await client.query("ROLLBACK");
     console.error("[updateMiembroRole]", e);
     return { error: "Error actualizando el role" };
+  } finally {
+    client.release();
   }
 }
 
