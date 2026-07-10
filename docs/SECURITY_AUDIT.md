@@ -2,7 +2,7 @@
 
 > **Leer al inicio de cada sesión.** Este documento es el reporte maestro de seguridad del proyecto.
 > Contiene hallazgos activos, plan de remediación y lineamientos no negociables.
-> Última actualización: 9 julio 2026 (sesión 2 — VPS diagnosticado vía SSH, Evolution API caído, audit_log iniciado).
+> Última actualización: 10 julio 2026 (sesión 3 — Evolution API restaurado, SSH rotado, git push realizado, Fase 3 y Fase 4 completadas).
 
 ---
 
@@ -171,24 +171,23 @@ Pre-requisito: Haber completado Fase 1 con backup en Bitwarden.
       - **Acción YO (working tree)**: ✅ `database/migrate-from-sheets.js` movido a `database/archive/` (commit `3643d6c`)
       - ⚠️ La key vieja sigue en el git history pero **ya no es válida** — acceso mitigado.
 
-- [ ] **Rotar Evolution API Key** — BLOQUEADO ⛔
-      - **Problema diagnosticado (9 julio 2026 vía SSH)**: Evolution API no está corriendo en el VPS.
-      - `docker ps` muestra solo 2 contenedores: `n8n-n8n-1` + `meyer_postgres`. Evolution API ausente.
-      - Puerto 8080 no responde ni desde localhost ni desde fuera.
-      - **Acción necesaria previa**: Verificar si el contenedor evolution-api existe pero está detenido (`docker ps -a`), o si hubo migración/movida.
-      - **Workflow creado**: `workflows/rotar-evolution-api-key.json` para regenerar key cuando Evolution API esté activo.
-      - **Instrucciones detalladas** en sección "Rotación Evolution API Key" abajo.
+- [x] **Evolution API restaurado (10 julio 2026)** ✅
+      - **Causa raíz encontrada**: reboot del VPS ~29h antes. Contenedores `evolution-api`, `evolution-postgres`, `evolution-redis` no tenían `restart policy` (a diferencia de n8n/postgres que sí la tienen).
+      - **Fix aplicado**: `docker update --restart unless-stopped` en los 3 contenedores + `docker start` en orden (postgres → redis → api). `docker-compose.yaml` actualizado con `restart: unless-stopped` para persistir el fix (backup del compose guardado).
+      - **Verificado**: ambas instancias (`peluqueria-beta`, `brayan-study`) reconectadas a WhatsApp sin necesidad de reescanear QR (no se recremicaron contenedores, se preservó la sesión).
+      - ⚠️ **Nuevo hallazgo**: `evolution-postgres` y `evolution-redis` **no tienen volumen persistente** — los datos viven en el filesystem del contenedor. Si el contenedor se elimina (`docker rm`), se pierde la sesión de WhatsApp y config de instancias. **Pendiente**: agregar volumen nombrado.
+      - ⚠️ **Nuevo hallazgo**: `docker-compose.yaml` de Evolution API tiene `API_KEY`, `AUTHENTICATION_API_KEY` y `POSTGRES_PASSWORD=password` **hardcodeados en texto plano** (no solo en git history — vivo en el VPS). No se migró a `.env` todavía por riesgo de recrear contenedores sin volumen (perdería sesión WhatsApp). **Pendiente para cuando se haga mantenimiento con downtime planeado.**
 
-- [ ] **Rotar Evolution API Key**
-      1. Evolution API manager UI (`http://178.104.27.180:8080/manager`)
+- [ ] **Rotar Evolution API Key** — DESBLOQUEADO (Evolution API corriendo), pendiente ejecutar
+      1. Evolution API manager UI (`http://178.104.27.180:8080/manager`) — acceso ahora solo vía localhost/túnel SSH (puerto cerrado al público, ver Fase 3)
       2. Ir a Settings → API Keys
       3. Generar nueva API key
-      4. Revocar la vieja (`***REMOVED-EVOLUTION-API-KEY***`)
+      4. Revocar la vieja (ya removida de docs/workflows, pero **sigue activa en el VPS** — rotarla es la única forma de invalidarla realmente)
       5. Copiar la nueva key
       6. Guardar en Bitwarden como Secure Note nueva
-      7. Actualizar `/root/n8n/.env` del VPS: `EVOLUTION_API_KEY=<nueva>`
-      8. En n8n UI → nodo `Confirmar Cancelación` cambiar header `apikey` a la nueva (modo Expression: `={{ $env.EVOLUTION_API_KEY }}`)
-      9. Reiniciar n8n: `docker compose down && docker compose up -d` para releer `.env`
+      7. Actualizar `/root/n8n/.env` del VPS: `EVOLUTION_API_KEY=<nueva>` y `/root/evolution-api/docker-compose.yaml` (`API_KEY`, `AUTHENTICATION_API_KEY`)
+      8. En n8n UI → nodos que usan `apikey` cambiar a la nueva (modo Expression: `={{ $env.EVOLUTION_API_KEY }}`)
+      9. Recrear evolution-api: requiere downtime — planificar con el dueño (riesgo de perder sesión WhatsApp si no hay volumen — ver hallazgo arriba)
 
 ### Pendiente como feature futura
 
@@ -197,38 +196,36 @@ Pre-requisito: Haber completado Fase 1 con backup en Bitwarden.
       - OAuth flow recomendado (no Service Account JSON) para usuarios que conecten su propio Google Calendar
       - Documentar en `docs/ARCHITECTURE.md` cuando se diseñe
 
-### Fase 3 — Hardening del VPS (URGENTE, pre-Sprint 12)
+### Fase 3 — Hardening del VPS (COMPLETADA ✅ — 10 julio 2026)
 
-- [ ] **Firewall: cerrar puerto 8080 de Evolution API al público**
-      1. Confirmar con: `sudo ufw status` en el VPS
-      2. Denegar acceso externo: `sudo ufw deny 8080/tcp`
-      3. Permitir solo localhost: `sudo ufw allow from 127.0.0.1 to any port 8080`
-      4. Verificar: `sudo ufw status numbered`
+- [x] **Firewall: cerrar puerto 8080 de Evolution API al público** ✅
+      - `ufw` ya tenía regla `8080 ALLOW Anywhere` → cambiada a `8080 ALLOW 127.0.0.1`.
+      - ⚠️ **Hallazgo**: Docker bypasea UFW (inserta reglas iptables con prioridad mayor). Solución real: regla en chain `DOCKER-USER`: `iptables -A DOCKER-USER -i eth0 -p tcp --dport 8080 -j DROP` (bloquea tráfico externo por `eth0`; tráfico desde localhost/Docker bridge no pasa por `eth0`, así que n8n sigue funcionando).
+      - Persistida con `iptables-persistent` (`/etc/iptables/rules.v4`), sobrevive reinicios.
+      - **Verificado desde fuera (Mac)**: `curl http://178.104.27.180:8080` → timeout/`HTTP 000`. Bloqueado correctamente.
+      - `docker-compose.yaml` de Evolution API actualizado a `127.0.0.1:8080:8080` (aplicará cuando se recree el contenedor).
 
-- [ ] **Cambiar password débil de meyer_user**
-      1. Generar password fuerte en Bitwarden (24+ caracteres, alphanumeric + symbols)
-      2. Guardar en Bitwarden como Secure Note `meyer-bot — Postgres meyer_user password`
-      3. SSH al VPS, conectarse a PostgreSQL: `docker exec -it meyer_postgres psql -U postgres`
-      4. Cambiar password: `ALTER USER meyer_user WITH PASSWORD 'nueva_password';`
-      5. Actualizar `/root/meyer-bot/dashboard/.env.local` en el VPS: `POSTGRES_PASSWORD=...`
-      6. Actualizar `~/Documents/meyer-bot/dashboard/.env.local` en Mac
-      7. Reiniciar n8n para releer nuevas credenciales: `docker compose down && docker compose up -d`
-      8. `pm2 restart meyer-dashboard`
+- [x] **Cambiar password débil de meyer_user** ✅
+      1. Password nueva (26 caracteres) generada y aplicada: `ALTER USER meyer_user WITH PASSWORD '...'`.
+      2. Guardada en Bitwarden por el dueño.
+      3. Actualizado `/root/meyer-bot/dashboard/.env.local` (VPS) y `~/Documents/meyer-bot/dashboard/.env.local` (Mac).
+      4. Actualizado `/root/n8n/.env` (VPS) — `POSTGRES_PASSWORD` (solo aplica si se recrea el contenedor `meyer_postgres` desde cero; no afecta el runtime actual).
+      5. `pm2 restart meyer-dashboard` — verificado HTTP 200 en `/login` + query exitosa a `businesses` con la nueva password.
+      6. ⚠️ **Hallazgo importante**: los workflows de n8n (bot WhatsApp) usan una **credencial cifrada en el vault interno de n8n** (`Postgres account`, id `AkRs7Kx5gs6JnVMz`), **no leen `POSTGRES_PASSWORD` desde `.env`**. Esta credencial fue actualizada manualmente por el dueño en la UI de n8n (`http://178.104.27.180:5678` → Credentials → Postgres account) tras el cambio de password.
 
-### Fase 4 — Limpieza de git history (Después de Fase 2 y 3)
+### Fase 4 — Limpieza de git history (COMPLETADA ✅ — 10 julio 2026)
 
-⚠️ **Requiere validación del usuario paso a paso.** Esta fase reescribe el git history con `git filter-repo` (o BFG). Es destructiva para el historial.
-
-- [ ] Instalar `git-filter-repo`: `brew install git-filter-repo`
-- [ ] Backup del repo actual: `cp -R meyer-bot meyer-bot-backup-pre-cleanup`
-- [ ] Identificar archivos a purgar del history:
+- [x] `git-filter-repo` instalado (`brew install git-filter-repo`)
+- [x] Backup del repo: `~/Documents/meyer-bot-backup-pre-cleanup/` (sin `node_modules`/`.next`, con `.git` completo verificado)
+- [x] Archivos purgados de **todo** el git history (`--invert-paths`):
       - `workflows/peluqueria-beta.json`
       - `docs/pendientes-seguridad.md`
-      - Strings específicos (la Google Private Key completa, la Evolution API key completa)
-- [ ] Ejecutar `git filter-repo` con replace-text para purgar los secrets
-- [ ] Force-push al remote: `git push --force origin main`
-- [ ] Avisar a colaboradores (aunque solo hay uno — el owner)
-- [ ] Re-ejecutar gitleaks para confirmar 0 leaks
+- [x] String reemplazado en todo el history (`--replace-text`): Evolution API Key → `***REMOVED-EVOLUTION-API-KEY***`
+- [x] ⚠️ **Hallazgo durante ejecución**: existía una rama adicional `fix/tab-title` en GitHub no incluida en el plan original — también tenía los mismos leaks. Se detectó, limpió y forzó el push igual que `main`.
+- [x] Force-push a ambas ramas: `git push --force origin main` y `git push --force origin fix/tab-title`
+- [x] Único colaborador (owner) — no requiere aviso a terceros
+- [x] Re-ejecutado gitleaks **desde un clon 100% fresco de GitHub** (no solo local): `no leaks found` en ambas ramas — confirmado
+- [x] Remote origin: se removió el PAT (`ghp_...`) que estaba hardcodeado en la URL del remote (`.git/config`); reemplazado por autenticación vía `gh` CLI / macOS Keychain (`gh auth setup-git`)
 
 ### Fase 5 — Hardening del dashboard (pre-Sprint 15)
 
@@ -294,7 +291,37 @@ Pre-requisito: Haber completado Fase 1 con backup en Bitwarden.
 
 ---
 
-## 🔄 Session Continuation (9 julio 2026)
+## 🔄 Session Continuation (10 julio 2026 — sesión 3)
+
+### Estado actual (post sesión 3)
+
+| Item | Estado | Detalle |
+|---|---|---|
+| **Evolution API** | ✅ Restaurado | 3 contenedores `Up`, `restart: unless-stopped` aplicado. WhatsApp reconectado sin re-escanear QR. |
+| **Volumen persistente evolution-postgres/redis** | ⚠️ Pendiente | No existe — riesgo de pérdida de sesión si se elimina el contenedor. |
+| **Secrets hardcodeados en docker-compose.yaml de Evolution** | ⚠️ Pendiente | `API_KEY`, `POSTGRES_PASSWORD=password` en texto plano en el VPS. Migrar a `.env` cuando se planifique downtime. |
+| **Rotar Evolution API Key (la key en sí)** | ⚠️ Pendiente (desbloqueado) | Evolution API ya corre; falta ejecutar la rotación real. |
+| **Password SSH root** | ✅ Rotada | Acceso por key `id_ed25519` configurado (`ssh-copy-id`) + password de emergencia rotada y guardada en Bitwarden por el dueño. |
+| **Git push commits locales** | ✅ Hecho | 9 commits sincronizados con `origin/main` (incluye 1 commit de rebase con cambio remoto pre-existente). |
+| **Fix hardcoded key en workflow antes de push** | ✅ Hecho | `workflows/rotar-evolution-api-key.json` — `oldApiKey` ahora usa variable en vez de string literal. |
+| **Firewall puerto 8080** | ✅ Cerrado al público | UFW + iptables `DOCKER-USER`, persistido, verificado desde fuera. |
+| **Password meyer_user PostgreSQL** | ✅ Rotada | `.env` actualizados (dashboard Mac+VPS, n8n VPS), `pm2 restart` verificado, credencial de n8n UI actualizada manualmente por el dueño. |
+| **Git history limpio** | ✅ Verificado | `git-filter-repo` — 0 leaks confirmado desde clon fresco de GitHub, ambas ramas (`main`, `fix/tab-title`). |
+| **PAT hardcodeado en remote URL** | ✅ Removido | Reemplazado por `gh auth setup-git` (Keychain). |
+| **GOOGLE_PRIVATE_KEY en .env del VPS** | ⚠️ Pendiente | Key ya revocada (inservible) pero sigue en el `.env` — limpiar cuando se prioricen las fases 5-6. |
+| **Sprint actual** | 🟢 Sprint 12 iniciando | Multi-profesional — desbloqueado, todas las fases de seguridad urgentes completas. |
+
+### 🔴 Pendientes para próximas sesiones (no bloqueantes para Sprint 12)
+
+1. Rotar la Evolution API Key real (ya no bloqueado, pero no ejecutado — requiere downtime breve de WhatsApp)
+2. Agregar volumen persistente a `evolution-postgres` y `evolution-redis`
+3. Migrar secrets hardcodeados del `docker-compose.yaml` de Evolution API a `.env`
+4. Limpiar `GOOGLE_PRIVATE_KEY` del `.env` del VPS (key ya revocada, solo limpieza)
+5. Fase 5 — hardening dashboard (rate limiting, security headers, compliance Ley 1581) — pre-Sprint 15
+
+---
+
+## 🔄 Session Continuation (9 julio 2026) — histórico, ver sesión 3 arriba para estado vigente
 
 Si este chat se corta o inicia una nueva sesión, el modelo debe:
 
@@ -374,3 +401,4 @@ SSH password: compartida en sesión anterior (rotar urgente)
 |---|---|
 | 6 julio 2026 | Creación: auditoría inicial (gitleaks + npm audit), plan de remediación completo |
 | 9 julio 2026 | VPS diagnosticado vía SSH: Evolution API caído, solo 2 contenedores activos. Session continuation agregado. |
+| 10 julio 2026 | **Sesión 3 completa**: Evolution API restaurado (causa raíz: sin restart policy tras reboot), SSH rotado (key + password), git push (9 commits) con fix de key hardcodeada previo, Fase 3 completada (firewall + password DB), Fase 4 completada (git history 100% limpio, verificado desde clon fresco). Nuevos hallazgos documentados: sin volumen persistente en evolution-postgres/redis, secrets hardcodeados en compose de Evolution, n8n usa vault interno no `.env` para credencial Postgres. Sprint 12 desbloqueado. |

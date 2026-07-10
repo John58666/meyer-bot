@@ -1,6 +1,6 @@
 # CONTEXT.md — meyer-bot
 
-> Última actualización: 9 julio 2026 (sesión 2 — auditoría seguridad + VPS diagnosticado).
+> Última actualización: 10 julio 2026 (sesión 3 — seguridad urgente resuelta: Evolution API restaurado, VPS hardened, git history limpio. Sprint 12 en curso).
 > Documento maestro CORTO. Cualquier chat nuevo lee esto primero.
 > **⚠️ ANTES de tocar NADA: leer `docs/SECURITY_AUDIT.md`** — reporte maestro de seguridad, hallazgos activos y plan de remediación.
 > Para profundidad: ver docs/ (ARCHITECTURE.md, SPRINTS.md, RUNBOOK.md, KEY_LEARNINGS.md, SECURITY_AUDIT.md)
@@ -108,8 +108,10 @@ Asignados manualmente por SQL al onboardear. Sistema formal con Stripe/Wompi en 
 
 ## Backlog priorizado
 
-### SPRINT 12 (próximo)
+### SPRINT 12 (en curso — 10 julio 2026)
 1. **Multi-profesional completo** — selección de profesional en bot (2 turnos extra), disponibilidad por `professional_id`, UI agenda paralela, métricas por profesional para owner/admin.
+   - Desbloqueado: todas las fases urgentes de seguridad (Fase 2-4) completadas en sesión 3.
+   - Contexto: presentación pendiente — priorizar que "barberos" (multi-profesional) y dashboard queden presentables.
 
 ### SPRINT 13
 2. **Auditoría** — tabla `audit_log`, instrumentación de actions, UI de consulta para owner/admin.
@@ -163,18 +165,21 @@ Asignados manualmente por SQL al onboardear. Sistema formal con Stripe/Wompi en 
 ## Seguridad pendiente
 > Reporte completo y plan de remediación: **`docs/SECURITY_AUDIT.md`** (leer primero).
 >
-> Estado al 9 julio 2026:
-> - 🔴 6 leaks de Google Private Key en git history — ✅ **key revocada** en Google Cloud Console (inservible)
-> - 🟡 2 leaks de Evolution API Key en git history — ⛔ **BLOQUEADO** Evolution API no corre en VPS
-> - 🔴 **Evolution API caído/ausente** en VPS (no está en `docker ps`, puerto 8080 vacío)
-> - 🔴 Password SSH compartida en sesión anterior — **URGENTE rotar**
-> - 🔴 Password meyer_user débil en PostgreSQL
-> - 🟡 GOOGLE_PRIVATE_KEY en .env del VPS (key revocada, pero limpiar .env)
-> - ✅ Bitwarden Cloud Free configurado como gestor de secrets
+> Estado al 10 julio 2026 (sesión 3):
+> - ✅ Git history 100% limpio — `gitleaks`: 0 leaks, verificado desde clon fresco de GitHub (`main` + `fix/tab-title`)
+> - ✅ **Evolution API restaurado** — causa raíz: contenedores sin `restart policy` tras reboot del VPS. Ahora `restart: unless-stopped` en los 3 (api/postgres/redis). WhatsApp reconectado sin re-escanear QR.
+> - ✅ Password SSH rotada + acceso por key `id_ed25519` configurado
+> - ✅ Password `meyer_user` PostgreSQL rotada — `.env` actualizados (Mac + VPS) + credencial de n8n UI actualizada
+> - ✅ Firewall: puerto 8080 de Evolution API cerrado al público (UFW + iptables `DOCKER-USER`, persistido)
+> - ✅ PAT de GitHub removido de la URL del remote git (ahora vía `gh auth`)
+> - 🟡 **Pendiente**: rotar la Evolution API Key en sí (ya desbloqueado, falta ejecutar — requiere downtime breve)
+> - 🟡 **Pendiente**: volumen persistente para `evolution-postgres`/`evolution-redis` (hoy los datos viven solo en el contenedor)
+> - 🟡 **Pendiente**: migrar secrets hardcodeados del `docker-compose.yaml` de Evolution API a `.env`
+> - 🟡 GOOGLE_PRIVATE_KEY en .env del VPS (key ya revocada, pero falta limpiar el archivo)
+> - ✅ Bitwarden Cloud Free — SSH password y DB password nuevas ya guardadas
 > - ✅ npm audit fix aplicado en local (commit `4a302ef`, no deployado)
 > - ✅ 1 vuln moderate (postcss) queda — requiere upgrade Next.js
-> - ⏳ Pendiente: reinstalar Evolution API en VPS, rotar key Evolution, cambiar password SSH, firewall VPS, limpiar git history, compliance Ley 1581
-> - VPS conectado vía SSH (9 jul): solo 2 contenedores activos (n8n, postgres)
+> - ⏳ Pendiente pre-Sprint 15: rate limiting, security headers, compliance Ley 1581
 >
 > NUNCA subir .env ni secrets a Git.
 
