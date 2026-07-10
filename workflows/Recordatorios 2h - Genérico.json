@@ -1,0 +1,145 @@
+{
+  "name": "Recordatorios 2h - Genérico",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/10 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "sched-2h-trigger",
+      "name": "Schedule Trigger 2h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        576,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT a.fecha::text AS \"Fecha\", a.hora::text AS \"Hora\", a.nombre AS \"Nombre\", a.servicio AS \"Servicio\", a.numero AS \"Número\", a.estado AS \"Estado\", b.whatsapp_instance, b.owner_number, b.name AS business_name FROM appointments a JOIN businesses b ON b.id = a.business_id WHERE a.fecha = (NOW() AT TIME ZONE 'America/Bogota')::date AND a.estado = 'Pendiente' AND b.active = TRUE AND a.hora BETWEEN ((NOW() AT TIME ZONE 'America/Bogota') + INTERVAL '1 hour 55 minutes')::time AND ((NOW() AT TIME ZONE 'America/Bogota') + INTERVAL '2 hours 5 minutes')::time",
+        "options": {}
+      },
+      "id": "leer-citas-2h",
+      "name": "Leer Citas 2h",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        816,
+        -200
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "AkRs7Kx5gs6JnVMz",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Construir mensajes de recordatorio 2 horas antes (ya filtradas por PostgreSQL)\nconst resultados = [];\n\nfor (const item of $input.all()) {\n  const row = item.json;\n  const numero = (row['Número'] || '').toString().trim().replace(/@s\\.whatsapp\\.net/g, '').replace(/\\D/g, '');\n  const nombre = (row['Nombre'] || 'cliente').toString().trim();\n  const businessName = (row['business_name'] || 'nuestro negocio').toString().trim();\n  const hora = (row['Hora'] || '').toString().trim().substring(0,5);\n  const servicio = (row['Servicio'] || '').toString().trim();\n\n  if (numero && hora) {\n    const mensaje = `Hola ${nombre} 👋\\n\\n¡Tu cita en *${businessName}* es en 2 horas! ⏰ Hoy a las *${hora}*.\\n\\n✂️ Servicio: *${servicio}*\\n\\nSi necesitas cancelar o reagendar, responde este mensaje 😊`;\n    resultados.push({ json: { numero, nombre, mensaje, hora, servicio } });\n  }\n}\n\nreturn resultados;"
+      },
+      "id": "construir-mensaje-2h",
+      "name": "Construir Mensaje 2h",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1056,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $('Leer Citas 2h').item.json.whatsapp_instance }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.EVOLUTION_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.numero }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.mensaje }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "enviar-recordatorio-2h",
+      "name": "Enviar Recordatorio WhatsApp 2h",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1296,
+        -200
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger 2h": {
+      "main": [
+        [
+          {
+            "node": "Leer Citas 2h",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Citas 2h": {
+      "main": [
+        [
+          {
+            "node": "Construir Mensaje 2h",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construir Mensaje 2h": {
+      "main": [
+        [
+          {
+            "node": "Enviar Recordatorio WhatsApp 2h",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": {
+    "documentation": "Workflow NUEVO — recordatorio 2 horas antes de la cita. Corre cada 10 min, busca citas de HOY en la ventana [ahora+1h55m, ahora+2h05m). IMPORTANTE: importar en n8n y ACTIVAR manualmente (queda 'active: false' por seguridad, para revisar antes de que empiece a enviar mensajes reales). Requiere las mismas env vars que 'Recordatorios 24h': EVOLUTION_API_URL, EVOLUTION_API_KEY."
+  },
+  "tags": []
+}
