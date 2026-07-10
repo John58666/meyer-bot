@@ -15,6 +15,8 @@ export default async function SemanaPage() {
   const businessId = session.user.businessId;
   const professionalId = session.user.professionalId;
   const multiProfessional = session.user.multiProfessional;
+  // Solo owner/admin ven el selector con TODOS los profesionales al agendar.
+  const isOwnerOrAdmin = professionalId == null;
   const appointments = await getWeekAppointments(businessId, professionalId);
 
   const { rows: bizRows } = await pool.query(
@@ -22,7 +24,7 @@ export default async function SemanaPage() {
     [businessId],
   );
   const servicesText: string = bizRows[0]?.services_text ?? "";
-  const professionals = await getActiveProfessionals(businessId);
+  const professionals = isOwnerOrAdmin ? await getActiveProfessionals(businessId) : [];
 
   const todayISO = new Date().toLocaleDateString("en-CA", {
     timeZone: "America/Bogota",

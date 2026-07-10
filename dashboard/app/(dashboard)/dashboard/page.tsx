@@ -16,6 +16,10 @@ export default async function DashboardPage() {
   const businessId = session.user.businessId;
   const professionalId = session.user.professionalId;
   const multiProfessional = session.user.multiProfessional;
+  // Solo owner/admin (professionalId null) ven el selector con TODOS los
+  // profesionales al agendar manual. Un "profesional" agenda siempre a su
+  // propio nombre (el server action también lo fuerza, esto es solo UI).
+  const isOwnerOrAdmin = professionalId == null;
 
   const [[appointments, stats], bizRows, professionals] = await Promise.all([
     Promise.all([
@@ -25,7 +29,7 @@ export default async function DashboardPage() {
     pool
       .query("SELECT services_text FROM businesses WHERE id = $1", [businessId])
       .then((r) => r.rows),
-    getActiveProfessionals(businessId),
+    isOwnerOrAdmin ? getActiveProfessionals(businessId) : Promise.resolve([]),
   ]);
   const servicesText: string = bizRows[0]?.services_text ?? "";
 

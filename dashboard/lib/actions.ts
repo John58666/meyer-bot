@@ -28,9 +28,17 @@ export async function createAppointment(formData: FormData) {
   const fecha = formData.get("fecha") as string; // YYYY-MM-DD
   const hora = formData.get("hora") as string;   // HH:MM
   const forceOverride = formData.get("forceOverride") === "true";
-  const professionalIdRaw = formData.get("professionalId") as string | null;
-  const professionalId = professionalIdRaw ? parseInt(professionalIdRaw, 10) : null;
   const businessId = session.user.businessId;
+
+  // Un usuario con rol "profesional" SOLO puede agendar a su propio nombre —
+  // se ignora cualquier professionalId que venga del form (no confiar en el
+  // cliente). Owner/admin sí pueden elegir cualquier profesional del negocio.
+  const professionalId = session.user.role === "profesional"
+    ? session.user.professionalId
+    : (() => {
+        const raw = formData.get("professionalId") as string | null;
+        return raw ? parseInt(raw, 10) : null;
+      })();
 
   if (!nombre || !numero || !servicio || !fecha || !hora) {
     return { error: "Todos los campos son obligatorios" };
@@ -337,7 +345,18 @@ export async function createBloqueo(data: {
   motivo?: string
   professionalId?: number | null
 }) {
-  const { businessId, fecha, tipo, hora_inicio, hora_fin, motivo, professionalId } = data
+  const session = await auth()
+  if (!session) return { error: 'No autenticado' }
+
+  const { fecha, tipo, hora_inicio, hora_fin, motivo } = data
+  // Nunca confiar en businessId/professionalId del cliente para AUTORIZAR —
+  // el negocio siempre es el de la sesión. Un "profesional" solo puede
+  // bloquear su propia agenda; solo owner/admin pueden elegir otro
+  // profesional o "todo el negocio".
+  const businessId = session.user.businessId
+  const professionalId = session.user.role === 'profesional'
+    ? session.user.professionalId
+    : (data.professionalId ?? null)
 
   if (tipo === 'horario_especial') {
     if (!hora_inicio || !hora_fin)
@@ -367,9 +386,21 @@ export async function createBloqueo(data: {
 }
 
 export async function deleteBloqueo(id: number, businessId: number) {
+  const session = await auth()
+  if (!session) return { error: 'No autenticado' }
+  // businessId siempre de la sesión, nunca del cliente.
+  const realBusinessId = session.user.businessId
+
+  // Un "profesional" solo puede borrar SUS PROPIOS bloqueos, nunca los de
+  // otro profesional ni los de "todo el negocio".
+  const params: (number)[] = [id, realBusinessId]
+  const profFilter = session.user.role === 'profesional'
+    ? ` AND professional_id = $${params.push(session.user.professionalId as number)}`
+    : ''
+
   await pool.query(
-    `DELETE FROM schedule_exceptions WHERE id = $1 AND business_id = $2`,
-    [id, businessId]
+    `DELETE FROM schedule_exceptions WHERE id = $1 AND business_id = $2${profFilter}`,
+    params
   )
   revalidatePath('/dashboard/semana/bloqueos')
   return { ok: true }
