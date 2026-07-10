@@ -43,7 +43,7 @@ try {
           success: true,
           newApiKey: nuevaKey,
           message: `🔑 Key rotada OK. Nueva key: ${nuevaKey}`,
-          oldApiKey: '***REMOVED-EVOLUTION-API-KEY***'
+          oldApiKey: apiKeyActual
         }
       }
     ];
@@ -78,7 +78,7 @@ try {
             success: true,
             newApiKey: apiKeyActual,
             message: `🔁 Instancia '${instanceName}' ya existe. Se reinició la instancia pero la key sigue igual: ${apiKeyActual}. Debes actualizar /root/n8n/.env del VPS manualmente a la nueva key.`,
-            oldApiKey: '***REMOVED-EVOLUTION-API-KEY***'
+            oldApiKey: apiKeyActual
           }
         }
       ];
