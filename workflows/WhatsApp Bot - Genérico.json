@@ -13,10 +13,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -2720,
-        400
+        16,
+        2656
       ],
-      "id": "55e06e95-6592-4316-b10a-cb5d13cd6267",
+      "id": "db959ff3-394d-4cb5-aa28-7b7cd9375ffc",
       "name": "Webhook",
       "webhookId": "7a1a3b0a-9f4e-48e3-bcc9-54de8d19c7b1"
     },
@@ -60,10 +60,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -2512,
-        400
+        224,
+        2656
       ],
-      "id": "82b5c370-d4bb-4f75-bbac-6502d9ca29ed",
+      "id": "bfd54054-b541-48d3-b5cb-6c0cea51a634",
       "name": "Filtro Inicial"
     },
     {
@@ -75,10 +75,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        -2320,
-        400
+        416,
+        2656
       ],
-      "id": "8384be0b-ab96-48d6-be60-2c22e16cd441",
+      "id": "ddebd0fe-fb5b-43a8-a730-7b4e5f489575",
       "name": "Lookup Negocio",
       "credentials": {
         "postgres": {
@@ -115,10 +115,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -2128,
-        400
+        608,
+        2656
       ],
-      "id": "8fc7b357-4726-4c9c-b88e-590b8591f9d0",
+      "id": "cde45a5c-94d6-47c0-a854-af6aa41ab8c8",
       "name": "\u00bfNegocio Existe?"
     },
     {
@@ -128,10 +128,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1936,
-        384
+        800,
+        2640
       ],
-      "id": "90aa0423-7772-4ab8-b32a-d13386cf881c",
+      "id": "18430009-fa7d-45c0-8775-0aade482d607",
       "name": "Procesar Mensaje"
     },
     {
@@ -143,10 +143,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -1520,
-        384
+        1216,
+        2640
       ],
-      "id": "0bdde1fe-b71f-4d93-9fc2-8e537c575f1d",
+      "id": "2767194e-b5f4-4eba-af3e-f356592e7259",
       "name": "Leer Slots Disponibles",
       "credentials": {
         "postgres": {
@@ -162,10 +162,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1312,
-        384
+        1424,
+        2640
       ],
-      "id": "79ab5817-c90e-4855-a8cb-5d2a79e62ff6",
+      "id": "d1231194-52ec-4c4e-8b11-77a3a8b0f1d0",
       "name": "Formatear Disponibilidad"
     },
     {
@@ -175,10 +175,10 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        -528,
-        416
+        2208,
+        2672
       ],
-      "id": "eca30926-3dbe-44f3-ae81-e142dc00e5bb",
+      "id": "6407f6c0-9888-4c59-b60b-7bc6e3781101",
       "name": "Wait",
       "webhookId": "4ee81907-f6c4-43ea-a460-7503f3834d62"
     },
@@ -191,10 +191,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        0,
-        0
+        2736,
+        2256
       ],
-      "id": "f5881db9-0741-4bfc-b96b-970d48868792",
+      "id": "54a3814d-f57e-4b10-b891-ddd4b046e86d",
       "name": "Leer Disponibilidad",
       "credentials": {
         "postgres": {
@@ -210,10 +210,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        176,
-        0
+        2912,
+        2256
       ],
-      "id": "14c1d931-5702-44eb-94e3-c07ae0e067fe",
+      "id": "2ce8bcff-b885-47b4-ba39-9adda71fb646",
       "name": "Verificar Slot"
     },
     {
@@ -244,10 +244,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        368,
-        0
+        3104,
+        2256
       ],
-      "id": "0c99c01c-97ae-448e-b682-afb56932cf44",
+      "id": "16c157f5-3b1f-490f-b924-2aa0bc662722",
       "name": "\u00bfDisponible?"
     },
     {
@@ -259,10 +259,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        560,
-        0
+        3296,
+        2256
       ],
-      "id": "d65b9c2e-2bab-4241-aaec-be30f6424df3",
+      "id": "1469b5df-2b62-4b63-84e9-e4e021cd7ddf",
       "name": "Insertar Cita",
       "credentials": {
         "postgres": {
@@ -278,10 +278,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        752,
-        0
+        3488,
+        2256
       ],
-      "id": "d8e01525-e93a-438e-a775-b254775377d8",
+      "id": "66350bb0-d2a0-4df9-8f06-12b7f2770c8b",
       "name": "Construir Mensajes"
     },
     {
@@ -310,10 +310,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        944,
-        0
+        3680,
+        2256
       ],
-      "id": "4a8ad52f-3287-4248-8368-96bed3692349",
+      "id": "f5432348-c585-4cb2-a236-a5f24a8ce2cd",
       "name": "Notificar Due\u00f1o"
     },
     {
@@ -342,10 +342,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        1136,
-        0
+        3872,
+        2256
       ],
-      "id": "0acffe3f-c072-4312-b6d9-0dd702952fe5",
+      "id": "90554054-149d-40aa-90b9-4d8ccdb65259",
       "name": "Confirmar Cliente"
     },
     {
@@ -383,10 +383,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        160,
-        992
+        2896,
+        3248
       ],
-      "id": "3c88908c-dc68-495c-855a-54714a8dbea5",
+      "id": "228a3f78-44d9-4671-be9f-25b606202cfb",
       "name": "Respuesta Normal"
     },
     {
@@ -416,10 +416,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -144,
-        960
+        2592,
+        3216
       ],
-      "id": "2174dfc4-a28d-40e0-b41b-2b234f6cb599",
+      "id": "5a9cee42-4142-46a8-affc-e7d07bdda52d",
       "name": "\u00bfConfirmar o Responder?"
     },
     {
@@ -457,10 +457,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        992,
-        192
+        3728,
+        2448
       ],
-      "id": "2ba66fef-1919-4bab-b2cc-ddd811260160",
+      "id": "385414a5-0ba6-428f-bccf-f8e6ab13be65",
       "name": "Aviso Slot Ocupado"
     },
     {
@@ -573,10 +573,10 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        -384,
-        368
+        2352,
+        2624
       ],
-      "id": "5ffdce39-f9fe-42f1-bfb8-ddab61bbfb50",
+      "id": "9d49cf1a-18ac-4ccb-8694-fd5a963ad0bb",
       "name": "Switch"
     },
     {
@@ -588,10 +588,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        0,
-        384
+        2736,
+        2640
       ],
-      "id": "243829e5-7689-4f18-bf1e-2e0039d0020e",
+      "id": "70442321-7c41-414f-8cf2-15a265118b46",
       "name": "Leer Citas Cliente",
       "alwaysOutputData": true,
       "credentials": {
@@ -608,10 +608,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        192,
-        384
+        2928,
+        2640
       ],
-      "id": "89e234e7-7384-4f61-806e-2fa376862dca",
+      "id": "dfe3fb21-379b-487e-8d82-2b4142de3f16",
       "name": "Formatear Citas"
     },
     {
@@ -649,10 +649,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        816,
-        480
+        3552,
+        2736
       ],
-      "id": "249938c6-215b-4d0f-b7a0-b9b7ef3daa54",
+      "id": "4e60eee5-c5e1-4147-9352-6fd703cc3eff",
       "name": "Enviar Lista de citas"
     },
     {
@@ -664,10 +664,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -16,
-        592
+        2720,
+        2848
       ],
-      "id": "add11403-40c5-44ed-98e0-2b90d32fb085",
+      "id": "9a525f82-9a06-4879-88d4-161764c00f60",
       "name": "Ejecutar Cancelaci\u00f3n",
       "credentials": {
         "postgres": {
@@ -699,28 +699,28 @@
         "body": "={\n  \"appointmentId\": {{ $json.id }},\n  \"businessId\": {{ $('Procesar Mensaje').item.json.businessId }}\n}",
         "options": {}
       },
-      "id": "65a81d08-8e1e-4549-b5fc-f2189ad223e4",
+      "id": "e5d08b46-2e19-4bd7-9cff-0db65b50755c",
       "name": "Sync Cancel Dashboard",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        224,
-        560
+        2992,
+        2816
       ]
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE appointments\nSET fecha = TO_DATE('{{ $('AI Agent').item.json.output.split('|')[2] }}', 'DD/MM/YYYY'),\n    hora  = '{{ $('AI Agent').item.json.output.split('|')[3].split('\\n')[0].trim() }}'::time,\n    estado = 'Pendiente',\n    updated_at = NOW()\nWHERE id = {{ $('AI Agent').item.json.output.split('|')[1] }}\n  AND business_id = {{ $('Procesar Mensaje').item.json.businessId }}\n  AND estado IN ('Pendiente', 'Confirmada')\nRETURNING id, fecha::text, hora::text, servicio, estado",
+        "query": "UPDATE appointments\nSET fecha = TO_DATE('{{ $('AI Agent').item.json.output.split('|')[2] }}', 'DD/MM/YYYY'),\n    hora  = '{{ $('AI Agent').item.json.output.split('|')[3].split('\\n')[0].trim() }}'::time,\n    estado = 'Pendiente',\n    updated_at = NOW()\nWHERE id = {{ $('AI Agent').item.json.output.split('|')[1] }}\n  AND business_id = {{ $('Procesar Mensaje').item.json.businessId }}\n  AND estado IN ('Pendiente', 'Confirmada')\nRETURNING id, fecha::text, hora::text, servicio, estado, professional_id, nombre",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -16,
-        784
+        2704,
+        3072
       ],
-      "id": "792b020b-b756-45a1-9a14-72c349383950",
+      "id": "01df68f1-3422-46ea-b78b-edd13ada5de3",
       "name": "Ejecutar Reagendamiento",
       "credentials": {
         "postgres": {
@@ -747,27 +747,18 @@
           ]
         },
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "number",
-              "value": "={{ $('Procesar Mensaje').item.json.numero.replace('@s.whatsapp.net','').replace(/\\D/g,'') }}"
-            },
-            {
-              "name": "text",
-              "value": "={{   (function() {    const row = $json;    const servicio = row.servicio || '';    const hora = row.hora ? row.hora.substring(0,5) : '';    const [hh, mm] = hora.split(':').map(Number);    const ampm = hh < 12 ? 'AM' : 'PM';    const h12 = hh === 0 ? 12 : hh > 12 ? hh - 12 : hh;    const horaAmPm = `${h12}:${String(mm).padStart(2,'0')} ${ampm}`;    const diasSemana = ['domingo','lunes','martes','mi\u00e9rcoles','jueves','viernes','s\u00e1bado'];    const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];    const d = new Date(row.fecha + 'T00:00:00');    const fechaNatural = `${diasSemana[d.getUTCDay()]} ${d.getUTCDate()} de ${meses[d.getUTCMonth()]}`;    return `\u2705 \u00a1Listo! Tu cita de ${servicio} qued\u00f3 reagendada para el ${fechaNatural} a las ${horaAmPm}. \u00a1Te esperamos! \ud83d\ude0a`;  })()}}"
-            }
-          ]
-        },
-        "options": {}
+        "options": {},
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.body }}"
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        192,
-        784
+        2928,
+        3088
       ],
-      "id": "48cec48d-0668-4b2c-9dbf-b4f0bfa93fbc",
+      "id": "5d56f4d1-e48d-4e67-9189-1f386b876d1e",
       "name": "Confirmar Reagendamiento"
     },
     {
@@ -779,10 +770,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -1728,
-        384
+        1008,
+        2640
       ],
-      "id": "18d4fc24-d6b8-42a4-bcc8-d944f33f4284",
+      "id": "ec364a51-63fc-4de2-ae1d-4d90ef392ded",
       "name": "Leer Sesi\u00f3n activa",
       "alwaysOutputData": true,
       "credentials": {
@@ -801,10 +792,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        640,
-        320
+        3376,
+        2576
       ],
-      "id": "a5bbe03d-b886-4e04-8cda-63875212e2de",
+      "id": "132be1f5-8422-4211-ae18-31ecb0aa54fa",
       "name": "Guardar Sesi\u00f3n",
       "credentials": {
         "postgres": {
@@ -822,10 +813,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        640,
-        608
+        3552,
+        3008
       ],
-      "id": "121fe1a3-5b55-4022-9679-d04f79800fbc",
+      "id": "d7cd22c5-6f5e-41fa-8d93-f028675e2944",
       "name": "Limpiar Sesi\u00f3n Cancelaci\u00f3n",
       "credentials": {
         "postgres": {
@@ -843,10 +834,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        400,
-        784
+        3136,
+        3104
       ],
-      "id": "89c698ea-b338-4e20-b64c-11e603f39571",
+      "id": "adfac214-664f-41f8-8fdb-04409da8ce15",
       "name": "Limpiar Sesi\u00f3n Reagendamiento",
       "credentials": {
         "postgres": {
@@ -883,10 +874,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        400,
-        384
+        3136,
+        2640
       ],
-      "id": "c249e053-c798-420c-ab6f-648f064e74e1",
+      "id": "98251388-e426-495a-88b7-72bca48dcde2",
       "name": "If"
     },
     {
@@ -898,10 +889,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -1072,
-        384
+        1664,
+        2640
       ],
-      "id": "ae2502b0-0a3d-489a-b7ce-37bd0e7f8ee4",
+      "id": "7b57f847-c30b-4020-b0dd-7e30c19cb2d7",
       "name": "Leer Historial",
       "alwaysOutputData": true,
       "credentials": {
@@ -920,10 +911,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -656,
-        416
+        2080,
+        2672
       ],
-      "id": "fcbb983e-4643-475f-80d3-82f59ca899dd",
+      "id": "ebffa29d-1bf7-4d0c-8d52-6ca70061604c",
       "name": "Guardar Historial",
       "credentials": {
         "postgres": {
@@ -939,10 +930,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -880,
-        384
+        1856,
+        2640
       ],
-      "id": "f43cc578-599f-4359-a1ca-92c2a55ca6ad",
+      "id": "76d5b94a-5eed-4dcc-95b6-2432036839ea",
       "name": "AI Agent"
     },
     {
@@ -952,10 +943,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        224,
-        592
+        3232,
+        2816
       ],
-      "id": "2dfa47e2-cb67-4b2d-aaca-6bfddee8126f",
+      "id": "47719769-82b7-4184-aad7-b5cc5a5d0995",
       "name": "Construir Confirmaci\u00f3n Cancelaci\u00f3n"
     },
     {
@@ -984,10 +975,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        432,
-        592
+        3376,
+        2960
       ],
-      "id": "633418bb-735d-4693-8741-7c9eadf7f4bb",
+      "id": "64f56feb-eb25-4f8c-9b2d-c0806ad0ebdc",
       "name": "Confirmar Cancelaci\u00f3n"
     },
     {
@@ -1013,13 +1004,26 @@
         "body": "={\n  \"number\": \"{{ $('Procesar Mensaje').item.json.ownerNumber }}\",\n  \"text\": \"\u274c *Cita cancelada por WhatsApp*\\n\\n\ud83d\udc64 *Cliente:* {{ $json.nombre }}\\n\u2702\ufe0f *Servicio:* {{ $json.servicio }}\\n\ud83d\udcc5 *Fecha:* {{ $json.fecha }}\\n\u23f0 *Hora:* {{ ($json.hora||'').substring(0,5) }}\"\n}",
         "options": {}
       },
-      "id": "deec366c-321c-4028-beff-2e34327ee29a",
+      "id": "3b75ba95-970f-4f46-8efe-beafb0718061",
       "name": "Notificar Due\u00f1o Cancelaci\u00f3n",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        432,
-        560
+        2880,
+        2944
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $input.first().json;\nconst servicio = row.servicio || '';\nconst hora = (row.hora || '').substring(0, 5);\nconst [hh, mm] = hora.split(':').map(Number);\nconst ampm = hh < 12 ? 'AM' : 'PM';\nconst h12 = hh === 0 ? 12 : hh > 12 ? hh - 12 : hh;\nconst horaAmPm = `${h12}:${String(mm).padStart(2,'0')} ${ampm}`;\n\nconst diasSemana = ['domingo','lunes','martes','mi\u00e9rcoles','jueves','viernes','s\u00e1bado'];\nconst meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];\nconst d = new Date(row.fecha + 'T00:00:00');\nconst fechaNatural = `${diasSemana[d.getUTCDay()]} ${d.getUTCDate()} de ${meses[d.getUTCMonth()]}`;\n\nconst numeroLimpio = $('Procesar Mensaje').item.json.numeroLimpio;\nconst whatsappInstance = $('Procesar Mensaje').item.json.whatsappInstance;\n\nreturn [{\n  json: {\n    numero: numeroLimpio,\n    whatsappInstance,\n    body: JSON.stringify({\n      number: numeroLimpio,\n      text: `\u2705 \u00a1Listo! Tu cita de ${servicio} qued\u00f3 reagendada para el ${fechaNatural} a las ${horaAmPm}. \u00a1Te esperamos! \ud83d\ude0a`\n    })\n  }\n}];"
+      },
+      "id": "6e77274a-309e-4cff-ab1d-fc0ca873a5fe",
+      "name": "Construir Mensaje Reagendamiento",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2704,
+        3040
       ]
     }
   ],
@@ -1266,9 +1270,7 @@
             "node": "Sync Cancel Dashboard",
             "type": "main",
             "index": 0
-          }
-        ],
-        [
+          },
           {
             "node": "Notificar Due\u00f1o Cancelaci\u00f3n",
             "type": "main",
@@ -1281,7 +1283,7 @@
       "main": [
         [
           {
-            "node": "Confirmar Reagendamiento",
+            "node": "Construir Mensaje Reagendamiento",
             "type": "main",
             "index": 0
           }
@@ -1405,9 +1407,15 @@
         ]
       ]
     },
-    "Notificar Due\u00f1o Cancelaci\u00f3n": {
+    "Construir Mensaje Reagendamiento": {
       "main": [
-        []
+        [
+          {
+            "node": "Confirmar Reagendamiento",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },
@@ -1415,7 +1423,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "a3c7f85f-141f-4fb0-a46e-7696025ab97c",
+  "versionId": "4460a178-7578-4763-bb1d-989c448c2943",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "78865b14428b3461ac0504416eb2ba5903a5482f3190c606719f27159eed62fe"
