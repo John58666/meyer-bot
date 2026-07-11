@@ -1,6 +1,6 @@
 # CONTEXT.md — meyer-bot
 
-> Última actualización: 11 julio 2026 (sesión 4 — Sprint 12 completado: multi-profesional #4 y #5 implementados. Slots por profesional, filtro en dashboard, RBAC server-side).
+> Última actualización: 11 julio 2026 (sesión 5 — Sprint 13 completado: auditoría, horarios dashboard, reagendamiento raw body, no-shows cron, sync cancel WhatsApp→dashboard funcional).
 > Documento maestro CORTO. Cualquier chat nuevo lee esto primero.
 > **⚠️ ANTES de tocar NADA: leer `docs/SECURITY_AUDIT.md`** — reporte maestro de seguridad, hallazgos activos y plan de remediación.
 > Para profundidad: ver docs/ (ARCHITECTURE.md, SPRINTS.md, RUNBOOK.md, KEY_LEARNINGS.md, SECURITY_AUDIT.md)
@@ -111,30 +111,32 @@ Asignados manualmente por SQL al onboardear. Sistema formal con Stripe/Wompi en 
 ### SPRINT 12 — COMPLETADO ✅ (11 julio 2026)
 1. **Multi-profesional completo** — #4 (bot pregunta profesional) y #5 (agenda paralela con slots, filtro dashboard, independencia de roles) implementados y deployados.
 
-### SPRINT 13
-2. **Auditoría** — tabla `audit_log`, instrumentación de actions, UI de consulta para owner/admin.
+### SPRINT 13 — COMPLETADO ✅ (11 julio 2026)
+2. **Auditoría** — tabla `audit_log`, instrumentación de 9 actions, UI `/dashboard/auditoria`.
+3. **Horarios desde dashboard** — editor día por día en configuración.
+4. **Sync cancel WhatsApp→dashboard** — endpoint webhook con WEBHOOK_SECRET, audit_log, revalidatePath.
+5. **Reagendamiento raw body** — IIFE reemplazada por Code node con contentType raw.
+6. **No-Shows cron** — workflow n8n que auto-completa citas Pendiente con fecha pasada.
 
 ### SPRINT 14
-3. **i18n completo** — dashboard multi-idioma + bot multi-idioma/multi-jerga por región (Colombia, México, España, USA/Canadá). Requiere system prompt configurable por negocio. Probable adelanto de migración n8n → Node.js+BullMQ+Redis.
+7. **Inactividad bot** — que pregunte si cliente sigue ahí tras X tiempo sin respuesta.
+8. **Debugging errores bot** — revisar executions fallidas.
+9. **i18n completo** — dashboard multi-idioma + bot multi-idioma/multi-jerga por región (Colombia, México, España, USA/Canadá). Requiere system prompt configurable por negocio. Probable adelanto de migración n8n → Node.js+BullMQ+Redis.
 
 ### SPRINT 15
-4. **Cumplimiento protección de datos** — GDPR (España), Ley 1581 Colombia (ya aplica HOY), LFPDPPP México.
+10. **Cumplimiento protección de datos** — GDPR (España), Ley 1581 Colombia (ya aplica HOY), LFPDPPP México.
 
 ### FIXES PENDIENTES
-5. **Servicios nuevos no reflejados en bot** — al guardar desde configuración, bot puede usar services_text anterior. Investigar orden en system prompt vs timing del lookup. Fix probable: mover servicios al inicio del system prompt del AI Agent.
-6. Fix 3 — sync cancelación WhatsApp → dashboard, pendiente verificación.
-7. `Confirmar Reagendamiento` → Raw body (deuda técnica, usa IIFE hoy).
-8. `updateMiembroRole` profesional→admin no valida `max_admins` — caso borde bajo riesgo.
-9. `lib/auth.config.ts` huérfano — eliminar en sprint de limpieza.
-10. Notificación al dueño con nombre del cliente (lookup en `customers` en Construir Mensajes).
-11. Quitar branding "Meyer" del producto.
-12. Confirmar services_text de Brayan y aplicar UPDATE.
-13. Horarios desde dashboard (editar `schedule_text` sin SQL).
-14. Datos del negocio desde dashboard (nombre, teléfono, timezone).
-15. Gestión de no-shows: cron que auto-completa citas pasadas.
-16. `reminder_config` JSONB configurable por negocio.
-17. Panel admin Johnander (todos los negocios, métricas agregadas).
-18. `pm2 reload` en vez de `pm2 restart` a 10+ clientes.
+11. **Servicios nuevos no reflejados en bot** — al guardar desde configuración, bot puede usar services_text anterior. Investigar orden en system prompt vs timing del lookup. Fix probable: mover servicios al inicio del system prompt del AI Agent.
+12. `updateMiembroRole` profesional→admin no valida `max_admins` — caso borde bajo riesgo.
+13. `lib/auth.config.ts` huérfano — eliminar en sprint de limpieza.
+14. Notificación al dueño con nombre del cliente (lookup en `customers` en Construir Mensajes) — ya implementado en n8n, verificar.
+15. Quitar branding "Meyer" del producto.
+16. Confirmar services_text de Brayan y aplicar UPDATE.
+17. Datos del negocio desde dashboard (nombre, teléfono, timezone).
+18. `reminder_config` JSONB configurable por negocio.
+19. Panel admin Johnander (todos los negocios, métricas agregadas).
+20. `pm2 reload` en vez de `pm2 restart` a 10+ clientes.
 
 ### FUTURO
 19. Sistema de planes formal con Stripe/Wompi.
