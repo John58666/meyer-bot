@@ -1,161 +1,154 @@
 # Nodos: Gestión de Citas (Cancelación y Reagendamiento)
 
-Agregar estos nodos en n8n UI después del nodo `¿CITA_CONFIRMADA?`,
-en la rama donde el output contenga `GESTIONAR_CITA`.
+Flujo completo de cancelación y reagendamiento dentro del workflow `WhatsApp Bot - Genérico.json`.
 
 ---
+
+## Diagrama de flujo completo
+
+```
+AI Agent (Code — LLM Orquestador)
+  └─ Switch (lee $json.output)
+        ├─ CITA_CONFIRMADA  → Verificar Slot → Insertar Cita → Construir Mensajes → Notificar Dueño → Confirmar Cliente
+        ├─ GESTIONAR_CITA   → Leer Citas Cliente → Formatear Citas → Enviar Lista de Citas → Guardar Sesión
+        ├─ CANCELAR_CITA    → Ejecutar Cancelación (paralelo: Sync Cancel Dashboard, Notificar Dueño Cancelación, Construir Confirmación Cancelación → Confirmar Cancelación)
+        ├─ REAGENDAR_CITA   → Ejecutar Reagendamiento (paralelo: Construir Mensaje Reagendamiento → Confirmar Reagendamiento, Sync Reagend Dashboard, Construir Notificación Reagend → Notificar Dueño Reagend)
+        └─ (texto normal)   → ¿Confirmar o Responder? → (vacio → Wait) | (Respuesta Normal)
+```
 
 ## Estructura de conexiones
 
 ```
 AI Agent
-  └─ ¿CITA_CONFIRMADA? (Switch/IF)
-        ├─ contiene CITA_CONFIRMADA   → [flujo existente de guardar cita]
-        ├─ contiene GESTIONAR_CITA    → [B2] Leer Citas del Cliente
-        ├─ contiene CANCELAR_CITA     → [B6] Ejecutar Cancelación
-        └─ contiene REAGENDAR_CITA    → [B7] Ejecutar Reagendamiento
+  └─ Switch (por output)
+        ├─ CITA_CONFIRMADA → Verificar Slot → (disponible?) Insertar Cita → Construir Mensajes → Notificar Dueño → Confirmar Cliente
+        ├─ GESTIONAR_CITA  → Leer Citas Cliente → Formatear Citas → Enviar Lista de Citas → Guardar Sesión → Leer Sesión activa → Formatear Disponibilidad
+        ├─ CANCELAR_CITA   → [A] Ejecutar Cancelación
+        ├─ REAGENDAR_CITA  → [B] Ejecutar Reagendamiento
+        └─ default         → [C] ¿Confirmar o Responder?
 
-[B2] Leer Citas del Cliente
-  └─ [B3] Code — Formatear Citas
-        └─ [B4] Enviar Lista de Citas
+[A] Ejecutar Cancelación
+    ├─ Sync Cancel Dashboard
+    ├─ Notificar Dueño Cancelación
+    └─ Construir Confirmación Cancelación → Confirmar Cancelación → Limpiar Sesión Cancelación
+
+[B] Ejecutar Reagendamiento
+    ├─ Construir Mensaje Reagendamiento → Confirmar Reagendamiento → Limpiar Sesión Reagendamiento
+    ├─ Sync Reagend Dashboard
+    └─ Construir Notificación Reagend → Notificar Dueño Reagend
+
+[C] ¿Confirmar o Responder?
+    ├─ (vacío, no output) → Wait (reenvía al AI Agent)
+    └─ Respuesta Normal → Guardar Historial → Leer Disponibilidad
 ```
 
 ---
 
-## B2 — Nodo Postgres: Leer Citas del Cliente
+## Nodos existentes (sin cambios de esta sesión)
 
-**Tipo:** Postgres  
-**Operación:** Execute Query
-
+### B2 — Leer Citas del Cliente (Postgres)
 ```sql
-SELECT id, fecha::text, hora::text, servicio, estado
-FROM appointments
-WHERE numero = '{{ $('Procesar Mensaje').item.json.numero.replace('@s.whatsapp.net','') }}'
-  AND business_id = {{ $('Procesar Mensaje').item.json.businessId }}
+SELECT a.id, a.fecha::text, a.hora::text, a.servicio, a.estado, a.professional_id, a.nombre, p.name AS profesionalNombre
+FROM appointments a LEFT JOIN professionals p ON a.professional_id = p.id
+WHERE a.numero = '{{ $('Procesar Mensaje').item.json.numero.replace('@s.whatsapp.net','') }}'
+  AND a.business_id = {{ $('Procesar Mensaje').item.json.businessId }}
   AND fecha >= (NOW() AT TIME ZONE 'America/Bogota')::date
   AND estado IN ('Pendiente', 'Confirmada')
-ORDER BY fecha ASC, hora ASC
+ORDER BY a.fecha ASC, hora ASC
+```
+
+### B3 — Formatear Citas (Code JS)
+Formatea las citas para respuesta al cliente y guarda en sesión con:
+- `id`, `servicio`, `fecha`, `hora`, `professionalId`, `profesionalNombre` (desde `p.name`)
+
+### Guardar Sesión (Postgres)
+```sql
+INSERT INTO sessions (business_id, numero, accion, citas, expires_at)
+VALUES (...)
+RETURNING id
+```
+
+### Leer Sesión activa (Postgres)
+```sql
+SELECT id, accion, citas
+FROM sessions
+WHERE business_id = {{ $json.businessId }}
+  AND numero = '{{ $json.numeroLimpio }}'
+  AND expires_at > NOW()
+ORDER BY created_at DESC
+LIMIT 1
 ```
 
 ---
 
-## B3 — Nodo Code: Formatear Citas para Respuesta
+## Nodos de cancelación
 
-**Tipo:** Code (JavaScript)
-
-```javascript
-const citas = $input.all();
-const accion = $('AI Agent').item.json.output.split('|')[1]?.trim();
-const numero = ($('Procesar Mensaje').item.json.numero || '').replace('@s.whatsapp.net','').replace(/\D/g,'');
-const whatsappInstance = $('Procesar Mensaje').item.json.whatsappInstance;
-
-if (citas.length === 0) {
-  return [{ json: {
-    numero,
-    whatsappInstance,
-    accion,
-    tieneCitas: false,
-    mensaje: 'No encontramos citas próximas agendadas a tu número. ¿Puedo ayudarte con algo más? 😊',
-    citasIds: []
-  }}];
-}
-
-const diasSemana = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
-const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-
-let listaCitas = '';
-citas.forEach((item, i) => {
-  const c = item.json;
-  const d = new Date(c.fecha + 'T00:00:00');
-  const fechaNatural = `${diasSemana[d.getUTCDay()]} ${d.getUTCDate()} de ${meses[d.getUTCMonth()]}`;
-  const hora = c.hora.substring(0,5);
-  listaCitas += `${i+1}. ${c.servicio} — ${fechaNatural} a las ${hora}\n`;
-});
-
-const verbo = accion === 'cancelar' ? 'cancelar' : 'reagendar';
-const mensaje = citas.length === 1
-  ? `Encontré esta cita:\n\n${listaCitas}\n¿Confirmas que deseas ${verbo} esta cita? Responde *sí* para confirmar. 😊`
-  : `Encontré estas citas próximas:\n\n${listaCitas}\n¿Cuál deseas ${verbo}? Responde con el número (1, 2, etc.) 😊`;
-
-return [{ json: {
-  numero,
-  whatsappInstance,
-  accion,
-  tieneCitas: true,
-  mensaje,
-  citasIds: citas.map(c => ({ id: c.json.id, fecha: c.json.fecha, hora: c.json.hora, servicio: c.json.servicio }))
-}}];
-```
-
----
-
-## B4 — Nodo HTTP Request: Enviar Lista de Citas
-
-**Tipo:** HTTP Request  
-**Método:** POST  
-**URL:** `{{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $json.whatsappInstance }}`
-
-**Body (JSON):**
-```json
-{
-  "number": "{{ $json.numero }}",
-  "text": "{{ $json.mensaje }}"
-}
-```
-
-**Headers:**
-- `apikey`: `{{ $env.EVOLUTION_API_KEY }}`
-- `Content-Type`: `application/json`
-
----
-
-## B6 — Nodo Postgres: Ejecutar Cancelación
-
-**Condición de entrada:** output del AI Agent contiene `CANCELAR_CITA`
-
+### Ejecutar Cancelación (Postgres)
 ```sql
 UPDATE appointments
 SET estado = 'Cancelada', updated_at = NOW()
 WHERE id = {{ $('AI Agent').item.json.output.split('|')[1] }}
   AND business_id = {{ $('Procesar Mensaje').item.json.businessId }}
   AND estado IN ('Pendiente', 'Confirmada')
-RETURNING id, fecha::text, hora::text, servicio, estado
+RETURNING id, fecha::text, hora::text, servicio, estado, professional_id, nombre,
+  (SELECT name FROM professionals WHERE id = appointments.professional_id) AS professional_name
 ```
 
-**Después del UPDATE — HTTP Request de confirmación:**
+### Notificar Dueño Cancelación (HTTP)
+Envía WhatsApp al dueño con: ❌ Cita cancelada — Cliente, Profesional, Servicio, Fecha, Hora.
 
-```
-"✅ Tu cita de {{ $json.servicio }} del {{ $json.fecha }} a las {{ $json.hora.substring(0,5) }} ha sido cancelada. ¡Cuando quieras volver a agendar, aquí estamos! 😊"
-```
+### Construir Confirmación Cancelación (Code JS)
+Construye mensaje de confirmación para el cliente: "✅ Tu cita de [servicio] del [fecha] a las [hora] ha sido cancelada."
+
+### Confirmar Cancelación (HTTP)
+Envía el mensaje de confirmación al cliente vía Evolution API.
+
+### Sync Cancel Dashboard (HTTP)
+Envía `{ appointmentId, businessId }` al dashboard para actualizar estado.
 
 ---
 
-## B7 — Nodo Postgres: Ejecutar Reagendamiento
+## Nodos de reagendamiento
 
-**Condición de entrada:** output del AI Agent contiene `REAGENDAR_CITA`
-
+### Ejecutar Reagendamiento (Postgres)
 ```sql
 UPDATE appointments
 SET fecha = TO_DATE('{{ $('AI Agent').item.json.output.split('|')[2] }}', 'DD/MM/YYYY'),
     hora  = '{{ $('AI Agent').item.json.output.split('|')[3].split('\n')[0].trim() }}'::time,
     estado = 'Pendiente',
-    updated_at = NOW()
+    updated_at = NOW(),
+    professional_id = COALESCE(
+      (SELECT id FROM professionals WHERE name = '{{ ($('AI Agent').item.json.output.split('|')[4]||'').split('\n')[0].trim() }}' AND business_id = {{ $('Procesar Mensaje').item.json.businessId }} LIMIT 1),
+      professional_id
+    )
 WHERE id = {{ $('AI Agent').item.json.output.split('|')[1] }}
   AND business_id = {{ $('Procesar Mensaje').item.json.businessId }}
   AND estado IN ('Pendiente', 'Confirmada')
-RETURNING id, fecha::text, hora::text, servicio, estado
+RETURNING id, fecha::text, hora::text, servicio, estado, professional_id, nombre,
+  (SELECT name FROM professionals WHERE id = appointments.professional_id) AS professional_name
 ```
 
-**Después del UPDATE — HTTP Request de confirmación:**
+### Construir Mensaje Reagendamiento (Code JS)
+Mensaje al cliente: "✅ ¡Listo! Tu cita de [servicio] con [profesional] quedó reagendada para el [fecha] a las [hora]."
 
-```
-"✅ ¡Listo! Tu cita de {{ $json.servicio }} quedó reagendada para el {{ $json.fecha }} a las {{ $json.hora.substring(0,5) }}. ¡Te esperamos! 😊"
-```
+### Confirmar Reagendamiento (HTTP)
+Envía el mensaje de confirmación al cliente.
+
+### Sync Reagend Dashboard (HTTP)
+Envía `{ appointmentId, businessId }` al dashboard para sincronizar el reagendamiento.
+
+### Construir Notificación Reagend (Code JS)
+Construye mensaje para el dueño: "🔄 Cita reagendada — Cliente, Profesional, Servicio, Fecha, Hora."
+
+### Notificar Dueño Reagend (HTTP)
+Envía la notificación al dueño vía Evolution API.
 
 ---
 
-## Nota sobre Simple Memory
+## Notas importantes
 
-La selección del cliente ("quiero cancelar la 1") llega en el siguiente mensaje.
-El Simple Memory ya guarda los últimos 10 mensajes — el AI Agent tiene contexto
-de qué citas mostró y puede extraer el ID correcto. No se necesita nodo adicional.
+- La sesión permite al AI saber qué citas tiene el cliente y la acción (cancelar/reagendar)
+- El `professional_name` se obtiene vía subquery en el RETURNING para evitar que el UPDATE falle si la cita no tiene profesional asignado
+- El 5to campo del código `REAGENDAR_CITA|ID|DD/MM/YYYY|HH:MM|Profesional` es opcional
+- `Construir Confirmación Cancelación` y `Confirmar Cancelación` son del flujo de cancelación existente
+- Esta sesión corrigió: saludo, CITA_CONFIRMADA, profesional en cancelación, reagendamiento sin notificación al dueño, profesionalNombre incorrecto, y manejo de AM/PM
