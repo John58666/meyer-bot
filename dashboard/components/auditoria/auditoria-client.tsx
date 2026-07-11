@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, X, ChevronLeft, ChevronRight, ShieldAlert } from "lucide-react";
-import { ACCIONES_LABELS } from "@/lib/audit-types";
+import { ACCIONES_LABELS, ENTIDAD_LABELS, describirDetalle } from "@/lib/audit-types";
 import type { AuditLogEntry } from "@/lib/audit-types";
 import type { MiembroEquipo } from "@/lib/actions";
 
@@ -161,10 +161,10 @@ export function AuditoriaClient({
                     {ACCIONES_LABELS[entry.accion] || entry.accion}
                   </td>
                   <td className="px-4 py-3 text-[var(--text-secondary)] hidden sm:table-cell">
-                    {entry.user_name || "n8n bot"}
+                    {entry.user_name ? entry.user_name : <span className="text-[var(--text-secondary)]/60">WhatsApp</span>}
                   </td>
                   <td className="px-4 py-3 text-[var(--text-secondary)] hidden md:table-cell">
-                    {entry.entidad}{entry.entidad_id ? ` #${entry.entidad_id}` : ""}
+                    {ENTIDAD_LABELS[entry.entidad] || entry.entidad}{entry.entidad_id ? ` #${entry.entidad_id}` : ""}
                   </td>
                   <td className="px-4 py-3 text-[var(--text-secondary)] text-xs">
                     {formatDate(entry.created_at)}
@@ -207,11 +207,11 @@ export function AuditoriaClient({
               </div>
               <div>
                 <dt className="text-[var(--text-secondary)] text-xs mb-0.5">Usuario</dt>
-                <dd className="text-white">{selected.user_name || "n8n bot"}</dd>
+                <dd className="text-white">{selected.user_name ? selected.user_name : <span className="text-[var(--text-secondary)]/60">WhatsApp</span>}</dd>
               </div>
               <div>
                 <dt className="text-[var(--text-secondary)] text-xs mb-0.5">Entidad</dt>
-                <dd className="text-white">{selected.entidad}{selected.entidad_id ? ` #${selected.entidad_id}` : ""}</dd>
+                <dd className="text-white">{ENTIDAD_LABELS[selected.entidad] || selected.entidad}{selected.entidad_id ? ` #${selected.entidad_id}` : ""}</dd>
               </div>
               <div>
                 <dt className="text-[var(--text-secondary)] text-xs mb-0.5">Fecha</dt>
@@ -223,14 +223,19 @@ export function AuditoriaClient({
                   <dd className="text-white font-mono text-xs">{selected.ip_address}</dd>
                 </div>
               )}
-              {selected.detalle && (
-                <div>
-                  <dt className="text-[var(--text-secondary)] text-xs mb-0.5">Detalle</dt>
-                  <dd className="text-white font-mono text-xs bg-[var(--bg-primary)] rounded-lg p-3 whitespace-pre-wrap break-all">
-                    {JSON.stringify(selected.detalle, null, 2)}
-                  </dd>
-                </div>
-              )}
+              {(() => {
+                const lineas = describirDetalle(selected.accion, selected.detalle);
+                return lineas.length > 0 ? (
+                  <div>
+                    <dt className="text-[var(--text-secondary)] text-xs mb-0.5">Detalle</dt>
+                    <dd className="text-white bg-[var(--bg-primary)] rounded-lg p-3 space-y-1">
+                      {lineas.map((l, i) => (
+                        <p key={i} className="text-xs">{l}</p>
+                      ))}
+                    </dd>
+                  </div>
+                ) : null;
+              })()}
             </dl>
           </div>
         </div>
