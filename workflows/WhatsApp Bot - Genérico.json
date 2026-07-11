@@ -658,7 +658,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE appointments\nSET estado = 'Cancelada', updated_at = NOW()\nWHERE id = {{ $('AI Agent').item.json.output.split('|')[1] }}\n  AND business_id = {{ $('Procesar Mensaje').item.json.businessId }}\n  AND estado IN ('Pendiente', 'Confirmada')\nRETURNING id, fecha::text, hora::text, servicio, estado, professional_id",
+        "query": "UPDATE appointments\nSET estado = 'Cancelada', updated_at = NOW()\nWHERE id = {{ $('AI Agent').item.json.output.split('|')[1] }}\n  AND business_id = {{ $('Procesar Mensaje').item.json.businessId }}\n  AND estado IN ('Pendiente', 'Confirmada')\nRETURNING id, fecha::text, hora::text, servicio, estado, professional_id, nombre",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -699,7 +699,7 @@
         "body": "={\n  \"appointmentId\": {{ $json.id }},\n  \"businessId\": {{ $('Procesar Mensaje').item.json.businessId }}\n}",
         "options": {}
       },
-      "id": "sync-cancel-dashboard",
+      "id": "65a81d08-8e1e-4549-b5fc-f2189ad223e4",
       "name": "Sync Cancel Dashboard",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -989,6 +989,38 @@
       ],
       "id": "633418bb-735d-4693-8741-7c9eadf7f4bb",
       "name": "Confirmar Cancelaci\u00f3n"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $('Procesar Mensaje').item.json.whatsappInstance }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.EVOLUTION_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"number\": \"{{ $('Procesar Mensaje').item.json.ownerNumber }}\",\n  \"text\": \"\u274c *Cita cancelada por WhatsApp*\\n\\n\ud83d\udc64 *Cliente:* {{ $json.nombre }}\\n\u2702\ufe0f *Servicio:* {{ $json.servicio }}\\n\ud83d\udcc5 *Fecha:* {{ $json.fecha }}\\n\u23f0 *Hora:* {{ ($json.hora||'').substring(0,5) }}\"\n}",
+        "options": {}
+      },
+      "id": "deec366c-321c-4028-beff-2e34327ee29a",
+      "name": "Notificar Due\u00f1o Cancelaci\u00f3n",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        432,
+        560
+      ]
     }
   ],
   "pinData": {},
@@ -1235,6 +1267,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Notificar Due\u00f1o Cancelaci\u00f3n",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -1364,6 +1403,11 @@
             "index": 0
           }
         ]
+      ]
+    },
+    "Notificar Due\u00f1o Cancelaci\u00f3n": {
+      "main": [
+        []
       ]
     }
   },
