@@ -198,7 +198,7 @@
 - Drawer detalle con descripciones claras en vez de JSON crudo
 - `describirDetalle()` en audit-types.ts formatea según cada acción
 
-### G — Dashboard Sync completo (new + cancel + reagend)
+### G — Dashboard Sync completo (new + cancel + reagend) — COMPLETADO ✅ (Julio 11, 2026)
 - Nuevo nodo `Sync New Dashboard` en workflow, en paralelo a `Construir Mensajes`
 - `Sync Cancel Dashboard` mejorado: envía datos completos (servicio, fecha, hora, nombre, estado, professional_name)
 - `Sync Reagend Dashboard` corregido: URL `/api/webhooks/sync-reagend`, header `x-webhook-secret`, body con datos completos
@@ -206,3 +206,12 @@
 - Dashboard: endpoint `POST /api/webhooks/sync-reagend` con audit_log `reschedule_appointment`
 - Dashboard: `sync-cancel` mejorado con JOIN a `professionals` para `professional_name`
 - Todos los sync incluyen `hora`, `estado`, `professional_name` en audit_log detalle
+
+### Pendientes para próxima sesión
+1. **Importar workflow actualizado en n8n UI** (desde PC local)
+2. **Inactividad bot** — preguntar si cliente sigue ahí tras X tiempo sin respuesta
+3. **Debugging errores bot** — revisar executions n8n, identificar y corregir causas raíz de errores frecuentes
+4. **Activar 4 workflows restantes** en n8n UI
+5. **Fixes backlog 21-26**: onboarding, clientes duplicados, FAQ, tooltips
+6. **Pruebas de carga** — simular múltiples clientes simultáneos, medir comportamiento del sistema
+7. **Dashboard métricas** — mejorar con más datos y visualizaciones (ingresos por periodo, servicios más vendidos, tendencias, etc.)
