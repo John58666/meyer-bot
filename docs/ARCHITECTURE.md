@@ -126,41 +126,43 @@ conversation_history (business_id, numero, messages JSONB, updated_at, expires_a
 - Multi-profesional: cuando se implemente, filtrar por `professional_id` del profesional. El schema ya lo soporta.
 - **⚠️ Limitación conocida:** si un `horario_especial` amplía el horario más allá del `schedule_text`, los slots extra no se generan. Para MVP (recortes) es correcto.
 
-### RBAC — pendiente, prerrequisito de multi-profesional
-**Estado actual:** `role` viaja en JWT pero nadie lo lee.
+### RBAC — IMPLEMENTADO Sprint 11-12 ✅
+**Estado actual:** Roles `owner`, `admin`, `profesional` operativos. `professionalId` en JWT. Middleware de rutas, filtros server-side, UI condicional.
 
-**Orden de sprints obligatorio:**
+**Orden de sprints ejecutado:**
 1. ✅ Sprint 7: Métricas
 2. ✅ Sprint 8: Bloqueos de agenda
 3. ✅ Sprint 9: Configuración + Nav
-4. Sprint RBAC: middleware de rol + filtros en actions + UI condicional
-5. Sprint CRM: tabla customers + UI clientes
-6. Sprint multi-profesional: feature completo
+4. ✅ Sprint 11: RBAC (middleware + filtros + UI condicional + equipo)
+5. ✅ Sprint 10: CRM (tabla customers + UI clientes)
+6. ✅ Sprint 12: Multi-profesional completo
 
-**Sin RBAC no lanzar multi-profesional.**
-
-**Modelo de permisos a implementar:**
+**Modelo de permisos actual:**
 | Role | Ve | Puede hacer |
 |------|-----|-------------|
 | owner | Todo el negocio | Configurar servicios, horarios, profesionales, bloquear cualquier agenda |
-| admin | Todo el negocio | Lo mismo excepto configuración de precios/horarios |
-| profesional | Solo sus citas y métricas | Marcar completada/cancelada sus citas, bloquear sus propios días |
+| admin | Todo el negocio | Lo mismo excepto gestión de usuarios/equipo |
+| profesional | Solo sus citas, clientes y métricas | Marcar completada/cancelada sus citas, bloquear sus propios días |
 
-### Multi-profesional — diseño pendiente
-**Ya resuelto:** tabla `professionals` ✅ · `professional_id` en `appointments` ✅ · flag `multi_professional` en JWT/UI ✅ · tabla `schedule_exceptions` ✅ · bloqueos por `professional_id` soportados en SQL del bot ✅
+### Multi-profesional — IMPLEMENTADO Sprint 12 ✅
+**Todo completado:**
+- ✅ `professionalId` en JWT (Sprint 11)
+- ✅ Query de disponibilidad por `professional_id` (`getAvailableSlots`, slots de 30min)
+- ✅ Flujo de selección de profesional en el bot (#4: bot pregunta "¿Con qué profesional?")
+- ✅ UI de agenda por profesional en dashboard (filtro en SemanaClient + CalendarMonthView)
+- ✅ UI de `schedule_exceptions` por profesional (createBloqueo/deleteBloqueo con scope)
+- ✅ Métricas por profesional (`getMetricas` con `professionalId` opcional)
+- ✅ RBAC server-side: updateServicesText, createBloqueo, createAppointment protegidos
+- ✅ Grilla de slots disponibles al agendar desde dashboard (NewAppointmentSheet)
+- ✅ Filtro de citas por profesional en vista lista y calendario (SemanaClient)
+- ✅ API routes: `/api/appointments/slots`, `/api/appointments/week`
 
-**Falta diseñar:**
-1. `professionalId` en JWT (columna en `users` ya existe)
-2. Query de disponibilidad por `professional_id`
-3. Flujo de selección de profesional en el bot (2 turnos extra)
-4. UI de agenda por profesional en dashboard
-5. UI de `schedule_exceptions` por profesional
-6. Métricas por profesional
-
-**Bot multi-profesional (1 número WhatsApp por negocio):**
+**Cómo funciona el bot multi-profesional (1 número WhatsApp por negocio):**
 1. Cliente dice servicio
-2. Bot: "¿Tienes profesional de preferencia? Si no, te asigno el primero disponible 😊"
-3. Si elige → disponibilidad de ese profesional. Si no → slots donde haya al menos un profesional libre.
+2. Bot: "¿Con qué profesional quieres agendar?" (lista de profesionales activos del negocio)
+3. Cliente elige → disponibilidad de ese profesional
+4. Si no elige → bot asigna al primero disponible
+5. Cita se guarda con `professional_id` correspondiente
 
 ### Deploy seguro — protocolo
 ```

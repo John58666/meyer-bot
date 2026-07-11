@@ -1,6 +1,6 @@
 # CONTEXT.md — meyer-bot
 
-> Última actualización: 10 julio 2026 (sesión 3 — seguridad urgente resuelta: Evolution API restaurado, VPS hardened, git history limpio. Sprint 12 en curso).
+> Última actualización: 11 julio 2026 (sesión 4 — Sprint 12 completado: multi-profesional #4 y #5 implementados. Slots por profesional, filtro en dashboard, RBAC server-side).
 > Documento maestro CORTO. Cualquier chat nuevo lee esto primero.
 > **⚠️ ANTES de tocar NADA: leer `docs/SECURITY_AUDIT.md`** — reporte maestro de seguridad, hallazgos activos y plan de remediación.
 > Para profundidad: ver docs/ (ARCHITECTURE.md, SPRINTS.md, RUNBOOK.md, KEY_LEARNINGS.md, SECURITY_AUDIT.md)
@@ -16,7 +16,7 @@ Diferenciador: WhatsApp-native (Fresha/Booksy/SimplyBook obligan a salir de What
 - **Vendible HOY** para negocios de un solo profesional. E2E completo (agendar/cancelar/reagendar).
 - **Dashboard operativo:** título dinámico, calendario clickeable, agendar manual, servicios dinámicos con precios, hora libre, anti-doble-booking, métricas con selector de rango Hoy/Semana/Mes, bloqueos de agenda, edición de servicios, nav responsive móvil 4 ítems, CRM /dashboard/clientes, **RBAC completo (Sprint 11)**, **gestión de equipo /dashboard/equipo**.
 - **Bot robusto:** fallback chain multi-LLM, historial conversacional, filtro de audios/multimedia, scope off-topic, rate limit. Slots cada 30 minutos. Respeta `schedule_exceptions`. Upsert automático en `customers` al agendar.
-- **NO vendible aún** para multi-profesional (ver ARCHITECTURE.md).
+- **Vendible para multi-profesional** desde Sprint 12 — bot pregunta profesional, dashboard filtra por profesional, slots y bloqueos independientes por profesional.
 - Brayan Study (business_id=3, 1 profesional) es el primer cliente real. Operativo.
 
 ## Stack
@@ -108,10 +108,8 @@ Asignados manualmente por SQL al onboardear. Sistema formal con Stripe/Wompi en 
 
 ## Backlog priorizado
 
-### SPRINT 12 (en curso — 10 julio 2026)
-1. **Multi-profesional completo** — selección de profesional en bot (2 turnos extra), disponibilidad por `professional_id`, UI agenda paralela, métricas por profesional para owner/admin.
-   - Desbloqueado: todas las fases urgentes de seguridad (Fase 2-4) completadas en sesión 3.
-   - Contexto: presentación pendiente — priorizar que "barberos" (multi-profesional) y dashboard queden presentables.
+### SPRINT 12 — COMPLETADO ✅ (11 julio 2026)
+1. **Multi-profesional completo** — #4 (bot pregunta profesional) y #5 (agenda paralela con slots, filtro dashboard, independencia de roles) implementados y deployados.
 
 ### SPRINT 13
 2. **Auditoría** — tabla `audit_log`, instrumentación de actions, UI de consulta para owner/admin.

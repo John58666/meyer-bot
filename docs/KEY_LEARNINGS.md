@@ -62,6 +62,27 @@
 - **Evolution API expuesta en 0.0.0.0:8080** — pendiente firewall.
 - **`lib/auth.config.ts` en `dashboard/lib/` es huérfano** — el middleware importa `./auth.config` (relativo a `dashboard/`). Verificar con `cat middleware.ts | head -3` antes de editar.
 
+## PostgreSQL / JSON columns
+
+- **`pg` driver auto-parsea JSON columns.** Si una columna es tipo `JSON`/`JSONB`, `pg` la devuelve como objeto JavaScript ya parseado. Hacer `JSON.parse()` sobre un objeto lanza error. Usar: `const data = typeof raw === 'string' ? JSON.parse(raw) : raw`.
+- **Fechas en PostgreSQL:** `CURRENT_DATE` depende del timezone de la DB (usualmente UTC). Para fecha en Colombia usar `(NOW() AT TIME ZONE 'America/Bogota')::date`.
+
+## Next.js / API Routes
+
+- **`fetch` desde cliente a API route del mismo origen:** las cookies se envían automáticamente. No necesita headers especiales.
+- **Server actions importadas desde `"use server"` file:** cuando se llaman desde API route (server-side), funcionan como funciones regulares. No hay transformación especial.
+- **`useCallback` con `[]` deps:** captura variables del closure en el momento de creación. Si usas una prop reactive (como `professionalFilter`), el callback tendrá el valor inicial. Solución: incluir la prop en deps o pasarla como argumento.
+
+## n8n / Workflow
+
+- **Workflows exportados no se pueden importar por API si n8n API devuelve 401.** La UI de n8n no tiene autenticación funcional por API con auth básica en esta versión. Solo import manual desde la UI.
+
+## Debugging
+
+- **Cuando un server action o API route devuelve resultado inesperado (ej: array vacío), agregar logs temporales en el servidor.** PM2 logs (`pm2 logs meyer-dashboard`) muestran `console.log` de Node.js.
+- **Verificar tipo de dato de columnas PostgreSQL.** Un `JSON` column devuelto por `pg` no es string — verificarlo antes de asumir tipo.
+- **Errores silenciosos en `try/catch` pueden ocultar bugs.** Mostrar error al usuario o al menos loguearlo con contexto suficiente.
+
 ## Diagnóstico
 
 - **Claude.ai puede equivocarse en diagnósticos.** Claude Code debe chequear rutas/hechos reales antes de asumir que el diagnóstico es correcto.

@@ -126,10 +126,40 @@
 - Datos sucios limpiados: professional id=1 (Meyer/owner) y id=9 (Juliana/admin) desactivados
 - `users.professional_id` de Juliana (admin) limpiado a NULL
 
-### Lecciones Sprint 11
-- Al agregar nuevo role en DB, verificar constraint existente antes de intentar INSERT.
-- Orden para rename de role con constraint: (1) ampliar a ambos valores, (2) UPDATE datos, (3) cerrar. Al revés da error de constraint.
-- Conteo de límite de plan debe usar `users.role`, NO tabla `professionals` (puede tener filas huérfanas de owner/admin que contaminan el conteo).
-- Owner y admin no tienen agenda propia — solo `profesional` tiene `professional_id` activo.
-- Cambiar role profesional→admin deja fila en `professionals` activa pero ya no afecta límite (conteo es en `users.role`).
-- `lib/auth.config.ts` en `dashboard/lib/` es huérfano — el middleware usa `dashboard/auth.config.ts` (raíz de dashboard). Verificar con `cat middleware.ts | head -5` antes de editar.
+## Sprint 12 (Multi-profesional + agenda paralela) — COMPLETADO ✅ (Julio 10-11, 2026)
+
+### A — #4 (Bot pregunta profesional)
+- Lookup Negocio SQL: LEFT JOIN `professionals` + GROUP BY para traer profesionales activos
+- Procesar Mensaje: parsing robusto de `professionals` (string o array) desde el nodo anterior
+- AI Agent: system prompt reordenado (servicios → profesional → fecha → hora → confirmar)
+- Resumen de cita incluye `👤 Profesional:`
+- Formato `CITA_CONFIRMADA` extendido con `nombreProfesional`
+- Gap de inactividad 10-60 min → bot pregunta si continuar; >1h → historial borrado
+- Recordatorios 24h y 2h: SQL JOIN con `professionals`, mensajes incluyen profesional
+- n8n API returns 401 — import/update manual de workflows
+
+### B — #5 (Dashboard multi-profesional)
+- **Filtro server-side por professionalId en todas las queries**: getTodayAppointments, getTodayStats, getAppointmentsByMonth, getWeekAppointments
+- **Dashboard hoy**: profesional ve solo sus citas, owner/admin ven todo
+- **Slots disponibles**: `getAvailableSlots` server action que calcula slots de 30min según:
+  - `schedule_text` del negocio (día de semana → horas)
+  - `schedule_exceptions`: `cerrado` → sin slots, `horario_especial` → slots solo en ese rango
+  - Business-wide + professional-specific exceptions ambos considerados
+  - Citas existentes no canceladas del profesional
+- **API routes nuevas**: `/api/appointments/slots`, `/api/appointments/week`
+- **NewAppointmentSheet**: migrado de input `time` libre a grilla de slots disponibles
+- **SemanaClient**: dropdown de filtro por profesional en vista lista y calendario
+- **CalendarMonthView**: acepta `professionalFilter`, refetch automático al cambiar filtro
+- **Fix**: `schedule_text` es tipo JSON en PostgreSQL, pg driver lo devuelve ya parseado — usar directo sin `JSON.parse()` duplicado
+
+### C — RBAC server-side (protector)
+- `updateServicesText`: owner/admin solo pueden modificar servicios
+- `createBloqueo`/`deleteBloqueo`: profesional solo bloquea/elimina sus propios días
+- `createAppointment`: profesional siempre agenda a su propio `professionalId` (ignora input del form)
+
+### Lecciones Sprint 12
+- `schedule_text` es columna `JSON` en PostgreSQL. `pg` driver la devuelve como objeto JS ya parseado. NO hacer `JSON.parse()` — usar directo o `typeof === 'string'` condicional.
+- Business-wide exceptions (`professional_id IS NULL`) deben aplicarse también cuando se filtra por profesional específico en `getAvailableSlots`.
+- `fetch` desde cliente a API route Next.js incluye cookies automáticamente (mismo origen).
+- `useCallback` con `[]` deps captura variables del closure inicial — incluir variables reactivas en deps o pasar como argumento.
+- JSON type columns in pg driver are automatically parsed — check with `typeof` before JSON.parse.
