@@ -163,3 +163,36 @@
 - `fetch` desde cliente a API route Next.js incluye cookies automáticamente (mismo origen).
 - `useCallback` con `[]` deps captura variables del closure inicial — incluir variables reactivas en deps o pasar como argumento.
 - JSON type columns in pg driver are automatically parsed — check with `typeof` before JSON.parse.
+
+## Sprint 13 (Auditoría + Horarios + No-Shows) — COMPLETADO ✅ (Julio 11, 2026)
+
+### A — Auditoría (tabla + UI + server actions)
+- Migración `013_audit_log.sql`: tabla `audit_log` con business_id, user_id, accion, entidad, entidad_id, detalle, created_at
+- `lib/audit.ts`: helper `auditar()` y `getAuditLogs()` con paginación + filtros por acción y rango de fechas
+- `lib/audit-types.ts`: tipos compartidos client-side seguros
+- 9 server actions instrumentadas en `lib/actions.ts`: createAppointment, updateAppointmentStatus, deleteAppointment, createBloqueo, deleteBloqueo, updateServicesText, createMiembroEquipo, toggleMiembroActivo, updateMiembroRole
+- UI `/dashboard/auditoria` con tabla paginada, filtros por acción y fechas, drawer de detalle
+- Sidebar link a Auditoría
+
+### B — Horarios desde dashboard
+- Server action `updateScheduleText` con RBAC + validación de tipos
+- `HorarioClient`: editor día por día con toggle abierto/cerrado + selects de hora
+- Sección Horarios en `/dashboard/configuracion`
+
+### C — Sync cancelación WhatsApp → dashboard
+- Endpoint `POST /api/webhooks/sync-cancel` con autenticación via `WEBHOOK_SECRET`
+- Registro en audit_log con origen="whatsapp"
+- RevalidatePath para refrescar dashboard
+- Fix: excluir `/api/webhooks` del middleware de NextAuth
+- Fix: n8n Docker container → `extra_hosts: host.docker.internal:host-gateway` + `DASHBOARD_URL=http://host.docker.internal:3001`
+
+### D — Reagendamiento raw body
+- Nuevo Code node "Construir Mensaje Reagendamiento" reemplaza IIFE, usa `contentType: raw`
+
+### E — Workflow No-Shows
+- Cron 23:59, completa citas Pendiente con fecha pasada
+
+### Pendientes
+1. Inactividad bot — que pregunte si cliente sigue ahí tras X tiempo sin respuesta
+2. Debugging errores bot en executions n8n
+3. Activar 4 workflows en n8n UI (WhatsApp Bot, Recordatorios 24h, Recordatorios 2h, No-Shows)

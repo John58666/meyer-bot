@@ -89,6 +89,17 @@
 - **Errores de autenticación n8n (`password authentication failed`):** la credencial en n8n UI puede no coincidir con la password actual en PostgreSQL. Solución: Settings → Credentials → "Postgres account" → actualizar password → Test connection.
 - **Nunca `git add -A` sin revisar `git status` primero** — puede incluir archivos huérfanos (FIX_*.md, package.json raíz, etc.).
 
+## n8n / Docker
+
+- **`ECONNREFUSED ::1:3001`** desde contenedor n8n → `localhost` resuelve a IPv6 `::1` dentro del contenedor. Usar `127.0.0.1` en vez de `localhost`, o mejor `host.docker.internal` con `extra_hosts: - "host.docker.internal:host-gateway"` en compose.
+- **`docker compose up -d` es necesario tras cambiar `.env` o compose** — `restart` no relee variables ni configuración de red.
+- **Middleware de NextAuth por defecto protege TODAS las rutas** incluyendo `/api/webhooks`. Excluir con `matcher: ["/((?!api/auth|api/webhooks|...).*)"]`.
+
+## Auditoría
+
+- **`revalidatePath` no funciona desde webhook externo** si la ruta está protegida por middleware de auth. El webhook debe hacerlo desde server-side sin pasar por auth.
+- **`audit_log` acepta `user_id = NULL`** para acciones originadas desde n8n/WhatsApp (cancelación vía webhook, no-shows automáticos).
+
 ## Git
 
 - **Antes de commitear:** `git diff --staged --name-only` para confirmar exactamente qué archivos van.
