@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useRef } from "react";
+import { useState, useTransition, useRef, useCallback, useEffect } from "react";
 import { createAppointment } from "@/lib/actions";
 import {
   Sheet,
@@ -24,7 +24,6 @@ const SERVICIOS_FALLBACK = [
   "Peinado especial",
 ];
 
-// Parsea "Corte caballero $18.000, Corte+barba $22.000" → ["Corte caballero", "Corte+barba"]
 function parseServices(text: string): string[] {
   if (!text?.trim()) return [];
   return text
@@ -45,11 +44,11 @@ interface Professional {
 }
 
 interface NewAppointmentSheetProps {
-  fecha?: string;          // YYYY-MM-DD — precarga la fecha si viene del calendario
-  servicesText?: string;   // "Nombre $precio, ..." — si no viene usa lista hardcodeada
-  trigger?: React.ReactNode; // botón custom desde el calendario
-  professionals?: Professional[]; // lista de profesionales activos del negocio
-  multiProfessional?: boolean;    // si el negocio tiene multi-profesional activado
+  fecha?: string;
+  servicesText?: string;
+  trigger?: React.ReactNode;
+  professionals?: Professional[];
+  multiProfessional?: boolean;
 }
 
 export function NewAppointmentSheet({
@@ -65,17 +64,56 @@ export function NewAppointmentSheet({
   const [conflict, setConflict] = useState(false);
   const [fecha, setFecha] = useState(fechaProp ?? todayISO());
   const [hora, setHora] = useState("");
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [slotsError, setSlotsError] = useState("");
+  const [selectedProf, setSelectedProf] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
 
   const servicios = servicesText
     ? parseServices(servicesText)
     : SERVICIOS_FALLBACK;
 
+  const businessId = typeof window !== "undefined"
+    ? // No tenemos accesso directo al businessId desde el cliente,
+      // la server action lo obtiene de la sesión.
+      null
+    : null;
+
+  const fetchSlots = useCallback(async (f: string, profId: string) => {
+    setLoadingSlots(true);
+    setHora("");
+    setAvailableSlots([]);
+    setSlotsError("");
+    try {
+      const res = await fetch(
+        `/api/appointments/slots?fecha=${f}&professionalId=${profId}`
+      );
+      if (res.status === 401) throw new Error("No autorizado — sesión expirada");
+      if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
+      const data = await res.json() as { slots: string[] };
+      setAvailableSlots(data.slots);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Error desconocido";
+      setSlotsError(msg);
+      console.error("[NewAppointmentSheet] fetchSlots error:", msg);
+    } finally {
+      setLoadingSlots(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (fecha) {
+      fetchSlots(fecha, selectedProf);
+    }
+  }, [fecha, selectedProf, fetchSlots]);
+
   function resetForm() {
     setError("");
     setConflict(false);
     setHora("");
     setFecha(fechaProp ?? todayISO());
+    setSelectedProf("");
     formRef.current?.reset();
   }
 
@@ -133,7 +171,6 @@ export function NewAppointmentSheet({
         </SheetHeader>
 
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
-          {/* Nombre */}
           <div className="space-y-1.5">
             <Label htmlFor="nombre" className="text-[var(--text-secondary)] text-sm">
               Nombre del cliente
@@ -147,7 +184,6 @@ export function NewAppointmentSheet({
             />
           </div>
 
-          {/* Teléfono */}
           <div className="space-y-1.5">
             <Label htmlFor="numero" className="text-[var(--text-secondary)] text-sm">
               Teléfono
@@ -162,7 +198,6 @@ export function NewAppointmentSheet({
             />
           </div>
 
-          {/* Servicio */}
           <div className="space-y-1.5">
             <Label htmlFor="servicio" className="text-[var(--text-secondary)] text-sm">
               Servicio
@@ -185,7 +220,6 @@ export function NewAppointmentSheet({
             </select>
           </div>
 
-          {/* Profesional — solo negocios multi-profesional con profesionales activos */}
           {multiProfessional && professionals.length > 0 && (
             <div className="space-y-1.5">
               <Label htmlFor="professionalId" className="text-[var(--text-secondary)] text-sm">
@@ -194,7 +228,8 @@ export function NewAppointmentSheet({
               <select
                 id="professionalId"
                 name="professionalId"
-                defaultValue=""
+                value={selectedProf}
+                onChange={(e) => setSelectedProf(e.target.value)}
                 className="w-full h-10 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-primary)] text-white px-3 text-sm focus:outline-none focus:border-[var(--color-accent)]"
               >
                 <option value="" className="bg-[var(--bg-card)]">
@@ -209,7 +244,6 @@ export function NewAppointmentSheet({
             </div>
           )}
 
-          {/* Fecha */}
           <div className="space-y-1.5">
             <Label htmlFor="fecha" className="text-[var(--text-secondary)] text-sm">
               Fecha
@@ -226,24 +260,51 @@ export function NewAppointmentSheet({
             />
           </div>
 
-          {/* Hora — input libre, sin slots fijos */}
+          <input type="hidden" name="hora" value={hora} />
+
           <div className="space-y-1.5">
-            <Label htmlFor="hora" className="text-[var(--text-secondary)] text-sm">
+            <Label className="text-[var(--text-secondary)] text-sm">
               Hora
             </Label>
-            <input
-              id="hora"
-              name="hora"
-              type="time"
-              required
-              value={hora}
-              onChange={(e) => setHora(e.target.value)}
-              className={cn(
-                "w-full rounded-md border border-[var(--border-subtle)] px-3 h-10",
-                "text-sm bg-[var(--bg-primary)] text-white",
-                "focus:outline-none focus:border-[var(--color-accent)]",
-              )}
-            />
+            {loadingSlots ? (
+              <div className="text-sm text-[var(--text-muted)] py-2">
+                Cargando horarios disponibles...
+              </div>
+            ) : slotsError ? (
+              <div className="text-sm text-[var(--color-danger)] py-2">
+                Error: {slotsError}
+              </div>
+            ) : availableSlots.length === 0 ? (
+              <div className="text-sm text-[var(--color-danger)] py-2">
+                No hay horarios disponibles para esta fecha
+              </div>
+            ) : (
+              <div className="grid grid-cols-4 gap-2 max-h-[200px] overflow-y-auto">
+                {availableSlots.map((slot) => {
+                  const [h, m] = slot.split(":");
+                  const hour = parseInt(h);
+                  const suffix = hour >= 12 ? "PM" : "AM";
+                  const display = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+                  const label = `${display}:${m} ${suffix}`;
+                  const selected = hora === slot;
+                  return (
+                    <button
+                      key={slot}
+                      type="button"
+                      onClick={() => setHora(slot)}
+                      className={cn(
+                        "rounded-md border px-2 py-1.5 text-xs font-medium transition-colors",
+                        selected
+                          ? "bg-[var(--color-accent)] text-white border-[var(--color-accent)]"
+                          : "bg-[var(--bg-primary)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:border-[var(--color-accent)] hover:text-white"
+                      )}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {error && (
@@ -277,7 +338,7 @@ export function NewAppointmentSheet({
           ) : (
             <Button
               type="submit"
-              disabled={isPending}
+              disabled={isPending || !hora}
               className="w-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white rounded-full h-11 mt-2"
             >
               {isPending ? "Guardando..." : "Confirmar cita"}

@@ -7,6 +7,7 @@ export type Appointment = {
   servicio: string;
   numero: string;
   estado: "Pendiente" | "Confirmada" | "Cancelada" | "Completada";
+  profesional?: string | null;
   created_at: string;
 };
 
@@ -31,15 +32,16 @@ export async function getTodayAppointments(
   const today = getTodayBogota();
   const params: (string | number)[] = [today, businessId];
   const profFilter = professionalId != null
-    ? ` AND professional_id = $${params.push(professionalId)}`
+    ? ` AND a.professional_id = $${params.push(professionalId)}`
     : '';
 
   const { rows } = await pool.query(
-    `SELECT id, hora::text, nombre, servicio, numero, estado, created_at::text
-     FROM appointments
-     WHERE fecha = $1 AND business_id = $2
+    `SELECT a.id, a.hora::text, a.nombre, a.servicio, a.numero, a.estado, a.created_at::text, p.name AS profesional
+     FROM appointments a
+     LEFT JOIN professionals p ON a.professional_id = p.id
+     WHERE a.fecha = $1 AND a.business_id = $2
      ${profFilter}
-     ORDER BY hora ASC`,
+     ORDER BY a.hora ASC`,
     params
   );
   return rows;
@@ -86,6 +88,7 @@ export type AppointmentRow = {
   servicio: string;
   numero: string;
   estado: "Pendiente" | "Confirmada" | "Cancelada" | "Completada";
+  profesional?: string | null;
 };
 
 export async function getAppointmentsByMonth(
@@ -96,15 +99,17 @@ export async function getAppointmentsByMonth(
 ): Promise<AppointmentRow[]> {
   const params: number[] = [businessId, year, month];
   const profFilter = professionalId != null
-    ? ` AND professional_id = $${params.push(professionalId)}`
+    ? ` AND a.professional_id = $${params.push(professionalId)}`
     : '';
 
   const { rows } = await pool.query(
-    `SELECT id, fecha::text, hora::text, nombre, servicio, numero, estado
-     FROM appointments WHERE business_id = $1
-     AND DATE_TRUNC('month', fecha) = DATE_TRUNC('month', make_date($2, $3, 1))
+    `SELECT a.id, a.fecha::text, a.hora::text, a.nombre, a.servicio, a.numero, a.estado, p.name AS profesional
+     FROM appointments a
+     LEFT JOIN professionals p ON a.professional_id = p.id
+     WHERE a.business_id = $1
+     AND DATE_TRUNC('month', a.fecha) = DATE_TRUNC('month', make_date($2, $3, 1))
      ${profFilter}
-     ORDER BY fecha, hora`,
+     ORDER BY a.fecha, a.hora`,
     params
   );
   return rows;
@@ -131,16 +136,17 @@ export async function getWeekAppointments(
 
   const params: (string | number)[] = [toISO(monday), toISO(sunday), businessId];
   const profFilter = professionalId != null
-    ? ` AND professional_id = $${params.push(professionalId)}`
+    ? ` AND a.professional_id = $${params.push(professionalId)}`
     : '';
 
   const { rows } = await pool.query(
-    `SELECT id, fecha::text, hora::text, nombre, servicio, numero, estado, created_at::text
-     FROM appointments
-     WHERE fecha BETWEEN $1 AND $2
-       AND business_id = $3
+    `SELECT a.id, a.fecha::text, a.hora::text, a.nombre, a.servicio, a.numero, a.estado, a.created_at::text, p.name AS profesional
+     FROM appointments a
+     LEFT JOIN professionals p ON a.professional_id = p.id
+     WHERE a.fecha BETWEEN $1 AND $2
+       AND a.business_id = $3
        ${profFilter}
-     ORDER BY fecha ASC, hora ASC`,
+     ORDER BY a.fecha ASC, a.hora ASC`,
     params
   );
 

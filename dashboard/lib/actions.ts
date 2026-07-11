@@ -407,6 +407,11 @@ export async function deleteBloqueo(id: number, businessId: number) {
 }
 
 export async function updateServicesText(businessId: number, servicesText: string) {
+  const session = await auth()
+  if (!session) return { error: 'No autenticado' }
+  if (session.user.role !== 'owner' && session.user.role !== 'admin')
+    return { error: 'No autorizado' }
+
   const entries = servicesText.split(',').map(s => s.trim()).filter(Boolean)
 
   if (entries.length === 0)
@@ -856,5 +861,79 @@ export async function getClienteHistorial(
   } catch (e) {
     console.error("[getClienteHistorial]", e);
     return { cliente: null, historial: [], error: "Error cargando historial" };
+  }
+}
+
+// ─── Slots disponibles ─────────────────────────────────────────────────────────
+
+function generateSlots(openHour: number, closeHour: number): string[] {
+  const slots: string[] = [];
+  for (let h = openHour; h < closeHour; h++) {
+    slots.push(`${String(h).padStart(2, '0')}:00`);
+    slots.push(`${String(h).padStart(2, '0')}:30`);
+  }
+  return slots;
+}
+
+export async function getAvailableSlots(
+  businessId: number,
+  fecha: string,
+  professionalId?: number | null
+): Promise<string[]> {
+  try {
+    const { rows: bizRows } = await pool.query(
+      `SELECT schedule_text FROM businesses WHERE id = $1`,
+      [businessId]
+    );
+    if (bizRows.length === 0) return [];
+    const rawSchedule = bizRows[0].schedule_text;
+    const schedule: Record<string, { open: number; close: number }> =
+      typeof rawSchedule === 'string' ? JSON.parse(rawSchedule) : rawSchedule;
+
+    const dateObj = new Date(fecha + 'T12:00:00');
+    const dayOfWeek = dateObj.getDay();
+    const daySchedule = schedule[String(dayOfWeek)];
+    if (!daySchedule) return [];
+
+    let slots = generateSlots(daySchedule.open, daySchedule.close);
+
+    const exParams: (string | number)[] = [businessId, fecha];
+    let exProfCondition: string;
+    if (professionalId != null) {
+      exProfCondition = `AND (professional_id = $${exParams.push(professionalId)} OR professional_id IS NULL)`;
+    } else {
+      exProfCondition = 'AND professional_id IS NULL';
+    }
+
+    const { rows: exceptions } = await pool.query(
+      `SELECT tipo, hora_inicio::text, hora_fin::text
+       FROM schedule_exceptions
+       WHERE business_id = $1 AND fecha = $2 ${exProfCondition}`,
+      exParams
+    );
+
+    for (const ex of exceptions) {
+      if (ex.tipo === 'cerrado') return [];
+      if (ex.tipo === 'horario_especial') {
+        slots = slots.filter(s => s >= ex.hora_inicio!.substring(0, 5) && s < ex.hora_fin!.substring(0, 5));
+      }
+    }
+
+    const aptParams: (string | number)[] = [businessId, fecha];
+    const aptProfCondition = professionalId != null
+      ? `AND professional_id = $${aptParams.push(professionalId)}`
+      : '';
+
+    const { rows: appointments } = await pool.query(
+      `SELECT hora::text FROM appointments
+       WHERE business_id = $1 AND fecha = $2 AND estado != 'Cancelada' ${aptProfCondition}`,
+      aptParams
+    );
+
+    const booked = new Set(appointments.map(a => a.hora.substring(0, 5)));
+    return slots.filter(s => !booked.has(s));
+  } catch (e) {
+    console.error('[getAvailableSlots]', e);
+    return [];
   }
 }

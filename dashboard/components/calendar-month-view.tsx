@@ -60,7 +60,7 @@ interface Professional {
   name: string
 }
 
-export function CalendarMonthView({ multiProfessional, servicesText, professionals = [] }: { multiProfessional: boolean; servicesText: string; professionals?: Professional[] }) {
+export function CalendarMonthView({ multiProfessional, servicesText, professionals = [], professionalFilter }: { multiProfessional: boolean; servicesText: string; professionals?: Professional[]; professionalFilter?: number }) {
   const [currentMonth, setCurrentMonth] = useState<Date>(() => {
     const now = new Date()
     return new Date(now.getFullYear(), now.getMonth(), 1)
@@ -76,7 +76,10 @@ export function CalendarMonthView({ multiProfessional, servicesText, professiona
     try {
       const year  = date.getFullYear()
       const month = date.getMonth() + 1
-      const res   = await fetch(`/api/appointments/month?year=${year}&month=${month}`)
+      let url = `/api/appointments/month?year=${year}&month=${month}`
+      const pf = professionalFilter
+      if (pf) url += `&professionalId=${pf}`
+      const res   = await fetch(url)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data  = await res.json() as { appointments: Appointment[] }
 
@@ -92,14 +95,14 @@ export function CalendarMonthView({ multiProfessional, servicesText, professiona
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [professionalFilter])
 
-  // Fetch al cambiar de mes + polling 30s (idéntico al resto del dashboard)
+  // Fetch al cambiar de mes o filtro + polling 30s
   useEffect(() => {
     fetchMonth(currentMonth)
     const id = setInterval(() => fetchMonth(currentMonth), 30_000)
     return () => clearInterval(id)
-  }, [currentMonth, fetchMonth])
+  }, [currentMonth, professionalFilter, fetchMonth])
 
   // ── Grilla ───────────────────────────────────────────────────────────────────
   const grid = useMemo(() => buildGrid(currentMonth), [currentMonth])
