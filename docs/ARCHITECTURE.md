@@ -76,6 +76,15 @@ conversation_history (business_id, numero, messages JSONB, updated_at, expires_a
 - **HTTP Request (Confirmar Cancelación)**: contentType raw, body `{{ $json.body }}`, URL/apikey con UN solo `=`
 - **Confirmar Reagendamiento**: usa IIFE en bodyParameters — deuda técnica, funciona pero frágil
 
+### Dashboard Sync (webhooks)
+- 3 endpoints en `/api/webhooks/`: `sync-new`, `sync-cancel`, `sync-reagend`
+- Autenticación via header `x-webhook-secret` contra `WEBHOOK_SECRET` del .env
+- El workflow envía datos completos desde los RETURNING de los queries PostgreSQL
+- `Sync New Dashboard` corre en paralelo a `Construir Mensajes` después de `Insertar Cita`
+- `Sync Cancel Dashboard` / `Sync Reagend Dashboard` corren en paralelo a las notificaciones
+- Todos registran en `audit_log` con `origen: "whatsapp"` y revalidan `/dashboard` + `/dashboard/semana`
+- Excluidos del middleware de NextAuth via patrón `/((?!api/auth|api/webhooks|...))`
+
 ## Decisiones de arquitectura tomadas
 
 ### Dashboard — rutas y navegación

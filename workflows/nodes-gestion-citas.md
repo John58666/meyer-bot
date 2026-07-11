@@ -10,6 +10,7 @@ Flujo completo de cancelación y reagendamiento dentro del workflow `WhatsApp Bo
 AI Agent (Code — LLM Orquestador)
   └─ Switch (lee $json.output)
         ├─ CITA_CONFIRMADA  → Verificar Slot → Insertar Cita → Construir Mensajes → Notificar Dueño → Confirmar Cliente
+        │                                                       └ Sync New Dashboard
         ├─ GESTIONAR_CITA   → Leer Citas Cliente → Formatear Citas → Enviar Lista de Citas → Guardar Sesión
         ├─ CANCELAR_CITA    → Ejecutar Cancelación (paralelo: Sync Cancel Dashboard, Notificar Dueño Cancelación, Construir Confirmación Cancelación → Confirmar Cancelación)
         ├─ REAGENDAR_CITA   → Ejecutar Reagendamiento (paralelo: Construir Mensaje Reagendamiento → Confirmar Reagendamiento, Sync Reagend Dashboard, Construir Notificación Reagend → Notificar Dueño Reagend)
@@ -22,6 +23,7 @@ AI Agent (Code — LLM Orquestador)
 AI Agent
   └─ Switch (por output)
         ├─ CITA_CONFIRMADA → Verificar Slot → (disponible?) Insertar Cita → Construir Mensajes → Notificar Dueño → Confirmar Cliente
+        │                                                                   └ Sync New Dashboard
         ├─ GESTIONAR_CITA  → Leer Citas Cliente → Formatear Citas → Enviar Lista de Citas → Guardar Sesión → Leer Sesión activa → Formatear Disponibilidad
         ├─ CANCELAR_CITA   → [A] Ejecutar Cancelación
         ├─ REAGENDAR_CITA  → [B] Ejecutar Reagendamiento
@@ -104,7 +106,11 @@ Construye mensaje de confirmación para el cliente: "✅ Tu cita de [servicio] d
 Envía el mensaje de confirmación al cliente vía Evolution API.
 
 ### Sync Cancel Dashboard (HTTP)
-Envía `{ appointmentId, businessId }` al dashboard para actualizar estado.
+Envía datos completos (`appointmentId`, `businessId`, `servicio`, `fecha`, `hora`, `nombre`, `estado`, `professional_name`) a `{{ $env.DASHBOARD_URL }}/api/webhooks/sync-cancel`.
+
+Autenticación via header `x-webhook-secret: {{ $env.WEBHOOK_SECRET }}`.
+
+El dashboard registra en `audit_log` con acción `cancel_appointment` y revalida caché.
 
 ---
 
@@ -135,7 +141,11 @@ Mensaje al cliente: "✅ ¡Listo! Tu cita de [servicio] con [profesional] quedó
 Envía el mensaje de confirmación al cliente.
 
 ### Sync Reagend Dashboard (HTTP)
-Envía `{ appointmentId, businessId }` al dashboard para sincronizar el reagendamiento.
+Envía datos completos (`appointmentId`, `businessId`, `servicio`, `fecha`, `hora`, `nombre`, `estado`, `professional_name`) a `{{ $env.DASHBOARD_URL }}/api/webhooks/sync-reagend`.
+
+Autenticación via header `x-webhook-secret: {{ $env.WEBHOOK_SECRET }}`.
+
+El dashboard registra en `audit_log` con acción `reschedule_appointment` y revalida caché.
 
 ### Construir Notificación Reagend (Code JS)
 Construye mensaje para el dueño: "🔄 Cita reagendada — Cliente, Profesional, Servicio, Fecha, Hora."
@@ -145,10 +155,34 @@ Envía la notificación al dueño vía Evolution API.
 
 ---
 
+## Nodos de nueva cita
+
+### Insertar Cita (Postgres)
+```sql
+INSERT INTO appointments (...)
+VALUES (...)
+RETURNING id, fecha::text, hora::text, nombre, servicio, numero, estado, professional_id
+```
+
+### Sync New Dashboard (HTTP)
+Corre en paralelo a `Construir Mensajes` después de `Insertar Cita`.
+
+Envía datos completos (`appointmentId`, `businessId`, `servicio`, `fecha`, `hora`, `nombre`, `estado`, `professional_name`) a `{{ $env.DASHBOARD_URL }}/api/webhooks/sync-new`.
+
+El `professional_name` se obtiene de `$('Verificar Slot').item.json.professionalName`.
+
+Autenticación via header `x-webhook-secret: {{ $env.WEBHOOK_SECRET }}`.
+
+El dashboard registra en `audit_log` con acción `create_appointment` y revalida caché.
+
+---
+
 ## Notas importantes
 
 - La sesión permite al AI saber qué citas tiene el cliente y la acción (cancelar/reagendar)
 - El `professional_name` se obtiene vía subquery en el RETURNING para evitar que el UPDATE falle si la cita no tiene profesional asignado
 - El 5to campo del código `REAGENDAR_CITA|ID|DD/MM/YYYY|HH:MM|Profesional` es opcional
 - `Construir Confirmación Cancelación` y `Confirmar Cancelación` son del flujo de cancelación existente
+- `Sync Reagend Dashboard` fue corregido: URL cambiada de `sync-cancel` a `sync-reagend`, header de `apikey` a `x-webhook-secret`, body con datos completos
+- Los 3 sync nodes envian datos completos al dashboard, que los registra en `audit_log` con origen "whatsapp"
 - Esta sesión corrigió: saludo, CITA_CONFIRMADA, profesional en cancelación, reagendamiento sin notificación al dueño, profesionalNombre incorrecto, y manejo de AM/PM
