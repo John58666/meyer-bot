@@ -65,7 +65,8 @@ export async function createAppointment(formData: FormData) {
 
     const insertResult = await pool.query(
       `INSERT INTO appointments (business_id, fecha, hora, nombre, servicio, numero, estado, professional_id)
-       VALUES ($1, $2, $3::time, $4, $5, $6, 'Pendiente', $7)
+       VALUES ($1, $2, $3::time, $4, $5, $6, 'Pendiente',
+         COALESCE($7, (SELECT id FROM professionals WHERE business_id = $1 AND active = true ORDER BY id LIMIT 1)))
        RETURNING id`,
       [businessId, fecha, hora, nombre.trim(), servicio, numero.trim(), professionalId]
     );
