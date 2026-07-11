@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Calendar, BarChart2, Users, Settings, HelpCircle, UserCog } from "lucide-react";
+import { Home, Calendar, BarChart2, Users, Settings, HelpCircle, UserCog, ClipboardList } from "lucide-react";
 
 const navItems = [
   { icon: Home,      href: "/dashboard",          label: "Inicio"   },
@@ -20,7 +20,10 @@ export function Sidebar({ role }: SidebarProps) {
 
   const bottomItems = [
     ...(role !== "profesional"
-      ? [{ icon: Settings, href: "/dashboard/configuracion", label: "Configuración" }]
+      ? [
+          { icon: Settings, href: "/dashboard/configuracion", label: "Configuración" },
+          { icon: ClipboardList, href: "/dashboard/auditoria", label: "Auditoría" },
+        ]
       : []),
     ...(role === "owner"
       ? [{ icon: UserCog, href: "/dashboard/equipo", label: "Equipo" }]

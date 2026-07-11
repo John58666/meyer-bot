@@ -5,6 +5,7 @@ import { pool } from "@/lib/db";
 import { auth } from "@/auth";
 import { parsePrice } from "@/lib/parse-services";
 import bcrypt from "bcryptjs";
+import { auditar } from "@/lib/audit";
 
 // ── Listar profesionales activos (para selector al agendar) ───
 export async function getActiveProfessionals(businessId: number) {
@@ -62,11 +63,13 @@ export async function createAppointment(formData: FormData) {
       if (rows.length > 0) return { conflict: true };
     }
 
-    await pool.query(
+    const insertResult = await pool.query(
       `INSERT INTO appointments (business_id, fecha, hora, nombre, servicio, numero, estado, professional_id)
-       VALUES ($1, $2, $3::time, $4, $5, $6, 'Pendiente', $7)`,
+       VALUES ($1, $2, $3::time, $4, $5, $6, 'Pendiente', $7)
+       RETURNING id`,
       [businessId, fecha, hora, nombre.trim(), servicio, numero.trim(), professionalId]
     );
+    const appointmentId = insertResult.rows[0].id;
 
     await pool.query(
       `INSERT INTO customers (business_id, numero, nombre, primera_visita, ultima_visita, total_visitas)
@@ -79,6 +82,10 @@ export async function createAppointment(formData: FormData) {
          updated_at    = NOW()`,
       [businessId, numero.trim(), nombre.trim()]
     );
+
+    auditar(businessId, parseInt(session.user.id), "create_appointment", "appointment", appointmentId, {
+      nombre, servicio, fecha, hora, professional_id: professionalId,
+    });
 
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/semana");
@@ -114,6 +121,28 @@ export async function updateAppointmentStatus(
     if (rowCount === 0) {
       return { error: "No tienes permiso para modificar esta cita" };
     }
+
+    // Obtener datos para auditoría
+    const { rows: aptRows } = await pool.query(
+      `SELECT nombre, servicio, fecha FROM appointments WHERE id = $1`,
+      [id],
+    );
+
+    const accionMap: Record<string, "cancel_appointment" | "complete_appointment" | "reactivate_appointment"> = {
+      Cancelada: "cancel_appointment",
+      Completada: "complete_appointment",
+      Pendiente: "reactivate_appointment",
+    };
+
+    if (aptRows.length > 0) {
+      auditar(session.user.businessId, parseInt(session.user.id), accionMap[estado], "appointment", id, {
+        nombre: aptRows[0].nombre,
+        servicio: aptRows[0].servicio,
+        fecha: aptRows[0].fecha,
+        nuevo_estado: estado,
+      });
+    }
+
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/semana");
     return { success: true };
@@ -135,12 +164,30 @@ export async function rescheduleAppointment(
   if (!fecha || !hora) return { error: "Fecha y hora son obligatorias" };
 
   try {
+    // Obtener datos anteriores para auditoría
+    const { rows: oldRows } = await pool.query(
+      `SELECT nombre, servicio, fecha::text, hora::text FROM appointments WHERE id = $1`,
+      [id],
+    );
+
     await pool.query(
       `UPDATE appointments
        SET fecha = $1, hora = $2::time, estado = 'Pendiente', updated_at = NOW()
        WHERE id = $3 AND business_id = $4`,
       [fecha, hora, id, session.user.businessId]
     );
+
+    if (oldRows.length > 0) {
+      auditar(session.user.businessId, parseInt(session.user.id), "reschedule_appointment", "appointment", id, {
+        nombre: oldRows[0].nombre,
+        servicio: oldRows[0].servicio,
+        fecha_anterior: oldRows[0].fecha,
+        hora_anterior: oldRows[0].hora,
+        fecha_nueva: fecha,
+        hora_nueva: hora,
+      });
+    }
+
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/semana");
     return { success: true };
@@ -368,9 +415,10 @@ export async function createBloqueo(data: {
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' })
   if (fecha < today) return { error: 'No se pueden bloquear fechas pasadas' }
 
-  await pool.query(
+  const bloqueoResult = await pool.query(
     `INSERT INTO schedule_exceptions (business_id, fecha, tipo, hora_inicio, hora_fin, motivo, professional_id)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     RETURNING id`,
     [
       businessId,
       fecha,
@@ -381,6 +429,11 @@ export async function createBloqueo(data: {
       professionalId ?? null,
     ]
   )
+
+  auditar(businessId, parseInt(session.user.id), "create_bloqueo", "bloqueo", bloqueoResult.rows[0].id, {
+    fecha, tipo, hora_inicio, hora_fin, motivo, professional_id: professionalId,
+  })
+
   revalidatePath('/dashboard/semana/bloqueos')
   return { ok: true }
 }
@@ -398,10 +451,25 @@ export async function deleteBloqueo(id: number, businessId: number) {
     ? ` AND professional_id = $${params.push(session.user.professionalId as number)}`
     : ''
 
+  // Obtener datos para auditoría antes de borrar
+  const { rows: delBloqRows } = await pool.query(
+    `SELECT fecha, tipo, motivo FROM schedule_exceptions WHERE id = $1 AND business_id = $2`,
+    [id, realBusinessId]
+  )
+
   await pool.query(
     `DELETE FROM schedule_exceptions WHERE id = $1 AND business_id = $2${profFilter}`,
     params
   )
+
+  if (delBloqRows.length > 0) {
+    auditar(realBusinessId, parseInt(session.user.id), "delete_bloqueo", "bloqueo", id, {
+      fecha: delBloqRows[0].fecha,
+      tipo: delBloqRows[0].tipo,
+      motivo: delBloqRows[0].motivo,
+    })
+  }
+
   revalidatePath('/dashboard/semana/bloqueos')
   return { ok: true }
 }
@@ -426,6 +494,11 @@ export async function updateServicesText(businessId: number, servicesText: strin
     `UPDATE businesses SET services_text = $1 WHERE id = $2`,
     [entries.join(', '), businessId]
   )
+
+  auditar(businessId, parseInt(session.user.id), "update_services", "business", businessId, {
+    servicios_count: entries.length,
+  })
+
   revalidatePath('/dashboard/configuracion')
   return { ok: true }
 }
@@ -630,6 +703,11 @@ export async function createMiembroEquipo(data: {
     );
 
     await client.query("COMMIT");
+
+    auditar(businessId, parseInt(session.user.id), "create_miembro", "user", null, {
+      name, email, role, professional_id: professionalId,
+    });
+
     revalidatePath("/dashboard/equipo");
     return { ok: true };
   } catch (e) {
@@ -666,6 +744,11 @@ export async function toggleMiembroActivo(userId: number, businessId: number, ac
       );
     }
     await client.query("COMMIT");
+
+    auditar(businessId, parseInt(session.user.id), "toggle_miembro", "user", userId, {
+      active, professional_id: professionalId,
+    });
+
     revalidatePath("/dashboard/equipo");
     return { ok: true };
   } catch (e) {
@@ -738,6 +821,11 @@ export async function updateMiembroRole(
     }
 
     await client.query("COMMIT");
+
+    auditar(businessId, parseInt(session.user.id), "update_role", "user", userId, {
+      role_nuevo: role,
+    });
+
     revalidatePath("/dashboard/equipo");
     return { ok: true };
   } catch (e) {
