@@ -503,6 +503,47 @@ export async function updateServicesText(businessId: number, servicesText: strin
   return { ok: true }
 }
 
+export interface DaySchedule {
+  open: number
+  close: number
+}
+
+export type ScheduleData = Record<string, DaySchedule>
+
+export async function updateScheduleText(businessId: number, schedule: ScheduleData) {
+  const session = await auth()
+  if (!session) return { error: 'No autenticado' }
+  if (session.user.role !== 'owner' && session.user.role !== 'admin')
+    return { error: 'No autorizado' }
+
+  for (const [day, hs] of Object.entries(schedule)) {
+    const d = parseInt(day)
+    if (isNaN(d) || d < 0 || d > 6)
+      return { error: `Día inválido: ${day}` }
+    if (!Number.isInteger(hs.open) || hs.open < 0 || hs.open > 23)
+      return { error: `Hora de apertura inválida en día ${d}` }
+    if (!Number.isInteger(hs.close) || hs.close < 1 || hs.close > 24)
+      return { error: `Hora de cierre inválida en día ${d}` }
+    if (hs.close <= hs.open)
+      return { error: `El cierre debe ser después de la apertura (día ${d})` }
+  }
+
+  try {
+    await pool.query(
+      `UPDATE businesses SET schedule_text = $1::jsonb WHERE id = $2`,
+      [JSON.stringify(schedule), businessId]
+    )
+    auditar(businessId, parseInt(session.user.id), "update_services", "business", businessId, {
+      schedule_days: Object.keys(schedule).length,
+    })
+    revalidatePath('/dashboard/configuracion')
+    return { ok: true }
+  } catch (e) {
+    console.error('[updateScheduleText]', e)
+    return { error: 'Error guardando los horarios' }
+  }
+}
+
 // ─── CRM — Clientes ──────────────────────────────────────────────────────────
 
 export interface Cliente {
