@@ -696,7 +696,7 @@
         "sendBody": true,
         "contentType": "raw",
         "rawContentType": "application/json",
-        "body": "={\n  \"appointmentId\": {{ $json.id }},\n  \"businessId\": {{ $('Procesar Mensaje').item.json.businessId }}\n}",
+        "body": "={\n  \"appointmentId\": {{ $json.id }},\n  \"businessId\": {{ $('Procesar Mensaje').item.json.businessId }},\n  \"servicio\": \"{{ $json.servicio }}\",\n  \"fecha\": \"{{ $json.fecha }}\",\n  \"hora\": \"{{ $json.hora }}\",\n  \"nombre\": \"{{ $json.nombre }}\",\n  \"estado\": \"{{ $json.estado }}\",\n  \"professional_name\": \"{{ $json.professional_name }}\"\n}",
         "options": {}
       },
       "id": "e5d08b46-2e19-4bd7-9cff-0db65b50755c",
@@ -1083,17 +1083,17 @@
       "type": "n8n-nodes-base.httpRequest",
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.DASHBOARD_URL }}/api/webhooks/sync-cancel",
+        "url": "={{ $env.DASHBOARD_URL }}/api/webhooks/sync-reagend",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
-              "name": "apikey",
-              "value": "={{ $env.EVOLUTION_API_KEY }}"
-            },
-            {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "x-webhook-secret",
+              "value": "={{ $env.WEBHOOK_SECRET }}"
             }
           ]
         },
@@ -1101,7 +1101,7 @@
         "options": {},
         "contentType": "raw",
         "rawContentType": "application/json",
-        "body": "={\n  \"appointmentId\": {{ $json.id }},\n  \"businessId\": {{ $('Procesar Mensaje').item.json.businessId }}\n}"
+        "body": "={\n  \"appointmentId\": {{ $json.id }},\n  \"businessId\": {{ $('Procesar Mensaje').item.json.businessId }},\n  \"servicio\": \"{{ $json.servicio }}\",\n  \"fecha\": \"{{ $json.fecha }}\",\n  \"hora\": \"{{ $json.hora }}\",\n  \"nombre\": \"{{ $json.nombre }}\",\n  \"estado\": \"{{ $json.estado }}\",\n  \"professional_name\": \"{{ $json.professional_name }}\"\n}"
       },
       "position": [
         3504,
@@ -1111,6 +1111,38 @@
         3504,
         2972
       ]
+    },
+    {
+      "id": "b6e8c1d4-2f3a-4b5c-8d9e-0f1a2b3c4d5e",
+      "name": "Sync New Dashboard",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3488,
+        2480
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.DASHBOARD_URL }}/api/webhooks/sync-new",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-webhook-secret",
+              "value": "={{ $env.WEBHOOK_SECRET }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"appointmentId\": {{ $json.id }},\n  \"businessId\": {{ $('Procesar Mensaje').item.json.businessId }},\n  \"servicio\": \"{{ $json.servicio }}\",\n  \"fecha\": \"{{ $json.fecha }}\",\n  \"hora\": \"{{ $json.hora }}\",\n  \"nombre\": \"{{ $json.nombre }}\",\n  \"estado\": \"{{ $json.estado }}\",\n  \"professional_name\": \"{{ $('Verificar Slot').item.json.professionalName || '' }}\"\n}",
+        "options": {}
+      }
     }
   ],
   "pinData": {},
@@ -1248,6 +1280,11 @@
         [
           {
             "node": "Construir Mensajes",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Sync New Dashboard",
             "type": "main",
             "index": 0
           }
@@ -1522,6 +1559,11 @@
             "index": 0
           }
         ]
+      ]
+    },
+    "Sync New Dashboard": {
+      "main": [
+        []
       ]
     }
   },

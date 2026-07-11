@@ -32,32 +32,19 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { rows: apt } = await pool.query(
-      `SELECT a.nombre, a.servicio, a.fecha::text, a.hora::text, a.estado,
-              COALESCE(p.name, '') as professional_name
-       FROM appointments a
-       LEFT JOIN professionals p ON a.professional_id = p.id
-       WHERE a.id = $1 AND a.business_id = $2`,
-      [appointmentId, businessId],
-    );
-
-    if (apt.length === 0) {
-      return NextResponse.json({ error: "Cita no encontrada" }, { status: 404 });
-    }
-
     await pool.query(
       `INSERT INTO audit_log (business_id, user_id, accion, entidad, entidad_id, detalle)
-       VALUES ($1, NULL, 'cancel_appointment', 'appointment', $2, $3)`,
+       VALUES ($1, NULL, 'create_appointment', 'appointment', $2, $3)`,
       [
         businessId,
         appointmentId,
         JSON.stringify({
-          nombre: apt[0].nombre,
-          servicio: apt[0].servicio,
-          fecha: apt[0].fecha,
-          hora: apt[0].hora,
-          estado: apt[0].estado,
-          professional_name: apt[0].professional_name,
+          nombre: body.nombre || "",
+          servicio: body.servicio || "",
+          fecha: body.fecha || "",
+          hora: body.hora || "",
+          estado: body.estado || "Pendiente",
+          professional_name: body.professional_name || "",
           origen: "whatsapp",
         }),
       ],
@@ -68,7 +55,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (e) {
-    console.error("[webhook sync-cancel]", e);
+    console.error("[webhook sync-new]", e);
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }
