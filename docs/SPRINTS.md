@@ -192,7 +192,13 @@
 ### E — Workflow No-Shows
 - Cron 23:59, completa citas Pendiente con fecha pasada
 
-### Pendientes
+### F — Fix UI auditoría
+- "n8n bot" → "WhatsApp" (user-friendly, no técnico)
+- Entidades con labels legibles (appointment → "Cita", bloqueo → "Bloqueo")
+- Drawer detalle con descripciones claras en vez de JSON crudo
+- `describirDetalle()` en audit-types.ts formatea según cada acción
+
+### Pendientes para próxima sesión
 1. Inactividad bot — que pregunte si cliente sigue ahí tras X tiempo sin respuesta
 2. Debugging errores bot en executions n8n
-3. Activar 4 workflows en n8n UI (WhatsApp Bot, Recordatorios 24h, Recordatorios 2h, No-Shows)
+3. Activar 4 workflows en n8n UI si no está hecho

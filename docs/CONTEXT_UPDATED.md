@@ -137,6 +137,12 @@ Asignados manualmente por SQL al onboardear. Sistema formal con Stripe/Wompi en 
 18. `reminder_config` JSONB configurable por negocio.
 19. Panel admin Johnander (todos los negocios, métricas agregadas).
 20. `pm2 reload` en vez de `pm2 restart` a 10+ clientes.
+21. **Onboarding negocio nuevo** — crear checklist/script que valide que al agregar un business se configuren todos los sistemas: schedule_text, services_text, whatsapp_instance, owner_number, timezone, profesionales, recordatorios, webhook secret, etc. No dejar que solo funcione para negocios existentes.
+22. **Desambiguación clientes mismo nombre** — si dos clientes se llaman "Santiago", debe haber forma de distinguirlos (teléfono, ID, notas). Implementar validación o flujo que evite confusión al agendar/historial. No incluye sync con Google Contacts por ahora.
+23. **Auditoría — explicación + default día/semana** — agregar texto breve que explique para qué sirve la página. Por defecto mostrar solo eventos del día o semana actual, no todo el historial (para eso están los filtros).
+24. **Botón ? → FAQ** — reemplazar el signo de interrogación en el footer del dashboard (PC web) con un modal/página de preguntas frecuentes. Definir contenido y comportamiento responsive.
+25. **Tooltips en botones** — al hacer hover sobre íconos (engranaje, casa, ?, etc.) mostrar el nombre de la acción ("Configuración", "Inicio", "Ayuda"). También en responsive.
+26. **Título negocio como link a inicio** — al hacer clic en "Peluquería Meyer" (nombre del negocio en topbar), redirigir a `/dashboard`.
 
 ### FUTURO
 19. Sistema de planes formal con Stripe/Wompi.
