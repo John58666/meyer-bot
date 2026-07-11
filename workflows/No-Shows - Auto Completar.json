@@ -13,7 +13,7 @@
           ]
         }
       },
-      "id": "26dae46e-bd1e-4542-ac7d-22ea1c274429",
+      "id": "bb450245-0b8e-416a-8563-f950ba389890",
       "name": "Schedule",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -28,7 +28,7 @@
         "query": "WITH actualizadas AS (\n  UPDATE appointments\n  SET estado = 'Completada', updated_at = NOW()\n  WHERE fecha < CURRENT_DATE\n    AND estado = 'Pendiente'\n  RETURNING id, business_id, nombre, servicio, fecha::text\n)\nSELECT COUNT(*)::int AS total FROM actualizadas;",
         "options": {}
       },
-      "id": "2fe30d0c-037e-46b6-89f3-d599da249e20",
+      "id": "fb8e9539-885f-4e28-97e1-ee3688f21517",
       "name": "Completar No-Shows",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2,
@@ -41,7 +41,7 @@
       "parameters": {
         "jsCode": "const total = $input.first().json.total;\nif (total > 0) {\n  console.log(`[No-Shows] ${total} cita(s) completada(s) autom\u00e1ticamente`);\n}\nreturn [{ json: { total, procesadas: total > 0 } }];"
       },
-      "id": "3267e087-d0c2-40eb-b09e-1c6ccfdc7e0f",
+      "id": "d44875b9-7f36-448b-b66e-eb31005a2128",
       "name": "Log Resultado",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -75,7 +75,17 @@
       ]
     }
   },
-  "settings": {},
-  "staticData": null,
-  "tags": []
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": "{}",
+  "tags": [],
+  "active": true,
+  "pinData": {},
+  "versionId": "3e6613c1-5272-405f-97d2-01115a9c8076",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "78865b14428b3461ac0504416eb2ba5903a5482f3190c606719f27159eed62fe"
+  },
+  "id": "q5Pm2VZAEtikMg"
 }
