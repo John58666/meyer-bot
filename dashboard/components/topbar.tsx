@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, Home, Calendar, BarChart2, Users, Settings, UserCog } from "lucide-react";
+import { LogOut, Home, Calendar, BarChart2, Users, Settings, UserCog, HelpCircle } from "lucide-react";
 
 const bottomNavItems = [
   { icon: Home,      href: "/dashboard",          label: "Inicio"   },
@@ -109,6 +109,13 @@ export function Topbar({ user, role }: TopbarProps) {
               Equipo
             </DropdownMenuItem>
           )}
+          <DropdownMenuItem
+            onClick={() => router.push('/dashboard/help')}
+            className="sm:hidden cursor-pointer focus:bg-white/5"
+          >
+            <HelpCircle size={16} className="mr-2" />
+            Ayuda
+          </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="text-[var(--color-danger)] cursor-pointer focus:text-[var(--color-danger)] focus:bg-white/5"
