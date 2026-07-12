@@ -1,6 +1,6 @@
 # CONTEXT.md — meyer-bot
 
-> Última actualización: 12 julio 2026 (sesión 10 — UI/UX Audit Sprint 15 implementado. 7 áreas ejecutadas: KPIs sparkline+semántica, filtro fechas global, drawers error states, accesibilidad, responsive, heatmap tooltip, charts LabelList+animación.)
+> Última actualización: 12 julio 2026 (sesión 11 — Responsive bugs post-deploy. Fix KPI grid overflow, fix "pantallitas negras" por isMobile en drawers, chart heights responsive, date picker full-width. Lección: CSS-only > JS state para responsive en componentes compartidos.)
 > Documento maestro CORTO. Cualquier chat nuevo lee esto primero.
 > **⚠️ ANTES de tocar NADA: leer `docs/SECURITY_AUDIT.md`** — reporte maestro de seguridad, hallazgos activos y plan de remediación.
 > Para profundidad: ver docs/ (ARCHITECTURE.md, SPRINTS.md, RUNBOOK.md, KEY_LEARNINGS.md, SECURITY_AUDIT.md)
@@ -158,6 +158,12 @@ Ejecución de todos los hallazgos de la sesión 9. Ver detalle en `docs/SPRINTS.
 - 🟢 Responsive: pagination dots para KPIs mobile
 - 🟢 Heatmap: tooltip flotante + indicador hora actual
 - 🟢 Charts: LabelList en barras servicios + animationDuration
+
+### SESIÓN 11 — Responsive bugs post-deploy + fix (12 julio 2026)
+Dos bugs responsive aparecieron tras deploy de UI/UX Audit:
+- **Bug 1 — KPI overflow**: scroll horizontal forzado en todos los tamaños. Fix: dual container (scroll mobile + grid desktop `sm:grid-cols-3`).
+- **Bug 2 — "Pantallitas negras"**: `isMobile` state en 4 drawers causaba overlays fantasma de base-ui Dialog. Fix: eliminar `isMobile`, CSS-only `max-md:!w-[90vw]`, siempre `side="right"`.
+- Charts altura responsive, date picker full-width mobile.
 
 ### PENDIENTE — Fase 4: Fixes complejos
 21. **#21 — Onboarding negocio nuevo** — script/checklist multi-sistema

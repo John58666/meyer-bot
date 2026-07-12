@@ -311,36 +311,47 @@ Detalle completo en spec sección 14. Pendiente de aprobación para ejecutar.
 - `LabelList` con formato de pesos en barras de servicios
 - `animationBegin={0}`, `animationDuration={600}`, `animationEasing="ease-out"` en servicio bars
 
-### Archivos modificados
-- `dashboard/lib/actions.ts` — RangoMetricas extendido, sparklines en MetricasData, calcularRangoFechas/PeriodoAnterior extendidos
-- `dashboard/components/metricas/metricas-client.tsx` — filtro fechas, pagination dots, accessibility, semántica
-- `dashboard/components/metricas/metricas-kpi-card.tsx` — sparkline SVG, TrendingUp/Down, tooltip hover, sr-only
-- `dashboard/components/metricas/metricas-tab-selector.tsx` — role="tablist", aria-selected, aria-controls
-- `dashboard/components/metricas/metricas-chart-servicios.tsx` — LabelList + animación
-- `dashboard/components/metricas/metricas-chart-ocupacion.tsx` — tooltip flotante + hora actual
-- `dashboard/components/metricas/drawer-ingresos.tsx` — error state + reintentar
-- `dashboard/components/metricas/drawer-citas-del-dia.tsx` — error state + reintentar
-- `dashboard/components/metricas/drawer-ocupacion.tsx` — error state + reintentar
-- `dashboard/components/metricas/drawer-servicio-detalle.tsx` — error state + reintentar
-- `dashboard/app/(dashboard)/dashboard/metricas/page.tsx` — soporte custom dates
+### Responsive bugs post-deploy — fix (Sesión 11, 12 julio 2026)
 
-### Archivos nuevos
-- `dashboard/components/metricas/metricas-kpi-card.tsx`
-- `dashboard/components/metricas/metricas-tab-selector.tsx`
-- `dashboard/components/metricas/metricas-chart-ingresos.tsx`
-- `dashboard/components/metricas/metricas-chart-servicios.tsx`
-- `dashboard/components/metricas/metricas-chart-ocupacion.tsx`
-- `dashboard/components/metricas/drawer-ingresos.tsx`
-- `dashboard/components/metricas/drawer-citas-del-dia.tsx`
-- `dashboard/components/metricas/drawer-ocupacion.tsx`
-- `dashboard/components/metricas/drawer-servicio-detalle.tsx`
-- `dashboard/app/(dashboard)/dashboard/metricas/api/drawer/route.ts`
-- `database/migrations/015_metrics_index.sql`
+Tras el deploy de la UI/UX Audit, aparecieron 2 bugs responsive:
 
-### Archivos modificados
-- `dashboard/lib/actions.ts` — MetricasData extendido + getMetricasDrawer() + helpers
-- `dashboard/components/metricas/metricas-client.tsx` — orquestación completa
-- `dashboard/app/(dashboard)/dashboard/metricas/page.tsx` — pasa role a MetricasClient
+**Bug 1 — KPI grid overflow en tablet/desktop**
+- KPIs en scroll horizontal forzado a TODOS los tamaños (solo `sm:flex-1 sm:min-w-0` como intento de responsive)
+- En tablet (768px), 6 cards a ~150px = 900px, overflow horizontal
+- Fix: dual container — scroll mobile (`flex sm:hidden`) + grid desktop (`hidden sm:grid sm:grid-cols-3`)
+
+**Bug 2 — "Varias pantallitas negras" al clickear en General (móvil)**
+- Causa raíz: `useState` + `useEffect` para `isMobile` agregado en los 4 drawers para switchear `side="bottom"` en móvil
+- En cada re-render de los drawers (todos montados simultáneamente), el flip de estado `false→true` en los 4 Sheet provoca render de overlays/backdrops fantasma de base-ui Dialog
+- Fix: eliminar `isMobile` de todos los drawers, siempre `side="right"`, usar CSS-only responsive width: `max-md:!w-[90vw] max-md:!max-w-[90vw]`
+
+**Cambios de altura de charts:**
+- `ChartIngresos`: `h-[180px]` mobile → `h-[260px]` desktop (wrap en container div, RC `height="100%"`)
+- `ChartServicios`: container `min-h-[200px]` mobile → `min-h-[280px]` desktop
+- `barSize` dinámico según cantidad de servicios
+
+**Date picker:**
+- Inputs full-width en mobile (`w-full`)
+- Botón Aplicar full-width en mobile
+- Labels con `shrink-0` para no comprimirse
+
+### Archivos modificados (commit 7f8a780 — responsive layout fix)
+- `dashboard/components/metricas/metricas-client.tsx` — KPI grid dual container + date picker full-width
+- `dashboard/components/metricas/metricas-chart-ingresos.tsx` — responsive height container
+- `dashboard/components/metricas/metricas-chart-servicios.tsx` — responsive height + barSize dinámico
+
+### Archivos modificados (commit 43751c5 — isMobile regression fix)
+- `dashboard/components/metricas/drawer-ingresos.tsx` — remove isMobile, CSS-only width
+- `dashboard/components/metricas/drawer-citas-del-dia.tsx` — remove isMobile, CSS-only width
+- `dashboard/components/metricas/drawer-ocupacion.tsx` — remove isMobile, CSS-only width
+- `dashboard/components/metricas/drawer-servicio-detalle.tsx` — remove isMobile, CSS-only width
+
+### Lecciones Sprint 15
+- `useState` + `useEffect` para responsive en componentes montados simultáneamente (drawers) causa re-render cascades en todos. Preferir CSS-only con media queries.
+- `side="bottom"` en base-ui Dialog añade overlays que pueden renderizarse fantasma durante re-renders de estado.
+- `max-md:!w-[90vw]` con `!important` necesario para overridear `data-[side=right]:w-3/4` (mayor especificidad CSS).
+- `min-h` + `style={{ height }}` en ResponsiveContainer wrapper: explicit height necesario para RC `height="100%"`.
+- Dual container KPI (scroll mobile + grid desktop) evita CSS hacks con `overflow-x:auto` + `flex-wrap` (incompatible).
 
 ---
 

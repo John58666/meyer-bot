@@ -27,6 +27,11 @@
 - **Groq llama-3.3-70b y Cerebras llama-3.3-70b** deprecados → migrados a gpt-oss-120b.
 - **Servicios nuevos no reflejados en bot:** al guardar desde dashboard, el bot puede usar services_text anterior. Investigar si es orden en system prompt (servicios al fondo → LLM los ignora) o timing del lookup. Fix probable: mover bloque de servicios al inicio del system prompt.
 
+## Dashboard / Frontend
+
+- **CSS-only > JS state para responsive en Sheet/Dialog.** `useState` + `useEffect` para detectar mobile en 4 componentes Sheet montados simultáneamente provoca re-render cascade (todos flipean `isMobile: false→true`). base-ui Dialog puede renderizar overlays fantasma durante estos re-renders incluso con `open={false}`. Preferir `max-md:!w-[90vw]` sobre `side={isMobile ? 'bottom' : 'right'}`.
+- **`data-[side=right]:w-3/4` tiene mayor especificidad CSS que `.w-\[90vw\]`** — necesita `!important` para override.
+
 ## Next.js / Dashboard
 
 - **Route groups** `(nombre)` NO aparecen en la URL. `app/(dashboard)/dashboard/semana/page.tsx` → URL `/dashboard/semana`. NO confundir al escribir `revalidatePath`.
