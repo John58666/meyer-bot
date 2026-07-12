@@ -259,16 +259,15 @@ export function EquipoClient({ miembros: initialMiembros, businessId }: Props) {
                       </button>
                     )}
                   </td>
-                  <td className="px-4 py-3">
-                    {m.role !== "owner" && (
-                      <button
-                        onClick={() => (editingId === m.id ? cancelEdit() : startEdit(m))}
-                        className="text-[var(--text-secondary)] hover:text-white transition-colors"
-                        title="Editar credenciales"
-                      >
-                        {editingId === m.id ? <X size={16} /> : <Pencil size={16} />}
-                      </button>
-                    )}
+                  <td className="px-4 py-3 w-12">
+                    <button
+                      onClick={() => (editingId === m.id ? cancelEdit() : startEdit(m))}
+                      className={`transition-colors ${m.role === "owner" ? "text-[var(--text-muted)] cursor-default" : "text-[var(--text-secondary)] hover:text-white"}`}
+                      title={m.role === "owner" ? "Dueño — no editable" : "Editar credenciales"}
+                      disabled={m.role === "owner"}
+                    >
+                      {editingId === m.id ? <X size={16} /> : <Pencil size={16} />}
+                    </button>
                   </td>
                 </tr>
                 {editingId === m.id && (

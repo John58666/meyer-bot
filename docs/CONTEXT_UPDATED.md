@@ -1,6 +1,6 @@
 # CONTEXT.md — meyer-bot
 
-> Última actualización: 11 julio 2026 (sesión 6 — Sprint 14 completado: fixes #26 #25 #23 #24. Dashboard Sync completo. Backlog organizado en fases).
+> Última actualización: 11 julio 2026 (sesión 6 — Sprint 14 completado: fixes #26 #25 #23 #24 + Auditoría link móvil. Dashboard Sync completo. Backlog organizado en fases).
 > Documento maestro CORTO. Cualquier chat nuevo lee esto primero.
 > **⚠️ ANTES de tocar NADA: leer `docs/SECURITY_AUDIT.md`** — reporte maestro de seguridad, hallazgos activos y plan de remediación.
 > Para profundidad: ver docs/ (ARCHITECTURE.md, SPRINTS.md, RUNBOOK.md, KEY_LEARNINGS.md, SECURITY_AUDIT.md)
@@ -84,7 +84,9 @@ Asignados manualmente por SQL al onboardear. Sistema formal con Stripe/Wompi en 
 ### Sidebar PC
 - Nav: Inicio, Agenda, Métricas, Clientes
 - Bottom: Configuración (oculto para `profesional`), Auditoría (oculto para `profesional`), Equipo (solo `owner`), Ayuda (→ `/dashboard/help` con FAQ)
-- Configuración y Equipo también en dropdown avatar móvil (sm:hidden)
+
+### Dropdown avatar móvil
+- Configuración (owner/admin), Auditoría (owner/admin), Equipo (solo owner), Ayuda (todos)
 
 ## Archivos clave del dashboard
 - `dashboard/lib/actions.ts` — todas las server actions (appointments, métricas, bloqueos, servicios, CRM, equipo).
@@ -124,29 +126,30 @@ Asignados manualmente por SQL al onboardear. Sistema formal con Stripe/Wompi en 
 8. **Fix #25** — Tooltips en botones (bottom nav, filtros, paginación) ✅
 9. **Fix #23** — Auditoría: texto explicativo + default semana actual ✅
 10. **Fix #24** — Página `/dashboard/help` con FAQ filtrada por rol ✅
+11. **Fix móvil** — Auditoría link en dropdown avatar móvil ✅
 
 ### PENDIENTE — Fase 2: Bot & Sistema
-11. **Inactividad bot** — que pregunte si cliente sigue ahí tras X tiempo sin respuesta.
-12. **Debugging errores bot** — revisar executions n8n, identificar y corregir causas raíz de errores frecuentes.
-13. **Pruebas de carga** — simular múltiples clientes simultáneos agendando, medir comportamiento del sistema.
+12. **Inactividad bot** — que pregunte si cliente sigue ahí tras X tiempo sin respuesta.
+13. **Debugging errores bot** — revisar executions n8n, identificar y corregir causas raíz de errores frecuentes.
+14. **Pruebas de carga** — simular múltiples clientes simultáneos agendando, medir comportamiento del sistema.
 
 ### PENDIENTE — Fase 3: Dashboard Métricas (expansión)
-14. **Métricas por profesional** — ingresos, citas, cancelaciones filtrados por cada barbero/profesional
-15. **Comparativa servicios** — ranking de servicios más vendidos, ingresos por servicio, tendencias
-16. **KPIs adicionales** — clientes nuevos vs recurrentes, hora pico por profesional, tasa de retención
-17. **Comparativas temporales** — esta semana vs anterior, este mes vs anterior, variación %
-18. **Responsive + roles** — todo funciona en móvil, respeta RBAC (profesional ve solo lo suyo)
-19. **Sync con bot** — datos basados en citas reales (WhatsApp + dashboard)
+15. **Métricas por profesional** — ingresos, citas, cancelaciones filtrados por cada barbero/profesional
+16. **Comparativa servicios** — ranking de servicios más vendidos, ingresos por servicio, tendencias
+17. **KPIs adicionales** — clientes nuevos vs recurrentes, hora pico por profesional, tasa de retención
+18. **Comparativas temporales** — esta semana vs anterior, este mes vs anterior, variación %
+19. **Responsive + roles** — todo funciona en móvil, respeta RBAC (profesional ve solo lo suyo)
+20. **Sync con bot** — datos basados en citas reales (WhatsApp + dashboard)
 
 ### PENDIENTE — Fase 4: Fixes complejos
-20. **#21 — Onboarding negocio nuevo** — script/checklist multi-sistema
-21. **#22 — Desambiguación clientes mismo nombre** — distinguir por teléfono/ID/notas
-22. **Servicios nuevos no reflejados en bot** (#11 anterior) — investigar timing system prompt vs lookup
-23. **Quitar branding Meyer del producto** (#15 anterior)
-24. **Panel admin Johnander** — vista global de todos los negocios (#19 anterior)
-25. `updateMiembroRole` profesional→admin no valida `max_admins` (#12)
-26. `lib/auth.config.ts` huérfano — eliminar (#13)
-27. Datos del negocio desde dashboard (#17)
+21. **#21 — Onboarding negocio nuevo** — script/checklist multi-sistema
+22. **#22 — Desambiguación clientes mismo nombre** — distinguir por teléfono/ID/notas
+23. **Servicios nuevos no reflejados en bot** (#11 anterior) — investigar timing system prompt vs lookup
+24. **Quitar branding Meyer del producto** (#15 anterior)
+25. **Panel admin Johnander** — vista global de todos los negocios (#19 anterior)
+26. `updateMiembroRole` profesional→admin no valida `max_admins` (#12)
+27. `lib/auth.config.ts` huérfano — eliminar (#13)
+28. Datos del negocio desde dashboard (#17)
 
 ### FUTURO (más adelante)
 - i18n completo dashboard + bot multi-región

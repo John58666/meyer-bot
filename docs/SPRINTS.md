@@ -232,6 +232,10 @@
 - Contenido filtrado por rol: owner ve todo, profesional ve solo lo relevante
 - Acordeón interactivo con íconos, responsive, dark mode
 
+### E — Fix: Auditoría link en dropdown móvil
+- Agregado `ClipboardList` icon + menú Auditoría en dropdown avatar móvil (antes solo estaba en sidebar)
+- Visible para owner/admin (oculto para profesional, igual que en sidebar)
+
 ---
 
 ## Backlog actual (Julio 11, 2026)
