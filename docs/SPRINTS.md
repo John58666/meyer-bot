@@ -207,11 +207,51 @@
 - Dashboard: `sync-cancel` mejorado con JOIN a `professionals` para `professional_name`
 - Todos los sync incluyen `hora`, `estado`, `professional_name` en audit_log detalle
 
-### Pendientes para próxima sesión
-1. **Importar workflow actualizado en n8n UI** (desde PC local)
-2. **Inactividad bot** — preguntar si cliente sigue ahí tras X tiempo sin respuesta
-3. **Debugging errores bot** — revisar executions n8n, identificar y corregir causas raíz de errores frecuentes
-4. **Activar 4 workflows restantes** en n8n UI
-5. **Fixes backlog 21-26**: onboarding, clientes duplicados, FAQ, tooltips
-6. **Pruebas de carga** — simular múltiples clientes simultáneos, medir comportamiento del sistema
-7. **Dashboard métricas** — mejorar con más datos y visualizaciones (ingresos por periodo, servicios más vendidos, tendencias, etc.)
+## Sprint 14 (Dashboard Fixes + Help) — COMPLETADO ✅ (Julio 11, 2026)
+
+### A — Fix #26: Título negocio como link a inicio
+- Nombre del negocio en `topbar.tsx` ahora es un `<Link href="/dashboard">`
+- Incluye `hover` con color accent para feedback visual
+- Todos los negocios, todos los roles, responsive
+
+### B — Fix #25: Tooltips en botones
+- Sidebar PC: ya tenía `title` en todos los íconos (sin cambios)
+- Bottom nav móvil: agregado `title` a cada link
+- Auditoría: agregado `title` a botón "Filtrar", paginación anterior/siguiente
+- Compatible con lectores de pantalla y hover en desktop
+
+### C — Fix #23: Auditoría — explicación + default semana actual
+- Agregado texto explicativo: "Registro de acciones realizadas en el sistema..."
+- Filtros por defecto: `desde` = lunes de la semana actual, `hasta` = domingo
+- Cálculo en timezone `America/Bogota` vía server component
+- El usuario puede cambiar fechas manualmente si necesita otro rango
+
+### D — Fix #24: Botón ? → FAQ (página /dashboard/help)
+- Creada `app/(dashboard)/dashboard/help/page.tsx`
+- 10 preguntas frecuentes sobre uso del sistema (agendar, cancelar, métricas, roles, etc.)
+- Contenido filtrado por rol: owner ve todo, profesional ve solo lo relevante
+- Acordeón interactivo con íconos, responsive, dark mode
+
+---
+
+## Backlog actual (Julio 11, 2026)
+
+### PENDIENTE — Fase 2: Bot & Sistema
+1. **Inactividad bot** — que pregunte "¿Sigues ahí?" si el cliente no responde tras X tiempo durante el flujo de agenda
+2. **Debugging errores bot** — revisar executions fallidas en n8n, identificar patrones de error frecuentes, corregir causas raíz
+3. **Pruebas de carga** — script que simule N clientes simultáneos agendando por WhatsApp, medir tiempos de respuesta del bot y del sistema completo (n8n + DB + dashboard)
+
+### PENDIENTE — Fase 3: Dashboard Métricas (expansión)
+4. **Métricas por profesional** — ingresos, citas, cancelaciones filtrados por cada barbero/profesional
+5. **Comparativa servicios** — ranking de servicios más vendidos, ingresos por servicio, tendencias semanales/mensuales
+6. **KPIs adicionales** — clientes nuevos vs recurrentes, hora pico por profesional, tasa de retención
+7. **Comparativas temporales** — esta semana vs semana anterior, este mes vs mes anterior, variación porcentual
+8. **Responsive + roles** — todo debe funcionar en móvil y respetar RBAC (profesional ve solo lo suyo)
+9. **Sync con bot** — datos basados en citas reales agendadas tanto por WhatsApp como por dashboard
+
+### PENDIENTE — Fase 4: Fixes complejos
+10. **#21 — Onboarding negocio nuevo** — script/checklist que valide la configuración completa al agregar un business: schedule_text, services_text, whatsapp_instance, owner_number, timezone, profesionales, recordatorios, webhook secret
+11. **#22 — Desambiguación clientes mismo nombre** — flujo para distinguir clientes con mismo nombre (por teléfono, ID, notas). Sin sync con Google Contacts por ahora.
+12. **Servicios nuevos no reflejados en bot** — investigar orden en system prompt vs timing del lookup (#11 del backlog anterior)
+13. **Quitar branding Meyer del producto** (#15)
+14. **Panel admin Johnander** — vista global de todos los negocios (#19)

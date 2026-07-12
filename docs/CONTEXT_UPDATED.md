@@ -1,6 +1,6 @@
 # CONTEXT.md — meyer-bot
 
-> Última actualización: 11 julio 2026 (sesión 5 — Sprint 13 completado: auditoría, horarios dashboard, reagendamiento raw body, no-shows cron, sync cancel WhatsApp→dashboard funcional).
+> Última actualización: 11 julio 2026 (sesión 6 — Sprint 14 completado: fixes #26 #25 #23 #24. Dashboard Sync completo. Backlog organizado en fases).
 > Documento maestro CORTO. Cualquier chat nuevo lee esto primero.
 > **⚠️ ANTES de tocar NADA: leer `docs/SECURITY_AUDIT.md`** — reporte maestro de seguridad, hallazgos activos y plan de remediación.
 > Para profundidad: ver docs/ (ARCHITECTURE.md, SPRINTS.md, RUNBOOK.md, KEY_LEARNINGS.md, SECURITY_AUDIT.md)
@@ -14,9 +14,10 @@ Diferenciador: WhatsApp-native (Fresha/Booksy/SimplyBook obligan a salir de What
 
 ## Estado del producto
 - **Vendible HOY** para negocios de un solo profesional. E2E completo (agendar/cancelar/reagendar).
-- **Dashboard operativo:** título dinámico, calendario clickeable, agendar manual, servicios dinámicos con precios, hora libre, anti-doble-booking, métricas con selector de rango Hoy/Semana/Mes, bloqueos de agenda, edición de servicios, nav responsive móvil 4 ítems, CRM /dashboard/clientes, **RBAC completo (Sprint 11)**, **gestión de equipo /dashboard/equipo**.
+- **Dashboard operativo:** título dinámico, calendario clickeable, agendar manual, servicios dinámicos con precios, hora libre, anti-doble-booking, métricas con selector de rango Hoy/Semana/Mes, bloqueos de agenda, edición de servicios, nav responsive móvil 4 ítems, CRM /dashboard/clientes, **RBAC completo (Sprint 11)**, **gestión de equipo /dashboard/equipo**, **FAQ/Ayuda en /dashboard/help**, **Auditoría con filtro de semana actual y texto explicativo**.
 - **Bot robusto:** fallback chain multi-LLM, historial conversacional, filtro de audios/multimedia, scope off-topic, rate limit. Slots cada 30 minutos. Respeta `schedule_exceptions`. Upsert automático en `customers` al agendar.
 - **Vendible para multi-profesional** desde Sprint 12 — bot pregunta profesional, dashboard filtra por profesional, slots y bloqueos independientes por profesional.
+- **Dashboard Sync:** 3 webhooks (sync-new, sync-cancel, sync-reagend) que registran en audit_log con origen "whatsapp" y revalidan caché.
 - Brayan Study (business_id=3, 1 profesional) es el primer cliente real. Operativo.
 
 ## Stack
@@ -118,31 +119,44 @@ Asignados manualmente por SQL al onboardear. Sistema formal con Stripe/Wompi en 
 5. **Reagendamiento raw body** — IIFE reemplazada por Code node con contentType raw.
 6. **No-Shows cron** — workflow n8n que auto-completa citas Pendiente con fecha pasada.
 
-### SPRINT 14
-7. **Inactividad bot** — que pregunte si cliente sigue ahí tras X tiempo sin respuesta.
-8. **Debugging errores bot** — revisar executions fallidas.
-9. **i18n completo** — dashboard multi-idioma + bot multi-idioma/multi-jerga por región (Colombia, México, España, USA/Canadá). Requiere system prompt configurable por negocio. Probable adelanto de migración n8n → Node.js+BullMQ+Redis.
+### SPRINT 14 — COMPLETADO ✅ (11 julio 2026)
+7. **Fix #26** — Título negocio como link a `/dashboard` ✅
+8. **Fix #25** — Tooltips en botones (bottom nav, filtros, paginación) ✅
+9. **Fix #23** — Auditoría: texto explicativo + default semana actual ✅
+10. **Fix #24** — Página `/dashboard/help` con FAQ filtrada por rol ✅
 
-### SPRINT 15
-10. **Cumplimiento protección de datos** — GDPR (España), Ley 1581 Colombia (ya aplica HOY), LFPDPPP México.
+### PENDIENTE — Fase 2: Bot & Sistema
+11. **Inactividad bot** — que pregunte si cliente sigue ahí tras X tiempo sin respuesta.
+12. **Debugging errores bot** — revisar executions n8n, identificar y corregir causas raíz de errores frecuentes.
+13. **Pruebas de carga** — simular múltiples clientes simultáneos agendando, medir comportamiento del sistema.
 
-### FIXES PENDIENTES
-11. **Servicios nuevos no reflejados en bot** — al guardar desde configuración, bot puede usar services_text anterior. Investigar orden en system prompt vs timing del lookup. Fix probable: mover servicios al inicio del system prompt del AI Agent.
-12. `updateMiembroRole` profesional→admin no valida `max_admins` — caso borde bajo riesgo.
-13. `lib/auth.config.ts` huérfano — eliminar en sprint de limpieza.
-14. Notificación al dueño con nombre del cliente (lookup en `customers` en Construir Mensajes) — ya implementado en n8n, verificar.
-15. Quitar branding "Meyer" del producto.
-16. Confirmar services_text de Brayan y aplicar UPDATE.
-17. Datos del negocio desde dashboard (nombre, teléfono, timezone).
-18. `reminder_config` JSONB configurable por negocio.
-19. Panel admin Johnander (todos los negocios, métricas agregadas).
-20. `pm2 reload` en vez de `pm2 restart` a 10+ clientes.
-21. **Onboarding negocio nuevo** — crear checklist/script que valide que al agregar un business se configuren todos los sistemas: schedule_text, services_text, whatsapp_instance, owner_number, timezone, profesionales, recordatorios, webhook secret, etc. No dejar que solo funcione para negocios existentes.
-22. **Desambiguación clientes mismo nombre** — si dos clientes se llaman "Santiago", debe haber forma de distinguirlos (teléfono, ID, notas). Implementar validación o flujo que evite confusión al agendar/historial. No incluye sync con Google Contacts por ahora.
-23. **Auditoría — explicación + default día/semana** — agregar texto breve que explique para qué sirve la página. Por defecto mostrar solo eventos del día o semana actual, no todo el historial (para eso están los filtros).
-24. **Botón ? → FAQ** — reemplazar el signo de interrogación en el footer del dashboard (PC web) con un modal/página de preguntas frecuentes. Definir contenido y comportamiento responsive.
-25. **Tooltips en botones** — al hacer hover sobre íconos (engranaje, casa, ?, etc.) mostrar el nombre de la acción ("Configuración", "Inicio", "Ayuda"). También en responsive.
-26. **Título negocio como link a inicio** — al hacer clic en "Peluquería Meyer" (nombre del negocio en topbar), redirigir a `/dashboard`.
+### PENDIENTE — Fase 3: Dashboard Métricas (expansión)
+14. **Métricas por profesional** — ingresos, citas, cancelaciones filtrados por cada barbero/profesional
+15. **Comparativa servicios** — ranking de servicios más vendidos, ingresos por servicio, tendencias
+16. **KPIs adicionales** — clientes nuevos vs recurrentes, hora pico por profesional, tasa de retención
+17. **Comparativas temporales** — esta semana vs anterior, este mes vs anterior, variación %
+18. **Responsive + roles** — todo funciona en móvil, respeta RBAC (profesional ve solo lo suyo)
+19. **Sync con bot** — datos basados en citas reales (WhatsApp + dashboard)
+
+### PENDIENTE — Fase 4: Fixes complejos
+20. **#21 — Onboarding negocio nuevo** — script/checklist multi-sistema
+21. **#22 — Desambiguación clientes mismo nombre** — distinguir por teléfono/ID/notas
+22. **Servicios nuevos no reflejados en bot** (#11 anterior) — investigar timing system prompt vs lookup
+23. **Quitar branding Meyer del producto** (#15 anterior)
+24. **Panel admin Johnander** — vista global de todos los negocios (#19 anterior)
+25. `updateMiembroRole` profesional→admin no valida `max_admins` (#12)
+26. `lib/auth.config.ts` huérfano — eliminar (#13)
+27. Datos del negocio desde dashboard (#17)
+
+### FUTURO (más adelante)
+- i18n completo dashboard + bot multi-región
+- Cumplimiento protección de datos GDPR / Ley 1581 / LFPDPPP
+- Sistema de planes formal con Stripe/Wompi
+- WhatsApp Cloud API oficial por cliente
+- Migración n8n → Node.js+BullMQ+Redis
+- Upgrade VPS Hetzner (4 vCPU / 8GB) a los 8-10 clientes
+- Integración Google Calendar
+- Expansión regional, exportación CSV
 
 ### FUTURO
 19. Sistema de planes formal con Stripe/Wompi.
