@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Fragment } from "react";
+import { useState, Fragment, useEffect } from "react";
 import { Eye, EyeOff, Pencil, X } from "lucide-react";
 import {
   createMiembroEquipo,
@@ -22,6 +22,7 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 export function EquipoClient({ miembros: initialMiembros, businessId }: Props) {
+  useEffect(() => { console.log("[EquipoClient] miembros count:", initialMiembros.length, "businessId:", businessId); }, []);
   const [miembros, setMiembros] = useState(initialMiembros);
   const [showForm, setShowForm] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -204,15 +205,15 @@ export function EquipoClient({ miembros: initialMiembros, businessId }: Props) {
         </form>
       )}
 
-      <div className="rounded-xl border border-[var(--border-subtle)] overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="rounded-xl border border-[var(--border-subtle)] overflow-x-auto">
+        <table className="w-full text-sm min-w-[500px]">
           <thead>
             <tr className="border-b border-[var(--border-subtle)] bg-[var(--bg-card)]">
-              <th className="text-left px-4 py-3 text-[var(--text-secondary)] font-medium">Nombre</th>
-              <th className="text-left px-4 py-3 text-[var(--text-secondary)] font-medium hidden sm:table-cell">Email</th>
-              <th className="text-left px-4 py-3 text-[var(--text-secondary)] font-medium">Role</th>
-              <th className="text-left px-4 py-3 text-[var(--text-secondary)] font-medium">Estado</th>
-              <th className="text-left px-4 py-3 text-[var(--text-secondary)] font-medium"></th>
+              <th className="text-left px-4 py-3 text-[var(--text-secondary)] font-medium whitespace-nowrap">Nombre</th>
+              <th className="text-left px-4 py-3 text-[var(--text-secondary)] font-medium whitespace-nowrap hidden sm:table-cell">Email</th>
+              <th className="text-left px-4 py-3 text-[var(--text-secondary)] font-medium whitespace-nowrap">Role</th>
+              <th className="text-left px-4 py-3 text-[var(--text-secondary)] font-medium whitespace-nowrap">Estado</th>
+              <th className="text-left px-4 py-3 text-[var(--text-secondary)] font-medium w-12"></th>
             </tr>
           </thead>
           <tbody>
@@ -259,14 +260,15 @@ export function EquipoClient({ miembros: initialMiembros, businessId }: Props) {
                       </button>
                     )}
                   </td>
-                  <td className="px-4 py-3 w-12">
+                  <td className="px-4 py-3">
                     <button
                       onClick={() => (editingId === m.id ? cancelEdit() : startEdit(m))}
-                      className={`transition-colors ${m.role === "owner" ? "text-[var(--text-muted)] cursor-default" : "text-[var(--text-secondary)] hover:text-white"}`}
+                      className={`text-xs px-2 py-1 rounded border transition-colors ${m.role === "owner" ? "text-[var(--text-muted)] border-transparent cursor-default" : "text-[var(--text-secondary)] border-[var(--border-subtle)] hover:text-white hover:border-[var(--border-hover)]"}`}
                       title={m.role === "owner" ? "Dueño — no editable" : "Editar credenciales"}
                       disabled={m.role === "owner"}
                     >
-                      {editingId === m.id ? <X size={16} /> : <Pencil size={16} />}
+                      {editingId === m.id ? <X size={14} /> : <Pencil size={14} />}
+                      <span className="ml-1">{editingId === m.id ? "Cerrar" : "Editar"}</span>
                     </button>
                   </td>
                 </tr>
