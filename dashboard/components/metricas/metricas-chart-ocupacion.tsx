@@ -15,10 +15,10 @@ interface Props {
 }
 
 function colorPorRatio(ratio: number): string {
-  if (ratio >= 0.8) return 'rgba(34,197,94,0.8)'
-  if (ratio >= 0.5) return 'rgba(34,197,94,0.4)'
-  if (ratio >= 0.2) return 'rgba(250,204,21,0.5)'
-  return 'rgba(107,114,128,0.2)'
+  if (ratio >= 0.8) return '#1A8A4A'
+  if (ratio >= 0.5) return '#1A5A3A'
+  if (ratio >= 0.2) return '#8A7010'
+  return '#3A3A3A'
 }
 
 export function ChartOcupacion({ grid }: Props) {
@@ -63,7 +63,7 @@ export function ChartOcupacion({ grid }: Props) {
                   <div
                     key={`${dia}-${hora}`}
                     className="rounded-md h-8 flex items-center justify-center text-[10px] font-medium transition-colors relative"
-                    style={{ backgroundColor: cell ? colorPorRatio(cell.ratio) : 'rgba(107,114,128,0.1)' }}
+                    style={{ backgroundColor: cell ? colorPorRatio(cell.ratio) : '#2A2A2A' }}
                     onMouseEnter={(e) => {
                       if (!cell) return
                       const rect = (e.target as HTMLElement).getBoundingClientRect()
@@ -100,22 +100,22 @@ export function ChartOcupacion({ grid }: Props) {
 
       {/* Color ramp legend */}
       <div className="flex items-center gap-4 mt-4 text-[10px] text-[var(--text-secondary)]">
-        <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded" style={{ backgroundColor: 'rgba(34,197,94,0.8)' }} />
-          80-100%
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded" style={{ backgroundColor: 'rgba(34,197,94,0.4)' }} />
-          50-80%
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded" style={{ backgroundColor: 'rgba(250,204,21,0.5)' }} />
-          20-50%
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded" style={{ backgroundColor: 'rgba(107,114,128,0.2)' }} />
-          0-20%
-        </span>
+          <span className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded" style={{ backgroundColor: '#1A8A4A' }} />
+            80-100%
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded" style={{ backgroundColor: '#1A5A3A' }} />
+            50-80%
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded" style={{ backgroundColor: '#8A7010' }} />
+            20-50%
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded" style={{ backgroundColor: '#3A3A3A' }} />
+            0-20%
+          </span>
       </div>
     </div>
   )

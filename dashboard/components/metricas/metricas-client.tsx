@@ -439,7 +439,7 @@ export default function MetricasClient({ data: initialData, error: initialError,
 
   if (clientError && !clientData) {
     return (
-      <div className="flex items-center justify-center h-48 text-[var(--text-secondary)] text-sm">
+      <div className="flex items-center justify-center min-h-48 text-[var(--text-secondary)] text-sm">
         {clientError}
       </div>
     )
@@ -447,7 +447,7 @@ export default function MetricasClient({ data: initialData, error: initialError,
 
   if (!clientData) {
     return (
-      <div className="flex items-center justify-center h-48 text-[var(--text-secondary)] text-sm">
+      <div className="flex items-center justify-center min-h-48 text-[var(--text-secondary)] text-sm">
         Sin datos
       </div>
     )
