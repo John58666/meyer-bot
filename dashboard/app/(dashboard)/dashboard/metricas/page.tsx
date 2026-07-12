@@ -29,6 +29,7 @@ export default async function MetricasPage({ searchParams }: Props) {
       error={error}
       rangoActivo={rango}
       businessId={businessId}
+      role={session.user.role}
     />
   );
 }

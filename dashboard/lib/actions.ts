@@ -207,6 +207,12 @@ export interface FilaCita {
   servicio: string;
   hora_slot: number;
   fecha: string;
+  professional_id: number | null;
+  professional_name: string | null;
+  id: number;
+  hora: string;
+  nombre: string;
+  numero: string;
 }
 
 export interface MetricasData {
@@ -217,11 +223,167 @@ export interface MetricasData {
   tasaCancelacion: number;
   ingresos: number;
   horaPico: number | null;
-  historialPorDia: Array<{
-    fecha: string;
-    total: number;
-    ingresos: number;
-  }>;
+  historialPorDia: Array<{ fecha: string; total: number; ingresos: number }>;
+  // Variación vs período anterior
+  ingresosVariacion: number | null;
+  totalCitasVariacion: number | null;
+  tasaCancelacionVariacion: number | null;
+  ocupacion: number | null;
+  ocupacionVariacion: number | null;
+  clientesNuevos: number;
+  clientesRecurrentes: number;
+  retencion: number | null;
+  retencionVariacion: number | null;
+  // Datos para tabs
+  profesionales: Array<{ id: number; name: string; ingresos: number; citas: number; cancelaciones: number }>;
+  servicios: Array<{ nombre: string; ingresos: number; citas: number }>;
+  // Datos para overlay chart
+  historialAnteriorPorDia: Array<{ fecha: string; total: number; ingresos: number }>;
+  // Profesionales activos para filtro (solo owner/admin)
+  profesionalesActivos: Array<{ id: number; name: string }>;
+}
+
+export type DrawerTipo = 'ingresos' | 'citas-del-dia' | 'ocupacion' | 'servicio-detalle';
+
+export type DrawerData =
+  | { tipo: 'ingresos'; filas: Array<{ profesional: string; servicio: string; cantidad: number; total: number }>; total: number }
+  | { tipo: 'citas-del-dia'; filas: Array<{ hora: string; nombre: string; servicio: string; profesional: string; estado: string }> }
+  | { tipo: 'ocupacion'; grid: Array<{ dia: string; hora: string; ocupados: number; total: number; ratio: number }> }
+  | { tipo: 'servicio-detalle'; servicio: string; profesionales: Array<{ name: string; citas: number; ingresos: number }>; tendenciaMensual: Array<{ mes: string; citas: number }> };
+
+function calcularRangoFechas(rango: RangoMetricas): { fechaDesde: string; fechaHasta: string } {
+  const ahora = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+
+  if (rango === 'hoy') {
+    const iso = ahora.toISOString().split('T')[0];
+    return { fechaDesde: iso, fechaHasta: iso };
+  }
+  if (rango === 'semana') {
+    const dia = ahora.getDay();
+    const diffLunes = dia === 0 ? -6 : 1 - dia;
+    const lunes = new Date(ahora);
+    lunes.setDate(ahora.getDate() + diffLunes);
+    const domingo = new Date(lunes);
+    domingo.setDate(lunes.getDate() + 6);
+    return {
+      fechaDesde: lunes.toISOString().split('T')[0],
+      fechaHasta: domingo.toISOString().split('T')[0],
+    };
+  }
+  const primerDia = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
+  const ultimoDia = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0);
+  return {
+    fechaDesde: primerDia.toISOString().split('T')[0],
+    fechaHasta: ultimoDia.toISOString().split('T')[0],
+  };
+}
+
+function calcularPeriodoAnterior(rango: RangoMetricas, fechaDesde: string, fechaHasta: string): { desde: string; hasta: string } {
+  const desde = new Date(fechaDesde + 'T12:00:00');
+  const hasta = new Date(fechaHasta + 'T12:00:00');
+  const diffMs = hasta.getTime() - desde.getTime();
+
+  const inicioAnterior = new Date(desde.getTime() - diffMs - 86400000);
+  const finAnterior = new Date(desde.getTime() - 86400000);
+  return {
+    desde: inicioAnterior.toISOString().split('T')[0],
+    hasta: finAnterior.toISOString().split('T')[0],
+  };
+}
+
+async function fetchMetricasQuery(
+  businessId: number,
+  fechaDesde: string,
+  fechaHasta: string,
+  professionalId?: number | null
+): Promise<FilaCita[]> {
+  const params: (string | number)[] = [businessId, fechaDesde, fechaHasta];
+  const profFilter = professionalId != null
+    ? ` AND a.professional_id = $${params.push(professionalId)}`
+    : '';
+
+  const { rows } = await pool.query<FilaCita>(
+    `SELECT a.estado, a.servicio,
+            EXTRACT(HOUR FROM a.hora)::int AS hora_slot,
+            a.fecha::text, a.professional_id,
+            p.name AS professional_name,
+            a.id, a.hora::text, a.nombre, a.numero
+     FROM appointments a
+     LEFT JOIN professionals p ON p.id = a.professional_id
+     WHERE a.business_id = $1
+       AND a.fecha BETWEEN $2 AND $3
+       ${profFilter}
+     ORDER BY a.fecha ASC, a.hora ASC`,
+    params
+  );
+  return rows;
+}
+
+async function fetchClientesMetricas(
+  businessId: number,
+  fechaDesde: string,
+  fechaHasta: string
+): Promise<{ nuevos: number; recurrentes: number }> {
+  const { rows } = await pool.query<{ tipo: string }>(
+    `SELECT CASE WHEN c.primera_visita >= $2 THEN 'nuevo' ELSE 'recurrente' END AS tipo
+     FROM customers c
+     WHERE c.business_id = $1
+       AND EXISTS (
+         SELECT 1 FROM appointments a
+         WHERE a.business_id = $1 AND a.numero = c.numero
+           AND a.fecha BETWEEN $2 AND $3
+       )`,
+    [businessId, fechaDesde, fechaHasta]
+  );
+
+  const nuevos = rows.filter(r => r.tipo === 'nuevo').length;
+  const recurrentes = rows.filter(r => r.tipo === 'recurrente').length;
+  return { nuevos, recurrentes };
+}
+
+async function fetchOcupacion(
+  businessId: number,
+  fechaDesde: string,
+  fechaHasta: string,
+  professionalId?: number | null
+): Promise<{ ocupados: number; total: number }> {
+  const scheduleQuery = await pool.query<{ schedule_text: unknown }>(
+    `SELECT schedule_text FROM businesses WHERE id = $1`,
+    [businessId]
+  );
+  if (!scheduleQuery.rows[0]?.schedule_text) return { ocupados: 0, total: 0 };
+
+  const schedule: Record<string, { open: number; close: number }> =
+    typeof scheduleQuery.rows[0].schedule_text === 'string'
+      ? JSON.parse(scheduleQuery.rows[0].schedule_text)
+      : scheduleQuery.rows[0].schedule_text;
+
+  const start = new Date(fechaDesde + 'T12:00:00');
+  const end = new Date(fechaHasta + 'T12:00:00');
+  let totalSlots = 0;
+
+  const params: (string | number)[] = [businessId, fechaDesde, fechaHasta];
+  const profFilter = professionalId != null
+    ? ` AND a.professional_id = $${params.push(professionalId)}`
+    : '';
+
+  const { rows: aptRows } = await pool.query<{ fecha: string }>(
+    `SELECT a.fecha::text
+     FROM appointments a
+     WHERE a.business_id = $1 AND a.fecha BETWEEN $2 AND $3 AND a.estado != 'Cancelada'
+     ${profFilter}`,
+    params
+  );
+
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const dayOfWeek = d.getDay();
+    const daySchedule = schedule[String(dayOfWeek)];
+    if (!daySchedule) continue;
+    const slotsForDay = (daySchedule.close - daySchedule.open) * 2;
+    totalSlots += slotsForDay;
+  }
+
+  return { ocupados: aptRows.length, total: totalSlots };
 }
 
 export async function getMetricas(
@@ -230,60 +392,26 @@ export async function getMetricas(
   professionalId?: number | null
 ): Promise<{ data: MetricasData | null; error: string | null }> {
   try {
-    // Calcular rango de fechas en zona America/Bogota
-    const ahora = new Date(
-      new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' })
+    const { fechaDesde, fechaHasta } = calcularRangoFechas(rango);
+    const periodoAnterior = calcularPeriodoAnterior(rango, fechaDesde, fechaHasta);
+
+    const [filas, filasAnteriores, clientesData, ocupacion] = await Promise.all([
+      fetchMetricasQuery(businessId, fechaDesde, fechaHasta, professionalId),
+      fetchMetricasQuery(businessId, periodoAnterior.desde, periodoAnterior.hasta, professionalId),
+      fetchClientesMetricas(businessId, fechaDesde, fechaHasta),
+      fetchOcupacion(businessId, fechaDesde, fechaHasta, professionalId),
+    ]);
+
+    const negocioResult = await pool.query<{ services_text: string }>(
+      `SELECT services_text FROM businesses WHERE id = $1 LIMIT 1`, [businessId]
     );
-
-    let fechaDesde: string;
-    let fechaHasta: string;
-
-    if (rango === 'hoy') {
-      const iso = ahora.toISOString().split('T')[0];
-      fechaDesde = iso;
-      fechaHasta = iso;
-    } else if (rango === 'semana') {
-      const dia = ahora.getDay();
-      const diffLunes = dia === 0 ? -6 : 1 - dia;
-      const lunes = new Date(ahora);
-      lunes.setDate(ahora.getDate() + diffLunes);
-      const domingo = new Date(lunes);
-      domingo.setDate(lunes.getDate() + 6);
-      fechaDesde = lunes.toISOString().split('T')[0];
-      fechaHasta = domingo.toISOString().split('T')[0];
-    } else {
-      const primerDia = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
-      const ultimoDia = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0);
-      fechaDesde = primerDia.toISOString().split('T')[0];
-      fechaHasta = ultimoDia.toISOString().split('T')[0];
-    }
-
-    // Query condicional: solo filtra professional_id si se pasa explícitamente
-    // (evita referenciar la columna si aún no existe en el schema)
-    const baseParams: (string | number)[] = [businessId, fechaDesde, fechaHasta];
-    const profFilter = professionalId != null
-      ? ` AND professional_id = $${baseParams.push(professionalId)}`
-      : '';
-
-    const { rows: filas } = await pool.query<FilaCita>(
-      `SELECT
-         estado,
-         servicio,
-         EXTRACT(HOUR FROM hora)::int AS hora_slot,
-         fecha::text
-       FROM appointments
-       WHERE business_id = $1
-         AND fecha BETWEEN $2 AND $3
-         ${profFilter}
-       ORDER BY fecha ASC, hora ASC`,
-      baseParams
-    );
-
-    const { rows: negocioRows } = await pool.query<{ services_text: string }>(
-      `SELECT services_text FROM businesses WHERE id = $1 LIMIT 1`,
+    const profResult = await pool.query<{ id: number; name: string }>(
+      `SELECT id, name FROM professionals WHERE business_id = $1 AND active = true ORDER BY name`,
       [businessId]
     );
-    const precioMap = parsePrice(negocioRows[0]?.services_text ?? '');
+
+    const { nuevos, recurrentes } = clientesData;
+    const precioMap = parsePrice(negocioResult.rows[0]?.services_text ?? '');
 
     const totalCitas = filas.length;
     const completadas = filas.filter(f => f.estado === 'Completada').length;
@@ -297,49 +425,320 @@ export async function getMetricas(
       .filter(f => f.estado === 'Completada')
       .reduce((acc, f) => acc + (precioMap.get(f.servicio) ?? 0), 0);
 
-    const conteoHoras: Record<number, number> = {};
-    filas
-      .filter(f => f.estado !== 'Cancelada')
-      .forEach(f => {
-        conteoHoras[f.hora_slot] = (conteoHoras[f.hora_slot] ?? 0) + 1;
-      });
-    const horaPico = Object.keys(conteoHoras).length > 0
-      ? parseInt(
-          Object.entries(conteoHoras).sort((a, b) => b[1] - a[1])[0][0]
-        )
+    // Cálculos período anterior
+    const ingresosAnt = filasAnteriores
+      .filter(f => f.estado === 'Completada')
+      .reduce((acc, f) => acc + (precioMap.get(f.servicio) ?? 0), 0);
+    const totalCitasAnt = filasAnteriores.length;
+    const canceladasAnt = filasAnteriores.filter(f => f.estado === 'Cancelada').length;
+    const tasaCancelacionAnt = totalCitasAnt > 0
+      ? Math.round((canceladasAnt / totalCitasAnt) * 100)
+      : 0;
+
+    const ingresosVariacion = ingresosAnt > 0
+      ? Math.round(((ingresos - ingresosAnt) / ingresosAnt) * 100)
       : null;
 
+    const totalCitasVariacion = totalCitasAnt > 0
+      ? totalCitas - totalCitasAnt
+      : null;
+
+    const tasaCancelacionVariacion = tasaCancelacionAnt > 0
+      ? Math.round((tasaCancelacion - tasaCancelacionAnt) * 100) / 100
+      : null;
+
+    // Hora pico
+    const conteoHoras: Record<number, number> = {};
+    filas.filter(f => f.estado !== 'Cancelada').forEach(f => {
+      conteoHoras[f.hora_slot] = (conteoHoras[f.hora_slot] ?? 0) + 1;
+    });
+    const horaPico = Object.keys(conteoHoras).length > 0
+      ? parseInt(Object.entries(conteoHoras).sort((a, b) => b[1] - a[1])[0][0])
+      : null;
+
+    // Ocupación y variación
+    const ocupacionAnt = await fetchOcupacion(businessId, periodoAnterior.desde, periodoAnterior.hasta, professionalId);
+    const ocupacionPct = ocupacion.total > 0
+      ? Math.round((ocupacion.ocupados / ocupacion.total) * 100)
+      : null;
+    const ocupacionAntPct = ocupacionAnt.total > 0
+      ? Math.round((ocupacionAnt.ocupados / ocupacionAnt.total) * 100)
+      : null;
+    const ocupacionVariacion = ocupacionAntPct != null && ocupacionPct != null
+      ? ocupacionPct - ocupacionAntPct
+      : null;
+
+    // Retención
+    const totalClientesPeriodo = nuevos + recurrentes;
+    const retencion = totalClientesPeriodo > 0
+      ? Math.round((recurrentes / totalClientesPeriodo) * 100)
+      : null;
+
+    const { nuevos: nuevosAnt, recurrentes: recurrentesAnt } = await fetchClientesMetricas(
+      businessId, periodoAnterior.desde, periodoAnterior.hasta
+    );
+    const totalAnt = nuevosAnt + recurrentesAnt;
+    const retencionAnt = totalAnt > 0 ? Math.round((recurrentesAnt / totalAnt) * 100) : null;
+    const retencionVariacion = retencionAnt != null && retencion != null
+      ? retencion - retencionAnt
+      : null;
+
+    // Historial por día (actual)
     const porDia: Record<string, { total: number; ingresos: number }> = {};
     filas.forEach(f => {
       if (!porDia[f.fecha]) porDia[f.fecha] = { total: 0, ingresos: 0 };
-      if (f.estado !== 'Cancelada') {
-        porDia[f.fecha].total += 1;
-      }
-      if (f.estado === 'Completada') {
-        porDia[f.fecha].ingresos += precioMap.get(f.servicio) ?? 0;
-      }
+      if (f.estado !== 'Cancelada') porDia[f.fecha].total += 1;
+      if (f.estado === 'Completada') porDia[f.fecha].ingresos += precioMap.get(f.servicio) ?? 0;
     });
-
     const historialPorDia = Object.entries(porDia)
       .map(([fecha, v]) => ({ fecha, ...v }))
       .sort((a, b) => a.fecha.localeCompare(b.fecha));
 
+    // Historial período anterior
+    const porDiaAnt: Record<string, { total: number; ingresos: number }> = {};
+    filasAnteriores.forEach(f => {
+      if (!porDiaAnt[f.fecha]) porDiaAnt[f.fecha] = { total: 0, ingresos: 0 };
+      if (f.estado !== 'Cancelada') porDiaAnt[f.fecha].total += 1;
+      if (f.estado === 'Completada') porDiaAnt[f.fecha].ingresos += precioMap.get(f.servicio) ?? 0;
+    });
+    const historialAnteriorPorDia = Object.entries(porDiaAnt)
+      .map(([fecha, v]) => ({ fecha, ...v }))
+      .sort((a, b) => a.fecha.localeCompare(b.fecha));
+
+    // Datos por profesional
+    const profMap: Record<number, { id: number; name: string; ingresos: number; citas: number; cancelaciones: number }> = {};
+    filas.forEach(f => {
+      if (!f.professional_id) return;
+      if (!profMap[f.professional_id]) {
+        profMap[f.professional_id] = {
+          id: f.professional_id,
+          name: f.professional_name ?? 'Sin nombre',
+          ingresos: 0, citas: 0, cancelaciones: 0,
+        };
+      }
+      if (f.estado !== 'Cancelada') profMap[f.professional_id].citas += 1;
+      if (f.estado === 'Cancelada') profMap[f.professional_id].cancelaciones += 1;
+      if (f.estado === 'Completada') {
+        profMap[f.professional_id].ingresos += precioMap.get(f.servicio) ?? 0;
+      }
+    });
+    const profesionales = Object.values(profMap).sort((a, b) => b.ingresos - a.ingresos);
+
+    // Datos por servicio
+    const servMap: Record<string, { nombre: string; ingresos: number; citas: number }> = {};
+    filas.forEach(f => {
+      if (!servMap[f.servicio]) servMap[f.servicio] = { nombre: f.servicio, ingresos: 0, citas: 0 };
+      if (f.estado !== 'Cancelada') servMap[f.servicio].citas += 1;
+      if (f.estado === 'Completada') servMap[f.servicio].ingresos += precioMap.get(f.servicio) ?? 0;
+    });
+    const servicios = Object.values(servMap).sort((a, b) => b.ingresos - a.ingresos);
+
     return {
       data: {
-        totalCitas,
-        completadas,
-        pendientes,
-        canceladas,
-        tasaCancelacion,
-        ingresos,
-        horaPico,
+        totalCitas, completadas, pendientes, canceladas, tasaCancelacion, ingresos, horaPico,
         historialPorDia,
+        ingresosVariacion, totalCitasVariacion, tasaCancelacionVariacion,
+        ocupacion: ocupacionPct, ocupacionVariacion,
+        clientesNuevos: nuevos, clientesRecurrentes: recurrentes,
+        retencion, retencionVariacion,
+        profesionales,
+        servicios,
+        historialAnteriorPorDia,
+        profesionalesActivos: profResult.rows,
       },
       error: null,
     };
   } catch (e) {
     console.error('[getMetricas]', e);
     return { data: null, error: 'Error cargando métricas' };
+  }
+}
+
+export async function getMetricasDrawer(
+  businessId: number,
+  tipo: DrawerTipo,
+  params: { fecha?: string; servicio?: string; professionalId?: number; rango?: RangoMetricas }
+): Promise<{ data: DrawerData | null; error: string | null }> {
+  try {
+    if (tipo === 'ingresos') {
+      const { fechaDesde, fechaHasta } = params.rango
+        ? calcularRangoFechas(params.rango)
+        : calcularRangoFechas('semana');
+
+      const queryParams: (string | number)[] = [businessId, fechaDesde, fechaHasta];
+      const profFilter = params.professionalId != null
+        ? ` AND a.professional_id = $${queryParams.push(params.professionalId)}`
+        : '';
+
+      const { rows: raw } = await pool.query(
+        `SELECT p.name AS profesional, a.servicio, COUNT(*)::int AS cantidad,
+                SUM(CASE WHEN a.estado = 'Completada' THEN COALESCE(
+                  (SELECT NULLIF(regexp_replace(split_part(split_part(b.services_text, a.servicio || ' $', 2), ',', 1), '[^0-9]', '', 'g'), '')::numeric),
+                  0
+                ) ELSE 0 END)::numeric AS total
+         FROM appointments a
+         JOIN businesses b ON b.id = a.business_id
+         LEFT JOIN professionals p ON p.id = a.professional_id
+         WHERE a.business_id = $1 AND a.fecha BETWEEN $2 AND $3 ${profFilter}
+         GROUP BY p.name, a.servicio
+         ORDER BY total DESC`,
+        queryParams
+      );
+
+      return {
+        data: {
+          tipo: 'ingresos',
+          filas: raw.map(r => ({
+            profesional: r.profesional ?? 'Sin asignar',
+            servicio: r.servicio,
+            cantidad: parseInt(r.cantidad),
+            total: parseFloat(r.total),
+          })),
+          total: raw.reduce((sum: number, r: { total: string }) => sum + parseFloat(r.total || '0'), 0),
+        },
+        error: null,
+      };
+    }
+
+    if (tipo === 'citas-del-dia') {
+      const fecha = params.fecha ?? new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+      const queryParams: (string | number)[] = [businessId, fecha];
+      const profFilter = params.professionalId != null
+        ? ` AND a.professional_id = $${queryParams.push(params.professionalId)}`
+        : '';
+
+      const { rows } = await pool.query(
+        `SELECT a.hora::text, a.nombre, a.servicio, a.estado,
+                COALESCE(p.name, 'Sin asignar') AS profesional
+         FROM appointments a
+         LEFT JOIN professionals p ON p.id = a.professional_id
+         WHERE a.business_id = $1 AND a.fecha = $2 ${profFilter}
+         ORDER BY a.hora ASC`,
+        queryParams
+      );
+
+      return {
+        data: { tipo: 'citas-del-dia', filas: rows },
+        error: null,
+      };
+    }
+
+    if (tipo === 'ocupacion') {
+      const { fechaDesde, fechaHasta } = calcularRangoFechas(params.rango ?? 'semana');
+      const scheduleQuery = await pool.query<{ schedule_text: unknown }>(
+        `SELECT schedule_text FROM businesses WHERE id = $1`, [businessId]
+      );
+      const schedule: Record<string, { open: number; close: number }> =
+        scheduleQuery.rows[0]?.schedule_text
+          ? typeof scheduleQuery.rows[0].schedule_text === 'string'
+            ? JSON.parse(scheduleQuery.rows[0].schedule_text)
+            : scheduleQuery.rows[0].schedule_text
+          : {};
+
+      const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+      const queryParams: (string | number)[] = [businessId, fechaDesde, fechaHasta];
+      const profFilter = params.professionalId != null
+        ? ` AND a.professional_id = $${queryParams.push(params.professionalId)}`
+        : '';
+
+      const { rows: apts } = await pool.query<{ fecha: string; hora_slot: number }>(
+        `SELECT a.fecha::text, EXTRACT(HOUR FROM a.hora)::int AS hora_slot
+         FROM appointments a
+         WHERE a.business_id = $1 AND a.fecha BETWEEN $2 AND $3 AND a.estado != 'Cancelada'
+         ${profFilter}`,
+        queryParams
+      );
+
+      const ocupGrid: Record<string, Record<number, number>> = {};
+      apts.forEach(a => {
+        if (!ocupGrid[a.fecha]) ocupGrid[a.fecha] = {};
+        ocupGrid[a.fecha][a.hora_slot] = (ocupGrid[a.fecha][a.hora_slot] ?? 0) + 1;
+      });
+
+      const grid: Array<{ dia: string; hora: string; ocupados: number; total: number; ratio: number }> = [];
+      const start = new Date(fechaDesde + 'T12:00:00');
+      const end = new Date(fechaHasta + 'T12:00:00');
+
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toISOString().split('T')[0];
+        const dayOfWeek = d.getDay();
+        const daySchedule = schedule[String(dayOfWeek)];
+        if (!daySchedule) continue;
+
+        for (let h = daySchedule.open; h < daySchedule.close; h++) {
+          const ocup = ocupGrid[dateStr]?.[h] ?? 0;
+          const total = 2; // slots de 30 min por hora
+          grid.push({
+            dia: `${diasSemana[dayOfWeek]} ${d.getDate()}`,
+            hora: `${String(h).padStart(2, '0')}:00`,
+            ocupados: Math.min(ocup, total),
+            total,
+            ratio: ocup / total,
+          });
+        }
+      }
+
+      return { data: { tipo: 'ocupacion', grid }, error: null };
+    }
+
+    if (tipo === 'servicio-detalle') {
+      if (!params.servicio) return { data: null, error: 'servicio requerido' };
+
+      // Por profesional
+      const { rows: profRows } = await pool.query(
+        `SELECT COALESCE(p.name, 'Sin asignar') AS name,
+                COUNT(*)::int AS citas,
+                SUM(CASE WHEN a.estado = 'Completada' THEN 1 ELSE 0 END)::int AS completadas
+         FROM appointments a
+         LEFT JOIN professionals p ON p.id = a.professional_id
+         WHERE a.business_id = $1 AND a.servicio = $2
+         GROUP BY p.name
+         ORDER BY citas DESC`,
+        [businessId, params.servicio]
+      );
+
+      // Precio del servicio
+      const { rows: bizRow } = await pool.query(
+        `SELECT services_text FROM businesses WHERE id = $1`, [businessId]
+      );
+      const precioMap = parsePrice(bizRow[0]?.services_text ?? '');
+      const precio = precioMap.get(params.servicio) ?? 0;
+
+      const profesionales = profRows.map(r => ({
+        name: r.name,
+        citas: parseInt(r.citas),
+        ingresos: parseInt(r.completadas) * precio,
+      }));
+
+      // Tendencia mensual (últimos 3 meses)
+      const tresMesesAtras = new Date();
+      tresMesesAtras.setMonth(tresMesesAtras.getMonth() - 3);
+      const fechaLimite = tresMesesAtras.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+
+      const { rows: mesRows } = await pool.query(
+        `SELECT TO_CHAR(a.fecha, 'YYYY-MM') AS mes, COUNT(*)::int AS citas
+         FROM appointments a
+         WHERE a.business_id = $1 AND a.servicio = $2 AND a.fecha >= $3 AND a.estado != 'Cancelada'
+         GROUP BY mes
+         ORDER BY mes ASC`,
+        [businessId, params.servicio, fechaLimite]
+      );
+
+      return {
+        data: {
+          tipo: 'servicio-detalle',
+          servicio: params.servicio,
+          profesionales,
+          tendenciaMensual: mesRows.map(r => ({ mes: r.mes, citas: parseInt(r.citas) })),
+        },
+        error: null,
+      };
+    }
+
+    return { data: null, error: 'Tipo de drawer inválido' };
+  } catch (e) {
+    console.error('[getMetricasDrawer]', e);
+    return { data: null, error: 'Error cargando detalle' };
   }
 }
 
