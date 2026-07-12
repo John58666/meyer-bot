@@ -122,7 +122,7 @@ export function AuditoriaClient({
         <button
           onClick={applyFilters}
           title="Aplicar filtros"
-          className="mt-3 px-4 py-2 rounded-lg bg-[var(--color-accent)] text-white text-sm font-medium hover:opacity-90 transition-opacity"
+          className="mt-3 w-full sm:w-auto px-4 py-2 rounded-lg bg-[var(--color-accent)] text-white text-sm font-medium hover:opacity-90 transition-opacity"
         >
           Filtrar
         </button>
@@ -137,7 +137,7 @@ export function AuditoriaClient({
           </p>
         </div>
       ) : (
-        <div className="rounded-xl border border-[var(--border-subtle)] overflow-hidden">
+        <div className="rounded-xl border border-[var(--border-subtle)] overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[var(--border-subtle)] bg-[var(--bg-card)]">
@@ -190,7 +190,7 @@ export function AuditoriaClient({
       {selected && (
         <div className="fixed inset-0 z-50 flex justify-end">
           <div className="absolute inset-0 bg-black/50" onClick={() => setSelected(null)} />
-          <div className="relative w-full max-w-md bg-[var(--bg-card)] border-l border-[var(--border-subtle)] h-full overflow-y-auto p-6">
+          <div className="relative w-full max-w-md bg-[var(--bg-card)] border-l border-[var(--border-subtle)] h-full overflow-y-auto p-4 sm:p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-bold text-white">Detalle del evento</h2>
               <button
