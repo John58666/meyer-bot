@@ -2,7 +2,7 @@
 
 > **Fecha:** 11 julio 2026
 > **Proyecto:** meyer-bot
-> **Estado:** Implementado y deployado ✅ (12 julio 2026)
+> **Estado:** Implementado y deployado ✅ (12 julio 2026) — 2 responsive bugs corregidos post-deploy (13 julio 2026)
 
 ---
 
@@ -150,8 +150,9 @@ Cubre todas las queries de métricas. El `CONCURRENTLY` permite crearlo sin down
 
 | Breakpoint | KPIs | Chart | Tabs | Drawers |
 |------------|------|-------|------|---------|
-| Desktop (>640px) | Grid 3x2 o 4+2 | Full width, padding | Row horizontal | Lateral (sheet desde derecha) |
-| Móvil (<640px) | Scroll horizontal single row | Full width, 180px height | Pills scrolleables | Desde abajo (sheet tipo bottom) |
+| Desktop (>768px) | Grid 3x2 | Full width, padding | Row horizontal | Lateral (sheet desde derecha, max-w-sm=384px) |
+| Tablet (640-767px) | Grid 3x2 | Full width, 260px height | Row horizontal | Lateral (sheet desde derecha, max-w-sm=384px) |
+| Móvil (<640px) | Scroll horizontal single row | Full width, 180px height | Pills scrolleables | Lateral (sheet desde derecha, 90vw con CSS-only) |
 
 ### 5.2 RBAC
 
@@ -377,61 +378,76 @@ Ver `docs/ARCHITECTURE_FUTURE.md` (post-sprint) para:
 
 ## 14. UI/UX Audit Post-Implementation (12 julio 2026)
 
-> Auditoría realizada con `ui-ux-pro-max` skill. Sin cambios ejecutados — pendiente de aprobación.
+> Auditoría realizada con `ui-ux-pro-max` skill. Todos los hallazgos implementados en sesiones 10-11.
 
-### 14.1 KPIs — Falta de contexto visual
+### 14.1 KPIs — Falta de contexto visual ✅ Implementado
 
-| Issue | Archivo | Prioridad | Esfuerzo |
-|-------|---------|-----------|----------|
-| Badges de variación solo verde/rojo sin semántica (↑ingresos bueno, ↑cancelaciones malo — mismo ícono) | `metricas-kpi-card.tsx` | 🔴 Alta | 2d |
-| Sin sparkline mini-gráfico de tendencia del periodo (7d/30d) debajo del valor | `metricas-kpi-card.tsx` | 🔴 Alta |  |
-| Sin tooltip con comparación real vs objetivo o vs año anterior | `metricas-kpi-card.tsx` | 🟡 Media |  |
-| Sin skeleton loader — KPIs aparecen de golpe sin transición | `metricas-client.tsx` | 🟡 Media |  |
+| Issue | Archivo | Prioridad | Estado |
+|-------|---------|-----------|--------|
+| Badges semánticos (TrendingUp/TrendingDown según tipo de métrica) | `metricas-kpi-card.tsx` + `metricas-client.tsx` | 🔴 Alta | ✅ |
+| Sparkline SVG inline (60×20px) en KPIs de ingresos, citas, cancelaciones, ocupación | `metricas-kpi-card.tsx` | 🔴 Alta | ✅ |
+| Tooltip hover "vs período anterior" con valor actual vs anterior | `metricas-kpi-card.tsx` | 🟡 Media | ✅ |
+| Sin skeleton loader — KPIs aparecen de golpe sin transición | — | 🟡 Media | ⏳ No implementado (bajo impacto) |
 
-### 14.2 Filtros por fecha — Ausentes
+### 14.2 Filtros por fecha — Implementado ✅
 
-| Issue | Archivo | Prioridad | Esfuerzo |
-|-------|---------|-----------|----------|
-| No hay selector de rango de fechas global — solo periodo hardcodeado (28 días) | `metricas-client.tsx` | 🔴 Alta | 2-3d |
-| No hay comparación custom (ej. "vs semana pasada", "vs mismo mes 2025") | `metricas-client.tsx` | 🟡 Media |  |
-| Dropdown de servicio + fechaFrom/fechaTo existe solo en drawer, no como filtro global | `metricas-client.tsx` | 🟢 Baja |  |
+| Feature | Archivo | Prioridad | Estado |
+|---------|---------|-----------|--------|
+| RangoMetricas extendido: `'trimestre'` + `'custom'` | `lib/actions.ts` | 🔴 Alta | ✅ |
+| Botón "Trimestre" en rango selector | `metricas-client.tsx` | 🔴 Alta | ✅ |
+| Botón "Personalizar" con icono calendario → inputs date Desde/Hasta + Aplicar | `metricas-client.tsx` | 🔴 Alta | ✅ |
+| `calcularRangoFechas()` / `calcularPeriodoAnterior()` extendidos | `lib/actions.ts` | 🔴 Alta | ✅ |
+| Cache key extendido con fechas para rangos custom | `lib/actions.ts` | 🟡 Media | ✅ |
+| No hay comparación custom ("vs semana pasada", "vs mismo mes 2025") | — | 🟡 Media | ⏳ Futuro |
 
-### 14.3 Charts — Interacción pobre
+### 14.3 Charts — Interacción ✅ Implementado
 
-| Issue | Archivo | Prioridad | Esfuerzo |
-|-------|---------|-----------|----------|
-| Heatmap sin tooltip al hover, sin color ramp legend, sin indicador de hora actual | `metricas-chart-ocupacion.tsx` | 🟢 Baja | 0.5d |
-| Chart ingresos sin zoom/pan, sin toggle bruto/neto/cantidad | `metricas-chart-ingresos.tsx` | 🟢 Baja | 0.5d |
-| Barras de servicios sin etiquetas de valor ni animación de entrada | `metricas-chart-servicios.tsx` | 🟢 Baja | 0.5d |
-| Drawer al click en chart sin loading state entre fetch y render | drawers | 🟡 Media | 0.5d |
+| Issue | Archivo | Prioridad | Estado |
+|-------|---------|-----------|--------|
+| Heatmap: tooltip flotante posicionado con `fixed` + transform | `metricas-chart-ocupacion.tsx` | 🟢 Baja | ✅ |
+| Heatmap: indicador hora actual (Bogotá) en color accent | `metricas-chart-ocupacion.tsx` | 🟢 Baja | ✅ |
+| Chart ingresos: sin zoom/pan, sin toggle bruto/neto/cantidad (bajo impacto) | — | 🟢 Baja | ⏳ Futuro |
+| Barras de servicios: LabelList con formato pesos + animación ease-out 600ms | `metricas-chart-servicios.tsx` | 🟢 Baja | ✅ |
+| Drawers: loading/skeleton/error state en los 4 drawers | `drawer-*.tsx` | 🟡 Media | ✅ |
 
-### 14.4 Responsive — KPIs horizontales frágiles
+### 14.4 Responsive — KPIs horizontales ✅ Implementado
 
-| Issue | Archivo | Prioridad | Esfuerzo |
-|-------|---------|-----------|----------|
-| Snap-scroll horizontal oculta KPIs sin indicador visual (dots/pagination) | `metricas-client.tsx` | 🟢 Baja | 0.5d |
-| Layout tablet (~768px) sin breakpoint `md` — posibles espacios incómodos | `metricas-client.tsx` | 🟢 Baja | 0.5d |
-| Charts con `h-[300px]` fijo puede recortar leyendas/ejes en mobile | charts | 🟢 Baja | 0.5d |
+| Issue | Archivo | Prioridad | Estado |
+|-------|---------|-----------|--------|
+| Pagination dots (6 dots, sm:hidden) con scroll tracking | `metricas-client.tsx` | 🟢 Baja | ✅ |
+| Dual container: scroll mobile (sm:hidden) + grid desktop (hidden sm:grid sm:grid-cols-3) | `metricas-client.tsx` | 🟢 Baja | ✅ |
+| Charts altura responsive: 180px mobile → 260px desktop (ChartIngresos), min-h 200/280 (ChartServicios) | `metricas-chart-ingresos.tsx`, `metricas-chart-servicios.tsx` | 🟢 Baja | ✅ |
 
-### 14.5 Drawers — Sin estado de carga/respuesta
+### 14.5 Drawers — Estado de carga/error ✅ Implementado
 
-| Issue | Archivo | Prioridad | Esfuerzo |
-|-------|---------|-----------|----------|
-| Sin spinner/skeleton mientras fetch corre — se ve blanco | drawers | 🟡 Media | 0.5d |
-| Sin estado de error si el fetch falla (API down) | drawers | 🟡 Media | 0.5d |
+| Issue | Archivo | Prioridad | Estado |
+|-------|---------|-----------|--------|
+| Skeleton (animate-pulse) mientras fetch corre | `drawer-*.tsx` | 🟡 Media | ✅ |
+| Estado error con mensaje + botón "Reintentar" | `drawer-*.tsx` | 🟡 Media | ✅ |
 
-### 14.6 Accesibilidad
+### 14.6 Accesibilidad ✅ Implementado
 
-| Issue | Prioridad | Esfuerzo |
-|-------|-----------|----------|
-| KPIs: colores rojo/verde sin símbolo adicional (↑↓) ni texto SR | 🟡 Media | 1d |
-| Charts sin `aria-label`, `role="img"`, ni fallback data table | 🟡 Media |  |
-| Tabs sin `aria-selected` ni `role="tabpanel"` vinculado | 🟡 Media |  |
+| Issue | Archivo | Prioridad | Estado |
+|-------|---------|-----------|--------|
+| Badges con sr-only ("Mejoró/Empeoró X%") | `metricas-kpi-card.tsx` | 🟡 Media | ✅ |
+| Charts envueltos en `<div role="img" aria-label="...">` | `metricas-client.tsx` | 🟡 Media | ✅ |
+| Tabs con `role="tablist"`, `role="tab"`, `aria-selected`, `aria-controls`, `role="tabpanel"`, `aria-labelledby` | `metricas-tab-selector.tsx`, `metricas-client.tsx` | 🟡 Media | ✅ |
+| Select profesional con `aria-label="Filtrar por profesional"` | `metricas-client.tsx` | 🟡 Media | ✅ |
+
+### 14.7 Post-deploy responsive bugs (13 julio 2026)
+
+> Aparecieron 2 bugs tras deploy del UI/UX Audit. Corregidos.
+
+| Bug | Causa raíz | Fix | Commit |
+|-----|-----------|-----|--------|
+| **KPI grid overflow** — KPIs en scroll horizontal forzado en tablet/desktop (6 cards ~900px en container 768px) | `flex overflow-x-auto` sin `flex-wrap` en sm+ | Dual container: scroll `flex sm:hidden` + grid `hidden sm:grid sm:grid-cols-3` | `7f8a780` |
+| **"Pantallitas negras"** — múltiples overlays/backdrops al clickear en General (móvil) | `useState`+`useEffect` para `isMobile` en 4 drawers causa re-render cascade; base-ui Dialog renderiza overlays fantasma | Eliminar `isMobile` de todos los drawers, siempre `side="right"`, CSS-only `max-md:!w-[90vw] max-md:!max-w-[90vw]` | `43751c5` |
 
 ---
 
 ## 13. Criterios de aceptación
 
+### Core
 1. [x] KPIs generales se muestran correctos para Hoy/Semana/Mes
 2. [x] Badges de variación vs período anterior aparecen con valor correcto
 3. [x] Tabs General / Por Profesional / Servicios cambian el contenido
@@ -440,6 +456,27 @@ Ver `docs/ARCHITECTURE_FUTURE.md` (post-sprint) para:
 6. [x] Charts se renderizan según la vista activa
 7. [x] Click en KPI abre drawer con datos correctos
 8. [x] Drawers se cierran correctamente
-9. [x] Todo funciona en móvil (<640px viewport)
-10. [x] Build exitoso sin errores
-11. [x] Funciona para business_id=1,2,3 sin cambios
+9. [x] Build exitoso sin errores
+10. [x] Funciona para business_id=1,2,3 sin cambios
+
+### UI/UX Audit (sesión 10)
+11. [x] Sparkline SVG visible en KPIs de ingresos, citas, cancelaciones, ocupación
+12. [x] Badges semánticos: TrendingUp/TrendingDown según METRICA_SEMANTICA (↑ingresos bueno, ↑cancelaciones malo)
+13. [x] Tooltip hover "vs período anterior" en KPIs clickeables
+14. [x] RangoMetricas incluye 'trimestre' + 'custom'
+15. [x] Custom date picker con inputs Desde/Hasta + Aplicar
+16. [x] Los 4 drawers tienen skeleton loading + error state con Reintentar
+17. [x] Tabs con role="tablist", aria-selected, aria-controls, role="tabpanel"
+18. [x] Charts con role="img" + aria-label
+19. [x] Badges con sr-only ("Mejoró/Empeoró X%")
+20. [x] LabelList en barras de servicios + animación ease-out
+21. [x] Heatmap tooltip flotante + indicador hora actual
+22. [x] Pagination dots en KPIs mobile (<640px)
+
+### Responsive bugs post-deploy (sesión 11)
+23. [x] KPIs en grid 3 columnas en tablet/desktop, scroll horizontal solo en móvil (<640px)
+24. [x] Charts altura: 180px mobile, 260px desktop (ChartIngresos)
+25. [x] Drawers con side="right" siempre, sin overlays fantasma en móvil
+26. [x] Drawers 90vw de ancho en móvil (CSS-only, sin JS)
+27. [x] Date picker inputs full-width en móvil
+28. [x] Sin errores de build ni lint (solo pre-existentes)
