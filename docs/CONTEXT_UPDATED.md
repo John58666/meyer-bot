@@ -1,6 +1,6 @@
 # CONTEXT.md — meyer-bot
 
-> Última actualización: 11 julio 2026 (sesión 6 — Sprint 14 completado: fixes #26 #25 #23 #24 + Auditoría link móvil + botón Editar Equipo. Dashboard Sync completo. Backlog organizado en fases).
+> Última actualización: 11 julio 2026 (sesión 7 — Sprint 14 completado. Beszel + Uptime Kuma instalados en VPS para monitoreo).
 > Documento maestro CORTO. Cualquier chat nuevo lee esto primero.
 > **⚠️ ANTES de tocar NADA: leer `docs/SECURITY_AUDIT.md`** — reporte maestro de seguridad, hallazgos activos y plan de remediación.
 > Para profundidad: ver docs/ (ARCHITECTURE.md, SPRINTS.md, RUNBOOK.md, KEY_LEARNINGS.md, SECURITY_AUDIT.md)
@@ -28,6 +28,8 @@ Diferenciador: WhatsApp-native (Fresha/Booksy/SimplyBook obligan a salir de What
 - **Next.js 16** + App Router + Tailwind v4 + shadcn/ui + **recharts** — dashboard en producción.
 - **NextAuth v5** JWT — auth dashboard contra PostgreSQL.
 - **PM2** + nginx — proceso y proxy en VPS. Dashboard en `/root/meyer-bot/dashboard/`.
+- **Beszel** — monitoreo de servidor (CPU, RAM, disco, Docker). Hub en Docker, expuesto en https://monitor.zyvenshop.com
+- **Uptime Kuma** — health checks de servicios. En Docker, expuesto en https://status.zyvenshop.com
 - **VPS Ubuntu Hetzner** 178.104.27.180 (2 vCPU / 3.7GB RAM / 38GB disco).
 
 ## Repositorio
@@ -169,7 +171,8 @@ Asignados manualmente por SQL al onboardear. Sistema formal con Stripe/Wompi en 
 22. Migración n8n → Node.js+BullMQ+Redis (adelantar a Sprint 14 si i18n lo requiere).
 23. Upgrade VPS Hetzner (4 vCPU / 8GB) a los 8-10 clientes.
 24. Tabla `services` normalizada.
-25. Mover DNS a Cloudflare, staging environment, rate limit en PostgreSQL.
+25. Backup automático de DB (pg_dump diario + copia remota a Backblaze/S3/Mac)
+26. Mover DNS a Cloudflare, staging environment, rate limit en PostgreSQL.
 26. Expansión regional, exportación CSV.
 27. **Integración Google Calendar en el dashboard** — Sync bidireccional entre el calendario del dashboard y Google Calendar del usuario, para facilitar gestión. Service Account conservada en Google Cloud Console (key revocada el 6 julio 2026 — crear nueva key cuando se implemente). **OAuth flow recomendado** (no Service Account JSON) para que cada usuario conecte su propio Google Calendar. Ver `docs/SECURITY_AUDIT.md` → "Pendiente como feature futura".
 
@@ -200,6 +203,10 @@ Asignados manualmente por SQL al onboardear. Sistema formal con Stripe/Wompi en 
 > - 🟡 **Pendiente**: volumen persistente para `evolution-postgres`/`evolution-redis` (hoy los datos viven solo en el contenedor)
 > - 🟡 **Pendiente**: migrar secrets hardcodeados del `docker-compose.yaml` de Evolution API a `.env`
 > - 🟡 GOOGLE_PRIVATE_KEY en .env del VPS (key ya revocada, pero falta limpiar el archivo)
+> - **🔴 CRÍTICO — Backup de DB requerido antes de producción seria:**
+>   - `meyer_postgres` tiene volumen Docker pero **0 backups** — si el volumen se corrompe o borra, se pierde todo
+>   - `evolution-postgres` y `evolution-redis` **sin volúmenes persistentes** — datos desaparecen si el contenedor se elimina
+>   - **Fix pendiente:** (1) volúmenes persistentes para evolution, (2) cron diario `pg_dump` → comprimido → copia remota (Backblaze B2 ~$1-2/mes o a tu Mac vía SCP)
 > - ✅ Bitwarden Cloud Free — SSH password y DB password nuevas ya guardadas
 > - ✅ npm audit fix aplicado en local (commit `4a302ef`, no deployado)
 > - ✅ 1 vuln moderate (postcss) queda — requiere upgrade Next.js
@@ -209,7 +216,9 @@ Asignados manualmente por SQL al onboardear. Sistema formal con Stripe/Wompi en 
 
 ## Docs de referencia
 - `docs/ARCHITECTURE.md` — schema DB, principios, decisiones arquitectónicas, RBAC, multi-profesional
-- `docs/SPRINTS.md` — historial completo Sprint 0-11
-- `docs/RUNBOOK.md` — deploy, psql, n8n, Evolution API, variables de entorno, túnel SSH
+- `docs/SPRINTS.md` — historial completo Sprint 0-14, backlog fases 2-4
+- `docs/RUNBOOK.md` — deploy, psql, n8n, Evolution API, variables de entorno, túnel SSH, Beszel, Uptime Kuma
 - `docs/KEY_LEARNINGS.md` — lecciones técnicas acumuladas
 - `docs/SECURITY_AUDIT.md` — ⚠️ auditoría de seguridad, leaks, plan de remediación, políticas
+- `docs/superpowers/specs/2026-07-11-sprint15-metricas-premium.md` — spec Sprint 15 (Dashboard Métricas Premium), aprobado pendiente implementación
+- `docs/ARCHITECTURE_FUTURE.md` — plan de escalabilidad, triggers de migración, thresholds para upgrade de infraestructura, proyecciones por tipo de negocio, costos, monitoreo con Beszel + Uptime Kuma

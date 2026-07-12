@@ -244,6 +244,26 @@
 
 ---
 
+## Sprint 15 — Dashboard Métricas Premium (spec aprobado, pendiente implementación)
+
+> Spec completo en `docs/superpowers/specs/2026-07-11-sprint15-metricas-premium.md`
+
+### Alcance aprobado
+1. **Vista General** — KPIs expandidos (ocupación, retención, clientes nuevos vs recurrentes) + badges de variación vs período anterior
+2. **Vista Por Profesional** — filtro por profesional con métricas filtradas
+3. **Vista Servicios** — ranking de servicios por ingresos y cantidad
+4. **Comparativas temporales** — cada KPI con % de cambio vs período anterior
+5. **4 Drawers de drill-down** — Ingresos, Citas del Día, Ocupación (heatmap), Servicio Detalle
+6. **Responsive + RBAC** — todo funciona en móvil, profesional ve solo sus datos
+7. **Multi-negocio** — funciona para cualquier business_id sin cambios
+8. **1 índice DB** — `idx_appointments_metrics` en appointments (business_id, professional_id, fecha, estado)
+
+### Pendientes pre-implementación
+- Revisar spec por el dueño
+- Aprobar inicio de implementación
+
+---
+
 ## Backlog actual (Julio 11, 2026)
 
 ### PENDIENTE — Fase 2: Bot & Sistema

@@ -139,18 +139,64 @@ AUTH_SECRET=...
 NEXTAUTH_URL=http://localhost:3000
 ```
 
+## Beszel — monitoreo del servidor
+- URL: https://monitor.zyvenshop.com
+- Admin: `admin@zyvenshop.com` / ver pass en Bitwarden
+- Directorio: `/opt/beszel/`
+- Stack Docker (hub + agent) en `/opt/beszel/docker-compose.yml`
+- Agent conectado vía Unix socket (monitoreo local)
+- Mide: CPU, RAM, disco, Docker containers, red, load average
+- Alertas configurables en la UI
+
+```bash
+# Ver estado
+cd /opt/beszel && docker compose ps
+
+# Logs
+docker compose logs beszel --tail 20
+docker compose logs beszel-agent --tail 20
+
+# Reiniciar
+docker compose restart
+```
+
+## Uptime Kuma — health checks
+- URL: https://status.zyvenshop.com
+- Primer ingreso: crear usuario administrador
+- Directorio: `/opt/uptime-kuma/`
+- Stack Docker en `/opt/uptime-kuma/docker-compose.yml`
+
+```bash
+# Ver estado
+cd /opt/uptime-kuma && docker compose ps
+
+# Logs
+docker compose logs --tail 20
+```
+
+**Monitores recomendados a configurar:**
+| Servicio | URL | Frecuencia |
+|----------|-----|-----------|
+| Dashboard | `https://dashboard.zyvenshop.com` | 60s |
+| n8n | `https://n8n.zyvenshop.com` | 60s |
+| Evolution API | `https://evolution.zyvenshop.com` | 60s |
+| PostgreSQL | Puerto 5432 TCP | 120s |
+| SSL certs | todos los dominios | 24h |
+
 ## Infraestructura VPS
 ```
-CONTAINER            IMAGE                    STATUS    PUERTO (verificado 9 jul 2026 vía SSH)
+CONTAINER            IMAGE                    STATUS    PUERTO
 n8n-n8n-1            n8nio/n8n (2.10.3)       Up        5678
 meyer_postgres       postgres:16-alpine       Up        127.0.0.1:5432
-⚠️ evolution-api        evoapicloud — NO CORRIENDO (no aparece en docker ps)
-⚠️ evolution-postgres   postgres:15 — NO CORRIENDO
-⚠️ redis:7-alpine       — NO CORRIENDO
-⚠️ meyer-dashboard      — NO CORRIENDO como contenedor (probablemente PM2 en host)
+evolution-api        evolution-api            Up        8080
+evolution-postgres   postgres:15              Up        5433
+evolution-redis      redis:7-alpine           Up        6379
+beszel               henrygd/beszel           Up        127.0.0.1:8090
+beszel-agent         henrygd/beszel-agent     Up        (host network)
+uptime-kuma          louislam/uptime-kuma     Up        127.0.0.1:3002
 
-System: Ubuntu 24.04.4 LTS | 2 vCPU | 3.7GB RAM | 38GB disco (46% usado)
-nginx 1.24.0 — proxies: n8n.zyvenshop.com, dashboard.zyvenshop.com
+System: Ubuntu 24.04.4 LTS | 2 vCPU | 3.7GB RAM | 38GB disco (49% usado)
+nginx 1.24.0 — proxies: n8n.zyvenshop.com, dashboard.zyvenshop.com, evolution.zyvenshop.com, monitor.zyvenshop.com, status.zyvenshop.com
 DNS: Namecheap (zyvenshop.com) — migrar a Cloudflare
 ```
 
