@@ -520,7 +520,7 @@ export default function MetricasClient({ data: initialData, error: initialError,
   }))
 
   const hayIngresos = clientData.ingresos > 0
-  const modoChart = vistaActiva === 'servicios' ? 'ingresos' : (hayIngresos ? modoChartManual : 'citas')
+  const modoChart = vistaActiva === 'servicios' ? 'ingresos' : modoChartManual
 
   return (
     <div>

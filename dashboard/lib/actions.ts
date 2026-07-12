@@ -274,13 +274,15 @@ export interface MetricasData {
   };
 }
 
-export type DrawerTipo = 'ingresos' | 'citas-del-dia' | 'ocupacion' | 'servicio-detalle';
+export type DrawerTipo = 'ingresos' | 'citas-del-dia' | 'ocupacion' | 'servicio-detalle' | 'cancelaciones' | 'clientes-nuevos';
 
 export type DrawerData =
   | { tipo: 'ingresos'; filas: Array<{ profesional: string; servicio: string; cantidad: number; total: number }>; total: number }
   | { tipo: 'citas-del-dia'; filas: Array<{ hora: string; nombre: string; servicio: string; profesional: string; estado: string }> }
   | { tipo: 'ocupacion'; grid: Array<{ dia: string; hora: string; ocupados: number; total: number; ratio: number }> }
-  | { tipo: 'servicio-detalle'; servicio: string; profesionales: Array<{ name: string; citas: number; ingresos: number }>; tendenciaMensual: Array<{ mes: string; citas: number }> };
+  | { tipo: 'servicio-detalle'; servicio: string; profesionales: Array<{ name: string; citas: number; ingresos: number }>; tendenciaMensual: Array<{ mes: string; citas: number }> }
+  | { tipo: 'cancelaciones'; filas: Array<{ fecha: string; hora: string; nombre: string; servicio: string; profesional: string }> }
+  | { tipo: 'clientes-nuevos'; filas: Array<{ nombre: string; numero: string; primeraVisita: string; totalCitas: number }> };
 
 function calcularRangoFechas(rango: RangoMetricas, fechaDesdeOverride?: string, fechaHastaOverride?: string): { fechaDesde: string; fechaHasta: string } {
   if (rango === 'custom' && fechaDesdeOverride && fechaHastaOverride) {
@@ -840,6 +842,54 @@ export async function getMetricasDrawer(
           profesionales,
           tendenciaMensual: mesRows.map(r => ({ mes: r.mes, citas: parseInt(r.citas) })),
         },
+        error: null,
+      };
+    }
+
+    if (tipo === 'cancelaciones') {
+      const { fechaDesde, fechaHasta } = params.rango
+        ? calcularRangoFechas(params.rango)
+        : calcularRangoFechas('semana');
+
+      const queryParams: (string | number)[] = [businessId, fechaDesde, fechaHasta];
+      const profFilter = params.professionalId != null
+        ? ` AND a.professional_id = $${queryParams.push(params.professionalId)}`
+        : '';
+
+      const { rows } = await pool.query(
+        `SELECT a.fecha::text, a.hora::text, a.nombre, a.servicio,
+                COALESCE(p.name, 'Sin asignar') AS profesional
+         FROM appointments a
+         LEFT JOIN professionals p ON p.id = a.professional_id
+         WHERE a.business_id = $1 AND a.fecha BETWEEN $2 AND $3
+           AND a.estado = 'Cancelada' ${profFilter}
+         ORDER BY a.fecha DESC, a.hora DESC`,
+        queryParams
+      );
+
+      return {
+        data: { tipo: 'cancelaciones', filas: rows },
+        error: null,
+      };
+    }
+
+    if (tipo === 'clientes-nuevos') {
+      const { fechaDesde, fechaHasta } = params.rango
+        ? calcularRangoFechas(params.rango)
+        : calcularRangoFechas('semana');
+
+      const { rows } = await pool.query(
+        `SELECT c.nombre, c.numero, c.primera_visita::text,
+                c.total_visitas AS "totalCitas"
+         FROM customers c
+         WHERE c.business_id = $1
+           AND c.primera_visita BETWEEN $2 AND $3
+         ORDER BY c.primera_visita DESC`,
+        [businessId, fechaDesde, fechaHasta]
+      );
+
+      return {
+        data: { tipo: 'clientes-nuevos', filas: rows },
         error: null,
       };
     }
