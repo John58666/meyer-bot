@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meyer Bot — Guía de Ventas</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800;9..40,900&family=Space+Grotesk:wght@400;500;600;700;800&display=swap');
+
+  :root {
+    --bg: oklch(6% 0.01 280); --bg2: oklch(10% 0.01 280); --bg3: oklch(14% 0.01 280);
+    --border: oklch(22% 0.01 280); --text: oklch(95% 0 0); --text2: oklch(60% 0 0); --text3: oklch(40% 0 0);
+    --accent: oklch(58% 0.19 280); --accent2: oklch(50% 0.19 280); --green: #22C55E; --red: #EF4444;
+    --amber: #F59E0B;
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    background-image:
+      radial-gradient(ellipse 60% 50% at 0% 20%, oklch(25% 0.08 270 / 0.25) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 60% at 100% 80%, oklch(20% 0.05 300 / 0.15) 0%, transparent 60%);
+    color: var(--text); line-height: 1.6;
+  }
+  a { color: var(--accent); text-decoration: none; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: oklch(6% 0.01 280 / 0.9); backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border); height: 56px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px;
+  }
+  nav .logo { font-weight: 800; font-size: 18px; color: var(--accent); }
+  nav .menu {
+    display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
+    -ms-overflow-style: none; padding: 4px 0;
+  }
+  nav .menu::-webkit-scrollbar { display: none; }
+  nav .menu a {
+    white-space: nowrap; font-size: 13px; color: var(--text2);
+    padding: 6px 12px; border-radius: 8px; transition: all .2s;
+  }
+  nav .menu a:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+  .menu-toggle { display: none; background: none; border: none; color: var(--text); font-size: 24px; cursor: pointer; }
+
+  /* SECTIONS */
+  section { padding: 80px 20px; max-width: 1100px; margin: 0 auto; }
+  .hero {
+    min-height: 90vh; display: flex; flex-direction: column;
+    justify-content: center; align-items: center; text-align: center;
+    padding: 120px 20px 80px; gap: 24px;
+  }
+  .hero {
+    min-height: 90vh; display: flex; flex-direction: row;
+    justify-content: center; align-items: center; text-align: left;
+    padding: 120px 20px 80px; gap: 60px;
+    position: relative; overflow: hidden;
+  }
+  .hero .hero-text { flex: 1; min-width: 300px; }
+  .hero h1 { font-family: var(--font-display); font-size: clamp(32px,5vw,56px); font-weight: 900; line-height: 1.05; letter-spacing: -0.02em; }
+  .hero h1 span { background: linear-gradient(135deg,var(--accent),#A78BFA); -webkit-background-clip: text;-webkit-text-fill-color: transparent; }
+  .hero p { font-size: clamp(15px,1.6vw,20px); color: var(--text2); max-width: 520px; margin-top: 16px; line-height: 1.7; }
+  .hero .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(107,78,255,0.12); border: 1px solid rgba(107,78,255,0.25);
+    padding: 6px 16px; border-radius: 100px; font-size: 13px; color: var(--accent); margin-bottom: 20px;
+  }
+  .hero .hero-actions { display:flex; gap:12px; flex-wrap:wrap; margin-top:24px; }
+
+  /* CHAT MOCKUP */
+  .chat-mock {
+    flex: 0 0 320px; background: oklch(12% 0.01 280 / 0.8);
+    border: 1px solid var(--border); border-radius: 20px; overflow: hidden;
+    backdrop-filter: blur(8px); box-shadow: 0 20px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(107,78,255,0.08);
+  }
+  .chat-mock .chat-header {
+    display: flex; align-items: center; gap: 10px; padding: 14px 16px;
+    border-bottom: 1px solid var(--border); font-size: 14px; font-weight: 600;
+  }
+  .chat-mock .chat-header .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: linear-gradient(135deg,var(--accent),#A78BFA);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: #fff; flex-shrink: 0;
+  }
+  .chat-mock .chat-body { padding: 14px; display: flex; flex-direction: column; gap: 10px; max-height: 360px; overflow: hidden; }
+  .chat-mock .msg { padding: 10px 14px; border-radius: 14px; font-size: 13px; line-height: 1.5; max-width: 85%; animation: fadeUp .4s ease both; }
+  .chat-mock .msg.client { background: oklch(22% 0.01 280); align-self: flex-end; border-bottom-right-radius: 4px; color: var(--text); }
+  .chat-mock .msg.bot { background: oklch(16% 0.02 280 / 0.8); align-self: flex-start; border-bottom-left-radius: 4px; color: var(--text2); border: 1px solid oklch(22% 0.01 280); }
+  .chat-mock .msg.bot strong { color: var(--text); }
+  .chat-mock .typing {
+    display: flex; align-items: center; gap: 4px; padding: 10px 14px;
+    align-self: flex-start; background: oklch(16% 0.02 280 / 0.8);
+    border-radius: 14px; border-bottom-left-radius: 4px; border: 1px solid oklch(22% 0.01 280);
+  }
+  .chat-mock .typing span { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); animation: typing 1.4s infinite; }
+  .chat-mock .typing span:nth-child(2) { animation-delay: .2s; }
+  .chat-mock .typing span:nth-child(3) { animation-delay: .4s; }
+  @keyframes typing { 0%,60%,100% { opacity: .3; } 30% { opacity: 1; } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .chat-mock .msg:nth-child(1) { animation-delay: .1s; }
+  .chat-mock .msg:nth-child(2) { animation-delay: .4s; }
+  .chat-mock .msg:nth-child(3) { animation-delay: .7s; }
+  .chat-mock .msg:nth-child(4) { animation-delay: 1.0s; }
+  .chat-mock .msg:nth-child(5) { animation-delay: 1.3s; }
+  .chat-mock .typing { animation-delay: 1.6s; }
+
+  @media (max-width: 768px) {
+    .hero { flex-direction: column; text-align: center; gap: 36px; padding: 100px 20px 60px; }
+    .hero h1 { max-width: 100%; }
+    .hero p { max-width: 100%; }
+    .hero .hero-actions { justify-content: center; }
+    .chat-mock { flex: 0 0 auto; width: 100%; max-width: 340px; }
+  }
+
+  h1, h2, h3, h4 { font-family: var(--font-display); }
+  h2 { font-size: clamp(26px,4vw,38px); font-weight: 800; margin-bottom: 32px; letter-spacing: -0.01em; }
+  h2 span { color: var(--accent); }
+  h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  .card {
+    background: oklch(14% 0.01 280 / 0.6); border: 1px solid oklch(24% 0.01 280 / 0.5);
+    border-radius: 16px; padding: 24px; transition: all .3s;
+    backdrop-filter: blur(4px);
+  }
+  .card:hover { border-color: oklch(58% 0.19 280 / 0.4); transform: translateY(-3px); box-shadow: 0 8px 32px rgba(107,78,255,0.06); }
+  .card .icon { font-size: 32px; margin-bottom: 12px; }
+  .card h4 { font-size: 16px; margin-bottom: 8px; }
+  .card p { font-size: 14px; color: var(--text2); }
+
+  .tag {
+    display: inline-block; background: rgba(107,78,255,0.15); color: var(--accent);
+    padding: 4px 12px; border-radius: 100px; font-size: 12px; font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  /* TABS */
+  .tabs { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+  .tab-btn {
+    padding: 8px 20px; border-radius: 100px; border: 1px solid var(--border);
+    background: transparent; color: var(--text2); font-size: 14px;
+    cursor: pointer; transition: all .2s;
+  }
+  .tab-btn:hover { border-color: var(--accent); color: var(--text); }
+  .tab-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { background: var(--bg3); font-weight: 700; white-space: nowrap; }
+  td { background: var(--bg2); }
+  tr:last-child td { border-bottom: none; }
+  .check { color: var(--green); } .cross { color: var(--text3); }
+
+  /* PRICE CARDS */
+  .price-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 16px; }
+  .price-card {
+    background: oklch(14% 0.01 280 / 0.6); border: 1px solid oklch(24% 0.01 280 / 0.5);
+    border-radius: 16px; padding: 28px 20px; text-align: center;
+    transition: all .3s; position: relative; backdrop-filter: blur(4px);
+  }
+  .price-card:hover { border-color: oklch(58% 0.19 280 / 0.4); transform: translateY(-4px); box-shadow: 0 12px 40px rgba(107,78,255,0.08); }
+  .price-card.featured { border-color: oklch(58% 0.19 280 / 0.4); background: oklch(18% 0.06 280 / 0.4); }
+  .price-card .amount { font-family: var(--font-display); font-size: 32px; font-weight: 900; background: linear-gradient(135deg,var(--accent),#A78BFA); -webkit-background-clip: text;-webkit-text-fill-color: transparent; margin: 12px 0; }
+  .price-card .amount small { font-size: 14px; color: var(--text2); font-weight: 400; }
+  .price-card ul { list-style: none; text-align: left; margin: 16px 0; }
+  .price-card ul li { padding: 6px 0; font-size: 14px; color: var(--text2); }
+  .price-card ul li::before { content: "✓ "; color: var(--green); font-weight: 700; }
+  .price-card .cta {
+    display: inline-block; margin-top: 16px; padding: 10px 32px;
+    background: var(--accent); color: #fff; border-radius: 100px;
+    font-weight: 700; font-size: 14px; border: none; cursor: pointer;
+    transition: all .25s; text-decoration: none;
+  }
+  .price-card .cta:hover { background: var(--accent2); transform: translateY(-2px); }
+  .price-card .cta:active { transform: scale(0.97); }
+  .price-card .popular {
+    position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+    background: linear-gradient(135deg,var(--accent),#A78BFA); color: #fff; padding: 4px 16px;
+    border-radius: 100px; font-size: 11px; font-weight: 800; letter-spacing: 0.03em;
+  }
+
+  /* FAQ */
+  .faq-item { border-bottom: 1px solid var(--border); }
+  .faq-q {
+    padding: 18px 0; cursor: pointer; display: flex; justify-content: space-between;
+    align-items: center; font-weight: 600; font-size: 15px;
+  }
+  .faq-q .arrow { transition: transform .3s; font-size: 12px; color: var(--text2); }
+  .faq-item.open .faq-q .arrow { transform: rotate(180deg); }
+  .faq-a {
+    max-height: 0; overflow: hidden; transition: max-height .3s ease;
+    color: var(--text2); font-size: 14px; line-height: 1.7; padding: 0;
+  }
+  .faq-item.open .faq-a { max-height: 300px; padding-bottom: 18px; }
+
+  .highlight-box {
+    background: linear-gradient(135deg, oklch(20% 0.08 280 / 0.3), oklch(15% 0.03 280 / 0.15));
+    border: 1px solid oklch(30% 0.08 280 / 0.25); border-radius: 16px;
+    padding: 32px; margin: 24px 0;
+    backdrop-filter: blur(4px);
+  }
+
+  .divider { height: 1px; background: var(--border); margin: 40px 0; }
+
+  .btn {
+    display: inline-block; padding: 14px 40px; border-radius: 100px;
+    font-weight: 700; font-size: 16px; border: none; cursor: pointer;
+    transition: all .2s; text-align: center;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent2); transform: translateY(-2px); }
+  .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text); }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+  footer {
+    text-align: center; padding: 40px 20px; border-top: 1px solid var(--border);
+    color: var(--text3); font-size: 13px;
+  }
+
+  @media print {
+    nav, .menu-toggle, .btn-outline, #cta .btn-primary, .grain::after,
+    .chat-mock .typing, .hero .badge svg { display: none !important; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    body { color: #000; background: #fff !important; background-image: none !important; }
+    section { padding: 32px 20px; page-break-inside: avoid; }
+    .hero { min-height: auto; padding: 40px 20px; flex-direction: column; text-align: center; gap: 16px; }
+    .hero-text { min-width: auto; }
+    .hero h1 { font-size: 28px; }
+    .chat-mock { flex: none; width: 100%; max-width: 300px; margin: 0 auto; background: #f9f9f9; border-color: #ddd; }
+    .chat-mock .chat-header { border-color: #ddd; }
+    .chat-mock .msg.client { background: #e8e0ff; color: #000; }
+    .chat-mock .msg.bot { background: #f0f0f0; color: #333; border-color: #ddd; }
+    .chat-mock .msg.bot strong { color: #000; }
+    .card, .price-card, .stat-card { background: #f5f5f5 !important; border-color: #ddd !important; backdrop-filter: none !important; box-shadow: none !important; }
+    .card:hover, .price-card:hover, .stat-card:hover { transform: none; }
+    .price-card.featured { background: #f0edff !important; border-color: #8B7AD8 !important; }
+    .price-card .amount { -webkit-text-fill-color: #6B4EFF !important; color: #6B4EFF !important; }
+    .price-card .popular { background: #6B4EFF !important; color: #fff !important; }
+    .highlight-box { background: #f5f0ff !important; border-color: #d0c8f0 !important; backdrop-filter: none !important; }
+    .badge { background: #e0d8ff; color: #5A3DE6; border-color: #c8b8f0 !important; }
+    h2 span { color: #5A3DE6; }
+    .stat-card .num { -webkit-text-fill-color: #6B4EFF !important; color: #6B4EFF !important; }
+    .tab-content { display: block !important; }
+    .tab-btn { display: none; }
+    .table-wrap { border-color: #ddd; }
+    th { background: #eee; color: #000; }
+    td { background: #fff; color: #000; border-color: #eee; }
+    .check { color: #16a34a; }
+    footer { border-color: #ddd; color: #666; }
+    .btn { border-color: #333; color: #000; }
+    .btn-primary { background: #6B4EFF; color: #fff !important; }
+    .logo { color: #000 !important; }
+    .logo svg { display: none; }
+  }
+
+  /* LOGO SVG */
+  .logo {
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+    font-family: var(--font-display); font-weight: 800; font-size: 18px;
+    color: var(--text); user-select: none;
+  }
+  .logo svg { width: 28px; height: 28px; flex-shrink: 0; }
+
+  /* MARKET STATS */
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 14px; }
+  .stat-card {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 14px; padding: 24px 16px; text-align: center; transition: all .3s;
+  }
+  .stat-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .stat-card .num { font-family: var(--font-display); font-size: 28px; font-weight: 800; background: linear-gradient(135deg,var(--accent),#A78BFA); -webkit-background-clip: text;-webkit-text-fill-color: transparent; }
+  .stat-card .label { font-size: 13px; color: var(--text2); margin-top: 4px; }
+  .stat-card .note { font-size: 11px; color: var(--text3); margin-top: 8px; }
+
+  .grain::after {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-repeat: repeat; background-size: 200px 200px;
+  }
+
+  .reveal {
+    opacity: 0; transform: translateY(30px);
+    transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  .btn:active { transform: scale(0.97); }
+
+  @media (max-width: 768px) {
+    nav .menu { display: none; position: absolute; top: 56px; left: 0; right: 0;
+      background: var(--bg); flex-direction: column; padding: 12px;
+      border-bottom: 1px solid var(--border); gap: 4px;
+    }
+    nav .menu.open { display: flex; }
+    .menu-toggle { display: block; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body class="grain">
+
+<nav>
+  <div class="logo" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="2" y="6" width="28" height="20" rx="6" stroke="url(#lg)" stroke-width="2.5" fill="none"/>
+      <path d="M10 16h12M16 12v8" stroke="url(#lg)" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="26" cy="10" r="4" fill="url(#lg)"/>
+      <defs><linearGradient id="lg" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#6B4EFF"/><stop offset="1" stop-color="#A78BFA"/></linearGradient></defs>
+    </svg>
+    Meyer Bot
+  </div>
+  <button class="menu-toggle" onclick="document.querySelector('.menu').classList.toggle('open')">☰</button>
+  <div class="menu">
+    <a href="#problema" onclick="closeMenu()">Problema</a>
+    <a href="#solucion" onclick="closeMenu()">Solución</a>
+    <a href="#bot" onclick="closeMenu()">Bot</a>
+    <a href="#dashboard" onclick="closeMenu()">Dashboard</a>
+    <a href="#multi" onclick="closeMenu()">Multi-Profesional</a>
+    <a href="#competencia" onclick="closeMenu()">Competencia</a>
+    <a href="#mercado" onclick="closeMenu()">Mercado</a>
+    <a href="#planes" onclick="closeMenu()">Planes</a>
+    <a href="#faq" onclick="closeMenu()">FAQ</a>
+    <a href="#como-vender" onclick="closeMenu()">Cómo vender</a>
+    <a href="#roadmap" onclick="closeMenu()">Roadmap</a>
+    <a href="#aliado" onclick="closeMenu()">Aliado</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-text">
+    <div class="badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      Hecho en Colombia
+    </div>
+    <h1>El WhatsApp de tu negocio<br>que <span>trabaja 24/7</span></h1>
+    <p>Un bot con inteligencia artificial que agenda citas, habla como persona y administra todo tu negocio — mientras el dueño solo se preocupa de atender bien.</p>
+    <div class="hero-actions">
+      <a href="#planes" class="btn btn-primary">Ver planes</a>
+      <a href="#bot" class="btn btn-outline">Conocer el producto</a>
+    </div>
+  </div>
+
+  <div class="chat-mock">
+    <div class="chat-header">
+      <div class="avatar">🤖</div>
+      <div>
+        <div style="font-size:13px">Meyer Bot</div>
+        <div style="font-size:11px;color:var(--text3)">En línea</div>
+      </div>
+    </div>
+    <div class="chat-body">
+      <div class="msg bot">¡Hola! Soy el asistente de <strong>Peluquería Meyer</strong>. ¿En qué puedo ayudarte? 🙌</div>
+      <div class="msg client">Hola, necesito un corte para mañana en la tarde</div>
+      <div class="msg bot">¡Claro! ¿A qué hora prefieres? <strong>Tenemos disponible a las 4:00 PM con Carlos</strong> o a las 5:30 PM con María. ¿Cuál te sirve? 😊</div>
+      <div class="msg client">A las 4 con Carlos, hagale</div>
+      <div class="msg bot">✅ <strong>¡Listo, confirmado!</strong> Te esperamos mañana a las 4:00 PM con Carlos. Te mandaré un recordatorio un día antes. ¡Gracias, parce!</div>
+      <div class="typing"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+</section>
+
+<section id="problema" class="reveal">
+  <h2>El <span>problema</span> real</h2>
+  <div class="grid-3">
+    <div class="card"><div class="icon">📱</div><h4>WhatsApp es un caos</h4><p>Mensajes perdidos, clientes preguntando horarios a las 11 PM, el dueño respondiendo hasta los domingos.</p></div>
+    <div class="card"><div class="icon">💸</div><h4>Plata perdida todos los días</h4><p>Una peluquería pierde ~$5,000,000 COP al mes en citas que nunca se agendan o clientes que no asisten.</p></div>
+    <div class="card"><div class="icon">😫</div><h4>El dueño es esclavo del teléfono</h4><p>En vez de administrar su negocio, pasa el día contestando "¿qué horarios tienes?" una y otra vez.</p></div>
+  </div>
+</section>
+
+<section id="solucion" class="reveal">
+  <h2>La <span>solución</span></h2>
+  <div class="highlight-box" style="text-align:center">
+    <p style="font-size:20px;font-weight:700;margin-bottom:8px">De la conversación a la cita en 3 pasos — sin intervención humana</p>
+    <p style="color:var(--text2)">No es un link de reserva (como todos los demás). Es una conversación real. El cliente habla natural y el bot le entiende.</p>
+  </div>
+  <div class="grid-3" style="margin-top:24px">
+    <div class="card" style="text-align:center"><div class="icon" style="font-size:48px">💬</div><h4>1. El cliente escribe</h4><p>"Parce, necesito un corte mañana en la tarde"</p></div>
+    <div class="card" style="text-align:center"><div class="icon" style="font-size:48px">🤖</div><h4>2. El Bot agenda solo</h4><p>Verifica disponibilidad, confirma con el cliente, guarda la cita</p></div>
+    <div class="card" style="text-align:center"><div class="icon" style="font-size:48px">📊</div><h4>3. El dueño lo ve al instante</h4><p>Notificación al WhatsApp + el dashboard actualizado en vivo</p></div>
+  </div>
+</section>
+
+<section id="bot" class="reveal">
+  <h2>El <span>Bot WhatsApp</span></h2>
+  <div class="highlight-box" style="text-align:center;margin-bottom:24px">
+    <p style="font-size:17px;font-weight:600">🤖 3 Inteligencias Artificiales trabajando en equipo — si una falla, otra responde. El negocio nunca se queda sin atender.</p>
+  </div>
+
+  <div class="tabs" id="botTabs">
+    <button class="tab-btn active" onclick="switchTab('botTabs','agendar','bot')">Agendamiento</button>
+    <button class="tab-btn" onclick="switchTab('botTabs','ia','bot')">Inteligencia</button>
+    <button class="tab-btn" onclick="switchTab('botTabs','control','bot')">Control</button>
+    <button class="tab-btn" onclick="switchTab('botTabs','notificaciones','bot')">Notificaciones</button>
+  </div>
+
+  <div id="bot-agendar" class="tab-content active">
+    <div class="grid-2">
+      <div class="card"><div class="icon">🗣️</div><h4>Conversación natural</h4><p>El bot entiende jerga colombiana: "parce", "mi amor", "hagale", "listo pues". No es un menú de opciones — habla como persona.</p></div>
+      <div class="card"><div class="icon">📅</div><h4>Agendamiento inteligente</h4><p>Guía al cliente paso a paso: ¿qué servicio? → ¿qué día? → ¿a qué hora? Todo en orden, sin saltos.</p></div>
+      <div class="card"><div class="icon">✅</div><h4>Verificación en tiempo real</h4><p>Revisa la agenda antes de confirmar. Si ya hay alguien, lo dice y propone otro horario.</p></div>
+      <div class="card"><div class="icon">🚫</div><h4>Anti-colisión</h4><p>Es imposible que dos clientes caigan en el mismo horario. El sistema lo bloquea automáticamente.</p></div>
+      <div class="card"><div class="icon">❌</div><h4>Cancelación por WhatsApp</h4><p>El cliente cancela solo desde el chat, sin llamar. El dueño recibe la notificación al instante.</p></div>
+      <div class="card"><div class="icon">🔄</div><h4>Reagendamiento por WhatsApp</h4><p>El cliente cambia fecha y hora desde la misma conversación. El sistema libera el slot anterior automáticamente.</p></div>
+    </div>
+  </div>
+
+  <div id="bot-ia" class="tab-content">
+    <div class="grid-2">
+      <div class="card"><div class="icon">🧠</div><h4>Triple respaldo de IA</h4><p>No tenemos una, sino tres inteligencias artificiales trabajando en cadena. Si una falla, la otra responde. Cero downtime.</p></div>
+      <div class="card"><div class="icon">💭</div><h4>Memoria conversacional</h4><p>El bot recuerda la conversación anterior. No empieza de cero cada vez que el cliente escribe.</p></div>
+      <div class="card"><div class="icon">⏱️</div><h4>Control de inactividad</h4><p>Si el cliente deja de responder, el bot pregunta "¿Sigues ahí?" para no perder la conversación.</p></div>
+      <div class="card"><div class="icon">🕐</div><h4>Responde fuera de horario</h4><p>Si alguien escribe a las 10 PM, el bot responde al toque. El negocio nunca deja de atender.</p></div>
+    </div>
+  </div>
+
+  <div id="bot-control" class="tab-content">
+    <div class="grid-2">
+      <div class="card"><div class="icon">👥</div><h4>Multi-Profesional</h4><p>El bot pregunta "¿Con qué profesional quieres agendarte?" y muestra la agenda de cada uno. Cada profesional tiene sus propios horarios.</p></div>
+      <div class="card"><div class="icon">🔔</div><h4>Recordatorio 24 horas antes</h4><p>Un día antes de la cita, el cliente recibe un WhatsApp recordándole. Reduce drásticamente los clientes que no asisten.</p></div>
+      <div class="card"><div class="icon">🔔</div><h4>Recordatorio 2 horas antes</h4><p>El mismo día, dos horas antes, otro recordatorio. Doble seguridad para que nadie se olvide.</p></div>
+      <div class="card"><div class="icon">🧹</div><h4>Limpieza automática nocturna</h4><p>Todas las noches, el sistema revisa y cierra las citas que no se completaron. La agenda siempre limpia.</p></div>
+      <div class="card"><div class="icon">🔄</div><h4>Relleno inteligente de espacios</h4><p>Si un cliente no llegó a las 8 AM, el bot detecta ese espacio vacío y lo ofrece en las siguientes conversaciones. El sistema solo no deja perder ingresos.</p></div>
+      <div class="card"><div class="icon">🛡️</div><h4>Anti-spam</h4><p>Protege el negocio de mensajes repetitivos o abusivos.</p></div>
+    </div>
+  </div>
+
+  <div id="bot-notificaciones" class="tab-content">
+    <div class="grid-2">
+      <div class="card"><div class="icon">📲</div><h4>Notificación al dueño al instante</h4><p>Cada vez que alguien agenda una cita, al dueño le llega un WhatsApp automático: servicio, fecha, hora, nombre del cliente.</p></div>
+      <div class="card"><div class="icon">📲</div><h4>Notificación de cancelación</h4><p>Si un cliente cancela, el dueño también recibe WhatsApp. Siempre está enterado de todo.</p></div>
+      <div class="card"><div class="icon">🎯</div><h4>Filtro inteligente</h4><p>Si el cliente manda audio, foto o video, el bot responde amable y guía la conversación de vuelta al texto.</p></div>
+      <div class="card"><div class="icon">🌙</div><h4>Modo fuera de horario</h4><p>Responde automáticamente con los horarios de atención si el cliente escribe cuando el negocio está cerrado.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="dashboard" class="reveal">
+  <h2>El <span>Dashboard Web</span></h2>
+  <p style="color:var(--text2);margin-bottom:24px">El dueño ve todo su negocio desde el celular, la tablet o el computador.</p>
+
+  <div class="tabs" id="dashTabs">
+    <button class="tab-btn active" onclick="switchTab('dashTabs','gestion','dash')">Gestión</button>
+    <button class="tab-btn" onclick="switchTab('dashTabs','roles','dash')">Roles</button>
+    <button class="tab-btn" onclick="switchTab('dashTabs','analisis','dash')">Análisis</button>
+    <button class="tab-btn" onclick="switchTab('dashTabs','admin','dash')">Administración</button>
+  </div>
+
+  <div id="dash-gestion" class="tab-content active">
+    <div class="grid-2">
+      <div class="card"><div class="icon">📋</div><h4>Vista HOY</h4><p>El dueño abre y ve todas las citas del día. En vivo, actualizadas, con colores por estado.</p></div>
+      <div class="card"><div class="icon">📅</div><h4>Agenda / Semana</h4><p>Calendario completo con vista mensual. Colores: verde = completada, amarillo = pendiente, rojo = cancelada.</p></div>
+      <div class="card"><div class="icon">➕</div><h4>Agendar desde la web</h4><p>El dueño o admin crean citas manualmente desde el dashboard eligiendo cliente (nuevo o existente), servicio, profesional, fecha y hora. Ideal para llamadas telefónicas o clientes que llegan sin avisar.</p></div>
+      <div class="card"><div class="icon">🔄</div><h4>Sincronización bidireccional</h4><p>Todo se sincroniza al instante: si el bot agenda por WhatsApp aparece en el dashboard. Si el dueño agenda desde la web, el bot lo sabe. No hay conflictos ni duplicados.</p></div>
+      <div class="card"><div class="icon">👤</div><h4>CRM / Clientes</h4><p>Base de datos con historial de cada cliente: qué servicios ha tomado, cuántas veces ha venido, cuándo fue su última visita.</p></div>
+      <div class="card"><div class="icon">👥</div><h4>Equipo y Roles</h4><p>Gestión de profesionales. El dueño decide quién ve qué. Roles: dueño (todo), admin (casi todo), profesional (solo su agenda).</p></div>
+    </div>
+  </div>
+
+  <div id="dash-roles" class="tab-content">
+    <p style="color:var(--text2);margin-bottom:16px">Cada rol ve exactamente lo que necesita. Ni más ni menos.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Función</th><th>👑 Dueño</th><th>⚙️ Admin</th><th>👤 Profesional</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Ver todas las citas</strong></td><td class="check">✅</td><td class="check">✅</td><td>❌ Solo las suyas</td></tr>
+          <tr><td><strong>Agendar desde la web</strong></td><td class="check">✅</td><td class="check">✅</td><td class="cross">❌</td></tr>
+          <tr><td><strong>Gestionar profesionales</strong></td><td class="check">✅</td><td class="cross">❌</td><td class="cross">❌</td></tr>
+          <tr><td><strong>Configurar servicios y precios</strong></td><td class="check">✅</td><td class="check">✅</td><td class="cross">❌</td></tr>
+          <tr><td><strong>Días que no abre el negocio</strong></td><td class="check">✅</td><td class="check">✅</td><td class="cross">❌</td></tr>
+          <tr><td><strong>Marcar profesional no disponible</strong></td><td class="check">✅</td><td class="check">✅</td><td class="cross">❌</td></tr>
+          <tr><td><strong>Ver métricas e informes</strong></td><td class="check">✅</td><td class="check">✅</td><td class="cross">❌</td></tr>
+          <tr><td><strong>Auditoría de cambios</strong></td><td class="check">✅</td><td class="cross">❌</td><td class="cross">❌</td></tr>
+          <tr><td><strong>CRM / Clientes</strong></td><td class="check">✅</td><td class="check">✅</td><td class="cross">❌</td></tr>
+          <tr><td><strong>Cancelar citas</strong></td><td class="check">✅</td><td class="check">✅</td><td class="check">✅ Solo las suyas</td></tr>
+          <tr><td><strong>Ver su propia agenda</strong></td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="highlight-box" style="margin-top:20px">
+      <p style="text-align:center;font-size:14px;color:var(--text2)">
+        💡 El dueño siempre ve todo. El profesional solo su propia agenda y sus citas. El admin es un asistente de confianza con permisos intermedios.
+      </p>
+    </div>
+  </div>
+
+  <div id="dash-analisis" class="tab-content">
+    <div class="grid-2">
+      <div class="card"><div class="icon">📊</div><h4>Métricas e Informes</h4><p>Cuánto se facturó, cuántas citas hubo, cuál servicio es el más vendido, qué días hay más movimiento. Todo en gráficos.</p></div>
+      <div class="card"><div class="icon">📈</div><h4>Comparativas</h4><p>Esta semana vs la anterior, este mes vs el mes pasado. El dueño ve si está creciendo o bajando.</p></div>
+      <div class="card"><div class="icon">🌡️</div><h4>Ocupación</h4><p>Qué horas del día están más llenas y cuáles vacías. Para tomar decisiones: ¿abrimos más temprano? ¿contratamos más personal?</p></div>
+      <div class="card"><div class="icon">🏆</div><h4>Ranking de Servicios</h4><p>Qué servicios dejan más plata y cuáles se piden más. Para saber dónde poner el foco.</p></div>
+    </div>
+  </div>
+
+  <div id="dash-admin" class="tab-content">
+    <div class="grid-2">
+      <div class="card"><div class="icon">⚙️</div><h4>Configuración</h4><p>El dueño mismo cambia servicios, precios y horarios. Sin llamar a nadie, sin esperar.</p></div>
+      <div class="card"><div class="icon">🚫</div><h4>Días cerrados / Bloqueos</h4><p>El dueño marca qué días el negocio no abre: vacaciones, feriados, mantenimiento. El bot lo respeta al agendar. Se bloquea con un clic.</p></div>
+      <div class="card"><div class="icon">⏰</div><h4>Disponibilidad de profesionales</h4><p>El dueño puede marcar que un profesional no está disponible en ciertas horas o días específicos. Ej: "María no atiende los jueves en la tarde". El bot no agenda a nadie con María en ese horario.</p></div>
+      <div class="card"><div class="icon">📜</div><h4>Auditoría</h4><p>Registro de todo lo que pasa: quién agendó, quién canceló, quién cambió un precio. Trazabilidad completa.</p></div>
+      <div class="card"><div class="icon">❓</div><h4>Ayuda / FAQ</h4><p>Preguntas frecuentes integradas en el sistema, con respuestas según el rol de cada usuario.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="multi" class="reveal">
+  <h2><span>Multi-Profesional</span> — el diferenciador</h2>
+  <div class="grid-3">
+    <div class="card" style="text-align:center"><div class="icon" style="font-size:40px">🗣️</div><h4>El bot pregunta</h4><p>"¿Con qué profesional quieres agendarte?" y muestra la lista de disponibles.</p></div>
+    <div class="card" style="text-align:center"><div class="icon" style="font-size:40px">📅</div><h4>Cada uno con su agenda</h4><p>Cada profesional tiene sus propios horarios, servicios y bloqueos. Independientes.</p></div>
+    <div class="card" style="text-align:center"><div class="icon" style="font-size:40px">👁️</div><h4>El dueño lo ve todo</h4><p>El dueño ve la agenda completa. Cada profesional ve solo la suya.</p></div>
+  </div>
+  <div class="highlight-box" style="margin-top:16px;text-align:center">
+    <p style="font-weight:600">No solo para peluquerías: clínicas, spas, gimnasios, centros de estética, consultorios — cualquier negocio con varios profesionales.</p>
+  </div>
+</section>
+
+<section id="infraestructura" class="reveal">
+  <h2>La <span>tecnología</span> que lo hace posible</h2>
+  <div class="grid-3">
+    <div class="card" style="text-align:center"><div class="icon" style="font-size:40px">🇩🇪</div><h4>Servidor en Europa</h4><p>Todo el sistema corre en un servidor profesional con respaldo 24/7. Tu información siempre disponible y protegida.</p></div>
+    <div class="card" style="text-align:center"><div class="icon" style="font-size:40px">🤖🤖🤖</div><h4>3 cerebros de IA</h4><p>Tres inteligencias artificiales trabajan en equipo. Si una falla, otra responde. El negocio nunca se queda sin atender.</p></div>
+    <div class="card" style="text-align:center"><div class="icon" style="font-size:40px">📱💻</div><h4>Funciona en todo</h4><p>El dashboard se ve perfecto en celular, tablet y computador. El dueño lo revisa desde donde esté.</p></div>
+  </div>
+  <div class="highlight-box" style="margin-top:16px">
+    <p style="text-align:center;font-weight:600">Infraestructura preparada para crecer — a medida que el negocio crece, el sistema crece con él. Sin preocupaciones técnicas.</p>
+  </div>
+</section>
+
+<section id="competencia" class="reveal">
+  <h2><span>Competencia</span> en Colombia y el mundo</h2>
+  <p style="color:var(--text2);margin-bottom:8px">Saber quién más está en la cancha te da las herramientas para vender con confianza.</p>
+
+  <h3 style="margin-top:32px">🌎 Competencia Internacional</h3>
+  <div class="table-wrap" style="margin-top:12px">
+    <table>
+      <thead><tr><th>Empresa</th><th>Origen</th><th>Presencia</th><th>Clientes</th><th>Modelo</th></tr></thead>
+      <tbody>
+        <tr><td><strong>AgendaPro</strong></td><td>🇨🇱 Chile (Santiago)</td><td>Chile, Colombia, México, Perú, Argentina, España</td><td>+20,000 negocios, +135,000 profesionales</td><td>Software de agendamiento web con IA. El cliente agenda desde un <strong>link</strong>, no conversando.</td></tr>
+        <tr><td><strong>Aurora Inbox</strong></td><td>🇲🇽 México</td><td>México, LATAM, España</td><td>—</td><td>Chatbot IA con GPT-5. $99-329 USD/mes. Agendamiento nativo.</td></tr>
+        <tr><td><strong>Kumbio</strong></td><td>🇺🇸 USA / LATAM</td><td>LATAM</td><td>—</td><td>Software de agendamiento con recordatorios WhatsApp.</td></tr>
+        <tr><td><strong>Infobip</strong></td><td>🌍 Global (UK)</td><td>Mundial</td><td>Enterprise</td><td>Plataforma de comunicaciones enterprise. No es para pequeños negocios.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="margin-top:32px">🇨🇴 Competencia en Colombia</h3>
+  <div class="table-wrap" style="margin-top:12px">
+    <table>
+      <thead><tr><th>Empresa</th><th>Origen</th><th>Qué hace</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Bukea</strong></td><td>🇨🇴 Colombia</td><td>Link de reserva con recordatorios WhatsApp y pagos Nequi. +50,000 citas. No tiene bot conversacional — es un formulario web.</td></tr>
+        <tr><td><strong>AsistChat</strong></td><td>🇨🇴 Colombia (Medellín)</td><td>Secretaria virtual con IA para WhatsApp. Desde $200,000 COP. Similar pero más caro y sin dashboard completo.</td></tr>
+        <tr><td><strong>ParceVox</strong></td><td>🇨🇴 Colombia / 🇲🇽 México</td><td>Chatbot WhatsApp para ventas, citas y cobranza. Multi-país.</td></tr>
+        <tr><td><strong>Agendi</strong></td><td>🇨🇴 Colombia</td><td>Agenda citas por WhatsApp para barberías y salones. "Configura en 10 minutos."</td></tr>
+        <tr><td><strong>Happoin</strong></td><td>🌎 LATAM / España</td><td>Agendamiento con pagos online y Google Calendar. Multi-país.</td></tr>
+        <tr><td><strong>ReservaSimple</strong></td><td>🇨🇴 Colombia</td><td>App de citas gratis para barberías. Plan gratuito disponible.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="margin-top:32px">
+    <h3 style="margin-bottom:16px">⚡ Comparativa rápida: Meyer Bot vs la competencia</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Característica</th><th>🏆 Meyer Bot</th><th>Bukea</th><th>AsistChat</th><th>AgendaPro</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Precio desde</strong></td><td style="color:var(--green);font-weight:700">$120K/mes</td><td>Gratis limitado</td><td>$200K/mes</td><td>$30 USD/mes</td></tr>
+          <tr><td><strong>Bot conversacional WhatsApp</strong></td><td class="check">✅ Natural, con jerga colombiana</td><td class="cross">❌ Link de formulario</td><td class="check">✅ Básico</td><td class="cross">❌ Link de agenda</td></tr>
+          <tr><td><strong>Dashboard web completo</strong></td><td class="check">✅ Sí</td><td class="cross">❌ No</td><td class="cross">❌ Limitado</td><td class="check">✅ Sí</td></tr>
+          <tr><td><strong>Multi-profesional</strong></td><td class="check">✅ Con agenda independiente</td><td class="check">✅ Básico</td><td class="cross">❌ No</td><td class="check">✅ Sí</td></tr>
+          <tr><td><strong>Doble recordatorio (24h + 2h)</strong></td><td class="check">✅ Sí</td><td class="check">✅ Simple</td><td class="check">✅ Sí</td><td class="check">✅ Sí</td></tr>
+          <tr><td><strong>3 IAs en respaldo</strong></td><td class="check">✅ Triple seguridad</td><td class="cross">❌ N/A</td><td class="cross">❌ Una sola</td><td class="cross">❌ N/A</td></tr>
+          <tr><td><strong>CRM con historial</strong></td><td class="check">✅ Sí</td><td class="cross">❌ No</td><td class="cross">❌ No</td><td class="check">✅ Básico</td></tr>
+          <tr><td><strong>Métricas e informes</strong></td><td class="check">✅ Sí</td><td class="cross">❌ No</td><td class="cross">❌ No</td><td class="check">✅ Sí</td></tr>
+          <tr><td><strong>Relleno inteligente de espacios</strong></td><td class="check">✅ Automático</td><td class="cross">❌ No</td><td class="cross">❌ No</td><td class="cross">❌ No</td></tr>
+          <tr><td><strong>Sin contrato, cancelación libre</strong></td><td class="check">✅ Sí</td><td class="check">✅ Sí</td><td class="check">✅ Sí</td><td class="check">✅ Sí</td></tr>
+          <tr><td><strong>Hecho en Colombia</strong></td><td class="check">✅ Colombiano</td><td class="check">✅ Colombiano</td><td class="check">✅ Colombiano</td><td class="cross">❌ Chileno</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="color:var(--text2);font-size:13px;margin-top:8px;text-align:center">Meyer Bot compite con herramientas que cuestan 2x o 3x y dan menos funcionalidades. Esta tabla es tu mejor argumento de venta.</p>
+  </div>
+
+  <div class="highlight-box" style="margin-top:32px">
+    <h4 style="margin-bottom:12px">¿Y entonces? ¿Por qué Meyer Bot es mejor?</h4>
+    <div class="grid-3" style="margin-top:16px">
+      <div style="text-align:center;padding:12px"><div style="font-size:32px">💬</div><p style="font-size:14px;color:var(--text2);margin-top:8px"><strong>Ellos usan links de formulario.</strong> Nosotros tenemos conversación natural con IA. El cliente habla, el bot entiende.</p></div>
+      <div style="text-align:center;padding:12px"><div style="font-size:32px">🔒</div><p style="font-size:14px;color:var(--text2);margin-top:8px"><strong>Ellos tienen 1 IA.</strong> Nosotros tenemos 3 con respaldo automático. Nunca fallamos.</p></div>
+      <div style="text-align:center;padding:12px"><div style="font-size:32px">📊</div><p style="font-size:14px;color:var(--text2);margin-top:8px"><strong>Ellos solo agendan.</strong> Nosotros damos dashboard completo con métricas, CRM, equipo, auditoría.</p></div>
+    </div>
+    <div class="grid-3" style="margin-top:8px">
+      <div style="text-align:center;padding:12px"><div style="font-size:32px">🔔🔔</div><p style="font-size:14px;color:var(--text2);margin-top:8px"><strong>Doble recordatorio</strong> (24h + 2h). Ellos solo mandan uno.</p></div>
+      <div style="text-align:center;padding:12px"><div style="font-size:32px">💰</div><p style="font-size:14px;color:var(--text2);margin-top:8px"><strong>Desde $120,000 COP.</strong> La competencia directa (AsistChat) cuesta desde $200,000.</p></div>
+      <div style="text-align:center;padding:12px"><div style="font-size:32px">🤝</div><p style="font-size:14px;color:var(--text2);margin-top:8px"><strong>Te acompañamos:</strong> capacitaciones 2x/semana, sorteos mensuales, atención cercana.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="planes" class="reveal">
+  <h2><span>Planes</span> y Precios</h2>
+  <p style="color:var(--text2);margin-bottom:32px;text-align:center">Sin contratos largos. Sin penalizaciones. Pagas mes a mes. Cancela cuando quieras.</p>
+
+  <div class="price-grid">
+    <div class="price-card">
+      <h4>Plan 1</h4>
+      <p style="font-size:14px;color:var(--text2)">1 a 5 profesionales</p>
+      <div class="amount">$120K<small>/mes</small></div>
+      <ul>
+        <li>1 dueño + 1 admin</li>
+        <li>Bot WhatsApp completo</li>
+        <li>Dashboard web</li>
+        <li>CRM / Clientes</li>
+        <li>Métricas e informes</li>
+        <li>Multi-profesional</li>
+      </ul>
+      <a href="https://wa.me/573226541957?text=Hola%2C%20quiero%20el%20Plan%201%20de%20Meyer%20Bot%20(1-5%20profesionales)" target="_blank" class="cta">Elegir plan</a>
+    </div>
+
+    <div class="price-card featured">
+      <div class="popular">RECOMENDADO</div>
+      <h4>Plan 2</h4>
+      <p style="font-size:14px;color:var(--text2)">6 a 12 profesionales</p>
+      <div class="amount">$180K<small>/mes</small></div>
+      <ul>
+        <li>1 dueño + 1 admin</li>
+        <li>Bot WhatsApp completo</li>
+        <li>Dashboard web completo</li>
+        <li>CRM / Clientes</li>
+        <li>Métricas premium</li>
+        <li>Multi-profesional</li>
+        <li>Auditoría</li>
+      </ul>
+      <a href="https://wa.me/573226541957?text=Hola%2C%20quiero%20el%20Plan%202%20de%20Meyer%20Bot%20(6-12%20profesionales)" target="_blank" class="cta">Elegir plan</a>
+    </div>
+
+    <div class="price-card">
+
+      <h4>Plan 3</h4>
+      <p style="font-size:14px;color:var(--text2)">13 a 20 profesionales</p>
+      <div class="amount">$260K<small>/mes</small></div>
+      <ul>
+        <li>1 dueño + 1 admin</li>
+        <li>Bot WhatsApp completo</li>
+        <li>Dashboard web completo</li>
+        <li>CRM / Clientes</li>
+        <li>Métricas premium</li>
+        <li>Multi-profesional</li>
+        <li>Auditoría</li>
+        <li>Soporte prioritario</li>
+      </ul>
+      <a href="https://wa.me/573226541957?text=Hola%2C%20quiero%20el%20Plan%203%20de%20Meyer%20Bot%20(13-20%20profesionales)" target="_blank" class="cta">Elegir plan</a>
+    </div>
+
+    <div class="price-card">
+      <h4>Plan Personalizado</h4>
+      <p style="font-size:14px;color:var(--text2)">A la medida del negocio</p>
+      <div class="amount" style="font-size:28px">A convenir<small></small></div>
+      <ul>
+        <li>Número de profesionales flexible</li>
+        <li>Dueños y admins adicionales</li>
+        <li>Funcionalidades extra</li>
+        <li>Soporte dedicado</li>
+        <li>Capacitación especializada</li>
+        <li>✅ Todo lo que el negocio necesite</li>
+      </ul>
+      <a href="https://wa.me/573226541957?text=Hola%2C%20quiero%20cotizar%20un%20plan%20personalizado%20de%20Meyer%20Bot" target="_blank" class="cta">Cotizar</a>
+    </div>
+  </div>
+
+  <div class="highlight-box" style="margin-top:32px">
+    <p style="text-align:center;font-size:15px;color:var(--text2)">
+      💡 El Plan 2 es el más elegido. Ideal para salones y clínicas que ya tienen varios profesionales y necesitan control total.
+    </p>
+  </div>
+</section>
+
+<section id="mercado" class="reveal">
+  <h2>El <span>mercado</span> real</h2>
+  <p style="color:var(--text2);margin-bottom:24px">Datos duros del sector de belleza y barbería en Colombia. Úsalos para cerrar ventas con argumentos concretos.</p>
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="num">261,000+</div>
+      <div class="label">Peluquerías y salones en Colombia</div>
+      <div class="note">Fuente: Henkel / Schwarzkopf 2025</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">94%</div>
+      <div class="label">Son micronegocios</div>
+      <div class="note">Menos de 10 empleados — nuestro mercado exacto</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">+3.2%</div>
+      <div class="label">Crecimiento anual del sector (2023-2024)</div>
+      <div class="note">Sigue creciendo — y la tecnología aún no llega</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">$500K MM</div>
+      <div class="label">Facturación anual solo en Bogotá</div>
+      <div class="note">Fenalco — mercado gigante y fragmentado</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">+20B COP</div>
+      <div class="label">Gasto en cuidado personal (2024)</div>
+      <div class="note">La gente cada vez gasta más en verse bien</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">0.3%</div>
+      <div class="label">Usan automatización con IA</div>
+      <div class="note">Mercado virgen. Oportunidad enorme.</div>
+    </div>
+  </div>
+
+  <div class="highlight-box" style="margin-top:24px">
+    <p style="font-weight:600;text-align:center">Dile esto al dueño:</p>
+    <p style="color:var(--text2);text-align:center;margin-top:8px;font-size:15px">
+      <em>"Hay <strong>261,000 peluquerías y salones en Colombia</strong> y casi <strong>ninguna usa inteligencia artificial</strong>. Las que automaticen primero, van a ganar. Tú puedes ser uno de los primeros en tu zona."</em>
+    </p>
+  </div>
+</section>
+
+<section id="casos" class="reveal">
+  <h2><span>Casos reales</span> — negocios que ya operan con Meyer Bot</h2>
+  <div class="grid-2">
+    <div class="card">
+      <div class="tag">En producción</div>
+      <h4>Peluquería Meyer</h4>
+      <p style="color:var(--text2)">80-120 citas al mes. 60-70% de las conversaciones terminan en una cita agendada. Más de 2 meses operando sin interrupciones.</p>
+    </div>
+    <div class="card">
+      <div class="tag">Primer cliente real</div>
+      <h4>Brayan Study</h4>
+      <p style="color:var(--text2)">Medina, Cundinamarca. Negocio local operativo con Meyer Bot. Cliente real atendiendo sus clientes a través del sistema.</p>
+    </div>
+  </div>
+  <p style="color:var(--text2);text-align:center;margin-top:16px">+3 negocios activos en la plataforma y creciendo.</p>
+</section>
+
+<section id="tipos" class="reveal">
+  <h2>¿A quién <span>venderle</span>?</h2>
+  <div class="grid-3">
+    <div class="card" style="text-align:center"><div class="icon" style="font-size:36px"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div><h4>Barberías y Peluquerías</h4></div>
+    <div class="card" style="text-align:center"><div class="icon" style="font-size:36px"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M3 21a9 9 0 0 1 18 0"/></svg></div><h4>Salones de Belleza</h4></div>
+    <div class="card" style="text-align:center"><div class="icon" style="font-size:36px"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg></div><h4>Spas y Centros de Estética</h4></div>
+    <div class="card" style="text-align:center"><div class="icon" style="font-size:36px"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg></div><h4>Clínicas Dentales</h4></div>
+    <div class="card" style="text-align:center"><div class="icon" style="font-size:36px"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div><h4>Gimnasios y Fitness</h4></div>
+    <div class="card" style="text-align:center"><div class="icon" style="font-size:36px"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/></svg></div><h4>Centros de Masajes</h4></div>
+    <div class="card" style="text-align:center"><div class="icon" style="font-size:36px"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg></div><h4>Consultorios Médicos</h4></div>
+    <div class="card" style="text-align:center"><div class="icon" style="font-size:36px"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9 10a3 3 0 1 1 6 0c0 2-3 3-3 5"/><circle cx="12" cy="17" r=".5" fill="var(--accent)"/></svg></div><h4>Psicólogos y Terapeutas</h4></div>
+    <div class="card" style="text-align:center"><div class="icon" style="font-size:36px"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12c-2 0-4-1.5-4-4 0-1.5 1-3 2.5-3C10 5 11 7 12 8c1-1 2-3 3.5-3C17 5 18 6.5 18 8c0 2.5-2 4-4 4"/><path d="M4 16c0 2 1.5 4 3 4h10c1.5 0 3-2 3-4"/></svg></div><h4>Veterinarias</h4></div>
+  </div>
+  <p style="text-align:center;color:var(--text2);margin-top:20px;font-size:17px;font-weight:600">Cualquier negocio que viva de las citas.</p>
+</section>
+
+<section id="datos" class="reveal">
+  <h2><span>Protección</span> de Datos Personales</h2>
+  <div class="highlight-box">
+    <p style="font-weight:600;margin-bottom:12px">Cumplimos con la Ley 1581 de Colombia (Protección de Datos Personales)</p>
+    <ul style="color:var(--text2);list-style:none">
+      <li style="padding:6px 0">🔐 Los datos de cada cliente están almacenados en servidores seguros</li>
+      <li style="padding:6px 0">🏪 El negocio es el <strong>dueño de sus datos</strong> — nosotros solo los procesamos para el servicio</li>
+      <li style="padding:6px 0">✅ El cliente final autoriza el tratamiento al usar el servicio</li>
+      <li style="padding:6px 0">🚫 No compartimos información con terceros</li>
+    </ul>
+  </div>
+</section>
+
+<section id="roadmap" class="reveal">
+  <h2>Lo que <span>viene</span></h2>
+  <p style="color:var(--text2);margin-bottom:24px">Estamos en constante evolución. Esto es lo que estamos construyendo:</p>
+  <div class="grid-3">
+    <div class="card"><div class="icon">💳</div><h4>Pagos desde el chat</h4><p>El cliente paga desde el WhatsApp con Nequi, Daviplata o PSE. Próximamente.</p></div>
+    <div class="card"><div class="icon">⭐</div><h4>Automatización Google Maps</h4><p>Después de cada cita, el sistema invita al cliente a calificar el negocio en Google Maps automáticamente. Más reseñas, más clientes nuevos.</p></div>
+    <div class="card"><div class="icon">📤</div><h4>Exportación de datos</h4><p>El dueño descarga sus reportes en Excel para contabilidad o análisis.</p></div>
+    <div class="card"><div class="icon">🤝</div><h4>Google Calendar Sync</h4><p>El dueño ve su agenda de Meyer Bot y su calendario personal en un solo lugar.</p></div>
+    <div class="card"><div class="icon">🌎</div><h4>Expansión regional</h4><p>Versión en inglés y portugués para llegar a México, USA y Canadá.</p></div>
+    <div class="card"><div class="icon">🚀</div><h4>Onboarding automatizado</h4><p>El negocio se registra solo, sin intervención técnica. Todo configurado en minutos.</p></div>
+  </div>
+</section>
+
+<section id="como-vender" class="reveal">
+  <h2><span>Cómo vender</span> Meyer Bot</h2>
+  <p style="color:var(--text2);margin-bottom:24px">El cliente no compra tecnología — compra tranquilidad, más clientes y menos trabajo. Así se lo vendes.</p>
+
+  <div class="grid-2">
+    <div class="card" style="border-left: 3px solid var(--accent)">
+      <div class="tag">Atención</div>
+      <h4>🟣 1. Abre con el dolor</h4>
+      <p style="color:var(--text2);font-size:14px;line-height:1.7">
+        <em>"Dueño, ¿cuántas veces al día te toca contestar el mismo WhatsApp de 'qué horarios tienes'? ¿Cuánta plata crees que se te va porque el cliente escribe a las 10 PM y tú estás dormido?"</em>
+        <br><br>No menciones el producto todavía. Solo haz que sientan el problema.
+      </p>
+    </div>
+    <div class="card" style="border-left: 3px solid var(--green)">
+      <div class="tag">Interés</div>
+      <h4>🟢 2. Presenta la solución</h4>
+      <p style="color:var(--text2);font-size:14px;line-height:1.7">
+        <em>"¿Y si te dijera que existe un bot que atiende WhatsApp por ti 24/7, agenda citas solo, manda recordatorios, y te avisa al instante cuando alguien agendó? Todo automático. El dueño solo se preocupa de atender bien."</em>
+        <br><br>Aquí muestras el bot. Habla de la conversación natural, no de tecnología.
+      </p>
+    </div>
+    <div class="card" style="border-left: 3px solid var(--amber)">
+      <div class="tag">Deseo</div>
+      <h4>🟡 3. Cierra el valor</h4>
+      <p style="color:var(--text2);font-size:14px;line-height:1.7">
+        <em>"Con Meyer Bot recuperas tiempo, no pierdes clientes, y sabes exactamente qué pasa en tu negocio desde el celular. Y cuesta menos de lo que pagas por almuerzos en una semana."</em>
+        <br><br>Muestra el dashboard, los recordatorios dobles, el multi-profesional. Haz que se imaginen usando el sistema.
+      </p>
+    </div>
+    <div class="card" style="border-left: 3px solid var(--accent)">
+      <div class="tag">Acción</div>
+      <h4>🟣 4. Pide la decisión</h4>
+      <p style="color:var(--text2);font-size:14px;line-height:1.7">
+        <em>"Sin contrato. Sin penalización. Pagas mes a mes. Si no te gusta, cancelas y listo. Empezamos en menos de una semana. ¿Probamos?"</em>
+        <br><br>Siempre cierra con una pregunta abierta. No digas "¿qué piensas?" — di <strong>"¿empezamos?"</strong>
+      </p>
+    </div>
+  </div>
+
+  <div class="highlight-box" style="margin-top:24px">
+    <h4 style="margin-bottom:8px">🗣️ Frases que venden solas</h4>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;color:var(--text2);font-size:14px">
+      <p>"No es un link de reserva. <strong>Es como tener una recepcionista 24/7</strong> que nunca se cansa, nunca se enoja y nunca pide aumento."</p>
+      <p>"Tres inteligencias artificiales trabajan juntas. <strong>Si una falla, la otra responde.</strong> Como tener 3 empleados por el precio de 1."</p>
+      <p>"$120,000 pesos al mes. <strong>Eso es lo que pierdes en 2 clientes que no pudieron agendar</strong> porque nadie les contestó."</p>
+      <p>"No reemplazamos al dueño. <strong>Reemplazamos el estrés de contestar WhatsApp todo el día.</strong> El dueño sigue siendo el dueño."</p>
+    </div>
+  </div>
+
+  <div class="highlight-box" style="margin-top:16px;border-color:var(--green)">
+    <p style="text-align:center;font-weight:600;color:var(--green)">💡 Regla de oro: No vendas tecnología. Vende tiempo libre, más clientes y tranquilidad.</p>
+  </div>
+</section>
+
+<section id="faq" class="reveal">
+  <h2>FAQ del <span>Vendedor</span></h2>
+  <p style="color:var(--text2);margin-bottom:24px">Objeciones reales que te van a poner. Aquí tienes cómo responder.</p>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">
+      <span>¿Y si el cliente no entiende al bot?</span>
+      <span class="arrow">▾</span>
+    </div>
+    <div class="faq-a">El bot habla en colombiano real: "parce", "hagale", "listo pues", "mi amor". No es un robot frío — es como estar chateando con una persona del barrio. Además, si el cliente se confunde, el bot lo guía paso a paso.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">
+      <span>¿Qué pasa si se cae internet?</span>
+      <span class="arrow">▾</span>
+    </div>
+    <div class="faq-a">El sistema está en un servidor profesional con respaldo 24/7. El cliente escribe normal por WhatsApp y el bot responde al toque. El dueño no tiene que preocuparse por absolutamente nada técnico.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">
+      <span>¿Es difícil de configurar?</span>
+      <span class="arrow">▾</span>
+    </div>
+    <div class="faq-a">Nosotros lo hacemos todo. El dueño solo nos da la lista de servicios con precios y los horarios del negocio. En menos de una semana ya está funcionando.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">
+      <span>¿Y si quiero cancelar?</span>
+      <span class="arrow">▾</span>
+    </div>
+    <div class="faq-a">Sin contratos largos. Sin penalizaciones. Pagas mes a mes y cancelas cuando quieras. Sin letra pequeña.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">
+      <span>¿Sirve para cualquier tipo de negocio?</span>
+      <span class="arrow">▾</span>
+    </div>
+    <div class="faq-a">Cualquier negocio que maneje citas: peluquería, barbería, clínica, spa, gimnasio, consultorio, veterinaria, centro de uñas, masajes, psicología... Si el negocio vive de las citas, Meyer Bot le sirve.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">
+      <span>Ya tengo otro sistema</span>
+      <span class="arrow">▾</span>
+    </div>
+    <div class="faq-a">Entendemos. Pero compáralos: ¿tu sistema actual tiene un bot que habla natural con los clientes? ¿Dashboard con métricas? ¿CRM? ¿Doble recordatorio? ¿Multi-profesional con agenda independiente? Meyer Bot reemplaza 3 herramientas en una. Además, <strong>damos capacitaciones 2 veces por semana</strong> para que el negocio saque el máximo provecho, y <strong>cada mes hacemos sorteos</strong> entre nuestros clientes activos. No es solo un software — es un aliado.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">
+      <span>¿Los clientes no van a extrañar hablar con una persona?</span>
+      <span class="arrow">▾</span>
+    </div>
+    <div class="faq-a">Para nada. El 90% de las consultas son para saber horarios, precios y agendar — cosas que el bot resuelve al instante. El cliente recibe respuesta inmediata, sin esperar, a cualquier hora. Y si el caso es complejo, el dueño siempre puede intervenir.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">
+      <span>Está muy caro para mi negocio</span>
+      <span class="arrow">▾</span>
+    </div>
+    <div class="faq-a"><strong>Objeción común.</strong> Respuesta: "Dueño, $120,000 es lo que pagas por 3 almuerzos. Ahora piensa: ¿cuánto pierdes al mes en clientes que llaman y no les contestan? ¿Cuánto vale tu tiempo respondiendo WhatsApp? El bot se paga solo con 1 o 2 citas extra a la semana. <strong>No es un gasto — es una inversión que se paga sola.</strong>"</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">
+      <span>Voy a pensarlo / Lo hablo con mi socio</span>
+      <span class="arrow">▾</span>
+    </div>
+    <div class="faq-a"><strong>Objecíon de procrastinación.</strong> Respuesta: "Te entiendo perfecto. Mientras piensas, ¿sabes cuántos clientes están escribiendo hoy a otros negocios porque el tuyo no les respondió a tiempo? Además, <strong>no hay contrato — empiezas cuando quieras y cancelas cuando quieras</strong>. No estás comprando un carro, es una mensualidad de $120K. ¿Qué tal si hacemos una prueba de 15 días sin compromiso?"</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">
+      <span>No sé de tecnología, me da miedo</span>
+      <span class="arrow">▾</span>
+    </div>
+    <div class="faq-a"><strong>Objeción por desconocimiento.</strong> Respuesta: "Tranquilo, para eso estamos. <strong>Nosotros te lo configuramos todo.</strong> Tú solo nos dices tus servicios con precios y tus horarios. En menos de una semana el bot ya está atendiendo. Además, <strong>te capacitamos 2 veces por semana</strong> para que aprendas a usar el dashboard. Es más fácil que aprender a usar Instagram."</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">
+      <span>¿Y si el bot se equivoca y agenda mal?</span>
+      <span class="arrow">▾</span>
+    </div>
+    <div class="faq-a"><strong>Objeción por desconfianza.</strong> Respuesta: "El bot tiene <strong>3 inteligencias artificiales trabajando en cadena</strong> — si una duda, otra verifica. Además, el sistema revisa la disponibilidad en tiempo real y bloquea los horarios automáticamente. Es matemáticamente imposible que dos clientes caigan en el mismo espacio. Y si algo raro pasa, <strong>tú recibes una notificación al instante</strong> y puedes corregirlo desde el dashboard en 2 toques."</div>
+  </div>
+</section>
+
+<section id="aliado" class="reveal">
+  <h2>No somos una <span>empresa más</span></h2>
+  <div class="highlight-box" style="text-align:center;padding:48px 32px;background:linear-gradient(135deg,oklch(18% 0.08 280 / 0.5),oklch(12% 0.03 280 / 0.3))">
+    <p style="font-size:20px;font-weight:600;max-width:700px;margin:0 auto;line-height:1.7">
+      Estamos en constante evolución. No somos una empresa lejana — crecemos al lado de cada negocio como un aliado, aprendiendo juntos, mejorando cada semana. Como un amigo que siempre está ahí cuando lo necesitas.
+    </p>
+    <p style="color:var(--text2);margin-top:20px;max-width:600px;margin:20px auto 0">
+      Capacitaciones 2 veces por semana. Sorteos mensuales. Soporte cercano. Esto no es solo un software — es una relación.
+    </p>
+  </div>
+</section>
+
+<section id="cta" class="reveal" style="text-align:center;padding:100px 20px;background:linear-gradient(180deg,transparent 0%,oklch(12% 0.04 280 / 0.4) 50%,transparent 100%)">
+  <h2>¿Listo para <span>empezar a vender</span> Meyer Bot?</h2>
+  <p style="color:var(--text2);max-width:500px;margin:12px auto 32px">Tienes el producto, los precios, la competencia y las respuestas. Ahora solo falta salir a vender.</p>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+    <a href="https://wa.me/573226541957?text=Hola%2C%20quiero%20ser%20vendedor%20de%20Meyer%20Bot" target="_blank" class="btn btn-primary" style="font-size:17px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Quiero ser vendedor
+    </a>
+    <a href="#" class="btn btn-outline" onclick="window.print();return false;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Descargar Brochure
+    </a>
+  </div>
+  <p style="color:var(--text3);font-size:12px;margin-top:12px">El brochure se abre como PDF para guardar o imprimir</p>
+</section>
+
+<footer>
+  <p>Meyer Bot — Hecho en Colombia para negocios locales</p>
+  <p style="margin-top:8px">Parte de una plataforma SaaS de agentes WhatsApp con IA · Todos los derechos reservados</p>
+</footer>
+
+<script>
+const WHATSAPP = '573226541957';
+
+function switchTab(tabsId, tabName, prefix) {
+  const container = document.getElementById(tabsId);
+  if (!container) return;
+  const btns = container.querySelectorAll('.tab-btn');
+  btns.forEach((b,i)=>{
+    b.classList.toggle('active', b.textContent.toLowerCase().includes(tabName) || (tabName==='agendar'&&i===0));
+  });
+  const contents = document.querySelectorAll(`[id^="${prefix}-"]`);
+  contents.forEach(c => {
+    c.classList.toggle('active', c.id === `${prefix}-${tabName}`);
+  });
+}
+
+function toggleFaq(el) {
+  const item = el.closest('.faq-item');
+  const wasOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+  if (!wasOpen) item.classList.add('open');
+}
+
+function closeMenu() {
+  document.querySelector('.menu').classList.remove('open');
+}
+
+// Scroll reveal
+const observer = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('visible'); } });
+}, { threshold: 0.1 });
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+});
+</script>
+</body>
+</html>
