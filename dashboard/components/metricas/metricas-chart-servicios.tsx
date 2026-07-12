@@ -70,9 +70,7 @@ export function ChartServicios({ data, onClickServicio }: Props) {
           radius={[0, 4, 4, 0]}
           onClick={handleClick}
           style={{ cursor: onClickServicio ? 'pointer' : undefined }}
-          animationBegin={0}
-          animationDuration={600}
-          animationEasing="ease-out"
+          isAnimationActive={false}
         >
           {sorted.map((_, index) => (
             <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />

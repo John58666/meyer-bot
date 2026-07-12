@@ -86,8 +86,8 @@
   --bg-primary: #0A0A0A;
   --bg-sidebar: #050505;
   --bg-card: #1A1A1A;
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-hover: rgba(255, 255, 255, 0.12);
+  --border-subtle: #2A2A2A;
+  --border-hover: #3A3A3A;
   --text-primary: #FFFFFF;
   --text-secondary: #888888;
   --text-muted: #555555;
