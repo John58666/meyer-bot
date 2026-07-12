@@ -375,6 +375,61 @@ Ver `docs/ARCHITECTURE_FUTURE.md` (post-sprint) para:
 
 ---
 
+## 14. UI/UX Audit Post-Implementation (12 julio 2026)
+
+> Auditoría realizada con `ui-ux-pro-max` skill. Sin cambios ejecutados — pendiente de aprobación.
+
+### 14.1 KPIs — Falta de contexto visual
+
+| Issue | Archivo | Prioridad | Esfuerzo |
+|-------|---------|-----------|----------|
+| Badges de variación solo verde/rojo sin semántica (↑ingresos bueno, ↑cancelaciones malo — mismo ícono) | `metricas-kpi-card.tsx` | 🔴 Alta | 2d |
+| Sin sparkline mini-gráfico de tendencia del periodo (7d/30d) debajo del valor | `metricas-kpi-card.tsx` | 🔴 Alta |  |
+| Sin tooltip con comparación real vs objetivo o vs año anterior | `metricas-kpi-card.tsx` | 🟡 Media |  |
+| Sin skeleton loader — KPIs aparecen de golpe sin transición | `metricas-client.tsx` | 🟡 Media |  |
+
+### 14.2 Filtros por fecha — Ausentes
+
+| Issue | Archivo | Prioridad | Esfuerzo |
+|-------|---------|-----------|----------|
+| No hay selector de rango de fechas global — solo periodo hardcodeado (28 días) | `metricas-client.tsx` | 🔴 Alta | 2-3d |
+| No hay comparación custom (ej. "vs semana pasada", "vs mismo mes 2025") | `metricas-client.tsx` | 🟡 Media |  |
+| Dropdown de servicio + fechaFrom/fechaTo existe solo en drawer, no como filtro global | `metricas-client.tsx` | 🟢 Baja |  |
+
+### 14.3 Charts — Interacción pobre
+
+| Issue | Archivo | Prioridad | Esfuerzo |
+|-------|---------|-----------|----------|
+| Heatmap sin tooltip al hover, sin color ramp legend, sin indicador de hora actual | `metricas-chart-ocupacion.tsx` | 🟢 Baja | 0.5d |
+| Chart ingresos sin zoom/pan, sin toggle bruto/neto/cantidad | `metricas-chart-ingresos.tsx` | 🟢 Baja | 0.5d |
+| Barras de servicios sin etiquetas de valor ni animación de entrada | `metricas-chart-servicios.tsx` | 🟢 Baja | 0.5d |
+| Drawer al click en chart sin loading state entre fetch y render | drawers | 🟡 Media | 0.5d |
+
+### 14.4 Responsive — KPIs horizontales frágiles
+
+| Issue | Archivo | Prioridad | Esfuerzo |
+|-------|---------|-----------|----------|
+| Snap-scroll horizontal oculta KPIs sin indicador visual (dots/pagination) | `metricas-client.tsx` | 🟢 Baja | 0.5d |
+| Layout tablet (~768px) sin breakpoint `md` — posibles espacios incómodos | `metricas-client.tsx` | 🟢 Baja | 0.5d |
+| Charts con `h-[300px]` fijo puede recortar leyendas/ejes en mobile | charts | 🟢 Baja | 0.5d |
+
+### 14.5 Drawers — Sin estado de carga/respuesta
+
+| Issue | Archivo | Prioridad | Esfuerzo |
+|-------|---------|-----------|----------|
+| Sin spinner/skeleton mientras fetch corre — se ve blanco | drawers | 🟡 Media | 0.5d |
+| Sin estado de error si el fetch falla (API down) | drawers | 🟡 Media | 0.5d |
+
+### 14.6 Accesibilidad
+
+| Issue | Prioridad | Esfuerzo |
+|-------|-----------|----------|
+| KPIs: colores rojo/verde sin símbolo adicional (↑↓) ni texto SR | 🟡 Media | 1d |
+| Charts sin `aria-label`, `role="img"`, ni fallback data table | 🟡 Media |  |
+| Tabs sin `aria-selected` ni `role="tabpanel"` vinculado | 🟡 Media |  |
+
+---
+
 ## 13. Criterios de aceptación
 
 1. [x] KPIs generales se muestran correctos para Hoy/Semana/Mes

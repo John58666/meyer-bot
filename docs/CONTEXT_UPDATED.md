@@ -1,6 +1,6 @@
 # CONTEXT.md — meyer-bot
 
-> Última actualización: 12 julio 2026 (sesión 8 — Sprint 15 completado. Dashboard Métricas Premium con KPIs, tabs, charts, drawers y comparativas temporales).
+> Última actualización: 12 julio 2026 (sesión 9 — UI/UX Audit post-Sprint 15. Hallazgos documentados en spec sección 14. Sin ejecución de cambios.)
 > Documento maestro CORTO. Cualquier chat nuevo lee esto primero.
 > **⚠️ ANTES de tocar NADA: leer `docs/SECURITY_AUDIT.md`** — reporte maestro de seguridad, hallazgos activos y plan de remediación.
 > Para profundidad: ver docs/ (ARCHITECTURE.md, SPRINTS.md, RUNBOOK.md, KEY_LEARNINGS.md, SECURITY_AUDIT.md)
@@ -138,6 +138,16 @@ Asignados manualmente por SQL al onboardear. Sistema formal con Stripe/Wompi en 
 
 ### SPRINT 15 — COMPLETADO ✅ (12 julio 2026)
 15. **Dashboard Métricas Premium** — KPIs expandidos (6 cards con badges de variación), tabs General/Profesional/Servicios, chart ingresos con overlay período anterior, chart horizontal servicios, grid heatmap ocupación, 4 drawers drill-down con Sheet, RBAC profesional, responsive móvil.
+
+### SESIÓN 9 — UI/UX Audit (12 julio 2026)
+Auditoría de interfaz post-Sprint 15 usando `ui-ux-pro-max`. **Sin ejecutar cambios.**
+Hallazgos en 6 áreas (detalle en `docs/superpowers/specs/2026-07-11-sprint15-metricas-premium.md` sección 14):
+- KPIs sin sparkline/skeleton/contexto semántico (🔴 alta)
+- Filtros por fecha ausentes (🔴 alta)
+- Drawers sin loading/error state (🟡 media)
+- Accesibilidad SR + colores (🟡 media)
+- Responsive tablet + pagination dots (🟢 baja)
+- Heatmap tooltip/legend + chart interactividad (🟢 baja)
 
 ### PENDIENTE — Fase 4: Fixes complejos
 21. **#21 — Onboarding negocio nuevo** — script/checklist multi-sistema

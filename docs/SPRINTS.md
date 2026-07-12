@@ -248,6 +248,17 @@
 
 > Spec: `docs/superpowers/specs/2026-07-11-sprint15-metricas-premium.md`
 
+### UI/UX Audit (sesión 9, 12 julio 2026)
+Auditoría post-implementación con `ui-ux-pro-max` skill. Hallazgos categorizados en 6 áreas, sin ejecución de cambios:
+1. **KPIs sin contexto visual** — badges verde/rojo sin semántica, faltan sparklines, skeleton loader, tooltips comparativos
+2. **Filtros por fecha ausentes** — no hay DatePicker global, solo periodo hardcodeado 28 días
+3. **Charts con interacción pobre** — heatmap sin tooltip/legend, chart ingresos sin toggle bruto/neto, barras sin etiquetas ni animación
+4. **Responsive frágil** — KPIs horizontales sin pagination dots, sin breakpoint md, charts con altura fija
+5. **Drawers sin loading/error** — se ven blancos hasta que fetch termina, sin fallback en error
+6. **Accesibilidad** — colores sin soporte SR, charts sin aria-label, tabs sin aria-selected
+
+Detalle completo en spec sección 14. Pendiente de aprobación para ejecutar.
+
 ### Implementado
 1. **Migración DB**: índice `idx_appointments_metrics` (business_id, professional_id, fecha, estado) creado CONCURRENTLY
 2. **Server actions**: `getMetricas()` extendida con periodo anterior, ocupación, clientes nuevos vs recurrentes, agregación por profesional y servicio. `getMetricasDrawer()` para 4 tipos de drawer bajo demanda
