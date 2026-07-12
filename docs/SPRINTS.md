@@ -360,6 +360,36 @@ Tras el deploy de la UI/UX Audit, aparecieron 2 bugs responsive:
 
 **Impacto:** Un solo cambio en CSS variable cascada a todos los componentes — cards, nav, charts, sidebar — sin tocar cada archivo individualmente.
 
+### Sesión 13 — GPU glitch continuation + post-Sprint 15 fixes (12 julio 2026)
+
+GPU glitch del Sprint 15 tenía más rgba sin cubrir. El heatmap de ocupación usaba `rgba()` para backgroundColor de las celdas del grid — mismo patrón que el glitch original.
+
+**Fixes:**
+
+1. **Heatmap rgba → hex sólido** (`metricas-chart-ocupacion.tsx`):
+   - `colorPorRatio()`: 4 colores rgba reemplazados por hex pre-multiplicados sobre fondo `#1A1A1A`:
+     - `rgba(34,197,94,0.8)` → `#1A8A4A`
+     - `rgba(34,197,94,0.4)` → `#1A5A3A`
+     - `rgba(250,204,21,0.5)` → `#8A7010`
+     - `rgba(107,114,128,0.2)` → `#3A3A3A`
+   - Celda vacía: `rgba(107,114,128,0.1)` → `#2A2A2A` (mismo que `--border-subtle`)
+   - 4 swatches de leyenda con los mismos hex
+
+2. **h-48 → min-h-48** (`metricas-client.tsx`):
+   - Error y empty states cambiados de `h-48` fijo a `min-h-48` para evitar compresión visual en tablet
+
+3. **performance-audit.md creado** (`docs/performance-audit.md`):
+   - Presupuesto CSS formal: "0 rgba borders, 0 rgba backgrounds, 0 animaciones SVG en móvil, 0 CSS filters"
+   - Tabla de colores pre-multiplicados sobre `#1A1A1A`
+   - Checklist de revisión pre-deploy
+
+**Commit:** `c2cc8fc` — deployado a producción.
+
+### Nuevas lecciones
+- **El heatmap grid también usa rgba** — las celdas del grid con backgroundColor rgba crean capas de composición GPU igual que los borders. Si el heatmap se ve corrupto en móvil, aplicar mismo patrón: hex sólido.
+- **Pre-multiplicación de color sobre fondo conocido** — calcular el hex resultante de rgba sobre `#1A1A1A` produce colores visualmente equivalentes sin composición GPU.
+- **`h-48` fijo en estados vacíos** se ve comprimido en tablet (768px). Preferir `min-h-48` o `py-*` para altura flexible.
+
 ### Lecciones Sprint 15
 - `useState` + `useEffect` para responsive en componentes montados simultáneamente (drawers) causa re-render cascades en todos. Preferir CSS-only con media queries.
 - `side="bottom"` en base-ui Dialog añade overlays que pueden renderizarse fantasma durante re-renders de estado.
@@ -370,6 +400,9 @@ Tras el deploy de la UI/UX Audit, aparecieron 2 bugs responsive:
 - **Un CSS variable bien ubicado > editar N archivos.** Cambiar `--border-subtle` de rgba a hex en `globals.css` arregló todos los componentes simultáneamente, sin tocar cada archivo individual.
 - **`backface-visibility: hidden` no arregla saturación de composición GPU.** El problema no es la transición CSS sino la cantidad de capas que el GPU debe componer. Eliminar la fuente de composición (rgba borders) es más efectivo que parchar síntomas.
 - **Las animaciones recharts (`animationDuration`) fuerzan repaint en móvil.** Desactivar con `isAnimationActive={false}` reduce trabajo de GPU significativamente.
+- **Heatmap grid cells con rgba también saturan composición GPU.** backgroundColor con rgba en cada celda del grid crea capas de composición individuales. Si el heatmap se ve corrupto en móvil, aplicar hex sólido pre-multiplicado.
+- **Pre-multiplicación de color sobre fondo conocido:** para simular transparencia sobre fondo `#1A1A1A`, calcular `rgb(base + alpha*(color - base))` y usar el hex resultante. Visualmente equivalente, cero capas GPU.
+- **`h-48` fijo en estados vacíos:** se ve comprimido en tablet. Preferir `min-h-48` o `py-*` para altura flexible.
 
 ---
 

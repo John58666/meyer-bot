@@ -35,6 +35,9 @@
 - **Un CSS variable bien ubicado > editar N archivos.** Cambiar `--border-subtle` de rgba a hex en `globals.css` arregla todos los componentes simultáneamente (cards, nav, charts, sidebar) sin tocar cada archivo individual.
 - **`backface-visibility: hidden` no arregla saturación de composición GPU.** El problema no es transición CSS sino cantidad de capas que el GPU debe componer. Eliminar la fuente de composición (`rgba` borders) es más efectivo que parchar síntomas.
 - **Animaciones recharts (`animationDuration`, `animationBegin`) fuerzan repaint SVG en cada frame en móvil.** Desactivar con `isAnimationActive={false}` reduce trabajo de GPU significativamente.
+- **Heatmap grid cells con rgba también saturan composición GPU.** backgroundColor con rgba en cada celda de grid crea capas de composición individuales. Aplicar hex sólido pre-multiplicado sobre el fondo conocido.
+- **Pre-multiplicación de color:** para simular transparencia rgba sobre fondo fijo (ej: `#1A1A1A`), calcular `rgb(base + alpha*(color - base))` y usar hex resultante. Cero capas GPU, visualmente idéntico.
+- **`h-48` fijo se ve comprimido en tablet.** Preferir `min-h-48` para estados vacíos/error.
 - **`truncate` (Tailwind) = `overflow-hidden` + `text-overflow: ellipsis` + `white-space: nowrap`.** Útil para labels largos en cards con `uppercase tracking-wide` donde el texto puede desbordar en mobile.
 - **`transition-all` es agresivo en móvil.** Preferir `transition-colors`, `transition-opacity`, etc. cuando solo se necesita animar propiedades específicas. `transition-all` obliga al browser a preparar capas para animar cualquier propiedad, incluso cuando no cambia.
 

@@ -1,6 +1,6 @@
 # CONTEXT.md — meyer-bot
 
-> Última actualización: 12 julio 2026 (sesión 12 — GPU glitch fix. Causa raíz: `--border-subtle: rgba(255,255,255,0.06)` forzaba composición GPU en cada borde. Fix: cambiar a hex sólido `#2A2A2A` en globals.css — un solo cambio cascada a cards, nav, charts, sidebar.)
+> Última actualización: 12 julio 2026 (sesión 13 — GPU glitch continuation: rgba del heatmap reemplazado por hex sólido, h-48→min-h-48 en estados vacíos, creado docs/performance-audit.md con presupuesto CSS.)
 > Documento maestro CORTO. Cualquier chat nuevo lee esto primero.
 > **⚠️ ANTES de tocar NADA: leer `docs/SECURITY_AUDIT.md`** — reporte maestro de seguridad, hallazgos activos y plan de remediación.
 > Para profundidad: ver docs/ (ARCHITECTURE.md, SPRINTS.md, RUNBOOK.md, KEY_LEARNINGS.md, SECURITY_AUDIT.md)
@@ -171,6 +171,13 @@ GPU glitch persistente en móvil (estática/píxeles rotos en cards + nav). Fix 
 - **Fix**: `globals.css`: `rgba` → hex sólido `#2A2A2A`. Un solo cambio cascada a todos los componentes.
 - `metricas-chart-servicios.tsx`: `isAnimationActive={false}` para evitar repaint GPU por animaciones recharts.
 
+### SESIÓN 13 — GPU glitch continuation + post-Sprint 15 fixes (12 julio 2026)
+GPU glitch del Sprint 15 tenía más rgba sin cubrir en el heatmap de ocupación:
+- **Fix heatmap rgba**: `metricas-chart-ocupacion.tsx` — 4 colores en `colorPorRatio()`, color de celda vacía, y 4 swatches de leyenda reemplazados de rgba a hex sólido pre-multiplicado sobre fondo `#1A1A1A`.
+- **Fix estados vacíos**: `metricas-client.tsx` — `h-48` fijo cambiado a `min-h-48` para evitar compresión en tablet.
+- **Docs**: creado `docs/performance-audit.md` con presupuesto CSS: 0 rgba borders/backgrounds, 0 animaciones SVG en móvil, 0 CSS filters.
+- **Commit**: `c2cc8fc`, deployado a producción.
+
 ### PENDIENTE — Fase 4: Fixes complejos
 21. **#21 — Onboarding negocio nuevo** — script/checklist multi-sistema
 22. **#22 — Desambiguación clientes mismo nombre** — distinguir por teléfono/ID/notas
@@ -247,5 +254,6 @@ GPU glitch persistente en móvil (estática/píxeles rotos en cards + nav). Fix 
 - `docs/RUNBOOK.md` — deploy, psql, n8n, Evolution API, variables de entorno, túnel SSH, Beszel, Uptime Kuma
 - `docs/KEY_LEARNINGS.md` — lecciones técnicas acumuladas
 - `docs/SECURITY_AUDIT.md` — ⚠️ auditoría de seguridad, leaks, plan de remediación, políticas
+- `docs/PERFORMANCE_AUDIT.md` — presupuesto CSS y reglas de performance para GPU móvil
 - `docs/superpowers/specs/2026-07-11-sprint15-metricas-premium.md` — spec Sprint 15 (Dashboard Métricas Premium), aprobado pendiente implementación
 - `docs/ARCHITECTURE_FUTURE.md` — plan de escalabilidad, triggers de migración, thresholds para upgrade de infraestructura, proyecciones por tipo de negocio, costos, monitoreo con Beszel + Uptime Kuma
