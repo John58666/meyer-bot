@@ -2,7 +2,8 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Line, Legend } from 'recharts'
+import { useState, useCallback } from 'react'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Line, Legend, ReferenceArea } from 'recharts'
 
 interface ChartDataPoint {
   fecha: string
@@ -42,54 +43,116 @@ function CustomTooltip({ active, payload, label }: any) {
 }
 
 export function ChartIngresos({ data, dataAnterior, modo, onClickDia }: Props) {
-  const mergedData = data.map((d, i) => ({
+  const [refAreaLeft, setRefAreaLeft] = useState<string | null>(null)
+  const [refAreaRight, setRefAreaRight] = useState<string | null>(null)
+  const [zoomedData, setZoomedData] = useState<ChartDataPoint[] | null>(null)
+  const [zoomDomain, setZoomDomain] = useState<{ start: string; end: string } | null>(null)
+
+  const mergedData = zoomedData ?? data.map((d, i) => ({
     ...d,
     anterior: dataAnterior[i]?.[modo === 'ingresos' ? 'ingresos' : 'citas'] ?? null,
   }))
 
-  const handleClick = (entry: any) => {
+  const handleClick = useCallback((entry: any) => {
     if (onClickDia && entry?.fecha) onClickDia(entry.fecha)
+  }, [onClickDia])
+
+  const getAxisValues = useCallback(() => {
+    return mergedData.map(d => d.fecha)
+  }, [mergedData])
+
+  const handleMouseDown = useCallback((e: any) => {
+    if (e?.activeLabel) setRefAreaLeft(e.activeLabel)
+  }, [])
+
+  const handleMouseMove = useCallback((e: any) => {
+    if (refAreaLeft && e?.activeLabel) setRefAreaRight(e.activeLabel)
+  }, [refAreaLeft])
+
+  const handleMouseUp = useCallback(() => {
+    if (refAreaLeft && refAreaRight && refAreaLeft !== refAreaRight) {
+      const left = refAreaLeft < refAreaRight ? refAreaLeft : refAreaRight
+      const right = refAreaLeft < refAreaRight ? refAreaRight : refAreaLeft
+      const filtered = data.filter(d => d.fecha >= left && d.fecha <= right)
+      if (filtered.length > 0) {
+        setZoomedData(filtered)
+        setZoomDomain({ start: left, end: right })
+      }
+    }
+    setRefAreaLeft(null)
+    setRefAreaRight(null)
+  }, [refAreaLeft, refAreaRight, data])
+
+  function resetZoom() {
+    setZoomedData(null)
+    setZoomDomain(null)
   }
 
   return (
-    <div className="h-[180px] sm:h-[260px]">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={mergedData} margin={{ top: 4, right: 4, left: -24, bottom: 0 }} barSize={12}>
-        <XAxis
-          dataKey="fecha"
-          tick={{ fontSize: 10, fill: 'var(--text-secondary,#888)' }}
-          axisLine={false} tickLine={false}
-        />
-        <YAxis
-          tick={{ fontSize: 10, fill: 'var(--text-secondary,#888)' }}
-          axisLine={false} tickLine={false}
-          tickFormatter={modo === 'ingresos' ? (v: number) => `$${(v/1000).toFixed(0)}k` : undefined}
-        />
-        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
-        <Legend
-          wrapperStyle={{ fontSize: '11px', color: 'var(--text-secondary)' }}
-          iconSize={8}
-        />
-        <Bar
-          dataKey={modo}
-          name={modo === 'ingresos' ? 'Ingresos' : 'Citas'}
-          fill={CHART_COLORS[0]}
-          radius={[3, 3, 0, 0]}
-          onClick={handleClick}
-          style={{ cursor: onClickDia ? 'pointer' : undefined }}
-        />
-        {dataAnterior.length > 0 && (
-          <Line
-            dataKey="anterior"
-            name="Período anterior"
-            stroke="#888"
-            strokeWidth={1.5}
-            dot={false}
-            strokeDasharray="4 4"
+    <div>
+      {zoomDomain && (
+        <button
+          onClick={resetZoom}
+          className="mb-2 text-[11px] text-[var(--color-accent,#6366f1)] hover:underline"
+        >
+          ← Reset zoom
+        </button>
+      )}
+      <div className="h-[180px] sm:h-[260px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={mergedData}
+            margin={{ top: 4, right: 4, left: -24, bottom: 0 }}
+            barSize={12}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+          >
+          <XAxis
+            dataKey="fecha"
+            tick={{ fontSize: 10, fill: 'var(--text-secondary,#888)' }}
+            axisLine={false} tickLine={false}
+            domain={zoomDomain ? [zoomDomain.start, zoomDomain.end] : ['auto', 'auto']}
           />
-        )}
-        </BarChart>
-      </ResponsiveContainer>
+          <YAxis
+            tick={{ fontSize: 10, fill: 'var(--text-secondary,#888)' }}
+            axisLine={false} tickLine={false}
+            tickFormatter={modo === 'ingresos' ? (v: number) => `$${(v/1000).toFixed(0)}k` : undefined}
+          />
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
+          <Legend
+            wrapperStyle={{ fontSize: '11px', color: 'var(--text-secondary)' }}
+            iconSize={8}
+          />
+          {refAreaLeft && refAreaRight && (
+            <ReferenceArea
+              x1={refAreaLeft}
+              x2={refAreaRight}
+              strokeOpacity={0.3}
+              fill="rgba(99,102,241,0.1)"
+            />
+          )}
+          <Bar
+            dataKey={modo}
+            name={modo === 'ingresos' ? 'Ingresos' : 'Citas'}
+            fill={CHART_COLORS[0]}
+            radius={[3, 3, 0, 0]}
+            onClick={handleClick}
+            style={{ cursor: onClickDia ? 'pointer' : undefined }}
+          />
+          {dataAnterior.length > 0 && (
+            <Line
+              dataKey="anterior"
+              name="Período anterior"
+              stroke="#888"
+              strokeWidth={1.5}
+              dot={false}
+              strokeDasharray="4 4"
+            />
+          )}
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   )
 }

@@ -203,9 +203,9 @@ export async function rescheduleAppointment(
 const metricsCache = new Map<string, { data: unknown; expiry: number }>();
 const CACHE_TTL_MS = 15_000; // 15 segundos
 
-function getCacheKey(businessId: number, rango: RangoMetricas, professionalId?: number | null, fechaDesde?: string, fechaHasta?: string): string {
+function getCacheKey(businessId: number, rango: RangoMetricas, professionalId?: number | null, fechaDesde?: string, fechaHasta?: string, compararCon?: CompararCon): string {
   const suffix = rango === 'custom' && fechaDesde && fechaHasta ? `:${fechaDesde}:${fechaHasta}` : '';
-  return `${businessId}:${rango}:${professionalId ?? ''}${suffix}`;
+  return `${businessId}:${rango}:${professionalId ?? ''}${suffix}:${compararCon ?? ''}`;
 }
 
 function cacheGet<T>(key: string): T | null {
@@ -228,6 +228,7 @@ function cacheSet<T>(key: string, data: T): void {
 // ─── MÉTRICAS ────────────────────────────────────────────────────────────────
 
 export type RangoMetricas = 'hoy' | 'semana' | 'mes' | 'trimestre' | 'custom';
+export type CompararCon = 'periodo-anterior' | 'semana-anterior' | 'mes-anterior' | 'ano-anterior';
 
 export interface FilaCita {
   estado: string;
@@ -320,12 +321,44 @@ function calcularRangoFechas(rango: RangoMetricas, fechaDesdeOverride?: string, 
   };
 }
 
-function calcularPeriodoAnterior(rango: RangoMetricas, fechaDesde: string, fechaHasta: string): { desde: string; hasta: string } {
+function calcularPeriodoAnterior(rango: RangoMetricas, fechaDesde: string, fechaHasta: string, compararCon?: CompararCon): { desde: string; hasta: string } {
   const desde = new Date(fechaDesde + 'T12:00:00');
   const hasta = new Date(fechaHasta + 'T12:00:00');
+
+  if (compararCon === 'semana-anterior') {
+    const inicioAnterior = new Date(desde.getTime() - 7 * 86400000);
+    const finAnterior = new Date(hasta.getTime() - 7 * 86400000);
+    return {
+      desde: inicioAnterior.toISOString().split('T')[0],
+      hasta: finAnterior.toISOString().split('T')[0],
+    };
+  }
+
+  if (compararCon === 'mes-anterior') {
+    const inicioAnterior = new Date(desde);
+    inicioAnterior.setMonth(inicioAnterior.getMonth() - 1);
+    const finAnterior = new Date(hasta);
+    finAnterior.setMonth(finAnterior.getMonth() - 1);
+    return {
+      desde: inicioAnterior.toISOString().split('T')[0],
+      hasta: finAnterior.toISOString().split('T')[0],
+    };
+  }
+
+  if (compararCon === 'ano-anterior') {
+    const inicioAnterior = new Date(desde);
+    inicioAnterior.setFullYear(inicioAnterior.getFullYear() - 1);
+    const finAnterior = new Date(hasta);
+    finAnterior.setFullYear(finAnterior.getFullYear() - 1);
+    return {
+      desde: inicioAnterior.toISOString().split('T')[0],
+      hasta: finAnterior.toISOString().split('T')[0],
+    };
+  }
+
+  // Default: periodo-anterior
   const diffMs = hasta.getTime() - desde.getTime();
 
-  // Para trimestre, comparamos con el trimestre anterior inmediato
   if (rango === 'trimestre') {
     const inicioAnterior = new Date(desde);
     inicioAnterior.setMonth(inicioAnterior.getMonth() - 3);
@@ -444,15 +477,16 @@ export async function getMetricas(
   rango: RangoMetricas,
   professionalId?: number | null,
   fechaDesdeOverride?: string,
-  fechaHastaOverride?: string
+  fechaHastaOverride?: string,
+  compararCon?: CompararCon
 ): Promise<{ data: MetricasData | null; error: string | null }> {
   const { fechaDesde, fechaHasta } = calcularRangoFechas(rango, fechaDesdeOverride, fechaHastaOverride);
-  const cacheKey = getCacheKey(businessId, rango, professionalId, fechaDesde, fechaHasta);
+  const cacheKey = getCacheKey(businessId, rango, professionalId, fechaDesde, fechaHasta, compararCon);
   const cached = cacheGet<MetricasData>(cacheKey);
   if (cached) return { data: cached, error: null };
 
   try {
-    const periodoAnterior = calcularPeriodoAnterior(rango, fechaDesde, fechaHasta);
+    const periodoAnterior = calcularPeriodoAnterior(rango, fechaDesde, fechaHasta, compararCon);
 
     const [filas, filasAnteriores, clientesData, ocupacion] = await Promise.all([
       fetchMetricasQuery(businessId, fechaDesde, fechaHasta, professionalId),

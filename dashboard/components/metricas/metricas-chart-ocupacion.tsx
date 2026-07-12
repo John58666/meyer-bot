@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 interface GridCell {
   dia: string
@@ -23,12 +23,14 @@ function colorPorRatio(ratio: number): string {
 
 export function ChartOcupacion({ grid }: Props) {
   const [tooltip, setTooltip] = useState<{ x: number; y: number; text: string } | null>(null)
+  const [horaActualStr, setHoraActualStr] = useState<string | null>(null)
   const dias = [...new Set(grid.map(g => g.dia))]
   const horas = [...new Set(grid.map(g => g.hora))].sort()
 
-  // Detectar hora actual en Bogotá para marcar
-  const ahoraBogota = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }))
-  const horaActualStr = `${ahoraBogota.getHours()}:00`
+  useEffect(() => {
+    const ahoraBogota = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }))
+    setHoraActualStr(`${ahoraBogota.getHours()}:00`)
+  }, [])
 
   if (grid.length === 0) {
     return (
@@ -51,7 +53,7 @@ export function ChartOcupacion({ grid }: Props) {
           </div>
         ))}
         {horas.map(hora => {
-          const esHoraActual = hora === horaActualStr
+          const esHoraActual = horaActualStr !== null && hora === horaActualStr
           return (
             <>
               <div key={hora} className={`text-[10px] py-2 ${esHoraActual ? 'text-[var(--color-accent,#6366f1)] font-semibold' : 'text-[var(--text-secondary)]'}`}>

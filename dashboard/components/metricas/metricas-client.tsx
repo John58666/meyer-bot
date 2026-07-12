@@ -2,7 +2,7 @@
 
 import { useSearchParams } from 'next/navigation'
 import { useState, useRef, useEffect } from 'react'
-import type { MetricasData, RangoMetricas } from '@/lib/actions'
+import type { MetricasData, RangoMetricas, CompararCon } from '@/lib/actions'
 import { getMetricas } from '@/lib/actions'
 import { KpiCard } from './metricas-kpi-card'
 import { TabSelector, type VistaMetricas } from './metricas-tab-selector'
@@ -55,7 +55,7 @@ const RANGOS: { key: RangoMetricas; label: string }[] = [
 ]
 
 function MetricasContent({
-  data, isOwnerOrAdmin, vistaActiva, setDrawerState, modoChart, chartData, chartDataAnterior
+  data, isOwnerOrAdmin, vistaActiva, setDrawerState, modoChart, chartData, chartDataAnterior, onToggleModo
 }: {
   data: MetricasData
   isOwnerOrAdmin: boolean
@@ -64,6 +64,7 @@ function MetricasContent({
   modoChart: 'ingresos' | 'citas'
   chartData: { fecha: string; citas: number; ingresos: number }[]
   chartDataAnterior: { fecha: string; citas: number; ingresos: number }[]
+  onToggleModo?: (modo: 'ingresos' | 'citas') => void
 }) {
   const kpiScrollRef = useRef<HTMLDivElement>(null)
   const [scrollPos, setScrollPos] = useState(0)
@@ -323,12 +324,36 @@ function MetricasContent({
         <>
           {chartData.length > 0 ? (
             <div className="bg-[var(--bg-card,#1a1a1a)] rounded-xl p-4 border border-[var(--border-subtle,#2a2a2a)]" role="tabpanel" id="panel-general" aria-labelledby="tab-general">
-              <p className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide mb-4">
-                {modoChart === 'ingresos' ? 'Ingresos por día' : 'Citas por día'}
-                <span className="ml-2 text-[10px] font-normal normal-case">
-                  (línea punteada = período anterior)
-                </span>
-              </p>
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide">
+                  {modoChart === 'ingresos' ? 'Ingresos por día' : 'Citas por día'}
+                  <span className="ml-2 text-[10px] font-normal normal-case">
+                    (línea punteada = período anterior)
+                  </span>
+                </p>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => onToggleModo?.('ingresos')}
+                    className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                      modoChart === 'ingresos'
+                        ? 'bg-[var(--color-accent,#6366f1)] text-white'
+                        : 'bg-[var(--bg-card,#1a1a1a)] text-[var(--text-secondary)] border border-[var(--border-subtle,#2a2a2a)]'
+                    }`}
+                  >
+                    Ingresos
+                  </button>
+                  <button
+                    onClick={() => onToggleModo?.('citas')}
+                    className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                      modoChart === 'citas'
+                        ? 'bg-[var(--color-accent,#6366f1)] text-white'
+                        : 'bg-[var(--bg-card,#1a1a1a)] text-[var(--text-secondary)] border border-[var(--border-subtle,#2a2a2a)]'
+                    }`}
+                  >
+                    Citas
+                  </button>
+                </div>
+              </div>
               <div role="img" aria-label={`Gráfico de barras de ${modoChart === 'ingresos' ? 'ingresos' : 'citas'} por día con comparación del período anterior`}>
                 <ChartIngresos
                   data={chartData}
@@ -373,8 +398,19 @@ export default function MetricasClient({ data: initialData, error: initialError,
     servicio?: string
   } | null>(null)
   const [showCustomDate, setShowCustomDate] = useState(initialRango === 'custom')
+  const [compararCon, setCompararCon] = useState<CompararCon>('periodo-anterior')
+  const [modoChartManual, setModoChartManual] = useState<'ingresos' | 'citas'>('ingresos')
 
-  async function cambiarRango(rango: RangoMetricas) {
+  const COMPARAR_OPTS: { key: CompararCon; label: string }[] = [
+    { key: 'periodo-anterior', label: 'Período anterior' },
+    { key: 'semana-anterior', label: 'Semana anterior' },
+    { key: 'mes-anterior', label: 'Mes anterior' },
+    { key: 'ano-anterior', label: 'Año anterior' },
+  ]
+
+  async function cambiarRango(rango: RangoMetricas, compararOverride?: CompararCon) {
+    const cc = compararOverride ?? compararCon
+    setCompararCon(cc)
     const params = new URLSearchParams(searchParams.toString())
     params.set('rango', rango)
     params.delete('desde')
@@ -389,7 +425,7 @@ export default function MetricasClient({ data: initialData, error: initialError,
     const id = ++reqRef.current
     setLoadingData(true)
     try {
-      const result = await getMetricas(businessId, rango, professionalId)
+      const result = await getMetricas(businessId, rango, professionalId, undefined, undefined, cc)
       if (id !== reqRef.current) return
       if (result.data) setClientData(result.data)
       if (result.error) setClientError(result.error)
@@ -417,7 +453,7 @@ export default function MetricasClient({ data: initialData, error: initialError,
 
     const id = ++reqRef.current
     setLoadingData(true)
-    getMetricas(businessId, 'custom', professionalId, desde, hasta)
+    getMetricas(businessId, 'custom', professionalId, desde, hasta, compararCon)
       .then(result => {
         if (id !== reqRef.current) return
         if (result.data) setClientData(result.data)
@@ -446,6 +482,24 @@ export default function MetricasClient({ data: initialData, error: initialError,
   }
 
   if (!clientData) {
+    if (loadingData) {
+      return (
+        <div className="mb-6">
+          <div className="hidden sm:grid sm:grid-cols-3 gap-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <KpiCard key={i} label="" valor="" loading />
+            ))}
+          </div>
+          <div className="flex sm:hidden gap-3 overflow-x-auto pb-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="min-w-[150px] flex-shrink-0">
+                <KpiCard label="" valor="" loading />
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    }
     return (
       <div className="flex items-center justify-center min-h-48 text-[var(--text-secondary)] text-sm">
         Sin datos
@@ -466,7 +520,7 @@ export default function MetricasClient({ data: initialData, error: initialError,
   }))
 
   const hayIngresos = clientData.ingresos > 0
-  const modoChart = vistaActiva === 'servicios' ? 'ingresos' : (hayIngresos ? 'ingresos' : 'citas')
+  const modoChart = vistaActiva === 'servicios' ? 'ingresos' : (hayIngresos ? modoChartManual : 'citas')
 
   return (
     <div>
@@ -533,6 +587,22 @@ export default function MetricasClient({ data: initialData, error: initialError,
         </div>
       )}
 
+      {/* Comparar con selector */}
+      <div className="flex items-center gap-2 mb-4">
+        <label htmlFor="comparar-select" className="text-[11px] text-[var(--text-secondary)] shrink-0">Comparar con:</label>
+        <select
+          id="comparar-select"
+          value={compararCon}
+          onChange={(e) => cambiarRango(activeRango, e.target.value as CompararCon)}
+          disabled={loadingData}
+          className="px-2 py-1 rounded-md text-[11px] font-medium bg-[var(--bg-card,#1a1a1a)] text-[var(--text-primary)] border border-[var(--border-subtle,#2a2a2a)]"
+        >
+          {COMPARAR_OPTS.map(op => (
+            <option key={op.key} value={op.key}>{op.label}</option>
+          ))}
+        </select>
+      </div>
+
       <TabSelector activa={vistaActiva} onChange={setVistaActiva} role={role} />
 
       {/* Filtro de profesional (solo owner/admin en vista profesional) */}
@@ -560,6 +630,7 @@ export default function MetricasClient({ data: initialData, error: initialError,
         modoChart={modoChart}
         chartData={chartData}
         chartDataAnterior={chartDataAnterior}
+        onToggleModo={setModoChartManual}
       />
 
       {/* Drawers */}
