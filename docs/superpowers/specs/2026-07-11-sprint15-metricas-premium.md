@@ -2,7 +2,7 @@
 
 > **Fecha:** 11 julio 2026
 > **Proyecto:** meyer-bot
-> **Estado:** Implementado y deployado ✅ (12 julio 2026) — 3 bugs corregidos post-deploy: 2 responsive + 1 GPU glitch
+> **Estado:** Implementado y deployado ✅ (12 julio 2026) — 3 bugs corregidos post-deploy: 2 responsive + 1 GPU glitch + 3 mejoras post-Sprint 15
 
 ---
 
@@ -451,6 +451,26 @@ Ver `docs/ARCHITECTURE_FUTURE.md` (post-sprint) para:
 |-----|-----------|-----|--------|
 | **GPU glitch** — screen tearing, píxeles rotos, estática visual en KPI cards + nav en móvil | `--border-subtle: rgba(255,255,255,0.06)` forzaba composición GPU en cada capa. 10-15 bordes RGBA visibles saturaban memoria de composición GPU móvil. | `globals.css`: `rgba` → hex sólido `#2A2A2A`. `metricas-chart-servicios.tsx`: `isAnimationActive={false}`. Un solo cambio cascada a todos los componentes. | `7a886b2` |
 
+### 14.9 GPU glitch continuation — heatmap + empty states (12 julio 2026)
+
+GPU glitch del Sprint 15 tenía más rgba sin cubrir. El heatmap de ocupación usaba `rgba()` para backgroundColor de las celdas del grid — mismo patrón que el glitch original.
+
+| Fix | Archivo | Cambio | Commit |
+|-----|---------|--------|--------|
+| **Heatmap rgba → hex** | `metricas-chart-ocupacion.tsx` | `colorPorRatio()`: 4 rgba reemplazados por hex pre-multiplicados sobre `#1A1A1A`. Celda vacía: `rgba(107,114,128,0.1)` → `#2A2A2A`. 4 swatches leyenda actualizados. | `c2cc8fc` |
+| **h-48 → min-h-48** | `metricas-client.tsx` | Error y empty states cambiados a `min-h-48` para evitar compresión en tablet | `c2cc8fc` |
+| **performance-audit.md** | `docs/performance-audit.md` | Nuevo doc con presupuesto CSS formal (0 rgba, 0 animaciones SVG, 0 filters) | `c2cc8fc` |
+
+**Paleta de hex pre-multiplicados sobre `#1A1A1A`:**
+
+| rgba original | Hex equivalente | Uso |
+|---------------|----------------|-----|
+| `rgba(34,197,94,0.8)` | `#1A8A4A` | 80-100% ocupación |
+| `rgba(34,197,94,0.4)` | `#1A5A3A` | 50-80% ocupación |
+| `rgba(250,204,21,0.5)` | `#8A7010` | 20-50% ocupación |
+| `rgba(107,114,128,0.2)` | `#3A3A3A` | 0-20% ocupación |
+| `rgba(107,114,128,0.1)` | `#2A2A2A` | Celda vacía (mismo que `--border-subtle`) |
+
 ---
 
 ## 13. Criterios de aceptación
@@ -493,3 +513,9 @@ Ver `docs/ARCHITECTURE_FUTURE.md` (post-sprint) para:
 29. [x] Sin GPU glitch en móvil (estática/píxeles rotos) al navegar entre vistas
 30. [x] KPI cards sin screen tearing ni artefactos visuales en scroll horizontal móvil
 31. [x] Nav (sidebar + topbar + bottomnav) sin corrupción visual al hacer scroll
+
+### GPU glitch continuation (sesión 13)
+32. [x] Heatmap sin rgba — todas las celdas usan hex sólido pre-multiplicado
+33. [x] Leyenda del heatmap sin rgba
+34. [x] Estados vacíos con `min-h-48` en vez de `h-48` fijo
+35. [x] `docs/performance-audit.md` creado con presupuesto CSS
