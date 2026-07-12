@@ -236,6 +236,12 @@
 - Agregado `ClipboardList` icon + menú Auditoría en dropdown avatar móvil (antes solo estaba en sidebar)
 - Visible para owner/admin (oculto para profesional, igual que en sidebar)
 
+### F — Fix: Botón Editar en tabla Equipo
+- Botón lápiz no se veía en tabla Equipo — faltaba texto label junto al icono SVG
+- Agregado texto "Editar" y borde visible para mejor affordance
+- Botón renderizado siempre (incluso owner, deshabilitado visualmente)
+- Tabla responsive: `overflow-x-auto` en contenedor, `min-w-[500px]`, `w-12` en columna acciones
+
 ---
 
 ## Backlog actual (Julio 11, 2026)

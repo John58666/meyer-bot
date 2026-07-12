@@ -1,6 +1,6 @@
 # CONTEXT.md — meyer-bot
 
-> Última actualización: 11 julio 2026 (sesión 6 — Sprint 14 completado: fixes #26 #25 #23 #24 + Auditoría link móvil. Dashboard Sync completo. Backlog organizado en fases).
+> Última actualización: 11 julio 2026 (sesión 6 — Sprint 14 completado: fixes #26 #25 #23 #24 + Auditoría link móvil + botón Editar Equipo. Dashboard Sync completo. Backlog organizado en fases).
 > Documento maestro CORTO. Cualquier chat nuevo lee esto primero.
 > **⚠️ ANTES de tocar NADA: leer `docs/SECURITY_AUDIT.md`** — reporte maestro de seguridad, hallazgos activos y plan de remediación.
 > Para profundidad: ver docs/ (ARCHITECTURE.md, SPRINTS.md, RUNBOOK.md, KEY_LEARNINGS.md, SECURITY_AUDIT.md)
@@ -127,6 +127,7 @@ Asignados manualmente por SQL al onboardear. Sistema formal con Stripe/Wompi en 
 9. **Fix #23** — Auditoría: texto explicativo + default semana actual ✅
 10. **Fix #24** — Página `/dashboard/help` con FAQ filtrada por rol ✅
 11. **Fix móvil** — Auditoría link en dropdown avatar móvil ✅
+12. **Fix Equipo** — Botón Editar con texto visible, tabla responsive ✅
 
 ### PENDIENTE — Fase 2: Bot & Sistema
 12. **Inactividad bot** — que pregunte si cliente sigue ahí tras X tiempo sin respuesta.
