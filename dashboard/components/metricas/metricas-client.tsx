@@ -12,6 +12,8 @@ import { DrawerIngresos } from './drawer-ingresos'
 import { DrawerCitasDelDia } from './drawer-citas-del-dia'
 import { DrawerOcupacion } from './drawer-ocupacion'
 import { DrawerServicioDetalle } from './drawer-servicio-detalle'
+import { DrawerCancelaciones } from './drawer-cancelaciones'
+import { DrawerClientesNuevos } from './drawer-clientes-nuevos'
 import { CalendarIcon } from 'lucide-react'
 
 type DireccionBuena = 'subir' | 'bajar'
@@ -60,7 +62,7 @@ function MetricasContent({
   data: MetricasData
   isOwnerOrAdmin: boolean
   vistaActiva: VistaMetricas
-  setDrawerState: (state: { tipo: 'ingresos' | 'citas-del-dia' | 'ocupacion' | 'servicio-detalle'; fecha?: string; servicio?: string } | null) => void
+  setDrawerState: (state: { tipo: 'ingresos' | 'citas-del-dia' | 'ocupacion' | 'servicio-detalle' | 'cancelaciones' | 'clientes-nuevos'; fecha?: string; servicio?: string } | null) => void
   modoChart: 'ingresos' | 'citas'
   chartData: { fecha: string; citas: number; ingresos: number }[]
   chartDataAnterior: { fecha: string; citas: number; ingresos: number }[]
@@ -119,6 +121,7 @@ function MetricasContent({
                     } : null}
                     direccionBuena={METRICA_SEMANTICA['Total citas']}
                     sparklineData={data.sparklines.citas}
+                    onClick={() => setDrawerState({ tipo: 'citas-del-dia' })}
                   />
                 </div>
                 <div className="snap-start min-w-[150px] flex-shrink-0">
@@ -131,6 +134,7 @@ function MetricasContent({
                     } : null}
                     direccionBuena={METRICA_SEMANTICA['Cancelaciones']}
                     sparklineData={data.sparklines.cancelaciones}
+                    onClick={() => setDrawerState({ tipo: 'cancelaciones' })}
                   />
                 </div>
                 <div className="snap-start min-w-[150px] flex-shrink-0">
@@ -163,6 +167,7 @@ function MetricasContent({
                     valor={String(data.clientesNuevos)}
                     sub={`${data.clientesRecurrentes} recurrentes`}
                     direccionBuena={METRICA_SEMANTICA['Clientes Nuevos']}
+                    onClick={() => setDrawerState({ tipo: 'clientes-nuevos' })}
                   />
                 </div>
               </div>
@@ -188,6 +193,7 @@ function MetricasContent({
                   } : null}
                   direccionBuena={METRICA_SEMANTICA['Total citas']}
                   sparklineData={data.sparklines.citas}
+                  onClick={() => setDrawerState({ tipo: 'citas-del-dia' })}
                 />
                 <KpiCard
                   label="Cancelaciones"
@@ -198,6 +204,7 @@ function MetricasContent({
                   } : null}
                   direccionBuena={METRICA_SEMANTICA['Cancelaciones']}
                   sparklineData={data.sparklines.cancelaciones}
+                  onClick={() => setDrawerState({ tipo: 'cancelaciones' })}
                 />
                 <KpiCard
                   label="Ocupación"
@@ -224,6 +231,7 @@ function MetricasContent({
                   valor={String(data.clientesNuevos)}
                   sub={`${data.clientesRecurrentes} recurrentes`}
                   direccionBuena={METRICA_SEMANTICA['Clientes Nuevos']}
+                  onClick={() => setDrawerState({ tipo: 'clientes-nuevos' })}
                 />
               </div>
               {/* Pagination dots (mobile only) */}
@@ -393,7 +401,7 @@ export default function MetricasClient({ data: initialData, error: initialError,
   const [vistaActiva, setVistaActiva] = useState<VistaMetricas>('general')
   const [profFilter, setProfFilter] = useState<number | null>(null)
   const [drawerState, setDrawerState] = useState<{
-    tipo: 'ingresos' | 'citas-del-dia' | 'ocupacion' | 'servicio-detalle'
+    tipo: 'ingresos' | 'citas-del-dia' | 'ocupacion' | 'servicio-detalle' | 'cancelaciones' | 'clientes-nuevos'
     fecha?: string
     servicio?: string
   } | null>(null)
@@ -425,7 +433,8 @@ export default function MetricasClient({ data: initialData, error: initialError,
     const id = ++reqRef.current
     setLoadingData(true)
     try {
-      const result = await getMetricas(businessId, rango, professionalId, undefined, undefined, cc)
+      const activeProfId = role === 'profesional' ? professionalId : (profFilter ?? undefined)
+      const result = await getMetricas(businessId, rango, activeProfId, undefined, undefined, cc)
       if (id !== reqRef.current) return
       if (result.data) setClientData(result.data)
       if (result.error) setClientError(result.error)
@@ -453,7 +462,8 @@ export default function MetricasClient({ data: initialData, error: initialError,
 
     const id = ++reqRef.current
     setLoadingData(true)
-    getMetricas(businessId, 'custom', professionalId, desde, hasta, compararCon)
+    const activeProfId = role === 'profesional' ? professionalId : (profFilter ?? undefined)
+    getMetricas(businessId, 'custom', activeProfId, desde, hasta, compararCon)
       .then(result => {
         if (id !== reqRef.current) return
         if (result.data) setClientData(result.data)
@@ -469,6 +479,23 @@ export default function MetricasClient({ data: initialData, error: initialError,
       .finally(() => {
         if (id === reqRef.current) setLoadingData(false)
       })
+  }
+
+  async function cambiarProfFilter(profId: number | null) {
+    setProfFilter(profId)
+    const id = ++reqRef.current
+    setLoadingData(true)
+    try {
+      const activeProfId = profId ?? undefined
+      const result = await getMetricas(businessId, activeRango, activeProfId, activeDesde, activeHasta, compararCon)
+      if (id !== reqRef.current) return
+      if (result.data) setClientData(result.data)
+      if (result.error) setClientError(result.error)
+    } catch {
+      if (id === reqRef.current) setClientError('Error cargando métricas')
+    } finally {
+      if (id === reqRef.current) setLoadingData(false)
+    }
   }
 
   const isOwnerOrAdmin = role === 'owner' || role === 'admin'
@@ -605,12 +632,17 @@ export default function MetricasClient({ data: initialData, error: initialError,
 
       <TabSelector activa={vistaActiva} onChange={setVistaActiva} role={role} />
 
-      {/* Filtro de profesional (solo owner/admin en vista profesional) */}
-      {vistaActiva === 'profesional' && isOwnerOrAdmin && clientData.profesionalesActivos.length > 1 && (
-        <div className="mb-4">
+      {/* Filtro de profesional global (siempre visible para owner/admin) */}
+      {isOwnerOrAdmin && clientData.profesionalesActivos.length > 1 && (
+        <div className="mb-4 flex items-center gap-2">
+          <label htmlFor="prof-filter" className="text-[11px] text-[var(--text-secondary)] shrink-0 uppercase tracking-wide">
+            Profesional
+          </label>
           <select
+            id="prof-filter"
             value={profFilter ?? ''}
-            onChange={(e) => setProfFilter(e.target.value ? Number(e.target.value) : null)}
+            onChange={(e) => cambiarProfFilter(e.target.value ? Number(e.target.value) : null)}
+            disabled={loadingData}
             className="w-full sm:w-64 px-3 py-2 rounded-lg text-sm bg-[var(--bg-card,#1a1a1a)] text-[var(--text-primary)] border border-[var(--border-subtle,#2a2a2a)]"
             aria-label="Filtrar por profesional"
           >
@@ -661,6 +693,19 @@ export default function MetricasClient({ data: initialData, error: initialError,
         onClose={() => setDrawerState(null)}
         businessId={businessId}
         servicio={drawerState?.servicio}
+      />
+
+      <DrawerCancelaciones
+        open={drawerState?.tipo === 'cancelaciones'}
+        onClose={() => setDrawerState(null)}
+        businessId={businessId}
+        professionalId={role === 'profesional' ? professionalId : (profFilter ?? undefined)}
+      />
+
+      <DrawerClientesNuevos
+        open={drawerState?.tipo === 'clientes-nuevos'}
+        onClose={() => setDrawerState(null)}
+        businessId={businessId}
       />
     </div>
   )

@@ -879,7 +879,7 @@ export async function getMetricasDrawer(
         : calcularRangoFechas('semana');
 
       const { rows } = await pool.query(
-        `SELECT c.nombre, c.numero, c.primera_visita::text,
+        `SELECT c.nombre, c.numero, c.primera_visita::text AS "primeraVisita",
                 c.total_visitas AS "totalCitas"
          FROM customers c
          WHERE c.business_id = $1

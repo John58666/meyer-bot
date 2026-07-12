@@ -59,8 +59,11 @@ export function KpiCard({ label, valor, variacion, direccionBuena, sub, onClick,
 
   const content = (
     <div
-      className="bg-[var(--bg-card,#1a1a1a)] rounded-xl p-4 flex flex-col gap-1.5 border border-[var(--border-subtle,#2a2a2a)] transition-colors duration-200 group relative"
-      style={onClick ? { cursor: 'pointer' } : undefined}
+      className={`bg-[var(--bg-card,#1a1a1a)] rounded-xl p-4 flex flex-col gap-1.5 border transition-colors duration-200 group relative ${
+        onClick
+          ? 'border-[var(--border-subtle,#2a2a2a)] hover:border-[var(--color-accent,#6366f1)]/40 cursor-pointer'
+          : 'border-[var(--border-subtle,#2a2a2a)]'
+      }`}
       tabIndex={onClick ? 0 : undefined}
       role={onClick ? 'button' : undefined}
       onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') onClick() } : undefined}
