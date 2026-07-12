@@ -244,23 +244,39 @@
 
 ---
 
-## Sprint 15 — Dashboard Métricas Premium (spec aprobado, pendiente implementación)
+## Sprint 15 — Dashboard Métricas Premium — COMPLETADO ✅ (Julio 12, 2026)
 
-> Spec completo en `docs/superpowers/specs/2026-07-11-sprint15-metricas-premium.md`
+> Spec: `docs/superpowers/specs/2026-07-11-sprint15-metricas-premium.md`
 
-### Alcance aprobado
-1. **Vista General** — KPIs expandidos (ocupación, retención, clientes nuevos vs recurrentes) + badges de variación vs período anterior
-2. **Vista Por Profesional** — filtro por profesional con métricas filtradas
-3. **Vista Servicios** — ranking de servicios por ingresos y cantidad
-4. **Comparativas temporales** — cada KPI con % de cambio vs período anterior
-5. **4 Drawers de drill-down** — Ingresos, Citas del Día, Ocupación (heatmap), Servicio Detalle
-6. **Responsive + RBAC** — todo funciona en móvil, profesional ve solo sus datos
-7. **Multi-negocio** — funciona para cualquier business_id sin cambios
-8. **1 índice DB** — `idx_appointments_metrics` en appointments (business_id, professional_id, fecha, estado)
+### Implementado
+1. **Migración DB**: índice `idx_appointments_metrics` (business_id, professional_id, fecha, estado) creado CONCURRENTLY
+2. **Server actions**: `getMetricas()` extendida con periodo anterior, ocupación, clientes nuevos vs recurrentes, agregación por profesional y servicio. `getMetricasDrawer()` para 4 tipos de drawer bajo demanda
+3. **API route**: `POST /dashboard/metricas/api/drawer` con RBAC server-side
+4. **6 KPIs**: ingresos, total citas, cancelaciones, ocupación, retención, clientes nuevos — todos con badge de variación vs período anterior
+5. **3 Tabs**: General (KPIs + chart), Por Profesional (tabla comparativa), Servicios (ranking horizontal + KPIs)
+6. **Chart Ingresos**: BarChart con línea punteada del período anterior, click en barra abre drawer de citas del día
+7. **Chart Servicios**: BarChart horizontal con colores por servicio, click abre drawer de detalle
+8. **4 Drawers**: Ingresos (desglose por profesional+servicio), Citas del Día (lista con estados), Ocupación (heatmap grid 7×N), Servicio Detalle (por profesional + tendencia mensual)
+9. **Responsive móvil**: KPIs en scroll horizontal con snap, tabs scrolleables, sheets en modo bottom
+10. **RBAC**: profesional solo ve vista General con sus datos, sin selector de profesional ni tab "Por Profesional"
 
-### Pendientes pre-implementación
-- Revisar spec por el dueño
-- Aprobar inicio de implementación
+### Archivos nuevos
+- `dashboard/components/metricas/metricas-kpi-card.tsx`
+- `dashboard/components/metricas/metricas-tab-selector.tsx`
+- `dashboard/components/metricas/metricas-chart-ingresos.tsx`
+- `dashboard/components/metricas/metricas-chart-servicios.tsx`
+- `dashboard/components/metricas/metricas-chart-ocupacion.tsx`
+- `dashboard/components/metricas/drawer-ingresos.tsx`
+- `dashboard/components/metricas/drawer-citas-del-dia.tsx`
+- `dashboard/components/metricas/drawer-ocupacion.tsx`
+- `dashboard/components/metricas/drawer-servicio-detalle.tsx`
+- `dashboard/app/(dashboard)/dashboard/metricas/api/drawer/route.ts`
+- `database/migrations/015_metrics_index.sql`
+
+### Archivos modificados
+- `dashboard/lib/actions.ts` — MetricasData extendido + getMetricasDrawer() + helpers
+- `dashboard/components/metricas/metricas-client.tsx` — orquestación completa
+- `dashboard/app/(dashboard)/dashboard/metricas/page.tsx` — pasa role a MetricasClient
 
 ---
 

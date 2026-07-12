@@ -198,6 +198,32 @@ export async function rescheduleAppointment(
   }
 }
 
+// ─── Cache simple in-memory para métricas ────────────────────────────────────
+
+const metricsCache = new Map<string, { data: unknown; expiry: number }>();
+const CACHE_TTL_MS = 15_000; // 15 segundos
+
+function getCacheKey(businessId: number, rango: RangoMetricas, professionalId?: number | null): string {
+  return `${businessId}:${rango}:${professionalId ?? ''}`;
+}
+
+function cacheGet<T>(key: string): T | null {
+  const entry = metricsCache.get(key);
+  if (!entry || Date.now() > entry.expiry) {
+    metricsCache.delete(key);
+    return null;
+  }
+  return entry.data as T;
+}
+
+function cacheSet<T>(key: string, data: T): void {
+  metricsCache.set(key, { data, expiry: Date.now() + CACHE_TTL_MS });
+  if (metricsCache.size > 100) {
+    const firstKey = metricsCache.keys().next().value;
+    if (firstKey) metricsCache.delete(firstKey);
+  }
+}
+
 // ─── MÉTRICAS ────────────────────────────────────────────────────────────────
 
 export type RangoMetricas = 'hoy' | 'semana' | 'mes';
@@ -209,10 +235,6 @@ export interface FilaCita {
   fecha: string;
   professional_id: number | null;
   professional_name: string | null;
-  id: number;
-  hora: string;
-  nombre: string;
-  numero: string;
 }
 
 export interface MetricasData {
@@ -306,8 +328,7 @@ async function fetchMetricasQuery(
     `SELECT a.estado, a.servicio,
             EXTRACT(HOUR FROM a.hora)::int AS hora_slot,
             a.fecha::text, a.professional_id,
-            p.name AS professional_name,
-            a.id, a.hora::text, a.nombre, a.numero
+            p.name AS professional_name
      FROM appointments a
      LEFT JOIN professionals p ON p.id = a.professional_id
      WHERE a.business_id = $1
@@ -391,6 +412,10 @@ export async function getMetricas(
   rango: RangoMetricas,
   professionalId?: number | null
 ): Promise<{ data: MetricasData | null; error: string | null }> {
+  const cacheKey = getCacheKey(businessId, rango, professionalId);
+  const cached = cacheGet<MetricasData>(cacheKey);
+  if (cached) return { data: cached, error: null };
+
   try {
     const { fechaDesde, fechaHasta } = calcularRangoFechas(rango);
     const periodoAnterior = calcularPeriodoAnterior(rango, fechaDesde, fechaHasta);
@@ -533,21 +558,21 @@ export async function getMetricas(
     });
     const servicios = Object.values(servMap).sort((a, b) => b.ingresos - a.ingresos);
 
-    return {
-      data: {
-        totalCitas, completadas, pendientes, canceladas, tasaCancelacion, ingresos, horaPico,
-        historialPorDia,
-        ingresosVariacion, totalCitasVariacion, tasaCancelacionVariacion,
-        ocupacion: ocupacionPct, ocupacionVariacion,
-        clientesNuevos: nuevos, clientesRecurrentes: recurrentes,
-        retencion, retencionVariacion,
-        profesionales,
-        servicios,
-        historialAnteriorPorDia,
-        profesionalesActivos: profResult.rows,
-      },
-      error: null,
+    const resultData: MetricasData = {
+      totalCitas, completadas, pendientes, canceladas, tasaCancelacion, ingresos, horaPico,
+      historialPorDia,
+      ingresosVariacion, totalCitasVariacion, tasaCancelacionVariacion,
+      ocupacion: ocupacionPct, ocupacionVariacion,
+      clientesNuevos: nuevos, clientesRecurrentes: recurrentes,
+      retencion, retencionVariacion,
+      profesionales,
+      servicios,
+      historialAnteriorPorDia,
+      profesionalesActivos: profResult.rows,
     };
+    cacheSet(cacheKey, resultData);
+
+    return { data: resultData, error: null };
   } catch (e) {
     console.error('[getMetricas]', e);
     return { data: null, error: 'Error cargando métricas' };
@@ -570,32 +595,34 @@ export async function getMetricasDrawer(
         ? ` AND a.professional_id = $${queryParams.push(params.professionalId)}`
         : '';
 
-      const { rows: raw } = await pool.query(
-        `SELECT p.name AS profesional, a.servicio, COUNT(*)::int AS cantidad,
-                SUM(CASE WHEN a.estado = 'Completada' THEN COALESCE(
-                  (SELECT NULLIF(regexp_replace(split_part(split_part(b.services_text, a.servicio || ' $', 2), ',', 1), '[^0-9]', '', 'g'), '')::numeric),
-                  0
-                ) ELSE 0 END)::numeric AS total
-         FROM appointments a
-         JOIN businesses b ON b.id = a.business_id
-         LEFT JOIN professionals p ON p.id = a.professional_id
-         WHERE a.business_id = $1 AND a.fecha BETWEEN $2 AND $3 ${profFilter}
-         GROUP BY p.name, a.servicio
-         ORDER BY total DESC`,
-        queryParams
-      );
+      const [aptRows, bizRows] = await Promise.all([
+        pool.query(
+          `SELECT COALESCE(p.name, 'Sin asignar') AS profesional, a.servicio,
+                  COUNT(*)::int AS cantidad,
+                  COUNT(*) FILTER (WHERE a.estado = 'Completada')::int AS completadas
+           FROM appointments a
+           LEFT JOIN professionals p ON p.id = a.professional_id
+           WHERE a.business_id = $1 AND a.fecha BETWEEN $2 AND $3 ${profFilter}
+           GROUP BY p.name, a.servicio
+           ORDER BY cantidad DESC`,
+          queryParams
+        ),
+        pool.query<{ services_text: string }>(
+          `SELECT services_text FROM businesses WHERE id = $1`, [businessId]
+        ),
+      ]);
+
+      const precioMap = parsePrice(bizRows.rows[0]?.services_text ?? '');
+      const filas = aptRows.rows.map(r => ({
+        profesional: r.profesional,
+        servicio: r.servicio,
+        cantidad: parseInt(r.cantidad),
+        total: parseInt(r.completadas) * (precioMap.get(r.servicio) ?? 0),
+      }));
+      const total = filas.reduce((s, f) => s + f.total, 0);
 
       return {
-        data: {
-          tipo: 'ingresos',
-          filas: raw.map(r => ({
-            profesional: r.profesional ?? 'Sin asignar',
-            servicio: r.servicio,
-            cantidad: parseInt(r.cantidad),
-            total: parseFloat(r.total),
-          })),
-          total: raw.reduce((sum: number, r: { total: string }) => sum + parseFloat(r.total || '0'), 0),
-        },
+        data: { tipo: 'ingresos', filas, total },
         error: null,
       };
     }

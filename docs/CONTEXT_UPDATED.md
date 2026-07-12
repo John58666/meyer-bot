@@ -1,6 +1,6 @@
 # CONTEXT.md — meyer-bot
 
-> Última actualización: 11 julio 2026 (sesión 7 — Sprint 14 completado. Beszel + Uptime Kuma instalados en VPS para monitoreo).
+> Última actualización: 12 julio 2026 (sesión 8 — Sprint 15 completado. Dashboard Métricas Premium con KPIs, tabs, charts, drawers y comparativas temporales).
 > Documento maestro CORTO. Cualquier chat nuevo lee esto primero.
 > **⚠️ ANTES de tocar NADA: leer `docs/SECURITY_AUDIT.md`** — reporte maestro de seguridad, hallazgos activos y plan de remediación.
 > Para profundidad: ver docs/ (ARCHITECTURE.md, SPRINTS.md, RUNBOOK.md, KEY_LEARNINGS.md, SECURITY_AUDIT.md)
@@ -136,13 +136,8 @@ Asignados manualmente por SQL al onboardear. Sistema formal con Stripe/Wompi en 
 13. **Debugging errores bot** — revisar executions n8n, identificar y corregir causas raíz de errores frecuentes.
 14. **Pruebas de carga** — simular múltiples clientes simultáneos agendando, medir comportamiento del sistema.
 
-### PENDIENTE — Fase 3: Dashboard Métricas (expansión)
-15. **Métricas por profesional** — ingresos, citas, cancelaciones filtrados por cada barbero/profesional
-16. **Comparativa servicios** — ranking de servicios más vendidos, ingresos por servicio, tendencias
-17. **KPIs adicionales** — clientes nuevos vs recurrentes, hora pico por profesional, tasa de retención
-18. **Comparativas temporales** — esta semana vs anterior, este mes vs anterior, variación %
-19. **Responsive + roles** — todo funciona en móvil, respeta RBAC (profesional ve solo lo suyo)
-20. **Sync con bot** — datos basados en citas reales (WhatsApp + dashboard)
+### SPRINT 15 — COMPLETADO ✅ (12 julio 2026)
+15. **Dashboard Métricas Premium** — KPIs expandidos (6 cards con badges de variación), tabs General/Profesional/Servicios, chart ingresos con overlay período anterior, chart horizontal servicios, grid heatmap ocupación, 4 drawers drill-down con Sheet, RBAC profesional, responsive móvil.
 
 ### PENDIENTE — Fase 4: Fixes complejos
 21. **#21 — Onboarding negocio nuevo** — script/checklist multi-sistema

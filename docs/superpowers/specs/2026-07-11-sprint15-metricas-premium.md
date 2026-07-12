@@ -2,7 +2,7 @@
 
 > **Fecha:** 11 julio 2026
 > **Proyecto:** meyer-bot
-> **Estado:** Spec aprobado — pendiente implementación
+> **Estado:** Implementado y deployado ✅ (12 julio 2026)
 
 ---
 
@@ -377,14 +377,14 @@ Ver `docs/ARCHITECTURE_FUTURE.md` (post-sprint) para:
 
 ## 13. Criterios de aceptación
 
-1. [ ] KPIs generales se muestran correctos para Hoy/Semana/Mes
-2. [ ] Badges de variación vs período anterior aparecen con valor correcto
-3. [ ] Tabs General / Por Profesional / Servicios cambian el contenido
-4. [ ] Selector de profesional funciona (owner/admin)
-5. [ ] Profesional solo ve sus datos, no ve selector ni tab Profesional
-6. [ ] Charts se renderizan según la vista activa
-7. [ ] Click en KPI abre drawer con datos correctos
-8. [ ] Drawers se cierran correctamente
-9. [ ] Todo funciona en móvil (<640px viewport)
-10. [ ] Build exitoso sin errores
-11. [ ] Funciona para business_id=1,2,3 sin cambios
+1. [x] KPIs generales se muestran correctos para Hoy/Semana/Mes
+2. [x] Badges de variación vs período anterior aparecen con valor correcto
+3. [x] Tabs General / Por Profesional / Servicios cambian el contenido
+4. [x] Selector de profesional funciona (owner/admin)
+5. [x] Profesional solo ve sus datos, no ve selector ni tab Profesional
+6. [x] Charts se renderizan según la vista activa
+7. [x] Click en KPI abre drawer con datos correctos
+8. [x] Drawers se cierran correctamente
+9. [x] Todo funciona en móvil (<640px viewport)
+10. [x] Build exitoso sin errores
+11. [x] Funciona para business_id=1,2,3 sin cambios
