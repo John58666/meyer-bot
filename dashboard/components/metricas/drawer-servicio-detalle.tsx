@@ -21,18 +21,10 @@ function formatPesos(valor: number): string {
 }
 
 export function DrawerServicioDetalle({ open, onClose, businessId, servicio }: Props) {
-  const [isMobile, setIsMobile] = useState(false)
   const [data, setData] = useState<DrawerData | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [retry, setRetry] = useState(0)
-
-  useEffect(() => {
-    setIsMobile(window.innerWidth < 768)
-    const handleResize = () => setIsMobile(window.innerWidth < 768)
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
 
   useEffect(() => {
     if (!open || !servicio) return
@@ -53,7 +45,7 @@ export function DrawerServicioDetalle({ open, onClose, businessId, servicio }: P
 
   return (
     <Sheet open={open} onOpenChange={(o) => { if (!o) onClose() }}>
-      <SheetContent side={isMobile ? 'bottom' : 'right'} className="sm:max-w-md">
+      <SheetContent side="right" className="max-md:!w-[90vw] max-md:!max-w-[90vw] sm:max-w-md">
         <SheetHeader>
           <SheetTitle>{servicio || 'Detalle del Servicio'}</SheetTitle>
           <SheetDescription>
