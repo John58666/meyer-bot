@@ -30,6 +30,7 @@ export function BottomNav() {
           <Link
             key={item.href}
             href={item.href}
+            title={item.label}
             className={`flex flex-col items-center justify-center gap-1 w-16 h-full transition-colors ${
               isActive
                 ? "text-[var(--color-accent)]"
@@ -67,7 +68,9 @@ export function Topbar({ user, role }: TopbarProps) {
     <header className="fixed top-0 left-0 right-0 h-[56px] bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] flex items-center justify-between px-4 z-50">
       <div className="flex items-center gap-2 ml-1">
         <span className="text-[var(--color-accent)] text-lg">✂️</span>
-        <span className="text-white font-bold text-lg leading-tight">{user.businessName}</span>
+        <Link href="/dashboard" className="text-white font-bold text-lg leading-tight hover:text-[var(--color-accent)] transition-colors">
+          {user.businessName}
+        </Link>
       </div>
 
       <DropdownMenu>

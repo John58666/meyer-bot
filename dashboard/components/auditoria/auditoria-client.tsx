@@ -121,6 +121,7 @@ export function AuditoriaClient({
         </div>
         <button
           onClick={applyFilters}
+          title="Aplicar filtros"
           className="mt-3 px-4 py-2 rounded-lg bg-[var(--color-accent)] text-white text-sm font-medium hover:opacity-90 transition-opacity"
         >
           Filtrar
@@ -247,6 +248,7 @@ export function AuditoriaClient({
           <button
             onClick={() => router.push(buildUrl(currentPage - 1))}
             disabled={currentPage <= 1}
+            title="Página anterior"
             className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-white hover:bg-white/5 disabled:opacity-30 disabled:pointer-events-none transition-colors"
           >
             <ChevronLeft size={18} />
@@ -269,6 +271,7 @@ export function AuditoriaClient({
           <button
             onClick={() => router.push(buildUrl(currentPage + 1))}
             disabled={currentPage >= pages}
+            title="Página siguiente"
             className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-white hover:bg-white/5 disabled:opacity-30 disabled:pointer-events-none transition-colors"
           >
             <ChevronRight size={18} />
