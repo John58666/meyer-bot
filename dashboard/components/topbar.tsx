@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, Home, Calendar, BarChart2, Users, Settings, UserCog, HelpCircle } from "lucide-react";
+import { LogOut, Home, Calendar, BarChart2, Users, Settings, UserCog, HelpCircle, ClipboardList } from "lucide-react";
 
 const bottomNavItems = [
   { icon: Home,      href: "/dashboard",          label: "Inicio"   },
@@ -98,6 +98,15 @@ export function Topbar({ user, role }: TopbarProps) {
             >
               <Settings size={16} className="mr-2" />
               Configuración
+            </DropdownMenuItem>
+          )}
+          {role !== "profesional" && (
+            <DropdownMenuItem
+              onClick={() => router.push('/dashboard/auditoria')}
+              className="sm:hidden cursor-pointer focus:bg-white/5"
+            >
+              <ClipboardList size={16} className="mr-2" />
+              Auditoría
             </DropdownMenuItem>
           )}
           {role === "owner" && (

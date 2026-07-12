@@ -83,7 +83,7 @@ Asignados manualmente por SQL al onboardear. Sistema formal con Stripe/Wompi en 
 
 ### Sidebar PC
 - Nav: Inicio, Agenda, Métricas, Clientes
-- Bottom: Configuración (oculto para `profesional`), Equipo (solo `owner`), Ayuda
+- Bottom: Configuración (oculto para `profesional`), Auditoría (oculto para `profesional`), Equipo (solo `owner`), Ayuda (→ `/dashboard/help` con FAQ)
 - Configuración y Equipo también en dropdown avatar móvil (sm:hidden)
 
 ## Archivos clave del dashboard
