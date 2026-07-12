@@ -2,7 +2,7 @@
 
 > **Fecha:** 11 julio 2026
 > **Proyecto:** meyer-bot
-> **Estado:** Implementado y deployado ✅ (12 julio 2026) — 2 responsive bugs corregidos post-deploy (13 julio 2026)
+> **Estado:** Implementado y deployado ✅ (12 julio 2026) — 3 bugs corregidos post-deploy: 2 responsive + 1 GPU glitch
 
 ---
 
@@ -443,6 +443,14 @@ Ver `docs/ARCHITECTURE_FUTURE.md` (post-sprint) para:
 | **KPI grid overflow** — KPIs en scroll horizontal forzado en tablet/desktop (6 cards ~900px en container 768px) | `flex overflow-x-auto` sin `flex-wrap` en sm+ | Dual container: scroll `flex sm:hidden` + grid `hidden sm:grid sm:grid-cols-3` | `7f8a780` |
 | **"Pantallitas negras"** — múltiples overlays/backdrops al clickear en General (móvil) | `useState`+`useEffect` para `isMobile` en 4 drawers causa re-render cascade; base-ui Dialog renderiza overlays fantasma | Eliminar `isMobile` de todos los drawers, siempre `side="right"`, CSS-only `max-md:!w-[90vw] max-md:!max-w-[90vw]` | `43751c5` |
 
+### 14.8 GPU glitch post-deploy (12 julio 2026)
+
+> GPU glitch persistente en móvil (estática/píxeles rotos en cards + nav). Fix anterior `backface-visibility` no funcionó.
+
+| Bug | Causa raíz | Fix | Commit |
+|-----|-----------|-----|--------|
+| **GPU glitch** — screen tearing, píxeles rotos, estática visual en KPI cards + nav en móvil | `--border-subtle: rgba(255,255,255,0.06)` forzaba composición GPU en cada capa. 10-15 bordes RGBA visibles saturaban memoria de composición GPU móvil. | `globals.css`: `rgba` → hex sólido `#2A2A2A`. `metricas-chart-servicios.tsx`: `isAnimationActive={false}`. Un solo cambio cascada a todos los componentes. | `7a886b2` |
+
 ---
 
 ## 13. Criterios de aceptación
@@ -480,3 +488,8 @@ Ver `docs/ARCHITECTURE_FUTURE.md` (post-sprint) para:
 26. [x] Drawers 90vw de ancho en móvil (CSS-only, sin JS)
 27. [x] Date picker inputs full-width en móvil
 28. [x] Sin errores de build ni lint (solo pre-existentes)
+
+### GPU glitch post-deploy (sesión 12)
+29. [x] Sin GPU glitch en móvil (estática/píxeles rotos) al navegar entre vistas
+30. [x] KPI cards sin screen tearing ni artefactos visuales en scroll horizontal móvil
+31. [x] Nav (sidebar + topbar + bottomnav) sin corrupción visual al hacer scroll
