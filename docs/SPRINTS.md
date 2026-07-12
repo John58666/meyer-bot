@@ -261,7 +261,7 @@ Detalle completo en spec sección 14. Pendiente de aprobación para ejecutar.
 
 ### Implementado
 1. **Migración DB**: índice `idx_appointments_metrics` (business_id, professional_id, fecha, estado) creado CONCURRENTLY
-2. **Server actions**: `getMetricas()` extendida con periodo anterior, ocupación, clientes nuevos vs recurrentes, agregación por profesional y servicio. `getMetricasDrawer()` para 4 tipos de drawer bajo demanda
+2. **Server actions**: `getMetricas()` extendida con período anterior, ocupación, clientes nuevos vs recurrentes, agregación por profesional y servicio. `getMetricasDrawer()` para 4 tipos de drawer bajo demanda
 3. **API route**: `POST /dashboard/metricas/api/drawer` con RBAC server-side
 4. **6 KPIs**: ingresos, total citas, cancelaciones, ocupación, retención, clientes nuevos — todos con badge de variación vs período anterior
 5. **3 Tabs**: General (KPIs + chart), Por Profesional (tabla comparativa), Servicios (ranking horizontal + KPIs)
@@ -270,6 +270,59 @@ Detalle completo en spec sección 14. Pendiente de aprobación para ejecutar.
 8. **4 Drawers**: Ingresos (desglose por profesional+servicio), Citas del Día (lista con estados), Ocupación (heatmap grid 7×N), Servicio Detalle (por profesional + tendencia mensual)
 9. **Responsive móvil**: KPIs en scroll horizontal con snap, tabs scrolleables, sheets en modo bottom
 10. **RBAC**: profesional solo ve vista General con sus datos, sin selector de profesional ni tab "Por Profesional"
+
+### UI/UX Audit — Implementado (Sesión 10, 12 julio 2026)
+**🔴 KPIs con contexto:**
+- Sparkline SVG inline (60×20px) debajo del valor en cada KPI (ingresos, citas, cancelaciones, ocupación)
+- Badges semánticos: `TrendingUp`/`TrendingDown` según tipo de métrica (↑ ingresos = verde, ↑ cancelaciones = rojo)
+- Tooltip hover "vs período anterior" con valores actual vs anterior
+- `METRICA_SEMANTICA` map (subir-bueno vs bajar-bueno) en metricas-client.tsx
+
+**🔴 Filtro fechas global:**
+- `RangoMetricas` extendido: `'trimestre'` y `'custom'`
+- Botón "Trimestre" en rango selector
+- Botón "Personalizar" con icono calendario → despliega inputs `date` Desde/Hasta + botón Aplicar
+- `calcularRangoFechas()` y `calcularPeriodoAnterior()` actualizados para trimestre y custom
+- Cache key extendido con fechas para rangos custom
+- `page.tsx` acepta `desde`/`hasta` en searchParams
+
+**🟡 Drawers con error states:**
+- Los 4 drawers (`drawer-ingresos`, `drawer-citas-del-dia`, `drawer-ocupacion`, `drawer-servicio-detalle`): estado `error` con mensaje + botón "Reintentar" ejecuta `fetchData()` de nuevo
+- Verificación `response.ok` + `d.error` en response JSON
+- Función `fetchData()` extraída para poder re-ejecutarla
+
+**🟡 Accesibilidad:**
+- `metricas-tab-selector`: `role="tablist"`, `role="tab"`, `aria-selected`, `aria-controls`
+- `metricas-client`: `role="tabpanel"` con `aria-labelledby`
+- Charts envueltos en `<div role="img" aria-label="...">`
+- `KpiCard`: `sr-only` en badges ("Mejoró/Empeoró X%")
+- Select profesional: `aria-label="Filtrar por profesional"`
+
+**🟢 Responsive:**
+- Pagination dots: indicador de posición en KPIs horizontal mobile (6 dots, solo visible en `<sm`)
+- Scroll tracking con `useRef` + `useEffect` + `scroll` event
+
+**🟢 Heatmap:**
+- Tooltip flotante posicionado con `fixed` + transform al hover de cada celda
+- Indicador de hora actual: "10:00 ←" en color accent para la hora de Bogotá actual
+- Color ramp legend existente sin cambios
+
+**🟢 Charts:**
+- `LabelList` con formato de pesos en barras de servicios
+- `animationBegin={0}`, `animationDuration={600}`, `animationEasing="ease-out"` en servicio bars
+
+### Archivos modificados
+- `dashboard/lib/actions.ts` — RangoMetricas extendido, sparklines en MetricasData, calcularRangoFechas/PeriodoAnterior extendidos
+- `dashboard/components/metricas/metricas-client.tsx` — filtro fechas, pagination dots, accessibility, semántica
+- `dashboard/components/metricas/metricas-kpi-card.tsx` — sparkline SVG, TrendingUp/Down, tooltip hover, sr-only
+- `dashboard/components/metricas/metricas-tab-selector.tsx` — role="tablist", aria-selected, aria-controls
+- `dashboard/components/metricas/metricas-chart-servicios.tsx` — LabelList + animación
+- `dashboard/components/metricas/metricas-chart-ocupacion.tsx` — tooltip flotante + hora actual
+- `dashboard/components/metricas/drawer-ingresos.tsx` — error state + reintentar
+- `dashboard/components/metricas/drawer-citas-del-dia.tsx` — error state + reintentar
+- `dashboard/components/metricas/drawer-ocupacion.tsx` — error state + reintentar
+- `dashboard/components/metricas/drawer-servicio-detalle.tsx` — error state + reintentar
+- `dashboard/app/(dashboard)/dashboard/metricas/page.tsx` — soporte custom dates
 
 ### Archivos nuevos
 - `dashboard/components/metricas/metricas-kpi-card.tsx`

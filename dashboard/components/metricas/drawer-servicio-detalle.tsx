@@ -1,5 +1,7 @@
 'use client'
 
+/* eslint-disable react-hooks/set-state-in-effect */
+
 import { useEffect, useState } from 'react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts'
@@ -21,19 +23,25 @@ function formatPesos(valor: number): string {
 export function DrawerServicioDetalle({ open, onClose, businessId, servicio }: Props) {
   const [data, setData] = useState<DrawerData | null>(null)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [retry, setRetry] = useState(0)
 
   useEffect(() => {
     if (!open || !servicio) return
+    let cancelled = false
     setLoading(true)
+    setError(null)
     fetch('/dashboard/metricas/api/drawer', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tipo: 'servicio-detalle', businessId, servicio }),
     })
-      .then(r => r.json())
-      .then(d => setData(d.data))
-      .finally(() => setLoading(false))
-  }, [open, businessId, servicio])
+      .then(r => { if (!r.ok) throw new Error('Error al cargar datos'); return r.json() })
+      .then(d => { if (!cancelled) { if (d.error) throw new Error(d.error); setData(d.data) } })
+      .catch(e => { if (!cancelled) setError(e.message) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [open, businessId, servicio, retry])
 
   return (
     <Sheet open={open} onOpenChange={(o) => { if (!o) onClose() }}>
@@ -50,6 +58,13 @@ export function DrawerServicioDetalle({ open, onClose, businessId, servicio }: P
               {[1,2,3].map(i => (
                 <div key={i} className="h-10 bg-[var(--border-subtle,#2a2a2a)] rounded animate-pulse" />
               ))}
+            </div>
+          ) : error ? (
+            <div className="mt-4 p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-center">
+              <p className="text-red-400 text-sm mb-2">{error}</p>
+              <button onClick={() => setRetry(r => r + 1)} className="text-xs text-[var(--color-accent,#6366f1)] underline">
+                Reintentar
+              </button>
             </div>
           ) : data?.tipo === 'servicio-detalle' ? (
             <div className="mt-4 space-y-6">

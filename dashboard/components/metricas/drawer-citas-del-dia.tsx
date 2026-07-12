@@ -1,5 +1,7 @@
 'use client'
 
+/* eslint-disable react-hooks/set-state-in-effect */
+
 import { useEffect, useState } from 'react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import type { DrawerData } from '@/lib/actions'
@@ -21,19 +23,25 @@ const ESTADO_COLORS: Record<string, string> = {
 export function DrawerCitasDelDia({ open, onClose, businessId, professionalId, fecha }: Props) {
   const [data, setData] = useState<DrawerData | null>(null)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [retry, setRetry] = useState(0)
 
   useEffect(() => {
     if (!open) return
+    let cancelled = false
     setLoading(true)
+    setError(null)
     fetch('/dashboard/metricas/api/drawer', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tipo: 'citas-del-dia', businessId, professionalId, fecha }),
     })
-      .then(r => r.json())
-      .then(d => setData(d.data))
-      .finally(() => setLoading(false))
-  }, [open, businessId, professionalId, fecha])
+      .then(r => { if (!r.ok) throw new Error('Error al cargar datos'); return r.json() })
+      .then(d => { if (!cancelled) { if (d.error) throw new Error(d.error); setData(d.data) } })
+      .catch(e => { if (!cancelled) setError(e.message) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [open, businessId, professionalId, fecha, retry])
 
   const tituloFecha = fecha
     ? new Date(fecha + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -54,6 +62,13 @@ export function DrawerCitasDelDia({ open, onClose, businessId, professionalId, f
               {[1,2,3,4,5].map(i => (
                 <div key={i} className="h-12 bg-[var(--border-subtle,#2a2a2a)] rounded animate-pulse" />
               ))}
+            </div>
+          ) : error ? (
+            <div className="mt-4 p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-center">
+              <p className="text-red-400 text-sm mb-2">{error}</p>
+              <button onClick={() => setRetry(r => r + 1)} className="text-xs text-[var(--color-accent,#6366f1)] underline">
+                Reintentar
+              </button>
             </div>
           ) : data?.tipo === 'citas-del-dia' ? (
             <div className="mt-4 space-y-2">

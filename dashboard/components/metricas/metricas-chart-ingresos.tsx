@@ -1,5 +1,7 @@
 'use client'
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Line, Legend } from 'recharts'
 
 interface ChartDataPoint {

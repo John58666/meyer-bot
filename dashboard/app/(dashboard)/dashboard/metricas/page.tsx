@@ -4,7 +4,12 @@ import { getMetricas, type RangoMetricas } from '@/lib/actions';
 import MetricasClient from '@/components/metricas/metricas-client';
 
 interface Props {
-  searchParams: Promise<{ rango?: string }>;
+  searchParams: Promise<{ rango?: string; desde?: string; hasta?: string }>;
+}
+
+function parseRango(raw: string | undefined): RangoMetricas {
+  if (raw === 'hoy' || raw === 'semana' || raw === 'mes' || raw === 'trimestre' || raw === 'custom') return raw;
+  return 'semana';
 }
 
 export default async function MetricasPage({ searchParams }: Props) {
@@ -12,16 +17,14 @@ export default async function MetricasPage({ searchParams }: Props) {
   if (!session?.user?.businessId) redirect('/login');
 
   const params = await searchParams;
-  const rangoRaw = params.rango ?? 'semana';
-  const rango: RangoMetricas =
-    rangoRaw === 'hoy' || rangoRaw === 'semana' || rangoRaw === 'mes'
-      ? rangoRaw
-      : 'semana';
+  const rango = parseRango(params.rango);
+  const fechaDesde = params.desde;
+  const fechaHasta = params.hasta;
 
   const businessId = Number(session.user.businessId);
   const professionalId = session.user.professionalId;
 
-  const { data, error } = await getMetricas(businessId, rango, professionalId);
+  const { data, error } = await getMetricas(businessId, rango, professionalId, fechaDesde, fechaHasta);
 
   return (
     <MetricasClient
@@ -30,6 +33,8 @@ export default async function MetricasPage({ searchParams }: Props) {
       rangoActivo={rango}
       businessId={businessId}
       role={session.user.role}
+      fechaDesde={fechaDesde}
+      fechaHasta={fechaHasta}
     />
   );
 }

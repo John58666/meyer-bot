@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+
 interface GridCell {
   dia: string
   hora: string
@@ -20,8 +22,13 @@ function colorPorRatio(ratio: number): string {
 }
 
 export function ChartOcupacion({ grid }: Props) {
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; text: string } | null>(null)
   const dias = [...new Set(grid.map(g => g.dia))]
   const horas = [...new Set(grid.map(g => g.hora))].sort()
+
+  // Detectar hora actual en Bogotá para marcar
+  const ahoraBogota = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }))
+  const horaActualStr = `${ahoraBogota.getHours()}:00`
 
   if (grid.length === 0) {
     return (
@@ -32,7 +39,7 @@ export function ChartOcupacion({ grid }: Props) {
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto relative">
       <div className="grid gap-1" style={{
         gridTemplateColumns: `80px repeat(${dias.length}, 1fr)`,
         minWidth: dias.length * 70 + 80,
@@ -43,31 +50,55 @@ export function ChartOcupacion({ grid }: Props) {
             {dia}
           </div>
         ))}
-        {horas.map(hora => (
-          <>
-            <div key={hora} className="text-[10px] text-[var(--text-secondary)] py-2">
-              {hora}
-            </div>
-            {dias.map(dia => {
-              const cell = grid.find(g => g.dia === dia && g.hora === hora)
-              return (
-                <div
-                  key={`${dia}-${hora}`}
-                  className="rounded-md h-8 flex items-center justify-center text-[10px] font-medium transition-colors"
-                  style={{ backgroundColor: cell ? colorPorRatio(cell.ratio) : 'rgba(107,114,128,0.1)' }}
-                  title={cell ? `${cell.ocupados}/${cell.total} ocupados` : 'Sin datos'}
-                >
-                  {cell && (
-                    <span className="text-white/80">
-                      {cell.ocupados}/{cell.total}
-                    </span>
-                  )}
-                </div>
-              )
-            })}
-          </>
-        ))}
+        {horas.map(hora => {
+          const esHoraActual = hora === horaActualStr
+          return (
+            <>
+              <div key={hora} className={`text-[10px] py-2 ${esHoraActual ? 'text-[var(--color-accent,#6366f1)] font-semibold' : 'text-[var(--text-secondary)]'}`}>
+                {hora}{esHoraActual && ' ←'}
+              </div>
+              {dias.map(dia => {
+                const cell = grid.find(g => g.dia === dia && g.hora === hora)
+                return (
+                  <div
+                    key={`${dia}-${hora}`}
+                    className="rounded-md h-8 flex items-center justify-center text-[10px] font-medium transition-colors relative"
+                    style={{ backgroundColor: cell ? colorPorRatio(cell.ratio) : 'rgba(107,114,128,0.1)' }}
+                    onMouseEnter={(e) => {
+                      if (!cell) return
+                      const rect = (e.target as HTMLElement).getBoundingClientRect()
+                      setTooltip({
+                        x: rect.left + rect.width / 2,
+                        y: rect.top - 8,
+                        text: `${dia} ${hora}: ${cell.ocupados}/${cell.total} ocupados (${Math.round(cell.ratio * 100)}%)`,
+                      })
+                    }}
+                    onMouseLeave={() => setTooltip(null)}
+                  >
+                    {cell && (
+                      <span className="text-white/80">
+                        {cell.ocupados}/{cell.total}
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
+            </>
+          )
+        })}
       </div>
+
+      {/* Tooltip flotante */}
+      {tooltip && (
+        <div
+          className="fixed z-50 bg-[var(--bg-card,#1a1a1a)] border border-[var(--border-subtle,#2a2a2a)] rounded-lg px-3 py-2 text-[11px] shadow-lg pointer-events-none"
+          style={{ left: tooltip.x, top: tooltip.y, transform: 'translate(-50%, -100%)' }}
+        >
+          {tooltip.text}
+        </div>
+      )}
+
+      {/* Color ramp legend */}
       <div className="flex items-center gap-4 mt-4 text-[10px] text-[var(--text-secondary)]">
         <span className="flex items-center gap-1">
           <span className="w-3 h-3 rounded" style={{ backgroundColor: 'rgba(34,197,94,0.8)' }} />

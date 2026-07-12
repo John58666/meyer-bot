@@ -203,8 +203,9 @@ export async function rescheduleAppointment(
 const metricsCache = new Map<string, { data: unknown; expiry: number }>();
 const CACHE_TTL_MS = 15_000; // 15 segundos
 
-function getCacheKey(businessId: number, rango: RangoMetricas, professionalId?: number | null): string {
-  return `${businessId}:${rango}:${professionalId ?? ''}`;
+function getCacheKey(businessId: number, rango: RangoMetricas, professionalId?: number | null, fechaDesde?: string, fechaHasta?: string): string {
+  const suffix = rango === 'custom' && fechaDesde && fechaHasta ? `:${fechaDesde}:${fechaHasta}` : '';
+  return `${businessId}:${rango}:${professionalId ?? ''}${suffix}`;
 }
 
 function cacheGet<T>(key: string): T | null {
@@ -226,7 +227,7 @@ function cacheSet<T>(key: string, data: T): void {
 
 // ─── MÉTRICAS ────────────────────────────────────────────────────────────────
 
-export type RangoMetricas = 'hoy' | 'semana' | 'mes';
+export type RangoMetricas = 'hoy' | 'semana' | 'mes' | 'trimestre' | 'custom';
 
 export interface FilaCita {
   estado: string;
@@ -263,6 +264,13 @@ export interface MetricasData {
   historialAnteriorPorDia: Array<{ fecha: string; total: number; ingresos: number }>;
   // Profesionales activos para filtro (solo owner/admin)
   profesionalesActivos: Array<{ id: number; name: string }>;
+  // Sparklines para KPIs (últimos valores diarios)
+  sparklines: {
+    ingresos: number[];
+    citas: number[];
+    cancelaciones: number[];
+    ocupacion: number[];
+  };
 }
 
 export type DrawerTipo = 'ingresos' | 'citas-del-dia' | 'ocupacion' | 'servicio-detalle';
@@ -273,7 +281,11 @@ export type DrawerData =
   | { tipo: 'ocupacion'; grid: Array<{ dia: string; hora: string; ocupados: number; total: number; ratio: number }> }
   | { tipo: 'servicio-detalle'; servicio: string; profesionales: Array<{ name: string; citas: number; ingresos: number }>; tendenciaMensual: Array<{ mes: string; citas: number }> };
 
-function calcularRangoFechas(rango: RangoMetricas): { fechaDesde: string; fechaHasta: string } {
+function calcularRangoFechas(rango: RangoMetricas, fechaDesdeOverride?: string, fechaHastaOverride?: string): { fechaDesde: string; fechaHasta: string } {
+  if (rango === 'custom' && fechaDesdeOverride && fechaHastaOverride) {
+    return { fechaDesde: fechaDesdeOverride, fechaHasta: fechaHastaOverride };
+  }
+
   const ahora = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }));
 
   if (rango === 'hoy') {
@@ -292,6 +304,14 @@ function calcularRangoFechas(rango: RangoMetricas): { fechaDesde: string; fechaH
       fechaHasta: domingo.toISOString().split('T')[0],
     };
   }
+  if (rango === 'trimestre') {
+    const primerDia = new Date(ahora.getFullYear(), ahora.getMonth() - 2, 1);
+    const ultimoDia = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0);
+    return {
+      fechaDesde: primerDia.toISOString().split('T')[0],
+      fechaHasta: ultimoDia.toISOString().split('T')[0],
+    };
+  }
   const primerDia = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
   const ultimoDia = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0);
   return {
@@ -304,6 +324,18 @@ function calcularPeriodoAnterior(rango: RangoMetricas, fechaDesde: string, fecha
   const desde = new Date(fechaDesde + 'T12:00:00');
   const hasta = new Date(fechaHasta + 'T12:00:00');
   const diffMs = hasta.getTime() - desde.getTime();
+
+  // Para trimestre, comparamos con el trimestre anterior inmediato
+  if (rango === 'trimestre') {
+    const inicioAnterior = new Date(desde);
+    inicioAnterior.setMonth(inicioAnterior.getMonth() - 3);
+    const finAnterior = new Date(hasta);
+    finAnterior.setMonth(finAnterior.getMonth() - 3);
+    return {
+      desde: inicioAnterior.toISOString().split('T')[0],
+      hasta: finAnterior.toISOString().split('T')[0],
+    };
+  }
 
   const inicioAnterior = new Date(desde.getTime() - diffMs - 86400000);
   const finAnterior = new Date(desde.getTime() - 86400000);
@@ -410,14 +442,16 @@ async function fetchOcupacion(
 export async function getMetricas(
   businessId: number,
   rango: RangoMetricas,
-  professionalId?: number | null
+  professionalId?: number | null,
+  fechaDesdeOverride?: string,
+  fechaHastaOverride?: string
 ): Promise<{ data: MetricasData | null; error: string | null }> {
-  const cacheKey = getCacheKey(businessId, rango, professionalId);
+  const { fechaDesde, fechaHasta } = calcularRangoFechas(rango, fechaDesdeOverride, fechaHastaOverride);
+  const cacheKey = getCacheKey(businessId, rango, professionalId, fechaDesde, fechaHasta);
   const cached = cacheGet<MetricasData>(cacheKey);
   if (cached) return { data: cached, error: null };
 
   try {
-    const { fechaDesde, fechaHasta } = calcularRangoFechas(rango);
     const periodoAnterior = calcularPeriodoAnterior(rango, fechaDesde, fechaHasta);
 
     const [filas, filasAnteriores, clientesData, ocupacion] = await Promise.all([
@@ -558,6 +592,19 @@ export async function getMetricas(
     });
     const servicios = Object.values(servMap).sort((a, b) => b.ingresos - a.ingresos);
 
+    // Sparklines: extraer arrays de valores diarios de historialPorDia
+    const porDiaCancel: Record<string, number> = {};
+    filas.filter(f => f.estado === 'Cancelada').forEach(f => {
+      porDiaCancel[f.fecha] = (porDiaCancel[f.fecha] ?? 0) + 1;
+    });
+    const fechas = historialPorDia.map(d => d.fecha);
+    const sparklines = {
+      ingresos: historialPorDia.map(d => d.ingresos),
+      citas: historialPorDia.map(d => d.total),
+      cancelaciones: fechas.map(f => porDiaCancel[f] ?? 0),
+      ocupacion: historialPorDia.map(d => d.total),
+    };
+
     const resultData: MetricasData = {
       totalCitas, completadas, pendientes, canceladas, tasaCancelacion, ingresos, horaPico,
       historialPorDia,
@@ -569,6 +616,7 @@ export async function getMetricas(
       servicios,
       historialAnteriorPorDia,
       profesionalesActivos: profResult.rows,
+      sparklines,
     };
     cacheSet(cacheKey, resultData);
 

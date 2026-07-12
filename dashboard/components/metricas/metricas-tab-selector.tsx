@@ -20,10 +20,13 @@ export function TabSelector({ activa, onChange, role }: TabSelectorProps) {
     : TABS
 
   return (
-    <div className="flex gap-1.5 mb-6 overflow-x-auto pb-1 scrollbar-none">
+    <div className="flex gap-1.5 mb-6 overflow-x-auto pb-1 scrollbar-none" role="tablist" aria-label="Vistas de métricas">
       {tabs.map(tab => (
         <button
           key={tab.key}
+          role="tab"
+          aria-selected={activa === tab.key}
+          aria-controls={`panel-${tab.key}`}
           onClick={() => onChange(tab.key)}
           className={`whitespace-nowrap px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             activa === tab.key

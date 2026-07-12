@@ -1,6 +1,8 @@
 'use client'
 
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts'
 
 interface ServicioData {
   nombre: string
@@ -40,7 +42,7 @@ export function ChartServicios({ data, onClickServicio }: Props) {
   }
 
   return (
-    <ResponsiveContainer width="100%" height={Math.max(200, sorted.length * 40)}>
+    <ResponsiveContainer width="100%" height={Math.max(200, sorted.length * 44)}>
       <BarChart
         data={sorted}
         layout="vertical"
@@ -67,10 +69,19 @@ export function ChartServicios({ data, onClickServicio }: Props) {
           radius={[0, 4, 4, 0]}
           onClick={handleClick}
           style={{ cursor: onClickServicio ? 'pointer' : undefined }}
+          animationBegin={0}
+          animationDuration={600}
+          animationEasing="ease-out"
         >
           {sorted.map((_, index) => (
             <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
           ))}
+          <LabelList
+            dataKey="ingresos"
+            position="right"
+            formatter={(v: any) => formatPesos(Number(v))}
+            style={{ fontSize: '10px', fill: 'var(--text-secondary,#888)' }}
+          />
         </Bar>
       </BarChart>
     </ResponsiveContainer>
