@@ -31,6 +31,12 @@
 
 - **CSS-only > JS state para responsive en Sheet/Dialog.** `useState` + `useEffect` para detectar mobile en 4 componentes Sheet montados simultáneamente provoca re-render cascade (todos flipean `isMobile: false→true`). base-ui Dialog puede renderizar overlays fantasma durante estos re-renders incluso con `open={false}`. Preferir `max-md:!w-[90vw]` sobre `side={isMobile ? 'bottom' : 'right'}`.
 - **`data-[side=right]:w-3/4` tiene mayor especificidad CSS que `.w-\[90vw\]`** — necesita `!important` para override.
+- **`rgba()` en borders es caro para GPU móvil.** Cada borde semitransparente (`rgba(255,255,255,0.06)`) fuerza una capa de composición GPU separada porque el navegador debe blendear el píxel del borde con el fondo detrás. Con 10-15 instancias visibles simultáneamente (cards + sidebar + topbar + bottom nav + charts), la memoria de composición GPU se satura y produce artefactos de estática/píxeles rotos. Preferir hex sólidos en CSS variables compartidas para borders.
+- **Un CSS variable bien ubicado > editar N archivos.** Cambiar `--border-subtle` de rgba a hex en `globals.css` arregla todos los componentes simultáneamente (cards, nav, charts, sidebar) sin tocar cada archivo individual.
+- **`backface-visibility: hidden` no arregla saturación de composición GPU.** El problema no es transición CSS sino cantidad de capas que el GPU debe componer. Eliminar la fuente de composición (`rgba` borders) es más efectivo que parchar síntomas.
+- **Animaciones recharts (`animationDuration`, `animationBegin`) fuerzan repaint SVG en cada frame en móvil.** Desactivar con `isAnimationActive={false}` reduce trabajo de GPU significativamente.
+- **`truncate` (Tailwind) = `overflow-hidden` + `text-overflow: ellipsis` + `white-space: nowrap`.** Útil para labels largos en cards con `uppercase tracking-wide` donde el texto puede desbordar en mobile.
+- **`transition-all` es agresivo en móvil.** Preferir `transition-colors`, `transition-opacity`, etc. cuando solo se necesita animar propiedades específicas. `transition-all` obliga al browser a preparar capas para animar cualquier propiedad, incluso cuando no cambia.
 
 ## Next.js / Dashboard
 

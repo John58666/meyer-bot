@@ -1,6 +1,6 @@
 # CONTEXT.md — meyer-bot
 
-> Última actualización: 12 julio 2026 (sesión 11 — Responsive bugs post-deploy. Fix KPI grid overflow, fix "pantallitas negras" por isMobile en drawers, chart heights responsive, date picker full-width. Lección: CSS-only > JS state para responsive en componentes compartidos.)
+> Última actualización: 12 julio 2026 (sesión 12 — GPU glitch fix. Causa raíz: `--border-subtle: rgba(255,255,255,0.06)` forzaba composición GPU en cada borde. Fix: cambiar a hex sólido `#2A2A2A` en globals.css — un solo cambio cascada a cards, nav, charts, sidebar.)
 > Documento maestro CORTO. Cualquier chat nuevo lee esto primero.
 > **⚠️ ANTES de tocar NADA: leer `docs/SECURITY_AUDIT.md`** — reporte maestro de seguridad, hallazgos activos y plan de remediación.
 > Para profundidad: ver docs/ (ARCHITECTURE.md, SPRINTS.md, RUNBOOK.md, KEY_LEARNINGS.md, SECURITY_AUDIT.md)
@@ -164,6 +164,12 @@ Dos bugs responsive aparecieron tras deploy de UI/UX Audit:
 - **Bug 1 — KPI overflow**: scroll horizontal forzado en todos los tamaños. Fix: dual container (scroll mobile + grid desktop `sm:grid-cols-3`).
 - **Bug 2 — "Pantallitas negras"**: `isMobile` state en 4 drawers causaba overlays fantasma de base-ui Dialog. Fix: eliminar `isMobile`, CSS-only `max-md:!w-[90vw]`, siempre `side="right"`.
 - Charts altura responsive, date picker full-width mobile.
+
+### SESIÓN 12 — GPU glitch fix (12 julio 2026)
+GPU glitch persistente en móvil (estática/píxeles rotos en cards + nav). Fix anterior `backface-visibility` no funcionó.
+- **Causa raíz**: `--border-subtle: rgba(255,255,255,0.06)` — cada borde semitransparente fuerza capa de composición GPU separada. 10-15 instancias saturan memoria GPU móvil.
+- **Fix**: `globals.css`: `rgba` → hex sólido `#2A2A2A`. Un solo cambio cascada a todos los componentes.
+- `metricas-chart-servicios.tsx`: `isAnimationActive={false}` para evitar repaint GPU por animaciones recharts.
 
 ### PENDIENTE — Fase 4: Fixes complejos
 21. **#21 — Onboarding negocio nuevo** — script/checklist multi-sistema

@@ -346,12 +346,30 @@ Tras el deploy de la UI/UX Audit, aparecieron 2 bugs responsive:
 - `dashboard/components/metricas/drawer-ocupacion.tsx` — remove isMobile, CSS-only width
 - `dashboard/components/metricas/drawer-servicio-detalle.tsx` — remove isMobile, CSS-only width
 
+### Sesión 12 — GPU glitch fix (12 julio 2026)
+
+**GPU glitch persistente en móvil:** Los borders con `rgba(255,255,255,0.06)` forzaban composición GPU en cada capa. El fix anterior (`backface-visibility: hidden`) no funcionó porque el problema no era transición sino **saturación de memoria de composición GPU**.
+
+**Causa raíz:** `--border-subtle: rgba(255,255,255,0.06)` en `globals.css`. Cada borde semitransparente requiere que el GPU **blendee** el píxel del borde con el fondo detrás, creando una capa de composición separada. Con 10-15 bordes RGBA visibles simultáneamente en móvil (cards KPI + sidebar + topbar + bottom nav + charts), la memoria de composición se satura y genera artefactos de estática/píxeles rotos.
+
+**Fix:**
+1. `globals.css`: `--border-subtle: rgba(255,255,255,0.06)` → `#2A2A2A` (hex sólido mate)
+2. `globals.css`: `--border-hover: rgba(255,255,255,0.12)` → `#3A3A3A` (hex sólido mate)
+3. `metricas-kpi-card.tsx`: eliminar `backface-visibility` (experimento fallido)
+4. `metricas-chart-servicios.tsx`: `isAnimationActive={false}` (desactiva animación SVG que forza repaint GPU)
+
+**Impacto:** Un solo cambio en CSS variable cascada a todos los componentes — cards, nav, charts, sidebar — sin tocar cada archivo individualmente.
+
 ### Lecciones Sprint 15
 - `useState` + `useEffect` para responsive en componentes montados simultáneamente (drawers) causa re-render cascades en todos. Preferir CSS-only con media queries.
 - `side="bottom"` en base-ui Dialog añade overlays que pueden renderizarse fantasma durante re-renders de estado.
 - `max-md:!w-[90vw]` con `!important` necesario para overridear `data-[side=right]:w-3/4` (mayor especificidad CSS).
 - `min-h` + `style={{ height }}` en ResponsiveContainer wrapper: explicit height necesario para RC `height="100%"`.
 - Dual container KPI (scroll mobile + grid desktop) evita CSS hacks con `overflow-x:auto` + `flex-wrap` (incompatible).
+- **`rgba()` en borders es caro para GPU móvil.** Cada borde semitransparente fuerza una capa de composición separada. Con 10+ instancias, la memoria GPU se satura y produce artefactos visuales. Preferir hex sólidos en CSS variables compartidas para bordes.
+- **Un CSS variable bien ubicado > editar N archivos.** Cambiar `--border-subtle` de rgba a hex en `globals.css` arregló todos los componentes simultáneamente, sin tocar cada archivo individual.
+- **`backface-visibility: hidden` no arregla saturación de composición GPU.** El problema no es la transición CSS sino la cantidad de capas que el GPU debe componer. Eliminar la fuente de composición (rgba borders) es más efectivo que parchar síntomas.
+- **Las animaciones recharts (`animationDuration`) fuerzan repaint en móvil.** Desactivar con `isAnimationActive={false}` reduce trabajo de GPU significativamente.
 
 ---
 
