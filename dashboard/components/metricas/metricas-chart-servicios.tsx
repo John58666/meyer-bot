@@ -42,12 +42,13 @@ export function ChartServicios({ data, onClickServicio }: Props) {
   }
 
   return (
-    <ResponsiveContainer width="100%" height={Math.max(200, sorted.length * 44)}>
-      <BarChart
-        data={sorted}
-        layout="vertical"
-        margin={{ top: 4, right: 16, left: 0, bottom: 0 }}
-        barSize={20}
+    <div className="min-h-[200px] sm:min-h-[280px]" style={{ height: Math.max(200, sorted.length * 40) }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={sorted}
+          layout="vertical"
+          margin={{ top: 4, right: 16, left: 0, bottom: 0 }}
+          barSize={Math.min(20, Math.max(12, 180 / sorted.length))}
       >
         <XAxis
           type="number"
@@ -82,8 +83,9 @@ export function ChartServicios({ data, onClickServicio }: Props) {
             formatter={(v: any) => formatPesos(Number(v))}
             style={{ fontSize: '10px', fill: 'var(--text-secondary,#888)' }}
           />
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   )
 }

@@ -85,98 +85,159 @@ function MetricasContent({
 
   return (
     <>
-      {/* KPIs - cambian según vista activa */}
-      {vistaActiva === 'general' && (
-        <div className="mb-6">
-          <div
-            ref={kpiScrollRef}
-            className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 snap-x scrollbar-none"
-          >
-            <div className="snap-start min-w-[150px] flex-shrink-0 sm:min-w-0 sm:flex-1">
-              <KpiCard
-                label="Ingresos"
-                valor={formatPesos(data.ingresos)}
-                variacion={data.ingresosVariacion != null ? {
-                  valor: Math.abs(data.ingresosVariacion),
-                  positiva: data.ingresosVariacion >= 0,
-                } : null}
-                direccionBuena={METRICA_SEMANTICA['Ingresos']}
-                sparklineData={data.sparklines.ingresos}
-                onClick={() => setDrawerState({ tipo: 'ingresos' })}
-              />
-            </div>
-            <div className="snap-start min-w-[150px] flex-shrink-0 sm:min-w-0 sm:flex-1">
-              <KpiCard
-                label="Total citas"
-                valor={String(data.totalCitas)}
-                variacion={data.totalCitasVariacion != null ? {
-                  valor: Math.abs(data.totalCitasVariacion),
-                  positiva: data.totalCitasVariacion >= 0,
-                } : null}
-                direccionBuena={METRICA_SEMANTICA['Total citas']}
-                sparklineData={data.sparklines.citas}
-              />
-            </div>
-            <div className="snap-start min-w-[150px] flex-shrink-0 sm:min-w-0 sm:flex-1">
-              <KpiCard
-                label="Cancelaciones"
-                valor={`${data.tasaCancelacion}%`}
-                variacion={data.tasaCancelacionVariacion != null ? {
-                  valor: Math.abs(data.tasaCancelacionVariacion),
-                  positiva: data.tasaCancelacionVariacion <= 0,
-                } : null}
-                direccionBuena={METRICA_SEMANTICA['Cancelaciones']}
-                sparklineData={data.sparklines.cancelaciones}
-              />
-            </div>
-            <div className="snap-start min-w-[150px] flex-shrink-0 sm:min-w-0 sm:flex-1">
-              <KpiCard
-                label="Ocupación"
-                valor={data.ocupacion != null ? `${data.ocupacion}%` : '—'}
-                variacion={data.ocupacionVariacion != null ? {
-                  valor: Math.abs(data.ocupacionVariacion),
-                  positiva: data.ocupacionVariacion >= 0,
-                } : null}
-                direccionBuena={METRICA_SEMANTICA['Ocupación']}
-                sparklineData={data.sparklines.ocupacion}
-                onClick={() => setDrawerState({ tipo: 'ocupacion' })}
-              />
-            </div>
-            <div className="snap-start min-w-[150px] flex-shrink-0 sm:min-w-0 sm:flex-1">
-              <KpiCard
-                label="Retención"
-                valor={data.retencion != null ? `${data.retencion}%` : '—'}
-                variacion={data.retencionVariacion != null ? {
-                  valor: Math.abs(data.retencionVariacion),
-                  positiva: data.retencionVariacion >= 0,
-                } : null}
-                direccionBuena={METRICA_SEMANTICA['Retención']}
-              />
-            </div>
-            <div className="snap-start min-w-[150px] flex-shrink-0 sm:min-w-0 sm:flex-1">
-              <KpiCard
-                label="Clientes Nuevos"
-                valor={String(data.clientesNuevos)}
-                sub={`${data.clientesRecurrentes} recurrentes`}
-                direccionBuena={METRICA_SEMANTICA['Clientes Nuevos']}
-              />
-            </div>
-          </div>
-          {/* Pagination dots (mobile only) */}
-          {kpiDots > 1 && (
-            <div className="flex justify-center gap-1 mt-2 sm:hidden">
-              {Array.from({ length: kpiDots }).map((_, idx) => (
-                <div
-                  key={idx}
-                  className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                    idx === dotIndex ? 'bg-[var(--color-accent,#6366f1)]' : 'bg-[var(--border-subtle,#2a2a2a)]'
-                  }`}
+          {/* KPIs - cambian según vista activa */}
+          {vistaActiva === 'general' && (
+            <div className="mb-6">
+              {/* Mobile scroll */}
+              <div
+                ref={kpiScrollRef}
+                className="flex sm:hidden gap-3 overflow-x-auto pb-2 -mx-1 px-1 snap-x scrollbar-none"
+              >
+                <div className="snap-start min-w-[150px] flex-shrink-0">
+                  <KpiCard
+                    label="Ingresos"
+                    valor={formatPesos(data.ingresos)}
+                    variacion={data.ingresosVariacion != null ? {
+                      valor: Math.abs(data.ingresosVariacion),
+                      positiva: data.ingresosVariacion >= 0,
+                    } : null}
+                    direccionBuena={METRICA_SEMANTICA['Ingresos']}
+                    sparklineData={data.sparklines.ingresos}
+                    onClick={() => setDrawerState({ tipo: 'ingresos' })}
+                  />
+                </div>
+                <div className="snap-start min-w-[150px] flex-shrink-0">
+                  <KpiCard
+                    label="Total citas"
+                    valor={String(data.totalCitas)}
+                    variacion={data.totalCitasVariacion != null ? {
+                      valor: Math.abs(data.totalCitasVariacion),
+                      positiva: data.totalCitasVariacion >= 0,
+                    } : null}
+                    direccionBuena={METRICA_SEMANTICA['Total citas']}
+                    sparklineData={data.sparklines.citas}
+                  />
+                </div>
+                <div className="snap-start min-w-[150px] flex-shrink-0">
+                  <KpiCard
+                    label="Cancelaciones"
+                    valor={`${data.tasaCancelacion}%`}
+                    variacion={data.tasaCancelacionVariacion != null ? {
+                      valor: Math.abs(data.tasaCancelacionVariacion),
+                      positiva: data.tasaCancelacionVariacion <= 0,
+                    } : null}
+                    direccionBuena={METRICA_SEMANTICA['Cancelaciones']}
+                    sparklineData={data.sparklines.cancelaciones}
+                  />
+                </div>
+                <div className="snap-start min-w-[150px] flex-shrink-0">
+                  <KpiCard
+                    label="Ocupación"
+                    valor={data.ocupacion != null ? `${data.ocupacion}%` : '—'}
+                    variacion={data.ocupacionVariacion != null ? {
+                      valor: Math.abs(data.ocupacionVariacion),
+                      positiva: data.ocupacionVariacion >= 0,
+                    } : null}
+                    direccionBuena={METRICA_SEMANTICA['Ocupación']}
+                    sparklineData={data.sparklines.ocupacion}
+                    onClick={() => setDrawerState({ tipo: 'ocupacion' })}
+                  />
+                </div>
+                <div className="snap-start min-w-[150px] flex-shrink-0">
+                  <KpiCard
+                    label="Retención"
+                    valor={data.retencion != null ? `${data.retencion}%` : '—'}
+                    variacion={data.retencionVariacion != null ? {
+                      valor: Math.abs(data.retencionVariacion),
+                      positiva: data.retencionVariacion >= 0,
+                    } : null}
+                    direccionBuena={METRICA_SEMANTICA['Retención']}
+                  />
+                </div>
+                <div className="snap-start min-w-[150px] flex-shrink-0">
+                  <KpiCard
+                    label="Clientes Nuevos"
+                    valor={String(data.clientesNuevos)}
+                    sub={`${data.clientesRecurrentes} recurrentes`}
+                    direccionBuena={METRICA_SEMANTICA['Clientes Nuevos']}
+                  />
+                </div>
+              </div>
+              {/* Desktop grid */}
+              <div className="hidden sm:grid sm:grid-cols-3 gap-3">
+                <KpiCard
+                  label="Ingresos"
+                  valor={formatPesos(data.ingresos)}
+                  variacion={data.ingresosVariacion != null ? {
+                    valor: Math.abs(data.ingresosVariacion),
+                    positiva: data.ingresosVariacion >= 0,
+                  } : null}
+                  direccionBuena={METRICA_SEMANTICA['Ingresos']}
+                  sparklineData={data.sparklines.ingresos}
+                  onClick={() => setDrawerState({ tipo: 'ingresos' })}
                 />
-              ))}
+                <KpiCard
+                  label="Total citas"
+                  valor={String(data.totalCitas)}
+                  variacion={data.totalCitasVariacion != null ? {
+                    valor: Math.abs(data.totalCitasVariacion),
+                    positiva: data.totalCitasVariacion >= 0,
+                  } : null}
+                  direccionBuena={METRICA_SEMANTICA['Total citas']}
+                  sparklineData={data.sparklines.citas}
+                />
+                <KpiCard
+                  label="Cancelaciones"
+                  valor={`${data.tasaCancelacion}%`}
+                  variacion={data.tasaCancelacionVariacion != null ? {
+                    valor: Math.abs(data.tasaCancelacionVariacion),
+                    positiva: data.tasaCancelacionVariacion <= 0,
+                  } : null}
+                  direccionBuena={METRICA_SEMANTICA['Cancelaciones']}
+                  sparklineData={data.sparklines.cancelaciones}
+                />
+                <KpiCard
+                  label="Ocupación"
+                  valor={data.ocupacion != null ? `${data.ocupacion}%` : '—'}
+                  variacion={data.ocupacionVariacion != null ? {
+                    valor: Math.abs(data.ocupacionVariacion),
+                    positiva: data.ocupacionVariacion >= 0,
+                  } : null}
+                  direccionBuena={METRICA_SEMANTICA['Ocupación']}
+                  sparklineData={data.sparklines.ocupacion}
+                  onClick={() => setDrawerState({ tipo: 'ocupacion' })}
+                />
+                <KpiCard
+                  label="Retención"
+                  valor={data.retencion != null ? `${data.retencion}%` : '—'}
+                  variacion={data.retencionVariacion != null ? {
+                    valor: Math.abs(data.retencionVariacion),
+                    positiva: data.retencionVariacion >= 0,
+                  } : null}
+                  direccionBuena={METRICA_SEMANTICA['Retención']}
+                />
+                <KpiCard
+                  label="Clientes Nuevos"
+                  valor={String(data.clientesNuevos)}
+                  sub={`${data.clientesRecurrentes} recurrentes`}
+                  direccionBuena={METRICA_SEMANTICA['Clientes Nuevos']}
+                />
+              </div>
+              {/* Pagination dots (mobile only) */}
+              {kpiDots > 1 && (
+                <div className="flex justify-center gap-1 mt-2 sm:hidden">
+                  {Array.from({ length: kpiDots }).map((_, idx) => (
+                    <div
+                      key={idx}
+                      className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                        idx === dotIndex ? 'bg-[var(--color-accent,#6366f1)]' : 'bg-[var(--border-subtle,#2a2a2a)]'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
-        </div>
-      )}
 
       {vistaActiva === 'profesional' && (
         <div className="mb-6" role="tabpanel" id="panel-profesional" aria-labelledby="tab-profesional">
@@ -402,27 +463,27 @@ export default function MetricasClient({ data, error, rangoActivo, businessId, r
       {/* Custom date picker */}
       {showCustomDate && (
         <div className="flex flex-col sm:flex-row gap-3 mb-4 p-3 bg-[var(--bg-card,#1a1a1a)] rounded-xl border border-[var(--border-subtle,#2a2a2a)]">
-          <div className="flex items-center gap-2">
-            <label htmlFor="custom-desde" className="text-[11px] text-[var(--text-secondary)]">Desde</label>
+          <div className="flex items-center gap-2 flex-1">
+            <label htmlFor="custom-desde" className="text-[11px] text-[var(--text-secondary)] shrink-0">Desde</label>
             <input
               id="custom-desde"
               type="date"
               defaultValue={fechaDesde || ''}
-              className="px-2 py-1.5 rounded-lg text-sm bg-[var(--bg-card,#1a1a1a)] text-[var(--text-primary)] border border-[var(--border-subtle,#2a2a2a)]"
+              className="w-full px-2 py-1.5 rounded-lg text-sm bg-[var(--bg-card,#1a1a1a)] text-[var(--text-primary)] border border-[var(--border-subtle,#2a2a2a)]"
             />
           </div>
-          <div className="flex items-center gap-2">
-            <label htmlFor="custom-hasta" className="text-[11px] text-[var(--text-secondary)]">Hasta</label>
+          <div className="flex items-center gap-2 flex-1">
+            <label htmlFor="custom-hasta" className="text-[11px] text-[var(--text-secondary)] shrink-0">Hasta</label>
             <input
               id="custom-hasta"
               type="date"
               defaultValue={fechaHasta || ''}
-              className="px-2 py-1.5 rounded-lg text-sm bg-[var(--bg-card,#1a1a1a)] text-[var(--text-primary)] border border-[var(--border-subtle,#2a2a2a)]"
+              className="w-full px-2 py-1.5 rounded-lg text-sm bg-[var(--bg-card,#1a1a1a)] text-[var(--text-primary)] border border-[var(--border-subtle,#2a2a2a)]"
             />
           </div>
           <button
             onClick={aplicarCustomDate}
-            className="px-4 py-1.5 rounded-lg text-sm font-medium bg-[var(--color-accent,#6366f1)] text-white"
+            className="w-full sm:w-auto px-4 py-1.5 rounded-lg text-sm font-medium bg-[var(--color-accent,#6366f1)] text-white"
           >
             Aplicar
           </button>

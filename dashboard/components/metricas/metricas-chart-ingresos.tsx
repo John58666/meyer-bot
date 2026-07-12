@@ -52,8 +52,9 @@ export function ChartIngresos({ data, dataAnterior, modo, onClickDia }: Props) {
   }
 
   return (
-    <ResponsiveContainer width="100%" height={220}>
-      <BarChart data={mergedData} margin={{ top: 4, right: 4, left: -24, bottom: 0 }} barSize={12}>
+    <div className="h-[180px] sm:h-[260px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={mergedData} margin={{ top: 4, right: 4, left: -24, bottom: 0 }} barSize={12}>
         <XAxis
           dataKey="fecha"
           tick={{ fontSize: 10, fill: 'var(--text-secondary,#888)' }}
@@ -87,7 +88,8 @@ export function ChartIngresos({ data, dataAnterior, modo, onClickDia }: Props) {
             strokeDasharray="4 4"
           />
         )}
-      </BarChart>
-    </ResponsiveContainer>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   )
 }

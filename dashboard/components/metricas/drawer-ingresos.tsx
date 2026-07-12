@@ -21,10 +21,18 @@ function formatPesos(valor: number): string {
 }
 
 export function DrawerIngresos({ open, onClose, businessId, professionalId, rango }: Props) {
+  const [isMobile, setIsMobile] = useState(false)
   const [data, setData] = useState<DrawerData | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [retry, setRetry] = useState(0)
+
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 768)
+    const handleResize = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   useEffect(() => {
     if (!open) return
@@ -45,7 +53,7 @@ export function DrawerIngresos({ open, onClose, businessId, professionalId, rang
 
   return (
     <Sheet open={open} onOpenChange={(o) => { if (!o) onClose() }}>
-      <SheetContent side="right">
+      <SheetContent side={isMobile ? 'bottom' : 'right'}>
         <SheetHeader>
           <SheetTitle>Desglose de Ingresos</SheetTitle>
           <SheetDescription>
