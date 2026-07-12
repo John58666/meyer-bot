@@ -33,6 +33,7 @@ export default async function MetricasPage({ searchParams }: Props) {
       rangoActivo={rango}
       businessId={businessId}
       role={session.user.role}
+      professionalId={session.user.professionalId}
       fechaDesde={fechaDesde}
       fechaHasta={fechaHasta}
     />

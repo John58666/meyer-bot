@@ -1,8 +1,9 @@
 'use client'
 
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useState, useTransition, useRef, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { useState, useRef, useEffect } from 'react'
 import type { MetricasData, RangoMetricas } from '@/lib/actions'
+import { getMetricas } from '@/lib/actions'
 import { KpiCard } from './metricas-kpi-card'
 import { TabSelector, type VistaMetricas } from './metricas-tab-selector'
 import { ChartIngresos } from './metricas-chart-ingresos'
@@ -41,6 +42,7 @@ interface Props {
   rangoActivo: RangoMetricas
   businessId: number
   role?: string
+  professionalId?: number | null
   fechaDesde?: string
   fechaHasta?: string
 }
@@ -352,10 +354,17 @@ function MetricasContent({
   )
 }
 
-export default function MetricasClient({ data, error, rangoActivo, businessId, role, fechaDesde, fechaHasta }: Props) {
-  const router = useRouter()
+export default function MetricasClient({ data: initialData, error: initialError, rangoActivo: initialRango, businessId, role, professionalId, fechaDesde: initialDesde, fechaHasta: initialHasta }: Props) {
   const searchParams = useSearchParams()
-  const [isPending, startTransition] = useTransition()
+  const reqRef = useRef(0)
+
+  const [clientData, setClientData] = useState<MetricasData | null>(initialData)
+  const [clientError, setClientError] = useState<string | null>(initialError)
+  const [loadingData, setLoadingData] = useState(false)
+  const [activeRango, setActiveRango] = useState<RangoMetricas>(initialRango)
+  const [activeDesde, setActiveDesde] = useState<string | undefined>(initialDesde)
+  const [activeHasta, setActiveHasta] = useState<string | undefined>(initialHasta)
+
   const [vistaActiva, setVistaActiva] = useState<VistaMetricas>('general')
   const [profFilter, setProfFilter] = useState<number | null>(null)
   const [drawerState, setDrawerState] = useState<{
@@ -363,9 +372,9 @@ export default function MetricasClient({ data, error, rangoActivo, businessId, r
     fecha?: string
     servicio?: string
   } | null>(null)
-  const [showCustomDate, setShowCustomDate] = useState(rangoActivo === 'custom')
+  const [showCustomDate, setShowCustomDate] = useState(initialRango === 'custom')
 
-  function cambiarRango(rango: RangoMetricas) {
+  async function cambiarRango(rango: RangoMetricas) {
     const params = new URLSearchParams(searchParams.toString())
     params.set('rango', rango)
     params.delete('desde')
@@ -375,35 +384,68 @@ export default function MetricasClient({ data, error, rangoActivo, businessId, r
       return
     }
     setShowCustomDate(false)
-    startTransition(() => {
-      router.push(`/dashboard/metricas?${params.toString()}`)
-    })
+    window.history.replaceState(null, '', `/dashboard/metricas?${params.toString()}`)
+
+    const id = ++reqRef.current
+    setLoadingData(true)
+    try {
+      const result = await getMetricas(businessId, rango, professionalId)
+      if (id !== reqRef.current) return
+      if (result.data) setClientData(result.data)
+      if (result.error) setClientError(result.error)
+      setActiveRango(rango)
+      setActiveDesde(undefined)
+      setActiveHasta(undefined)
+    } catch {
+      if (id === reqRef.current) setClientError('Error cargando métricas')
+    } finally {
+      if (id === reqRef.current) setLoadingData(false)
+    }
   }
 
   function aplicarCustomDate() {
     const desdeInput = document.getElementById('custom-desde') as HTMLInputElement
     const hastaInput = document.getElementById('custom-hasta') as HTMLInputElement
     if (!desdeInput?.value || !hastaInput?.value) return
+    const desde = desdeInput.value
+    const hasta = hastaInput.value
     const params = new URLSearchParams(searchParams.toString())
     params.set('rango', 'custom')
-    params.set('desde', desdeInput.value)
-    params.set('hasta', hastaInput.value)
-    startTransition(() => {
-      router.push(`/dashboard/metricas?${params.toString()}`)
-    })
+    params.set('desde', desde)
+    params.set('hasta', hasta)
+    window.history.replaceState(null, '', `/dashboard/metricas?${params.toString()}`)
+
+    const id = ++reqRef.current
+    setLoadingData(true)
+    getMetricas(businessId, 'custom', professionalId, desde, hasta)
+      .then(result => {
+        if (id !== reqRef.current) return
+        if (result.data) setClientData(result.data)
+        if (result.error) setClientError(result.error)
+        setActiveRango('custom')
+        setActiveDesde(desde)
+        setActiveHasta(hasta)
+        setShowCustomDate(false)
+      })
+      .catch(() => {
+        if (id === reqRef.current) setClientError('Error cargando métricas')
+      })
+      .finally(() => {
+        if (id === reqRef.current) setLoadingData(false)
+      })
   }
 
   const isOwnerOrAdmin = role === 'owner' || role === 'admin'
 
-  if (error) {
+  if (clientError && !clientData) {
     return (
       <div className="flex items-center justify-center h-48 text-[var(--text-secondary)] text-sm">
-        {error}
+        {clientError}
       </div>
     )
   }
 
-  if (!data) {
+  if (!clientData) {
     return (
       <div className="flex items-center justify-center h-48 text-[var(--text-secondary)] text-sm">
         Sin datos
@@ -411,23 +453,23 @@ export default function MetricasClient({ data, error, rangoActivo, businessId, r
     )
   }
 
-  const chartData = data.historialPorDia.map(d => ({
+  const chartData = clientData.historialPorDia.map(d => ({
     fecha: formatFechaCorta(d.fecha),
     citas: d.total,
     ingresos: d.ingresos,
   }))
 
-  const chartDataAnterior = data.historialAnteriorPorDia.map(d => ({
+  const chartDataAnterior = clientData.historialAnteriorPorDia.map(d => ({
     fecha: formatFechaCorta(d.fecha),
     citas: d.total,
     ingresos: d.ingresos,
   }))
 
-  const hayIngresos = data.ingresos > 0
+  const hayIngresos = clientData.ingresos > 0
   const modoChart = vistaActiva === 'servicios' ? 'ingresos' : (hayIngresos ? 'ingresos' : 'citas')
 
   return (
-    <div className={`transition-opacity duration-200 ${isPending ? 'opacity-50' : 'opacity-100'}`}>
+    <div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <h1 className="text-lg font-semibold text-[var(--text-primary,#fff)]">Métricas</h1>
         <div className="flex gap-2 flex-wrap">
@@ -435,9 +477,9 @@ export default function MetricasClient({ data, error, rangoActivo, businessId, r
             <button
               key={r.key}
               onClick={() => cambiarRango(r.key)}
-              disabled={isPending}
+              disabled={loadingData}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                rangoActivo === r.key
+                activeRango === r.key
                   ? 'bg-[var(--color-accent,#6366f1)] text-white'
                   : 'bg-[var(--bg-card,#1a1a1a)] text-[var(--text-secondary)] border border-[var(--border-subtle,#2a2a2a)]'
               }`}
@@ -447,9 +489,9 @@ export default function MetricasClient({ data, error, rangoActivo, businessId, r
           ))}
           <button
             onClick={() => cambiarRango('custom')}
-            disabled={isPending}
+            disabled={loadingData}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${
-              rangoActivo === 'custom'
+              activeRango === 'custom'
                 ? 'bg-[var(--color-accent,#6366f1)] text-white'
                 : 'bg-[var(--bg-card,#1a1a1a)] text-[var(--text-secondary)] border border-[var(--border-subtle,#2a2a2a)]'
             }`}
@@ -468,7 +510,7 @@ export default function MetricasClient({ data, error, rangoActivo, businessId, r
             <input
               id="custom-desde"
               type="date"
-              defaultValue={fechaDesde || ''}
+              defaultValue={activeDesde || ''}
               className="w-full px-2 py-1.5 rounded-lg text-sm bg-[var(--bg-card,#1a1a1a)] text-[var(--text-primary)] border border-[var(--border-subtle,#2a2a2a)]"
             />
           </div>
@@ -477,12 +519,13 @@ export default function MetricasClient({ data, error, rangoActivo, businessId, r
             <input
               id="custom-hasta"
               type="date"
-              defaultValue={fechaHasta || ''}
+              defaultValue={activeHasta || ''}
               className="w-full px-2 py-1.5 rounded-lg text-sm bg-[var(--bg-card,#1a1a1a)] text-[var(--text-primary)] border border-[var(--border-subtle,#2a2a2a)]"
             />
           </div>
           <button
             onClick={aplicarCustomDate}
+            disabled={loadingData}
             className="w-full sm:w-auto px-4 py-1.5 rounded-lg text-sm font-medium bg-[var(--color-accent,#6366f1)] text-white"
           >
             Aplicar
@@ -493,7 +536,7 @@ export default function MetricasClient({ data, error, rangoActivo, businessId, r
       <TabSelector activa={vistaActiva} onChange={setVistaActiva} role={role} />
 
       {/* Filtro de profesional (solo owner/admin en vista profesional) */}
-      {vistaActiva === 'profesional' && isOwnerOrAdmin && data.profesionalesActivos.length > 1 && (
+      {vistaActiva === 'profesional' && isOwnerOrAdmin && clientData.profesionalesActivos.length > 1 && (
         <div className="mb-4">
           <select
             value={profFilter ?? ''}
@@ -502,7 +545,7 @@ export default function MetricasClient({ data, error, rangoActivo, businessId, r
             aria-label="Filtrar por profesional"
           >
             <option value="">Todos los profesionales</option>
-            {data.profesionalesActivos.map(p => (
+            {clientData.profesionalesActivos.map(p => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
@@ -510,7 +553,7 @@ export default function MetricasClient({ data, error, rangoActivo, businessId, r
       )}
 
       <MetricasContent
-        data={data}
+        data={clientData}
         isOwnerOrAdmin={isOwnerOrAdmin}
         vistaActiva={vistaActiva}
         setDrawerState={setDrawerState}
@@ -525,7 +568,7 @@ export default function MetricasClient({ data, error, rangoActivo, businessId, r
         onClose={() => setDrawerState(null)}
         businessId={businessId}
         professionalId={role === 'profesional' ? undefined : undefined}
-        rango={rangoActivo}
+        rango={activeRango}
       />
 
       <DrawerCitasDelDia
@@ -539,7 +582,7 @@ export default function MetricasClient({ data, error, rangoActivo, businessId, r
         open={drawerState?.tipo === 'ocupacion'}
         onClose={() => setDrawerState(null)}
         businessId={businessId}
-        rango={rangoActivo}
+        rango={activeRango}
       />
 
       <DrawerServicioDetalle
