@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 
 interface KpiCardProps {
@@ -43,7 +44,7 @@ function Sparkline({ data }: { data: number[] }) {
   )
 }
 
-export function KpiCard({ label, valor, variacion, direccionBuena, sub, onClick, loading, sparklineData, valorActual, valorAnterior }: KpiCardProps) {
+export const KpiCard = memo(function KpiCard({ label, valor, variacion, direccionBuena, sub, onClick, loading, sparklineData, valorActual, valorAnterior }: KpiCardProps) {
   const isGood = variacion
     ? (direccionBuena === 'bajar' ? !variacion.positiva : variacion.positiva)
     : true
@@ -123,4 +124,4 @@ export function KpiCard({ label, valor, variacion, direccionBuena, sub, onClick,
     return <div onClick={onClick}>{content}</div>
   }
   return content
-}
+})

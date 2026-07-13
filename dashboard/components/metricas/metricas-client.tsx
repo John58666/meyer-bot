@@ -1,7 +1,7 @@
 'use client'
 
 import { useSearchParams } from 'next/navigation'
-import { useState, useRef, useEffect } from 'react'
+  import { useState, useRef, useEffect, useMemo, useTransition } from 'react'
 import type { MetricasData, RangoMetricas, CompararCon } from '@/lib/actions'
 import { getMetricas } from '@/lib/actions'
 import { KpiCard } from './metricas-kpi-card'
@@ -57,7 +57,7 @@ const RANGOS: { key: RangoMetricas; label: string }[] = [
 ]
 
 function MetricasContent({
-  data, isOwnerOrAdmin, vistaActiva, setDrawerState, modoChart, chartData, chartDataAnterior, onToggleModo
+  data, isOwnerOrAdmin, vistaActiva, setDrawerState, modoChart, chartData, chartDataAnterior, onToggleModo, periodoLabel
 }: {
   data: MetricasData
   isOwnerOrAdmin: boolean
@@ -67,7 +67,9 @@ function MetricasContent({
   chartData: { fecha: string; citas: number; ingresos: number }[]
   chartDataAnterior: { fecha: string; citas: number; ingresos: number }[]
   onToggleModo?: (modo: 'ingresos' | 'citas') => void
+  periodoLabel?: string
 }) {
+  const [profFilterLocal, setProfFilterLocal] = useState<number | null>(null)
   const kpiScrollRef = useRef<HTMLDivElement>(null)
   const [scrollPos, setScrollPos] = useState(0)
   const [maxScroll, setMaxScroll] = useState(0)
@@ -252,6 +254,22 @@ function MetricasContent({
 
       {vistaActiva === 'profesional' && (
         <div className="mb-6" role="tabpanel" id="panel-profesional" aria-labelledby="tab-profesional">
+          {/* Filtro profesional dentro de la vista Por Profesional */}
+          {isOwnerOrAdmin && data.profesionales.length > 1 && (
+            <div className="mb-3">
+              <select
+                value={profFilterLocal ?? ''}
+                onChange={(e) => setProfFilterLocal(e.target.value ? Number(e.target.value) : null)}
+                className="w-full sm:w-64 px-3 py-2 rounded-lg text-sm bg-[var(--bg-card,#1a1a1a)] text-[var(--text-primary)] border border-[var(--border-subtle,#2a2a2a)]"
+                aria-label="Filtrar por profesional"
+              >
+                <option value="">Todos los profesionales</option>
+                {data.profesionales.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="bg-[var(--bg-card,#1a1a1a)] rounded-xl border border-[var(--border-subtle,#2a2a2a)] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -264,22 +282,27 @@ function MetricasContent({
                   </tr>
                 </thead>
                 <tbody>
-                  {data.profesionales.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="text-center py-6 text-[var(--text-secondary)]">
-                        Sin datos de profesionales
-                      </td>
-                    </tr>
-                  ) : (
-                    data.profesionales.map((p) => (
-                      <tr key={p.id} className="border-t border-[var(--border-subtle,#2a2a2a)]">
-                        <td className="py-3 px-4 text-[var(--text-primary)] font-medium">{p.name}</td>
-                        <td className="py-3 px-4 text-right">{p.citas}</td>
-                        <td className="py-3 px-4 text-right text-red-400">{p.cancelaciones}</td>
-                        <td className="py-3 px-4 text-right font-medium">{formatPesos(p.ingresos)}</td>
+                  {(() => {
+                    const filtered = profFilterLocal
+                      ? data.profesionales.filter(p => p.id === profFilterLocal)
+                      : data.profesionales;
+                    return filtered.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="text-center py-6 text-[var(--text-secondary)]">
+                          Sin datos de profesionales
+                        </td>
                       </tr>
-                    ))
-                  )}
+                    ) : (
+                      filtered.map((p) => (
+                        <tr key={p.id} className="border-t border-[var(--border-subtle,#2a2a2a)]">
+                          <td className="py-3 px-4 text-[var(--text-primary)] font-medium">{p.name}</td>
+                          <td className="py-3 px-4 text-right">{p.citas}</td>
+                          <td className="py-3 px-4 text-right text-red-400">{p.cancelaciones}</td>
+                          <td className="py-3 px-4 text-right font-medium">{formatPesos(p.ingresos)}</td>
+                        </tr>
+                      ))
+                    );
+                  })()}
                 </tbody>
               </table>
             </div>
@@ -367,6 +390,7 @@ function MetricasContent({
                   data={chartData}
                   dataAnterior={chartDataAnterior}
                   modo={modoChart}
+                  periodoLabel={periodoLabel}
                   onClickDia={(fecha) => {
                     const fechaReal = data.historialPorDia.find(d => formatFechaCorta(d.fecha) === fecha)
                     if (fechaReal) setDrawerState({ tipo: 'citas-del-dia', fecha: fechaReal.fecha })
@@ -399,7 +423,6 @@ export default function MetricasClient({ data: initialData, error: initialError,
   const [activeHasta, setActiveHasta] = useState<string | undefined>(initialHasta)
 
   const [vistaActiva, setVistaActiva] = useState<VistaMetricas>('general')
-  const [profFilter, setProfFilter] = useState<number | null>(null)
   const [drawerState, setDrawerState] = useState<{
     tipo: 'ingresos' | 'citas-del-dia' | 'ocupacion' | 'servicio-detalle' | 'cancelaciones' | 'clientes-nuevos'
     fecha?: string
@@ -424,6 +447,7 @@ export default function MetricasClient({ data: initialData, error: initialError,
     params.delete('desde')
     params.delete('hasta')
     if (rango === 'custom') {
+      setActiveRango('custom')
       setShowCustomDate(true)
       return
     }
@@ -433,8 +457,7 @@ export default function MetricasClient({ data: initialData, error: initialError,
     const id = ++reqRef.current
     setLoadingData(true)
     try {
-      const activeProfId = role === 'profesional' ? professionalId : (profFilter ?? undefined)
-      const result = await getMetricas(businessId, rango, activeProfId, undefined, undefined, cc)
+      const result = await getMetricas(businessId, rango, professionalId, undefined, undefined, cc)
       if (id !== reqRef.current) return
       if (result.data) setClientData(result.data)
       if (result.error) setClientError(result.error)
@@ -462,8 +485,7 @@ export default function MetricasClient({ data: initialData, error: initialError,
 
     const id = ++reqRef.current
     setLoadingData(true)
-    const activeProfId = role === 'profesional' ? professionalId : (profFilter ?? undefined)
-    getMetricas(businessId, 'custom', activeProfId, desde, hasta, compararCon)
+    getMetricas(businessId, 'custom', professionalId, desde, hasta, compararCon)
       .then(result => {
         if (id !== reqRef.current) return
         if (result.data) setClientData(result.data)
@@ -479,23 +501,6 @@ export default function MetricasClient({ data: initialData, error: initialError,
       .finally(() => {
         if (id === reqRef.current) setLoadingData(false)
       })
-  }
-
-  async function cambiarProfFilter(profId: number | null) {
-    setProfFilter(profId)
-    const id = ++reqRef.current
-    setLoadingData(true)
-    try {
-      const activeProfId = profId ?? undefined
-      const result = await getMetricas(businessId, activeRango, activeProfId, activeDesde, activeHasta, compararCon)
-      if (id !== reqRef.current) return
-      if (result.data) setClientData(result.data)
-      if (result.error) setClientError(result.error)
-    } catch {
-      if (id === reqRef.current) setClientError('Error cargando métricas')
-    } finally {
-      if (id === reqRef.current) setLoadingData(false)
-    }
   }
 
   const isOwnerOrAdmin = role === 'owner' || role === 'admin'
@@ -534,20 +539,27 @@ export default function MetricasClient({ data: initialData, error: initialError,
     )
   }
 
-  const chartData = clientData.historialPorDia.map(d => ({
+  const chartData = useMemo(() => clientData.historialPorDia.map(d => ({
     fecha: formatFechaCorta(d.fecha),
     citas: d.total,
     ingresos: d.ingresos,
-  }))
+  })), [clientData.historialPorDia])
 
-  const chartDataAnterior = clientData.historialAnteriorPorDia.map(d => ({
+  const chartDataAnterior = useMemo(() => clientData.historialAnteriorPorDia.map(d => ({
     fecha: formatFechaCorta(d.fecha),
     citas: d.total,
     ingresos: d.ingresos,
-  }))
+  })), [clientData.historialAnteriorPorDia])
 
   const hayIngresos = clientData.ingresos > 0
   const modoChart = vistaActiva === 'servicios' ? 'ingresos' : modoChartManual
+  const PERIODO_LABELS: Record<string, string> = {
+    'periodo-anterior': 'Período anterior',
+    'semana-anterior': 'Semana anterior',
+    'mes-anterior': 'Mes anterior',
+    'ano-anterior': 'Año anterior',
+  }
+  const periodoLabel = PERIODO_LABELS[compararCon] ?? 'Período anterior'
 
   return (
     <div>
@@ -632,28 +644,6 @@ export default function MetricasClient({ data: initialData, error: initialError,
 
       <TabSelector activa={vistaActiva} onChange={setVistaActiva} role={role} />
 
-      {/* Filtro de profesional global (siempre visible para owner/admin) */}
-      {isOwnerOrAdmin && clientData.profesionalesActivos.length > 1 && (
-        <div className="mb-4 flex items-center gap-2">
-          <label htmlFor="prof-filter" className="text-[11px] text-[var(--text-secondary)] shrink-0 uppercase tracking-wide">
-            Profesional
-          </label>
-          <select
-            id="prof-filter"
-            value={profFilter ?? ''}
-            onChange={(e) => cambiarProfFilter(e.target.value ? Number(e.target.value) : null)}
-            disabled={loadingData}
-            className="w-full sm:w-64 px-3 py-2 rounded-lg text-sm bg-[var(--bg-card,#1a1a1a)] text-[var(--text-primary)] border border-[var(--border-subtle,#2a2a2a)]"
-            aria-label="Filtrar por profesional"
-          >
-            <option value="">Todos los profesionales</option>
-            {clientData.profesionalesActivos.map(p => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
-        </div>
-      )}
-
       <MetricasContent
         data={clientData}
         isOwnerOrAdmin={isOwnerOrAdmin}
@@ -663,6 +653,7 @@ export default function MetricasClient({ data: initialData, error: initialError,
         chartData={chartData}
         chartDataAnterior={chartDataAnterior}
         onToggleModo={setModoChartManual}
+        periodoLabel={periodoLabel}
       />
 
       {/* Drawers */}
@@ -699,7 +690,7 @@ export default function MetricasClient({ data: initialData, error: initialError,
         open={drawerState?.tipo === 'cancelaciones'}
         onClose={() => setDrawerState(null)}
         businessId={businessId}
-        professionalId={role === 'profesional' ? professionalId : (profFilter ?? undefined)}
+        professionalId={professionalId}
       />
 
       <DrawerClientesNuevos

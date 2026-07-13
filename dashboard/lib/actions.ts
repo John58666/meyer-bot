@@ -380,6 +380,12 @@ function calcularPeriodoAnterior(rango: RangoMetricas, fechaDesde: string, fecha
   };
 }
 
+function calcularPorcentajeVariacion(current: number, previous: number): number | null {
+  if (previous === 0 && current === 0) return null;
+  if (previous === 0) return current > 0 ? 100 : null;
+  return Math.round(((current - previous) / previous) * 100);
+}
+
 async function fetchMetricasQuery(
   businessId: number,
   fechaDesde: string,
@@ -530,17 +536,9 @@ export async function getMetricas(
       ? Math.round((canceladasAnt / totalCitasAnt) * 100)
       : 0;
 
-    const ingresosVariacion = ingresosAnt > 0
-      ? Math.round(((ingresos - ingresosAnt) / ingresosAnt) * 100)
-      : null;
-
-    const totalCitasVariacion = totalCitasAnt > 0
-      ? totalCitas - totalCitasAnt
-      : null;
-
-    const tasaCancelacionVariacion = tasaCancelacionAnt > 0
-      ? Math.round((tasaCancelacion - tasaCancelacionAnt) * 100) / 100
-      : null;
+    const ingresosVariacion = calcularPorcentajeVariacion(ingresos, ingresosAnt);
+    const totalCitasVariacion = calcularPorcentajeVariacion(totalCitas, totalCitasAnt);
+    const tasaCancelacionVariacion = calcularPorcentajeVariacion(tasaCancelacion, tasaCancelacionAnt);
 
     // Hora pico
     const conteoHoras: Record<number, number> = {};
@@ -560,7 +558,7 @@ export async function getMetricas(
       ? Math.round((ocupacionAnt.ocupados / ocupacionAnt.total) * 100)
       : null;
     const ocupacionVariacion = ocupacionAntPct != null && ocupacionPct != null
-      ? ocupacionPct - ocupacionAntPct
+      ? calcularPorcentajeVariacion(ocupacionPct, ocupacionAntPct)
       : null;
 
     // Retención
@@ -575,7 +573,7 @@ export async function getMetricas(
     const totalAnt = nuevosAnt + recurrentesAnt;
     const retencionAnt = totalAnt > 0 ? Math.round((recurrentesAnt / totalAnt) * 100) : null;
     const retencionVariacion = retencionAnt != null && retencion != null
-      ? retencion - retencionAnt
+      ? calcularPorcentajeVariacion(retencion, retencionAnt)
       : null;
 
     // Historial por día (actual)

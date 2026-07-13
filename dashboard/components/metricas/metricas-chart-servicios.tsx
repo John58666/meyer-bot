@@ -61,7 +61,8 @@ export function ChartServicios({ data, onClickServicio }: Props) {
           dataKey="nombre"
           tick={{ fontSize: 10, fill: 'var(--text-secondary,#888)' }}
           axisLine={false} tickLine={false}
-          width={100}
+          width={140}
+          tickFormatter={(v: string) => v.length > 18 ? v.slice(0, 16) + '…' : v}
         />
         <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
         <Bar

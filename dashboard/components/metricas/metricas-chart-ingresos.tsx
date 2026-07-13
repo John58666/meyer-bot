@@ -16,6 +16,7 @@ interface Props {
   dataAnterior: ChartDataPoint[]
   modo: 'ingresos' | 'citas'
   onClickDia?: (fecha: string) => void
+  periodoLabel?: string
 }
 
 function formatPesos(valor: number): string {
@@ -26,23 +27,26 @@ function formatPesos(valor: number): string {
 
 const CHART_COLORS = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6']
 
-function CustomTooltip({ active, payload, label }: any) {
+function CustomTooltip({ active, payload, label, periodoLabel, chartModo }: any) {
   if (!active || !payload?.length) return null
   return (
     <div className="bg-[var(--bg-card,#1a1a1a)] border border-[var(--border-subtle,#2a2a2a)] rounded-lg px-3 py-2 text-[12px] shadow-lg space-y-1">
       <p className="text-[var(--text-secondary)] mb-1">{label}</p>
-      {payload.map((p: any, i: number) => (
-        <p key={i} className="text-[var(--text-primary,#fff)] font-medium" style={{ color: p.color }}>
-          {p.name === 'ingresos' || p.name === 'Ingresos' || p.name === 'Período anterior'
-            ? formatPesos(p.value)
-            : `${p.value} citas`}
-        </p>
-      ))}
+      {payload.map((p: any, i: number) => {
+        const isAnterior = p.name === 'Período anterior' || p.name === 'anterior'
+        const isPesos = chartModo === 'ingresos'
+        return (
+          <p key={i} className="text-[var(--text-primary,#fff)] font-medium" style={{ color: p.color }}>
+            {isAnterior && periodoLabel ? `${periodoLabel}: ` : ''}
+            {isPesos ? formatPesos(p.value) : `${p.value} citas`}
+          </p>
+        )
+      })}
     </div>
   )
 }
 
-export function ChartIngresos({ data, dataAnterior, modo, onClickDia }: Props) {
+export function ChartIngresos({ data, dataAnterior, modo, onClickDia, periodoLabel }: Props) {
   const [refAreaLeft, setRefAreaLeft] = useState<string | null>(null)
   const [refAreaRight, setRefAreaRight] = useState<string | null>(null)
   const [zoomedData, setZoomedData] = useState<ChartDataPoint[] | null>(null)
@@ -119,7 +123,7 @@ export function ChartIngresos({ data, dataAnterior, modo, onClickDia }: Props) {
             axisLine={false} tickLine={false}
             tickFormatter={modo === 'ingresos' ? (v: number) => `$${(v/1000).toFixed(0)}k` : undefined}
           />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
+          <Tooltip content={<CustomTooltip periodoLabel={periodoLabel} chartModo={modo} />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
           <Legend
             wrapperStyle={{ fontSize: '11px', color: 'var(--text-secondary)' }}
             iconSize={8}
