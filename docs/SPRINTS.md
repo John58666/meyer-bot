@@ -406,10 +406,26 @@ GPU glitch del Sprint 15 tenía más rgba sin cubrir. El heatmap de ocupación u
 
 ---
 
-## Backlog actual (Julio 11, 2026)
+## Sprint 16 — Inactividad Proactiva del Bot — COMPLETADO ✅ (Julio 12, 2026)
+
+> Spec: `docs/superpowers/specs/2026-07-12-inactividad-proactiva-bot.md`
+
+### Implementado
+1. **Migración DB**: columna `inactividad_estado TEXT` en `conversation_history`
+2. **Workflow cron n8n** (`Inactividad Bot - Proactivo`): Schedule cada 5 min → query PostgreSQL → Code node filtra (horario laboral, cierre de conversación, fuera de horario) → IF node bifurca:
+   - True (avisar): envía "¿Sigues ahí?" vía Evolution API → marca `inactividad_estado = 'avisado'`
+   - False (cerrar): marca `inactividad_estado = 'cerrado'`
+3. **Guardar Historial modificado**: agrega `inactividad_estado = NULL` al UPSERT para resetear cuando el cliente responde
+4. **15 min de inactividad** → bot pregunta "¿Sigues ahí?"
+5. **Sin respuesta** → flujo cerrado, historial intacto
+6. **No molesta** si: CITA_CONFIRMADA reciente, fuera de horario laboral, conversación ya cerrada
+
+---
+
+## Backlog actual (Julio 12, 2026)
 
 ### PENDIENTE — Fase 2: Bot & Sistema
-1. **Inactividad bot** — que pregunte "¿Sigues ahí?" si el cliente no responde tras X tiempo durante el flujo de agenda
+1. ~~**Inactividad bot** — que pregunte "¿Sigues ahí?" si el cliente no responde tras X tiempo durante el flujo de agenda~~ ✅ Hecho en Sprint 16
 2. **Debugging errores bot** — revisar executions fallidas en n8n, identificar patrones de error frecuentes, corregir causas raíz
 3. **Pruebas de carga** — script que simule N clientes simultáneos agendando por WhatsApp, medir tiempos de respuesta del bot y del sistema completo (n8n + DB + dashboard)
 

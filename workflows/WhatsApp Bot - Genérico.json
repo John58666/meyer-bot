@@ -905,7 +905,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO conversation_history (business_id, numero, messages, updated_at, expires_at)\nVALUES (\n  {{ $('AI Agent').item.json.businessId }},\n  '{{ $('AI Agent').item.json.numeroLimpio }}',\n  '{{ $('AI Agent').item.json.historyJSON }}'::jsonb,\n  NOW(),\n  NOW() + INTERVAL '2 hours'\n)\nON CONFLICT (business_id, numero)\nDO UPDATE SET\n  messages   = EXCLUDED.messages,\n  updated_at = EXCLUDED.updated_at,\n  expires_at = EXCLUDED.expires_at;\n\nDELETE FROM conversation_history WHERE expires_at < NOW();",
+        "query": "INSERT INTO conversation_history (business_id, numero, messages, updated_at, expires_at)\nVALUES (\n  {{ $('AI Agent').item.json.businessId }},\n  '{{ $('AI Agent').item.json.numeroLimpio }}',\n  '{{ $('AI Agent').item.json.historyJSON }}'::jsonb,\n  NOW(),\n  NOW() + INTERVAL '2 hours'\n)\nON CONFLICT (business_id, numero)\nDO UPDATE SET\n  messages   = EXCLUDED.messages,\n  updated_at = EXCLUDED.updated_at,\n  expires_at        = EXCLUDED.expires_at,\n  inactividad_estado = NULL;\n\nDELETE FROM conversation_history WHERE expires_at < NOW();",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
