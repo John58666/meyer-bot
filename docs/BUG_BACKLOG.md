@@ -254,6 +254,31 @@ Leer `CLAUDE.md` `´CONTEXT.UPDATE 'en la raíz del proyecto para el protocolo c
 
 ---
 
+### B14 — Múltiples errores de conversación: servicios sin formato, AM/PM innecesario, multi-servicio, timeout
+
+**Síntomas:**
+1. Lista de servicios en formato plano (coma separado)
+2. Bot pregunta "4 AM o 4 PM" cuando 4 AM no existe en horarios
+3. Cliente pide 8 servicios → bot se bloquea y da "problemita técnico"
+4. "Problemática técnico" por timeout de LLM con contexto grande
+
+**Causa raíz:**
+1. `servicesText` se inyecta al prompt raw (coma separado) sin formatear
+2. Regla de AM/PM tenía "pregunta siempre" ANTES de "verifica si existe" — LLM preguntaba sin verificar
+3. No había instrucción para cuando el cliente pide múltiples servicios
+4. Historial de 20 mensajes + timeout 10s → contexto grande → 3 proveedores fallan
+
+**Estado:** ✅ Completado (2026-07-22)
+
+**Cambios (WhatsApp Bot - Genérico.json):**
+- [x] **Procesar Mensaje**: nuevo campo `servicesTextFormateado` — lista numerada con formato `1. Nombre - $precio`
+- [x] **AI Agent prompt**: `servicios` y error "no disponible" ahora usan `servicesTextFormateado`
+- [x] **AI Agent prompt**: regla AM/PM reordenada — primero verifica existencia, solo pregunta si ambos existen
+- [x] **AI Agent prompt**: nueva regla multi-servicio — agenda uno a uno empezando por el primero
+- [x] **AI Agent**: historial reducido de 20→14 mensajes, timeout aumentado de 10s→15s
+
+---
+
 ## Prioridad CRÍTICA — Nuevos hallazgos (Sprint 19)
 
 ### B11 — Post-LLM validation gap (causa raíz de disponibilidad errónea)
