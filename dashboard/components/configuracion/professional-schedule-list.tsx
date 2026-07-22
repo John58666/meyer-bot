@@ -28,8 +28,14 @@ export function ProfessionalScheduleList({ businessId, professionalId }: { busin
 
   async function loadProfessionals() {
     setLoading(true);
-    const data = await getAllProfessionalSchedules(businessId);
-    setProfessionals(data);
+    setError("");
+    try {
+      const data = await getAllProfessionalSchedules(businessId);
+      setProfessionals(data);
+    } catch (e) {
+      setError("Error cargando los horarios de profesionales");
+      console.error('[ProfessionalScheduleList] loadProfessionals error:', e);
+    }
     setLoading(false);
   }
 
@@ -82,7 +88,22 @@ export function ProfessionalScheduleList({ businessId, professionalId }: { busin
     ? professionals
     : professionals.filter(p => p.professionalId === Number(professionalId));
 
-  if (displayed.length === 0) return null;
+  if (displayed.length === 0) {
+    if (error) {
+      return (
+        <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--color-danger)]/30 p-4">
+          <p className="text-sm text-[var(--color-danger)]">{error}</p>
+        </div>
+      );
+    }
+    return (
+      <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)] p-4">
+        <p className="text-sm text-[var(--text-secondary)]">
+          No se encontraron profesionales activos para este negocio.
+        </p>
+      </div>
+    );
+  }
 
   if (!isOwnerOrAdmin) {
     const prof = displayed[0];

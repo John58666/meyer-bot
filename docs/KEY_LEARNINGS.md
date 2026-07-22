@@ -41,6 +41,10 @@
 - **Español colombiano neutro para prompts de agendamiento:** el prompt debe especificar explícitamente "no vos", listar palabras colombianas y prohibir modismos rioplatenses. Sin instrucción explícita, los LLMs tienden a argentino/voseo por defecto en español latinoamericano.
 - **Ley 1581 integrada en prompt:** respuesta genérica sobre protección de datos se implementa como sección en el prompt con template `${d.politicaPrivacidadUrl || 'placeholder'}`. La URL se pasa desde el business lookup en el flujo del bot.
 
+- **Nunca instruir al LLM a tratar números como índices de lista:** El prompt original decía "Si dice solo un número, es la posición en el listado" en reagendar PASO 3. Esto causó que "3" se interpretara como posición 3 (10:00 AM) en vez de 3 PM. La regla correcta: números del 1 al 12 son HORAS, solo frases como "la primera", "la opción 1" son posiciones.
+
+- **Reagendamiento necesita confirmación explícita igual que agendamiento:** El flujo de reagendar no tenía paso de confirmación — emitía REAGENDAR_CITA inmediatamente después de elegir hora. Se agregó PASO 4 con resumen y pregunta "¿Confirmamos el reagendamiento?" siguiendo el mismo patrón que agendamiento.
+
 ## Dashboard / Frontend
 
 - **Extensibility via `onSave` prop pattern:** When a server component (like `HorarioClient`) has a hardcoded server action call (`updateScheduleText`), add an optional `onSave` prop that overrides the default. This lets parent components reuse the same UI for different server actions (e.g., `updateProfessionalSchedule`) without duplicating component code. The pattern: `const result = onSave ? await onSave(schedule) : await defaultAction(id, schedule)`.
@@ -150,6 +154,17 @@
 - **Reaction y protocol messages:** WhatsApp envía `reactionMessage` (👍) y `protocolMessage` (mensaje eliminado) como tipos separados. Ambos deben filtrarse con `return []` temprano para no romper el flujo.
 - **Normalización de acentos en JS:** para comparar texto en español sin importar tildes, usar `.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')`. Esto elimina los diacríticos dejando solo los caracteres base.
 - **`$("Node").item` en `runOnceForAllItems`:** cuando un nodo ejecuta una vez para todos los items, `$("Node").item` resuelve al item índice 0 de `"Node"`. Para datos multi-item en UPDATE, cambiar a `runOnceForEachItem` para que cada ejecución tenga su propio contexto.
+- **Code node intermedio elimina campos del SQL node:** si un Code node (ej: `Filtrar Mañana1`) procesa el output de un Postgres node y solo pasa ciertos campos al output, cualquier campo no incluido se pierde. HTTP node downstream que referencie esos campos con `$json.field` recibirá `undefined`. Solución: incluir explícitamente el campo en el output del Code node, o referenciar el Postgres node directamente con `$('SQLNode').item.json.field`.
+
+## Next.js / Auth
+
+- **Middleware redirect vs client-side nav:** En Next.js con App Router, el middleware corre en client-side navigation (next/link) también. Si el middleware retorna `Response.redirect()`, la navegación se intercepta. Sin embargo, redirects en `authorized` callback de NextAuth v5 beta pueden no funcionar correctamente — verificar siempre con logs si el redirect se ejecuta.
+- **`professionalId` en JWT:** El tipo es `number | null` en sesión. El valor PostgreSQL (`u.professional_id`) es integer. En JWT serializado como JSON, se mantiene como número. `Number(professionalId)` con número ya es redundante pero seguro.
+
+## Dashboard
+
+- **Server actions desde `"use client"` components:** Next.js interpone un fetch HTTP para llamar a funciones `"use server"`. Si la build no crea el endpoint correctamente, el fetch falla silenciosamente (el catch en la server action captura el error y retorna `[]`). Verificar que la función exista en los chunks del build output.
+- **`useEffect` sin try/catch en server action call:** Si `getAllProfessionalSchedules` lanza error no capturado (ej: fuera del try/catch), la promesa se rechaza, `setLoading(false)` no se ejecuta nunca, y el componente queda en loading forever. Asegurar try/catch alrededor de toda la lógica en server actions.
 
 ## Git
 

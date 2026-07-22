@@ -1129,7 +1129,9 @@ export async function updateProfessionalSchedule(
 ) {
   const session = await auth();
   if (!session) return { error: 'No autenticado' };
-  if (session.user.role !== 'owner' && session.user.role !== 'admin')
+  const isOwnerAdmin = session.user.role === 'owner' || session.user.role === 'admin';
+  const isOwnSchedule = session.user.role === 'profesional' && session.user.professionalId === professionalId;
+  if (!isOwnerAdmin && !isOwnSchedule)
     return { error: 'No autorizado' };
 
   for (const [day, hs] of Object.entries(schedule)) {
@@ -1168,7 +1170,9 @@ export async function updateProfessionalSchedule(
 export async function deleteProfessionalSchedule(businessId: number, professionalId: number) {
   const session = await auth();
   if (!session) return { error: 'No autenticado' };
-  if (session.user.role !== 'owner' && session.user.role !== 'admin')
+  const isOwnerAdmin = session.user.role === 'owner' || session.user.role === 'admin';
+  const isOwnSchedule = session.user.role === 'profesional' && session.user.professionalId === professionalId;
+  if (!isOwnerAdmin && !isOwnSchedule)
     return { error: 'No autorizado' };
 
   try {

@@ -201,6 +201,18 @@ No existe hoy (VPS sin recursos). Implementar cuando se haga upgrade a 4 vCPU / 
 5. Exportar JSON antes de tocar nada — rollback = reimportar JSON anterior
 6. **SQL de n8n no verificable via API REST con auth básica — verificar visualmente en la UI.**
 
+### Workflows activos en n8n (5)
+
+| # | Workflow | Trigger | Propósito |
+|---|----------|---------|-----------|
+| 1 | `WhatsApp Bot - Genérico` | Webhook | Bot conversacional IA — agendar, cancelar, reagendar, historial |
+| 2 | `Recordatorios 24h - Peluquería Meyer` | Cron 3 PM | Recordatorio de cita al día siguiente |
+| 3 | `Recordatorios 2h - Genérico` | Cron c/2h | Recordatorio de cita en 2 horas |
+| 4 | `Inactividad Bot - Proactivo` | Cron c/5min | Detecta conversaciones inactivas y envía "¿Sigues ahí?" |
+| 5 | `No-Shows - Auto Completar` | Cron 23:59 | Marca citas del día como completadas |
+
+> **No activos:** `Peluqueria Beta` (beta anterior, reemplazado por #1), `rotar-evolution-api-key` (utilitario manual), `llm-orquestador-nodes` (extracto de #1 para referencia).
+
 ### CRM
 - Tabla `customers` ya existe.
 - Upsert automático al agendar por WhatsApp: actualiza `ultima_visita`, `total_visitas`, `nombre`.

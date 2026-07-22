@@ -1,5 +1,5 @@
 import { auth } from '@/auth'
-import { redirect } from 'next/navigation'
+import { redirect, notFound } from 'next/navigation'
 import { pool } from '@/lib/db'
 import { ServiciosClient } from '@/components/configuracion/servicios-client'
 import { HorarioClient } from '@/components/configuracion/horario-client'
@@ -11,8 +11,10 @@ export default async function ConfiguracionPage() {
   if (!session) redirect('/login')
 
   const businessId = session.user.businessId
-  const professionalId = session.user.professionalId
-  const isOwnerOrAdmin = professionalId == null
+  const role = session.user.role
+  const isOwnerOrAdmin = role === 'owner' || role === 'admin'
+
+  if (!isOwnerOrAdmin) notFound()
 
   const { rows } = await pool.query(
     `SELECT services_text, schedule_text, multi_professional FROM businesses WHERE id = $1`,
@@ -24,23 +26,6 @@ export default async function ConfiguracionPage() {
     ? JSON.parse(rawSchedule)
     : (rawSchedule as ScheduleData) ?? {}
   const multiProfessional = rows[0]?.multi_professional ?? false
-
-  if (!isOwnerOrAdmin) {
-    return (
-      <div>
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white">Mi horario</h1>
-          <p className="text-sm text-[var(--text-secondary)] mt-0.5">
-            Define tus días y horarios de atención
-          </p>
-        </div>
-        <ProfessionalScheduleList
-          businessId={businessId}
-          professionalId={professionalId}
-        />
-      </div>
-    )
-  }
 
   return (
     <div>

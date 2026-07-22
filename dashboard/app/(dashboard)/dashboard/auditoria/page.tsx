@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import { getAuditLogs } from "@/lib/audit";
 import { getEquipo } from "@/lib/actions";
 import { AuditoriaClient } from "@/components/auditoria/auditoria-client";
@@ -29,7 +29,7 @@ function getWeekBounds() {
 export default async function AuditoriaPage({ searchParams }: Props) {
   const session = await auth();
   if (!session) redirect("/login");
-  if (session.user.role === "profesional") redirect("/dashboard");
+  if (session.user.role !== "owner" && session.user.role !== "admin") notFound();
 
   const businessId = session.user.businessId;
   const sp = await searchParams;

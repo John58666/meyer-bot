@@ -6,7 +6,10 @@
       "name": "Schedule",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [0, 0],
+      "position": [
+        0,
+        0
+      ],
       "parameters": {
         "triggerTimes": {
           "item": [
@@ -23,7 +26,10 @@
       "name": "Buscar Conversaciones Inactivas",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
-      "position": [300, 0],
+      "position": [
+        300,
+        0
+      ],
       "credentials": {
         "postgres": {
           "id": "AkRs7Kx5gs6JnVMz",
@@ -32,7 +38,7 @@
       },
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT\n  ch.business_id,\n  ch.numero,\n  ch.updated_at,\n  ch.inactividad_estado,\n  ch.messages::text,\n  b.instance,\n  b.owner_number,\n  b.schedule_text::text,\n  b.timezone\nFROM conversation_history ch\nJOIN businesses b ON b.id = ch.business_id\nWHERE ch.updated_at < NOW() - '15 minutes'::interval\n  AND b.active = true\n  AND (ch.inactividad_estado IS NULL OR ch.inactividad_estado = 'avisado')\nORDER BY ch.updated_at ASC",
+        "query": "SELECT\n  ch.business_id,\n  ch.numero,\n  ch.updated_at,\n  ch.inactividad_estado,\n  ch.messages::text,\n  b.whatsapp_instance AS instance,\n  b.owner_number,\n  b.schedule_text::text,\n  b.timezone\nFROM conversation_history ch\nJOIN businesses b ON b.id = ch.business_id\nWHERE ch.updated_at < NOW() - '15 minutes'::interval\n  AND b.active = true\n  AND (ch.inactividad_estado IS NULL OR ch.inactividad_estado = 'avisado')\nORDER BY ch.updated_at ASC",
         "options": {}
       }
     },
@@ -41,10 +47,12 @@
       "name": "Filtrar y Decidir",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [600, 0],
+      "position": [
+        600,
+        0
+      ],
       "parameters": {
-        "language": "javascript",
-        "code": "// ─── FILTRAR Y DECIDIR ACCIÓN POR INACTIVIDAD ───\n// Entrada: items del nodo PostgreSQL\n// Salida: items con acción 'avisar' o 'cerrar'\n// Luego un IF node bifurca según accion === 'avisar'\n\nconst ITEMS = $input.all();\nconst RESULT = [];\n\nconst DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];\n\nfor (const item of ITEMS) {\n  const json = item.json;\n\n  // 1. Parsear schedule_text\n  let scheduleText = {};\n  try {\n    scheduleText = typeof json.schedule_text === 'string'\n      ? JSON.parse(json.schedule_text)\n      : json.schedule_text;\n  } catch (e) {\n    scheduleText = {};\n  }\n\n  // 2. Verificar horario laboral\n  const ahora = new Date();\n  const diaSemana = DIAS[ahora.getDay()];\n  const horaActual = ahora.getHours() * 60 + ahora.getMinutes();\n\n  const horarioHoy = scheduleText[diaSemana];\n  let dentroDeHorario = false;\n\n  if (horarioHoy && horarioHoy.length > 0) {\n    for (const bloque of horarioHoy) {\n      if (bloque.desde && bloque.hasta) {\n        const [hDesde, mDesde] = bloque.desde.split(':').map(Number);\n        const [hHasta, mHasta] = bloque.hasta.split(':').map(Number);\n        const inicio = hDesde * 60 + mDesde;\n        const fin = hHasta * 60 + mHasta;\n        if (horaActual >= inicio && horaActual <= fin) {\n          dentroDeHorario = true;\n          break;\n        }\n      }\n    }\n  }\n\n  if (!dentroDeHorario) continue;\n\n  // 3. Revisar último mensaje del assistant\n  let ultimoMensaje = '';\n  try {\n    const messages = typeof json.messages === 'string'\n      ? JSON.parse(json.messages)\n      : json.messages;\n    if (Array.isArray(messages) && messages.length > 0) {\n      for (let i = messages.length - 1; i >= 0; i--) {\n        if (messages[i].role === 'assistant') {\n          ultimoMensaje = messages[i].content || messages[i].text || '';\n          break;\n        }\n      }\n    }\n  } catch (e) {}\n\n  // 4. Detectar cierre de conversación\n  const patronesCierre = ['CITA_CONFIRMADA', 'GESTIONAR_CITA', 'fuera de horario', 'vuelve mañana', 'gracias por escribir'];\n  if (patronesCierre.some(p => ultimoMensaje.includes(p))) continue;\n\n  // 5. Decidir acción\n  if (json.inactividad_estado === null || json.inactividad_estado === undefined || json.inactividad_estado === '') {\n    RESULT.push({ json: { accion: 'avisar', numero: json.numero, business_id: json.business_id, instance: json.instance } });\n  } else if (json.inactividad_estado === 'avisado') {\n    RESULT.push({ json: { accion: 'cerrar', numero: json.numero, business_id: json.business_id } });\n  }\n}\n\nreturn RESULT;"
+        "jsCode": "// ─── FILTRAR Y DECIDIR ACCIÓN POR INACTIVIDAD ───\n// Entrada: items del nodo PostgreSQL\n// Salida: items con acción 'avisar' o 'cerrar'\n// Luego un IF node bifurca según accion === 'avisar'\n\nconst ITEMS = $input.all();\nconst RESULT = [];\n\nconst DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];\n\nfor (const item of ITEMS) {\n  const json = item.json;\n\n  // 1. Parsear schedule_text\n  let scheduleText = {};\n  try {\n    scheduleText = typeof json.schedule_text === 'string'\n      ? JSON.parse(json.schedule_text)\n      : json.schedule_text;\n  } catch (e) {\n    scheduleText = {};\n  }\n\n  // 2. Verificar horario laboral\n  const ahora = new Date();\n  const diaSemana = DIAS[ahora.getDay()];\n  const horaActual = ahora.getHours() * 60 + ahora.getMinutes();\n\n  const horarioHoy = scheduleText[diaSemana];\n  let dentroDeHorario = false;\n\n  if (horarioHoy && horarioHoy.length > 0) {\n    for (const bloque of horarioHoy) {\n      if (bloque.desde && bloque.hasta) {\n        const [hDesde, mDesde] = bloque.desde.split(':').map(Number);\n        const [hHasta, mHasta] = bloque.hasta.split(':').map(Number);\n        const inicio = hDesde * 60 + mDesde;\n        const fin = hHasta * 60 + mHasta;\n        if (horaActual >= inicio && horaActual <= fin) {\n          dentroDeHorario = true;\n          break;\n        }\n      }\n    }\n  }\n\n  if (!dentroDeHorario) continue;\n\n  // 3. Revisar último mensaje del assistant\n  let ultimoMensaje = '';\n  try {\n    const messages = typeof json.messages === 'string'\n      ? JSON.parse(json.messages)\n      : json.messages;\n    if (Array.isArray(messages) && messages.length > 0) {\n      for (let i = messages.length - 1; i >= 0; i--) {\n        if (messages[i].role === 'assistant') {\n          ultimoMensaje = messages[i].content || messages[i].text || '';\n          break;\n        }\n      }\n    }\n  } catch (e) {}\n\n  // 4. Detectar cierre de conversación\n  const patronesCierre = ['CITA_CONFIRMADA', 'GESTIONAR_CITA', 'fuera de horario', 'vuelve mañana', 'gracias por escribir'];\n  if (patronesCierre.some(p => ultimoMensaje.includes(p))) continue;\n\n  // 5. Decidir acción\n  if (json.inactividad_estado === null || json.inactividad_estado === undefined || json.inactividad_estado === '') {\n    RESULT.push({ json: { accion: 'avisar', numero: json.numero, business_id: json.business_id, instance: json.instance } });\n  } else if (json.inactividad_estado === 'avisado') {\n    RESULT.push({ json: { accion: 'cerrar', numero: json.numero, business_id: json.business_id } });\n  }\n}\n\nreturn RESULT;"
       }
     },
     {
@@ -52,7 +60,10 @@
       "name": "¿Es para avisar?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [900, 0],
+      "position": [
+        900,
+        0
+      ],
       "parameters": {
         "conditions": {
           "options": {
@@ -79,7 +90,10 @@
       "name": "Enviar ¿Sigues Ahí?",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1200, -200],
+      "position": [
+        1200,
+        -200
+      ],
       "parameters": {
         "method": "POST",
         "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $json.instance }}",
@@ -108,7 +122,10 @@
       "name": "Marcar como Avisado",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
-      "position": [1500, -200],
+      "position": [
+        1500,
+        -200
+      ],
       "credentials": {
         "postgres": {
           "id": "AkRs7Kx5gs6JnVMz",
@@ -126,7 +143,10 @@
       "name": "Marcar como Cerrado",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
-      "position": [1500, 200],
+      "position": [
+        1500,
+        200
+      ],
       "credentials": {
         "postgres": {
           "id": "AkRs7Kx5gs6JnVMz",

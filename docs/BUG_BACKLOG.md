@@ -45,12 +45,14 @@ Leer `CLAUDE.md` `´CONTEXT.UPDATE 'en la raíz del proyecto para el protocolo c
 - [x] `Formatear Disponibilidad`: agrupa por fecha → profesional, formato compacto con header
 - [x] `Leer Disponibilidad`: colisión ahora filtra por profesional específico
 
-**Fase 2 (completada — 2026-07-21):**
+**Fase 2 (completada — 2026-07-22):**
 - [x] Migración DB `017_professional_schedule.sql` creada
 - [x] Dashboard: editor de horario por profesional en Configuración
 - [x] `getAvailableSlots()` usa COALESCE(ps.schedule_text, b.schedule_text)
 - [x] `HorarioClient` acepta `onSave` prop para reutilización
 - [x] Queries n8n actualizadas con COALESCE per-profesional
+
+**⚠️ BUG POST-DEPLOY (2026-07-22):** Profesional ve solo título "Mi horario" sin editor. Causa probable: middleware redirect en `auth.config.ts` bloqueaba el acceso. Se eliminó (commit `f4b4fb3`) pero bug persiste. Pendiente debuggear si el redirect era la causa real o hay otro problema en el componente.
 
 ---
 
@@ -88,13 +90,15 @@ Leer `CLAUDE.md` `´CONTEXT.UPDATE 'en la raíz del proyecto para el protocolo c
 - `workflows/WhatsApp Bot - Genérico.json` — nodo AI Agent (prompt), nodos downstream
 - `database/n8n-queries.sql` — INSERT sin validación previa
 
-**Estado:** ✅ Aplicado en n8n UI y en JSON local (2026-07-20)
+**Estado:** ✅ Completado (2026-07-22)
 
 **Cambios:**
 - [x] Nueva regla ABSOLUTA: "NUNCA emitas CITA_CONFIRMADA sin haber mostrado resumen"
 - [x] Explicita que aplica incluso en 2da/3ra cita en misma conversación
 - [x] Confirmación agregada a CANCELAR: ahora pide "¿Confirmas que deseas cancelar?" antes de emitir código
 - [x] Aplicar en n8n UI (nodo AI Agent → jsCode)
+
+**Fix adicional (2026-07-22):** Se agregó PASO 4 de confirmación obligatoria en reagendamiento (antes emitía REAGENDAR_CITA sin resumen ni pregunta). Ahora muestra resumen completo y pide confirmación exactamente como en agendamiento.
 
 ---
 
@@ -110,13 +114,15 @@ Leer `CLAUDE.md` `´CONTEXT.UPDATE 'en la raíz del proyecto para el protocolo c
 **Archivos involucrados:**
 - `workflows/WhatsApp Bot - Genérico.json` — nodo AI Agent (prompt), nodo Verificar Slot
 
-**Estado:** ✅ Prompt aplicado en n8n UI y JSON local. Verificar Slot pendiente (2026-07-20)
+**Estado:** ✅ Completado (2026-07-22)
 
 **Cambios:**
 - [x] Regla de validación de hora al emitir CITA_CONFIRMADA: "la hora debe ser IDÉNTICA a la del resumen"
 - [x] Validación extra en Verificar Slot: normaliza hora AM/PM a 24h
 - [x] Aplicar en n8n UI (AI Agent → jsCode)
-- [ ] Aplicar en n8n UI (Verificar Slot — normalización de hora)
+- [x] Aplicar en JSON local (Verificar Slot — normalización de hora)
+
+**Fix adicional (2026-07-22):** El prompt tenía `"Si dice solo un número, es la posición en el listado"` en reagendar PASO 3, causando que "3" se interpretara como índice (posición 3 = 10:00 AM) en vez de 3 PM. Corregido a: números del 1 al 12 = HORA, no posición. También se agregó PASO 4 de confirmación obligatoria en reagendamiento (antes emitía REAGENDAR_CITA sin preguntar).
 
 ---
 
@@ -219,6 +225,32 @@ Leer `CLAUDE.md` `´CONTEXT.UPDATE 'en la raíz del proyecto para el protocolo c
 - [x] "recomendás" → "recomiendas", "¿Querés?" → "¿Quieres?"
 - [x] Lista de expresiones colombianas naturales: "listo", "claro", "con gusto", "¿en qué más puedo ayudarte?", "seguimos", "ya mismo", "ahí te va", "dime"
 - [x] Advertencia: "Evita modismos argentinos como 'che', 'vos', 'sabés', 'tenés', 'querés', 'podés'"
+
+---
+
+### B12 — Recordatorios 24h: whatsapp_instance eliminado por Code node
+
+**Síntoma:** El workflow de recordatorios 24h no envía WhatsApp porque el HTTP Request queda con `{{ $json.whatsapp_instance }}` = `undefined`.
+
+**Causa raíz:** El nodo Code `Filtrar Mañana1` recibe `whatsapp_instance` desde PostgreSQL pero no lo incluye en su output (`{ numero, nombre, mensaje, hora, servicio }`). El HTTP node downstream referencia `$json.whatsapp_instance` que nunca existe.
+
+**Estado:** ✅ Completado (2026-07-22)
+
+**Cambios:**
+- [x] Agregado `whatsapp_instance: row['whatsapp_instance']` al output del Code node
+
+---
+
+### B13 — rotar-evolution-api-key: IP hardcodeada
+
+**Síntoma:** Workflow temporal de rotación de API key tenía `http://178.104.27.180:8080` hardcodeado en 3 URLs.
+
+**Causa raíz:** Escrito manualmente sin usar variable de entorno.
+
+**Estado:** ✅ Completado (2026-07-22)
+
+**Cambios:**
+- [x] Reemplazadas 3 URLs hardcodeadas por `$env.EVOLUTION_API_URL` via template literal
 
 ---
 

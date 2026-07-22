@@ -3,7 +3,8 @@
   "nodes": [
     {
       "parameters": {
-        "jsCode": "// Node: EVOLUTION — Rotar API Key\n// POST /instance/create para regenerar la key\nconst evolutionUrl = 'http://178.104.27.180:8080/instance/create';
+        "jsCode": "// Node: EVOLUTION — Rotar API Key\n// POST /instance/create para regenerar la key\nconst evolutionBaseUrl = $env.EVOLUTION_API_URL;
+const evolutionUrl = `${evolutionBaseUrl}/instance/create`;
 const apiKeyActual = $env.EVOLUTION_API_KEY;
 
 // Instancia dados de Peluquería Meyer (business_id = 1)
@@ -50,7 +51,7 @@ try {
   } else if (response?.message === "instance already exists") {
     // La instancia ya existe, pero podemos forzar regeneración de la key
     // Usamos PUT /instance/reload para reiniciar la instancia
-    const reloadUrl = `http://178.104.27.180:8080/instance/reload/${instanceName}`;
+    const reloadUrl = `${evolutionBaseUrl}/instance/reload/${instanceName}`;
     const reloadResponse = await this.helpers.httpRequest({
       url: reloadUrl,
       method: 'PUT',
@@ -61,7 +62,7 @@ try {
     });
     
     if (reloadResponse?.status === true) {
-      const methodsUrl = `http://178.104.27.180:8080/instance/info/${instanceName}`;
+      const methodsUrl = `${evolutionBaseUrl}/instance/info/${instanceName}`;
       const infoResponse = await this.helpers.httpRequest({
         url: methodsUrl,
         method: 'GET',

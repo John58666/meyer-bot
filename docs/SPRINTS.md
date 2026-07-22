@@ -422,11 +422,81 @@ GPU glitch del Sprint 15 tenía más rgba sin cubrir. El heatmap de ocupación u
 
 ---
 
-## Backlog actual (Julio 12, 2026)
+## Sprint 17 — Debugging Bot + Fix Inactividad Bot — EN CURSO 🔴 (Julio 14, 2026)
+
+### A — Debugging errores bot
+16 executions fallidas identificadas, 3 patrones:
+
+1. **Recordatorios 24h** — `null value in column "professional_id"` (ejecuciones #1834-#1848, Jul 13). Histórico: citas sin profesional asignado que recordatorios no manejaban. Bugs relacionados fixeados en Sprint 13. No recurrente.
+
+2. **Evolution API webhook** — `Cannot read properties of undefined (reading 'status')` (ejecución #1852, Jul 13). Histórico: webhook de Evolution API que llegó antes de que n8n inicializara el webhook listener. No recurrente tras sprint 16.
+
+3. **WhatsApp Bot sync-cancel** — `Cannot read properties of null (reading 'id')` (ejecuciones #1860-#1865, Jul 13-14). Histórico: mismo bug que Sprint 14 sync-cancel fix. No recurrente.
+
+4. **Inactividad Bot** — 2 patrones de error desde el deploy del Sprint 16 (Jul 12):
+   - **Schedule trigger roto**: la DB de n8n tenía `rule.interval[0] = {}` (vacío) en vez de `*/5 * * * *`. Solo se disparaba a 04:00 UTC (medianoche Bogotá). **Fix**: actualizado vía Python directo a SQLite (`workflow_entity.nodes`, `workflow_history`).
+   - **Column `b.instance` no existe**: la query SQL usaba `b.instance` pero la columna real es `b.whatsapp_instance`. **Fix**: cambiado a `b.whatsapp_instance AS instance` en query.
+   - **Code node sin código**: el nodo "Filtrar y Decidir" solo tenía `language: javascript` sin `jsCode`. **Fix**: inyectado código completo (2552 chars) como `jsCode` en SQLite.
+
+### Estado actual del Item 1
+- Schedule dispara cada 5 min ✅ (antes solo 04:00 UTC)
+- Query Postgres arreglada ✅
+- Code node tiene `jsCode` en DB ✅
+- ~~Code node fallaba con `Could not get parameter`~~ **RESUELTO ✅**
+
+### Sprint 17 — Continuación (Jul 14-15, 2026) — Fix dataflow + quoted messages
+
+**A — Fix code node output vacío**
+El Code node "Filtrar y Decidir" usaba `$input.all()` que en n8n 2.10.3 devuelve `[]` cuando el nodo anterior es PostgreSQL (bug conocido). Fix: cambiar a `$("Buscar Conversaciones Inactivas").all()`.
+
+**B — Fix UPDATE Postgres nodes (dataflow after HTTP Request)**
+"Enviar ¿Sigues Ahí?" (HTTP Request) sobreescribe `$json` — los UPDATE Postgres recibían `undefined` en `business_id` y `numero`. Fix: cambiar queries de `$json.business_id` a `$("Filtrar y Decidir").item.json.business_id`, y establecer `mode: 'runOnceForEachItem'`.
+
+**C — DB corruption por WAL mode + docker**
+Copiar SQLite mientras n8n está corriendo (WAL mode) corrompió la DB el Jul 14. Recuperada con `.recover` en sqlite3. Lección: siempre `docker stop n8n-n8n-1` antes de modificar DB.
+
+**D — Pérdida de `availableInMCP` tras recovery**
+El recovery de SQLite perdió la columna virtual `availableInMCP` de todos los workflows (quedó en `false`). Restaurado a `true` vía SQL directo. Peluqueria Beta quedó con `active=0`, restaurado a `1`.
+
+**E — Fix quoted messages + inactividad retomar (WhatsApp Bot)**
+3 cambios en el WhatsApp Bot Genérico:
+
+1. **Leer Historial**: SELECT agregó `inactividad_estado` (antes no se traía)
+2. **Procesar Mensaje**: 
+   - Filtro temprano de `reactionMessage` y `protocolMessage` (return `[]`)
+   - Soporte para `buttonsResponseMessage`, `listResponseMessage` (botones/listas)
+   - Detección de quoted message (`contextInfo.quotedMessage`) → agrega `[Respondiendo a: "..."]` al texto
+   - Detección de reply al "¿Sigues ahí?" → flag `esRetomoPorInactividad: true`
+3. **AI Agent**:
+   - Si `d.esRetomoPorInactividad === true` → inyecta instrucción de continuación automática (no saluda, no pregunta, sigue exactamente donde quedó)
+   - Si no, usa el gapMessage reactivo existente (10-60 min)
+
+**Cambios exclusivos al SQLite** (no exportables vía API):
+- Scripts Python modifican `workflow_entity.nodes` + `workflow_history.nodes` directamente
+- `versionId` y `activeVersionId` sincronizados
+- n8n reiniciado con `docker stop` + `docker start` cada vez (necesario para release de lock SQLite)
+
+### Root cause del `Could not get parameter`
+El Code node v2 en n8n usa `displayOptions` para validar que `jsCode` sea un parámetro accesible. Las condiciones eran:
+- `@version`: [2] ✅
+- `language`: ['javaScript'] ❌ — la DB tenía `'javascript'` (todo minúsculas, sin mayúscula S)
+- `mode`: ['runOnceForAllItems'] ❌ — el parámetro `mode` no existía en la DB
+
+Sin ambos parámetros correctos, n8n no considera `jsCode` como parámetro válido, y `getNodeParameter('jsCode')` lanza `Could not get parameter`.
+
+**Fix (Jul 14, 18:18 UTC):**
+1. `language` corregido de `'javascript'` → `'javaScript'` (camelCase, con S mayúscula)
+2. `mode: 'runOnceForAllItems'` agregado a los parámetros del Code node
+3. Ambos cambios aplicados vía Python a `workflow_entity.nodes` y `workflow_history.nodes`
+4. `versionId` actualizado (nuevo: `eab9bef376795a9c9dd56e1f0008d4d5`)
+5. n8n reiniciado con `docker compose restart n8n`
+6. **Ejecución #1913 a las 18:20 UTC = success** ✅ — primera ejecución exitosa del workflow Inactividad Bot
+
+### Backlog actual (Julio 14, 2026)
 
 ### PENDIENTE — Fase 2: Bot & Sistema
 1. ~~**Inactividad bot** — que pregunte "¿Sigues ahí?" si el cliente no responde tras X tiempo durante el flujo de agenda~~ ✅ Hecho en Sprint 16
-2. **Debugging errores bot** — revisar executions fallidas en n8n, identificar patrones de error frecuentes, corregir causas raíz
+2. ~~**Debugging errores bot** — Inactividad Bot Code node fallaba con `Could not get parameter`~~ ✅ **RESUELTO** (Sprint 17)
 3. **Pruebas de carga** — script que simule N clientes simultáneos agendando por WhatsApp, medir tiempos de respuesta del bot y del sistema completo (n8n + DB + dashboard)
 
 ### PENDIENTE — Fase 3: Dashboard Métricas (expansión)
@@ -443,3 +513,96 @@ GPU glitch del Sprint 15 tenía más rgba sin cubrir. El heatmap de ocupación u
 12. **Servicios nuevos no reflejados en bot** — investigar orden en system prompt vs timing del lookup (#11 del backlog anterior)
 13. **Quitar branding Meyer del producto** (#15)
 14. **Panel admin Johnander** — vista global de todos los negocios (#19)
+
+### PENDIENTE — Infraestructura / Seguridad
+15. **Migrar n8n MCP de Access Token a OAuth2** — cuando haya múltiples clientes/agentes conectados (OpenCode + Claude Desktop + Lovable, etc.). Hoy con Access Token único funciona bien. OAuth2 permitiría revocar acceso por cliente individualmente. No urgente.
+
+---
+
+## Sprint 18 — Fixes Prompt: B7 (AM/PM + "más horarios"), B9 (tono colombiano), B10 (Ley 1581) — COMPLETADO ✅ (Julio 21, 2026)
+
+> Todos los cambios en `workflows/WhatsApp Bot - Genérico.json` únicamente.
+
+### B7 — AM/PM + disponibilidadCompleta + "más horarios"
+- **Node [6] Formatear Disponibilidad**: eliminado `.replace(/AM/g, 'a.m.').replace(/PM/g, 'p.m.')`. Ahora preserva `HH12:MI AM` de PostgreSQL.
+- **disponibilidadCompleta** creada: todos los slots sin truncar, con header `📅 fecha:` por día. Pasa como campo separado en el output del code node.
+- **Node [33] AI Agent**: nueva sección `HORARIOS COMPLETOS (sin límite)` + regla `INSTRUCCIÓN "MÁS HORARIOS"`. Fallback: `${d.disponibilidadCompleta || d.disponibilidad}`.
+- **Scope bug detectado y corregido**: `const todas` (para `disponibilidadCompleta`) estaba fuera del for interior donde `horasFormateadas` se define. Movido a indent 4-space.
+- **Dangling const bug post-deploy (descubierto en UI)**: `const systemPrompt =` colgante en línea 66, remanente de la modularización B6. JavaScrip interpreta `const systemPrompt =` seguido de `const role = ...` como una asignación incompleta → `SyntaxError: Unexpected token 'const'`. Corregido eliminando la línea 66.
+
+### B9 — Tono colombiano neutro
+- Sección TONO Y LENGUAJE reescrita: "español colombiano neutro (usa 'tú' no 'vos')"
+- `recomendás` → `recomiendas`, `¿Querés?` → `¿Quieres?`
+- Lista de expresiones colombianas: "listo", "claro", "con gusto", "¿en qué más puedo ayudarte?", "seguimos", "ya mismo", "ahí te va", "dime"
+- Advertencia explícita: "Evita modismos argentinos como 'che', 'vos', 'sabés', 'tenés', 'querés', 'podés'"
+- Investigación web confirmó que "colombiano neutro" se define mejor con instrucciones sobre qué NO usar que con una lista cerrada de expresiones.
+
+### B10 — Ley 1581
+- Nueva sección `DATOS PERSONALES (Ley 1581)` en prompt del AI Agent.
+- Template: `${d.politicaPrivacidadUrl || '[enlace a política de privacidad]'}`
+- Detecta: "uso de sus datos", "privacidad", "protección de datos", "para qué van a usar mi información", "dónde guardan mis datos"
+- Respuesta cumple Ley 1581 de 2012: consentimiento previo, expreso e informado, derecho a conocer/corregir/actualizar, SIC como autoridad de control.
+- Investigación web confirmó que no hay cambios legales 2026 que afecten la respuesta (Ley 1581 se mantiene vigente).
+
+### B1 F2 — Evaluado como bloqueado
+- `schedule_text` por profesional requiere: (1) nueva tabla `professional_schedule` en DB, (2) editor en dashboard Configuración, (3) migración del `schedule_text` global existente a la nueva estructura.
+- No se puede implementar solo en JSON del workflow. Requiere cambios DB + dashboard.
+
+### Documentación
+- `docs/prompt-changelog.md`: 3 nuevas entradas (B7, B9, B10)
+- `docs/BUG_BACKLOG.md`: B7, B8, B9, B10 marcados completados
+- `docs/KEY_LEARNINGS.md`: 5 nuevas lecciones (emojis U+1F464, AM/PM PostgreSQL, dual data pass, colombiano neutro, Ley 1581)
+- `docs/CONTEXT_UPDATED.md`: sesión marcada como cerrada
+- `scripts/apply_all_fixes.py`: script reusable con todas las transformaciones (mantenido en repo)
+- `docs/HANDOFF_NEXT_CHAT.md`: handoff prompt creado para el próximo chat
+
+---
+
+## Sprint 19 — B1 Fase 2: Professional Schedules — COMPLETADO PARCIALMENTE 🔴 (Julio 22, 2026)
+
+> Spec: `docs/superpowers/specs/2026-07-21-b1-fase2-professional-schedules.md`
+> Plan: `docs/superpowers/plans/2026-07-21-b1-fase2-professional-schedules.md`
+
+### Implementado ✅
+1. **Migración DB 017**: `professional_schedule` table con business_id, professional_id, schedule_text (JSONB), updated_at
+   - `UNIQUE(business_id, professional_id)` constraint
+   - FK references a businesses y professionals
+   - ON DELETE CASCADE
+2. **4 server actions** en `lib/actions.ts`:
+   - `getAllProfessionalSchedules(businessId)` — lista todos los profesionales con su schedule (LEFT JOIN)
+   - `getProfessionalSchedule(businessId, professionalId)` — obtiene schedule de un profesional específico
+   - `updateProfessionalSchedule(businessId, professionalId, schedule)` — UPSERT schedule
+   - `deleteProfessionalSchedule(businessId, professionalId)` — DELETE (restaurar a horario del negocio)
+3. **ProfessionalScheduleList componente** (`components/configuracion/professional-schedule-list.tsx`):
+   - Owner/admin: lista multi-profesional con toggle de edición inline + botón restaurar
+   - Profesional: vista simplificada con solo su horario usando el mismo `HorarioClient`
+   - Filtro `displayed = professionals.filter(p => p.professionalId === Number(professionalId))`
+4. **Config page split** (`app/(dashboard)/dashboard/configuracion/page.tsx`):
+   - Owner/admin: secciones Servicios, Horarios, Horarios por profesional
+   - Profesional: solo "Mi horario" con `ProfessionalScheduleList` limitado a su ID
+5. **HorarioClient**: `onSave` prop opcional — si se provee, reemplaza `updateScheduleText` por la función del caller
+6. **getAvailableSlots**: COALESCE(ps.schedule_text, b.schedule_text) para consultar schedule per-profesional con fallback al del negocio
+7. **n8n queries actualizadas**: COALESCE per-profesional en `database/n8n-queries.sql`
+8. **auth.config.ts**: eliminado redirect que bloqueaba profesionales de `/dashboard/configuracion` (commit `f4b4fb3`)
+
+### Bug post-deploy 🔴
+- Profesional ve solo título "Mi horario" sin editor de horario debajo
+- Commit `f4b4fb3` eliminó middleware redirect pero bug persiste
+- Causa raíz no determinada — requiere debug en próxima sesión
+
+### Commits
+1. `f58247e` — fix: RBAC en horarios por profesional
+2. `d26ca95` — fix: profesional ahora guarda horario correctamente
+3. `674c82f` — fix: type mismatch profesionalId (JWT string vs DB int)
+4. `f4b4fb3` — fix: remove middleware redirect blocking profesionales from config page
+
+### Archivos modificados
+- `dashboard/lib/actions.ts` — 4 server actions nuevas + getAvailableSlots COALESCE
+- `dashboard/components/configuracion/professional-schedule-list.tsx` — NUEVO
+- `dashboard/components/configuracion/horario-client.tsx` — onSave prop + ProfessionalScheduleItem type
+- `dashboard/app/(dashboard)/dashboard/configuracion/page.tsx` — split por role
+- `dashboard/auth.config.ts` — removed middleware redirect
+- `dashboard/database/migrations/017_professional_schedule.sql` — NUEVO
+- `dashboard/database/n8n-queries.sql` — COALESCE actualizado
+- `docs/superpowers/specs/2026-07-21-b1-fase2-professional-schedules.md` — NUEVO
+- `docs/superpowers/plans/2026-07-21-b1-fase2-professional-schedules.md` — NUEVO

@@ -2,7 +2,7 @@
 
 > **Fecha:** 12 julio 2026
 > **Proyecto:** meyer-bot
-> **Estado:** Implementado ✅ (Julio 12, 2026)
+> **Estado:** Implementado + Fixes Sprint 17 ✅ (Julio 15, 2026)
 
 ---
 
@@ -209,3 +209,29 @@ No se envía mensaje al cliente. Es solo un marcador interno para que el bot no 
 6. [ ] El gap reactivo existente (10-60 min → nota en prompt, >60 min → reseteo) sigue funcionando
 7. [ ] Funciona para todos los negocios multi-tenant
 8. [ ] Migración DB aplica y rollback funciona
+
+---
+
+## 10. Fixes Sprint 17 (Julio 14-15, 2026)
+
+### 10.1 Code node `$input.all()` bug
+En n8n 2.10.3, `$input.all()` en Code node v2 devuelve `[]` cuando el nodo anterior es PostgreSQL.
+**Fix:** usar `$("Buscar Conversaciones Inactivas").all()` — referencia directa al nodo por nombre.
+
+### 10.2 UPDATE nodes dataflow
+El HTTP Request "Enviar ¿Sigues Ahí?" sobreescribe `$json`. Los UPDATE Postgres recibían `undefined`.
+**Fix:**
+- Queries cambian de `$json.business_id` a `$("Filtrar y Decidir").item.json.business_id`
+- Mode de Postgres cambia a `runOnceForEachItem` para que cada UPDATE tenga su contexto individual
+
+### 10.3 DB corruption por SQLite WAL mode
+Copiar SQLite mientras Docker corre (WAL mode) → DB corrupta.
+**Fix:** recovery con `sqlite3 .recover` + eliminar `-wal`/`-shm` remanentes.
+**Lección:** siempre `docker stop n8n-n8n-1` antes de modificar SQLite.
+
+### 10.4 Quoted messages + inactividad retomar
+Integración con WhatsApp Bot para que cuando el cliente responda al "¿Sigues ahí?":
+1. **Procesar Mensaje** detecta `contextInfo.quotedMessage` con texto del "¿Sigues ahí?"
+2. Flag `esRetomoPorInactividad = true` fluye al AI Agent
+3. **AI Agent** inyecta instrucción de continuación automática: no saluda, no pregunta, sigue exactamente donde quedó
+4. Para quoted messages normales, agrega `[Respondiendo a: "..."]` al texto para contexto del LLM
