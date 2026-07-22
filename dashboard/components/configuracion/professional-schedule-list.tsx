@@ -14,12 +14,13 @@ interface ProfessionalScheduleItem {
   updatedAt: string | null;
 }
 
-export function ProfessionalScheduleList({ businessId }: { businessId: number }) {
+export function ProfessionalScheduleList({ businessId, professionalId }: { businessId: number; professionalId?: number | null }) {
   const [professionals, setProfessionals] = useState<ProfessionalScheduleItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingSchedule, setEditingSchedule] = useState<ScheduleData | null>(null);
+  const isOwnerOrAdmin = professionalId == null;
 
   useEffect(() => {
     loadProfessionals();
@@ -32,10 +33,10 @@ export function ProfessionalScheduleList({ businessId }: { businessId: number })
     setLoading(false);
   }
 
-  async function handleEdit(professionalId: number) {
+  async function handleEdit(pid: number) {
     setError("");
-    const schedule = await getProfessionalSchedule(businessId, professionalId);
-    setEditingId(professionalId);
+    const schedule = await getProfessionalSchedule(businessId, pid);
+    setEditingId(pid);
     setEditingSchedule(schedule ?? {});
   }
 
@@ -51,9 +52,9 @@ export function ProfessionalScheduleList({ businessId }: { businessId: number })
     }
   }
 
-  async function handleRestore(professionalId: number) {
+  async function handleRestore(pid: number) {
     setError("");
-    const result = await deleteProfessionalSchedule(businessId, professionalId);
+    const result = await deleteProfessionalSchedule(businessId, pid);
     if (result?.error) {
       setError(result.error);
     } else {
@@ -77,7 +78,43 @@ export function ProfessionalScheduleList({ businessId }: { businessId: number })
     );
   }
 
-  if (professionals.length === 0) return null;
+  const displayed = isOwnerOrAdmin
+    ? professionals
+    : professionals.filter(p => p.professionalId === professionalId);
+
+  if (displayed.length === 0) return null;
+
+  if (!isOwnerOrAdmin) {
+    const prof = displayed[0];
+    return (
+      <div className="space-y-3">
+        <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)] p-3">
+          <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+            Define tus días y horarios de atención. Si no configuras un horario personalizado, se usará el horario general del negocio.
+          </p>
+        </div>
+        <HorarioClient
+          businessId={businessId}
+          initialSchedule={prof.schedule ?? {}}
+          onSave={handleSave}
+        />
+        {prof.hasCustomSchedule && (
+          <button
+            onClick={() => handleRestore(prof.professionalId)}
+            className="w-full rounded-full h-10 text-sm font-semibold text-[var(--color-danger)] border border-[var(--color-danger)]/30 hover:bg-red-500/10 transition-all"
+          >
+            Restaurar horario del negocio
+          </button>
+        )}
+        {error && (
+          <p className="text-sm text-[var(--color-danger)] flex items-center gap-1">
+            <AlertCircle className="h-4 w-4" />
+            {error}
+          </p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
@@ -88,15 +125,15 @@ export function ProfessionalScheduleList({ businessId }: { businessId: number })
         </p>
       </div>
 
-      {professionals.map((prof) => (
+      {displayed.map((prof) => (
         <div key={prof.professionalId}>
           <div className={cn(
-            "flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors",
+            "flex items-center gap-1.5 px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3 rounded-xl border transition-colors",
             editingId === prof.professionalId
               ? "bg-[var(--color-accent)]/5 border-[var(--color-accent)]/30"
               : "bg-[var(--bg-card)] border-[var(--border-subtle)]"
           )}>
-            <div className="w-8 h-8 rounded-full bg-[var(--color-accent)]/10 flex items-center justify-center shrink-0">
+            <div className="hidden sm:flex w-8 h-8 rounded-full bg-[var(--color-accent)]/10 items-center justify-center shrink-0">
               <Clock size={16} className="text-[var(--color-accent)]" />
             </div>
 
@@ -111,11 +148,11 @@ export function ProfessionalScheduleList({ businessId }: { businessId: number })
               </p>
             </div>
 
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex items-center gap-1 shrink-0">
               {editingId === prof.professionalId ? (
                 <button
                   onClick={handleCancel}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-[var(--text-secondary)] hover:text-white border border-[var(--border-subtle)] hover:border-[var(--color-accent)]/30 transition-colors"
+                  className="px-2.5 py-1.5 sm:px-3 rounded-lg text-xs font-medium text-[var(--text-secondary)] hover:text-white border border-[var(--border-subtle)] hover:border-[var(--color-accent)]/30 transition-colors"
                 >
                   Cancelar
                 </button>
@@ -123,18 +160,18 @@ export function ProfessionalScheduleList({ businessId }: { businessId: number })
                 <>
                   <button
                     onClick={() => handleEdit(prof.professionalId)}
-                    className="p-2 rounded-lg text-[var(--text-secondary)] hover:text-white hover:bg-[var(--color-accent)]/10 transition-colors"
+                    className="p-1.5 sm:p-2 rounded-lg text-[var(--text-secondary)] hover:text-white hover:bg-[var(--color-accent)]/10 transition-colors"
                     title="Editar horario"
                   >
-                    <Pencil size={16} />
+                    <Pencil size={14} className="sm:size-[16px]" />
                   </button>
                   {prof.hasCustomSchedule && (
                     <button
                       onClick={() => handleRestore(prof.professionalId)}
-                      className="p-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--color-danger)] hover:bg-red-500/10 transition-colors"
+                      className="p-1.5 sm:p-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--color-danger)] hover:bg-red-500/10 transition-colors"
                       title="Restaurar horario del negocio"
                     >
-                      <RotateCcw size={16} />
+                      <RotateCcw size={14} className="sm:size-[16px]" />
                     </button>
                   )}
                 </>
@@ -143,7 +180,7 @@ export function ProfessionalScheduleList({ businessId }: { businessId: number })
           </div>
 
           {editingId === prof.professionalId && editingSchedule && (
-            <div className="mt-2 ml-11">
+            <div className="mt-2 sm:ml-11">
               <HorarioClient
                 businessId={businessId}
                 initialSchedule={editingSchedule}
