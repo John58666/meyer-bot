@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { pool } from '@/lib/db'
 import { ServiciosClient } from '@/components/configuracion/servicios-client'
 import { HorarioClient } from '@/components/configuracion/horario-client'
+import { ProfessionalScheduleList } from '@/components/configuracion/professional-schedule-list'
 import type { ScheduleData } from '@/lib/actions'
 
 export default async function ConfiguracionPage() {
@@ -13,7 +14,7 @@ export default async function ConfiguracionPage() {
   const businessId = session.user.businessId
 
   const { rows } = await pool.query(
-    `SELECT services_text, schedule_text FROM businesses WHERE id = $1`,
+    `SELECT services_text, schedule_text, multi_professional FROM businesses WHERE id = $1`,
     [businessId]
   )
   const servicesText: string = rows[0]?.services_text ?? ''
@@ -21,6 +22,7 @@ export default async function ConfiguracionPage() {
   const schedule: ScheduleData = typeof rawSchedule === 'string'
     ? JSON.parse(rawSchedule)
     : (rawSchedule as ScheduleData) ?? {}
+  const multiProfessional = rows[0]?.multi_professional ?? false
 
   return (
     <div>
@@ -55,6 +57,20 @@ export default async function ConfiguracionPage() {
             initialSchedule={schedule}
           />
         </div>
+
+        {multiProfessional && (
+          <>
+            <hr className="border-[var(--border-subtle)]" />
+
+            <div>
+              <h2 className="text-base font-semibold text-white mb-1">Horarios por profesional</h2>
+              <p className="text-xs text-[var(--text-secondary)] mb-3">
+                Horarios individuales para cada profesional
+              </p>
+              <ProfessionalScheduleList businessId={businessId} />
+            </div>
+          </>
+        )}
       </div>
     </div>
   )

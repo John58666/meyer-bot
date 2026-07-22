@@ -9,13 +9,16 @@ export type AuditAccion =
   | "create_miembro"
   | "toggle_miembro"
   | "update_role"
-  | "update_services";
+  | "update_services"
+  | "update_professional_schedule"
+  | "delete_professional_schedule";
 
 export type AuditEntidad =
   | "appointment"
   | "bloqueo"
   | "user"
-  | "business";
+  | "business"
+  | "professional_schedule";
 
 export interface AuditLogEntry {
   id: number;
@@ -50,6 +53,8 @@ export const ACCIONES_LABELS: Record<string, string> = {
   toggle_miembro: "Estado miembro",
   update_role: "Cambiar role",
   update_services: "Actualizar servicios",
+  update_professional_schedule: "Actualizar horario profesional",
+  delete_professional_schedule: "Restaurar horario profesional",
 };
 
 export const ENTIDAD_LABELS: Record<string, string> = {
@@ -57,6 +62,7 @@ export const ENTIDAD_LABELS: Record<string, string> = {
   bloqueo: "Bloqueo",
   user: "Usuario",
   business: "Negocio",
+  professional_schedule: "Horario profesional",
 };
 
 export function describirDetalle(accion: string, detalle: Record<string, unknown> | null): string[] {
@@ -103,6 +109,12 @@ export function describirDetalle(accion: string, detalle: Record<string, unknown
         detalle.servicios_count ? `Servicios actualizados: ${detalle.servicios_count}` : null,
         detalle.schedule_days ? `Días de atención: ${detalle.schedule_days}` : null,
       ].filter(Boolean) as string[];
+    case "update_professional_schedule":
+      return [
+        detalle.schedule_days ? `Días configurados: ${detalle.schedule_days}` : null,
+      ].filter(Boolean) as string[];
+    case "delete_professional_schedule":
+      return ["Horario restaurado al del negocio"];
     default:
       return [JSON.stringify(detalle, null, 2)];
   }

@@ -8,13 +8,15 @@ import { ToggleLeft, ToggleRight, AlertCircle } from "lucide-react";
 interface HorarioClientProps {
   businessId: number;
   initialSchedule: ScheduleData;
+  /** If provided, called instead of updateScheduleText (e.g. for per-professional saves) */
+  onSave?: (schedule: ScheduleData) => Promise<{ error?: string } | undefined>;
 }
 
 const DAY_LABELS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
-export function HorarioClient({ businessId, initialSchedule }: HorarioClientProps) {
+export function HorarioClient({ businessId, initialSchedule, onSave }: HorarioClientProps) {
   const [schedule, setSchedule] = useState<ScheduleData>(initialSchedule);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -61,7 +63,9 @@ export function HorarioClient({ businessId, initialSchedule }: HorarioClientProp
     if (hasErrors()) return;
     setError("");
     setSaving(true);
-    const result = await updateScheduleText(businessId, schedule);
+    const result = onSave
+      ? await onSave(schedule)
+      : await updateScheduleText(businessId, schedule);
     setSaving(false);
     if (result?.error) {
       setError(result.error);

@@ -1101,6 +1101,121 @@ export async function updateScheduleText(businessId: number, schedule: ScheduleD
   }
 }
 
+// ─── Professional Schedule (per-professional) ─────────────────────────────────
+
+export async function getProfessionalSchedule(businessId: number, professionalId: number): Promise<ScheduleData | null> {
+  try {
+    const { rows } = await pool.query(
+      `SELECT COALESCE(ps.schedule_text, b.schedule_text) AS schedule_text
+       FROM businesses b
+       LEFT JOIN professional_schedule ps
+         ON ps.business_id = b.id AND ps.professional_id = $2
+       WHERE b.id = $1`,
+      [businessId, professionalId]
+    );
+    if (rows.length === 0) return null;
+    const raw = rows[0].schedule_text;
+    return typeof raw === 'string' ? JSON.parse(raw) : raw;
+  } catch (e) {
+    console.error('[getProfessionalSchedule]', e);
+    return null;
+  }
+}
+
+export async function updateProfessionalSchedule(
+  businessId: number,
+  professionalId: number,
+  schedule: ScheduleData
+) {
+  const session = await auth();
+  if (!session) return { error: 'No autenticado' };
+  if (session.user.role !== 'owner' && session.user.role !== 'admin')
+    return { error: 'No autorizado' };
+
+  for (const [day, hs] of Object.entries(schedule)) {
+    const d = parseInt(day);
+    if (isNaN(d) || d < 0 || d > 6)
+      return { error: `Día inválido: ${day}` };
+    if (!Number.isInteger(hs.open) || hs.open < 0 || hs.open > 23)
+      return { error: `Hora de apertura inválida en día ${d}` };
+    if (!Number.isInteger(hs.close) || hs.close < 1 || hs.close > 24)
+      return { error: `Hora de cierre inválida en día ${d}` };
+    if (hs.close <= hs.open)
+      return { error: `El cierre debe ser después de la apertura (día ${d})` };
+  }
+
+  try {
+    await pool.query(
+      `INSERT INTO professional_schedule (business_id, professional_id, schedule_text)
+       VALUES ($1, $2, $3::jsonb)
+       ON CONFLICT (business_id, professional_id)
+       DO UPDATE SET schedule_text = $3::jsonb, updated_at = NOW()`,
+      [businessId, professionalId, JSON.stringify(schedule)]
+    );
+
+    auditar(businessId, parseInt(session.user.id), "update_professional_schedule", "professional_schedule", professionalId, {
+      schedule_days: Object.keys(schedule).length,
+    });
+
+    revalidatePath('/dashboard/configuracion');
+    return { ok: true };
+  } catch (e) {
+    console.error('[updateProfessionalSchedule]', e);
+    return { error: 'Error guardando el horario' };
+  }
+}
+
+export async function deleteProfessionalSchedule(businessId: number, professionalId: number) {
+  const session = await auth();
+  if (!session) return { error: 'No autenticado' };
+  if (session.user.role !== 'owner' && session.user.role !== 'admin')
+    return { error: 'No autorizado' };
+
+  try {
+    await pool.query(
+      `DELETE FROM professional_schedule WHERE business_id = $1 AND professional_id = $2`,
+      [businessId, professionalId]
+    );
+
+    auditar(businessId, parseInt(session.user.id), "delete_professional_schedule", "professional_schedule", professionalId, {
+      professional_id: professionalId,
+    });
+
+    revalidatePath('/dashboard/configuracion');
+    return { ok: true };
+  } catch (e) {
+    console.error('[deleteProfessionalSchedule]', e);
+    return { error: 'Error eliminando el horario' };
+  }
+}
+
+export async function getAllProfessionalSchedules(businessId: number) {
+  try {
+    const { rows } = await pool.query(
+      `SELECT p.id AS professional_id, p.name AS professional_name,
+              ps.schedule_text, ps.updated_at
+       FROM professionals p
+       LEFT JOIN professional_schedule ps
+         ON ps.business_id = p.business_id AND ps.professional_id = p.id
+       WHERE p.business_id = $1 AND p.active = true
+       ORDER BY p.name`,
+      [businessId]
+    );
+    return rows.map(r => ({
+      professionalId: r.professional_id,
+      professionalName: r.professional_name,
+      schedule: r.schedule_text
+        ? (typeof r.schedule_text === 'string' ? JSON.parse(r.schedule_text) : r.schedule_text)
+        : null,
+      hasCustomSchedule: r.schedule_text != null,
+      updatedAt: r.updated_at,
+    }));
+  } catch (e) {
+    console.error('[getAllProfessionalSchedules]', e);
+    return [];
+  }
+}
+
 // ─── CRM — Clientes ──────────────────────────────────────────────────────────
 
 export interface Cliente {
@@ -1567,14 +1682,29 @@ export async function getAvailableSlots(
   professionalId?: number | null
 ): Promise<string[]> {
   try {
-    const { rows: bizRows } = await pool.query(
-      `SELECT schedule_text FROM businesses WHERE id = $1`,
-      [businessId]
-    );
-    if (bizRows.length === 0) return [];
-    const rawSchedule = bizRows[0].schedule_text;
-    const schedule: Record<string, { open: number; close: number }> =
-      typeof rawSchedule === 'string' ? JSON.parse(rawSchedule) : rawSchedule;
+    let schedule: Record<string, { open: number; close: number }>;
+
+    if (professionalId != null) {
+      const { rows } = await pool.query(
+        `SELECT COALESCE(ps.schedule_text, b.schedule_text) AS schedule_text
+         FROM businesses b
+         LEFT JOIN professional_schedule ps
+           ON ps.business_id = b.id AND ps.professional_id = $2
+         WHERE b.id = $1`,
+        [businessId, professionalId]
+      );
+      if (rows.length === 0) return [];
+      const raw = rows[0].schedule_text;
+      schedule = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    } else {
+      const { rows: bizRows } = await pool.query(
+        `SELECT schedule_text FROM businesses WHERE id = $1`,
+        [businessId]
+      );
+      if (bizRows.length === 0) return [];
+      const rawSchedule = bizRows[0].schedule_text;
+      schedule = typeof rawSchedule === 'string' ? JSON.parse(rawSchedule) : rawSchedule;
+    }
 
     const dateObj = new Date(fecha + 'T12:00:00');
     const dayOfWeek = dateObj.getDay();

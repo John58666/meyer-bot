@@ -13,10 +13,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        16,
-        2656
+        5856,
+        7920
       ],
-      "id": "db959ff3-394d-4cb5-aa28-7b7cd9375ffc",
+      "id": "66f76dcf-f05f-430c-bd02-cba03989a4b7",
       "name": "Webhook",
       "webhookId": "7a1a3b0a-9f4e-48e3-bcc9-54de8d19c7b1"
     },
@@ -60,10 +60,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        224,
-        2656
+        6064,
+        7920
       ],
-      "id": "bfd54054-b541-48d3-b5cb-6c0cea51a634",
+      "id": "959a17ca-ca9f-47ce-94c3-c7ddf6628054",
       "name": "Filtro Inicial"
     },
     {
@@ -75,10 +75,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        416,
-        2656
+        6256,
+        7920
       ],
-      "id": "ddebd0fe-fb5b-43a8-a730-7b4e5f489575",
+      "id": "4c7cb3df-cec7-4066-b104-05a096ab50bd",
       "name": "Lookup Negocio",
       "credentials": {
         "postgres": {
@@ -115,38 +115,38 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        608,
-        2656
+        6448,
+        7920
       ],
-      "id": "cde45a5c-94d6-47c0-a854-af6aa41ab8c8",
+      "id": "b698afb6-6ef9-442d-93a2-166ee491868d",
       "name": "¿Negocio Existe?"
     },
     {
       "parameters": {
-        "jsCode": "// ============================================================\n// Procesar Mensaje — versión con filtro de audio (Bloque 1 + 2)\n// ============================================================\n\n// ── FILTRO fromMe ──────────────────────────────────────────\nif ($('Webhook').item.json.body.data.key.fromMe === true) {\n  return [];\n}\n\n// ── FILTRO AUDIO (detección) ────────────────────────────────\nconst esAudio = !!$('Webhook').item.json.body.data.message?.audioMessage ||\n                !!$('Webhook').item.json.body.data.message?.pttMessage;\n\n// ── DATOS DEL NEGOCIO desde Lookup ─────────────────────────\nconst negocio = $('Lookup Negocio').item.json;\nconst businessId        = negocio.id;\nconst whatsappInstance  = negocio.whatsapp_instance;\nconst ownerNumber       = negocio.owner_number;\nconst promptName        = negocio.prompt_name || negocio.name;\nconst servicesText      = negocio.services_text || '';\nconst professionalsRaw = negocio.professionals;\nlet professionals = [];\nif (Array.isArray(professionalsRaw)) {\n  professionals = professionalsRaw;\n} else if (typeof professionalsRaw === 'string' && professionalsRaw) {\n  try { professionals = JSON.parse(professionalsRaw); } catch(e) { professionals = []; }\n}\nconst professionalsText = professionals.map(p => p.name).join(', ');\nconst multiProfessional  = professionals.length > 0;\nconst timezone          = negocio.timezone || 'America/Bogota';\n\nlet scheduleText;\ntry {\n  scheduleText = JSON.parse(negocio.schedule_text || '{}');\n} catch(e) {\n  scheduleText = {};\n}\n\n// ── RATE LIMIT ─────────────────────────────────────────────\nconst numero = $('Webhook').item.json.body.data.key.remoteJid;\nconst ahora = Date.now();\nconst ventana = 60 * 60 * 1000;\nconst limite = 50;\n\nconst historialRaw = $getWorkflowStaticData('global');\nif (!historialRaw.rateLimits) historialRaw.rateLimits = {};\nconst rateLimitKey = `${businessId}_${numero}`;\nconst historial = historialRaw.rateLimits[rateLimitKey] || [];\nconst recientes = historial.filter(t => ahora - t < ventana);\n\nif (recientes.length >= limite) return [];\n\nrecientes.push(ahora);\nhistorialRaw.rateLimits[rateLimitKey] = recientes;\n\n// ── NÚMERO LIMPIO (movido arriba para usarlo en el filtro de audio) ──\nconst numeroLimpio = numero.replace('@s.whatsapp.net', '').replace(/\\D/g, '');\n\n// ── FILTRO MENSAJES NO-TEXTO ────────────────────────────────\nconst msg = $('Webhook').item.json.body.data.message || {};\nconst esNoTexto = !!(\n  msg.audioMessage   ||\n  msg.pttMessage     ||\n  msg.imageMessage   ||\n  msg.videoMessage   ||\n  msg.stickerMessage ||\n  msg.documentMessage||\n  msg.locationMessage ||\n  msg.liveLocationMessage\n);\n\nif (esNoTexto) {\n  await this.helpers.httpRequest({\n    method: 'POST',\n    url: `${$env.EVOLUTION_API_URL}/message/sendText/${whatsappInstance}`,\n    headers: { 'apikey': $env.EVOLUTION_API_KEY, 'Content-Type': 'application/json' },\n    body: { number: numeroLimpio, text: 'Solo proceso mensajes de texto 😊 Escríbeme lo que necesitas y con gusto te ayudo.' },\n    json: true\n  });\n  return [];\n}\n\n// ── FECHA HOY ───────────────────────────────────────────────\nconst ahoraTZ = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }));\nconst dia  = String(ahoraTZ.getDate()).padStart(2, '0');\nconst mes  = String(ahoraTZ.getMonth() + 1).padStart(2, '0');\nconst anio = ahoraTZ.getFullYear();\nconst fechaHoy = `${dia}/${mes}/${anio}`;\n\n// ── CALENDARIO PRÓXIMOS 7 DÍAS ──────────────────────────────\nconst diasSemana = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];\nconst manana = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }));\nmanana.setDate(manana.getDate() + 1);\nlet calendario = `Mañana: ${String(manana.getDate()).padStart(2,'0')}/${String(manana.getMonth()+1).padStart(2,'0')}/${manana.getFullYear()}\\n`;\nfor (let i = 1; i <= 7; i++) {\n  const d = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }));\n  d.setDate(d.getDate() + i);\n  calendario += `${diasSemana[d.getDay()]}: ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}\\n`;\n}\n\n// ── HORARIO TEXTO PARA PROMPT ───────────────────────────────\nconst toAmPm = h => h < 12 ? `${h === 0 ? 12 : h}:00 AM` : `${h === 12 ? 12 : h-12}:00 PM`;\nlet horarioTextoPrompt = '';\nfor (let d = 0; d <= 6; d++) {\n  const key = String(d);\n  if (scheduleText[key]) {\n    const { open, close } = scheduleText[key];\n    horarioTextoPrompt += `${diasSemana[d]}: ${toAmPm(open)} - ${toAmPm(close)}\\n`;\n  } else {\n    horarioTextoPrompt += `${diasSemana[d]}: Cerrado\\n`;\n  }\n}\n\n// ── EXTRAER MENSAJE ─────────────────────────────────────────\nconst mensaje = $('Webhook').item.json.body.data.message?.conversation ||\n                $('Webhook').item.json.body.data.message?.extendedTextMessage?.text || '';\n\n// ── VALIDACIÓN DE HORARIO ───────────────────────────────────\nfunction detectarFueraDeHorario(texto, schedule, tzName) {\n  const t = (texto || '').toLowerCase()\n    .replace(/[áàä]/g,'a').replace(/[éèë]/g,'e')\n    .replace(/[íìï]/g,'i').replace(/[óòö]/g,'o')\n    .replace(/[úùü]/g,'u');\n\n  const nombresDiasNorm = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];\n  let diaIndex = null;\n  for (let i = 0; i < nombresDiasNorm.length; i++) {\n    if (t.includes(nombresDiasNorm[i])) { diaIndex = i; break; }\n  }\n  if (diaIndex === null) {\n    const mf = t.match(/\\b(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})\\b/);\n    if (mf) {\n      const dFecha = new Date(parseInt(mf[3]), parseInt(mf[2])-1, parseInt(mf[1]));\n      diaIndex = dFecha.getDay();\n    }\n  }\n  if (diaIndex === null) {\n    const hoyTZ = new Date(new Date().toLocaleString('en-US', { timeZone: tzName }));\n    diaIndex = hoyTZ.getDay();\n  }\n\n  const config = schedule[String(diaIndex)];\n  if (!config) return { fueraDeHorario: true, mensajeHorario: `Lo sentimos, ese día no atendemos. ¿Te puedo agendar en otro día? 😊` };\n\n  const abreH = config.open;\n  const cierraH = config.close;\n  let hora = null;\n\n  const mHHMM = t.match(/\\b(\\d{1,2}):(\\d{2})\\s*([ap]\\.?m\\.?)?/);\n  if (mHHMM) {\n    let h = parseInt(mHHMM[1]);\n    const m = parseInt(mHHMM[2]);\n    const suf = (mHHMM[3] || '').replace(/\\./g, '');\n    if (suf.startsWith('p') && h < 12) h += 12;\n    if (suf.startsWith('a') && h === 12) h = 0;\n    hora = h + m / 60;\n  }\n  if (hora === null) { const mPm = t.match(/\\b(\\d{1,2})\\s*p\\.?m\\.?\\b/); if (mPm) { let h = parseInt(mPm[1]); if (h < 12) h += 12; hora = h; } }\n  if (hora === null) { const mAm = t.match(/\\b(\\d{1,2})\\s*a\\.?m\\.?\\b/); if (mAm) { let h = parseInt(mAm[1]); if (h === 12) h = 0; hora = h; } }\n  if (hora === null) { const mT = t.match(/(?:a las|las)\\s+(\\d{1,2})(?:\\s+de la|\\s+en la)?\\s+(?:tarde|noche)/); if (mT) { let h = parseInt(mT[1]); if (h < 12) h += 12; hora = h; } }\n  if (hora === null) { const mM = t.match(/(?:a las|las)\\s+(\\d{1,2})(?:\\s+de la)?\\s+manana/); if (mM) { let h = parseInt(mM[1]); if (h === 12) h = 0; hora = h; } }\n\n  if (hora === null) return { fueraDeHorario: false };\n  if (hora >= abreH && hora < cierraH) return { fueraDeHorario: false };\n\n  return {\n    fueraDeHorario: true,\n    mensajeHorario: `Lo sentimos, esa hora está fuera de nuestro horario. Atendemos de ${toAmPm(abreH)} a ${toAmPm(cierraH)}. ¿Te puedo agendar en otro horario? 😊`\n  };\n}\n\nconst validacion = detectarFueraDeHorario(mensaje, scheduleText, timezone);\n\nif (!mensaje.trim()) return [];\n\nreturn [{\n  json: {\n    textoOriginal:    mensaje,\n    numero:           numero,\n    numeroLimpio:     numeroLimpio,\n    timestamp:        $('Webhook').item.json.body.data.messageTimestamp,\n    procesado:        true,\n    fechaHoy:         fechaHoy,\n    calendario:       calendario,\n    fueraDeHorario:   validacion.fueraDeHorario,\n    mensajeHorario:   validacion.mensajeHorario || null,\n    businessId:       businessId,\n    whatsappInstance: whatsappInstance,\n    ownerNumber:      ownerNumber,\n    promptName:       promptName,\n    servicesText:     servicesText,\n    horarioTexto:     horarioTextoPrompt,\n    professionals:     professionals,\n    professionalsText: professionalsText,\n    multiProfessional:  multiProfessional\n  }\n}];"
+        "jsCode": "// ============================================================\n// Procesar Mensaje — versión con filtro de audio (Bloque 1 + 2)\n// ============================================================\n\n// ── FILTRO fromMe ──────────────────────────────────────────\nif ($('Webhook').item.json.body.data.key.fromMe === true) {\n  return [];\n}\n\n// ── FILTRO AUDIO (detección) ────────────────────────────────\nconst esAudio = !!$('Webhook').item.json.body.data.message?.audioMessage ||\n                !!$('Webhook').item.json.body.data.message?.pttMessage;\n\n// ── DATOS DEL NEGOCIO desde Lookup ─────────────────────────\nconst negocio = $('Lookup Negocio').item.json;\nconst businessId        = negocio.id;\nconst whatsappInstance  = negocio.whatsapp_instance;\nconst ownerNumber       = negocio.owner_number;\nconst promptName        = negocio.prompt_name || negocio.name;\nconst servicesText      = negocio.services_text || '';\nconst professionalsRaw = negocio.professionals;\nlet professionals = [];\nif (Array.isArray(professionalsRaw)) {\n  professionals = professionalsRaw;\n} else if (typeof professionalsRaw === 'string' && professionalsRaw) {\n  try { professionals = JSON.parse(professionalsRaw); } catch(e) { professionals = []; }\n}\nconst professionalsText = professionals.map(p => p.name).join(', ');\nconst multiProfessional  = professionals.length > 0;\nconst timezone          = negocio.timezone || 'America/Bogota';\n\nlet scheduleText;\ntry {\n  scheduleText = JSON.parse(negocio.schedule_text || '{}');\n} catch(e) {\n  scheduleText = {};\n}\n\n// ── RATE LIMIT ─────────────────────────────────────────────\nconst numero = $('Webhook').item.json.body.data.key.remoteJid;\nconst ahora = Date.now();\nconst ventana = 60 * 60 * 1000;\nconst limite = 50;\n\nconst historialRaw = $getWorkflowStaticData('global');\nif (!historialRaw.rateLimits) historialRaw.rateLimits = {};\nconst rateLimitKey = `${businessId}_${numero}`;\nconst historial = historialRaw.rateLimits[rateLimitKey] || [];\nconst recientes = historial.filter(t => ahora - t < ventana);\n\nif (recientes.length >= limite) return [];\n\nrecientes.push(ahora);\nhistorialRaw.rateLimits[rateLimitKey] = recientes;\n\n// ── NÚMERO LIMPIO (movido arriba para usarlo en el filtro de audio) ──\nconst numeroLimpio = numero.replace('@s.whatsapp.net', '').replace(/\\D/g, '');\n\n// ── FILTRO MENSAJES NO-TEXTO ────────────────────────────────\nconst msg = $('Webhook').item.json.body.data.message || {};\nconst esNoTexto = !!(\n  msg.audioMessage   ||\n  msg.pttMessage     ||\n  msg.imageMessage   ||\n  msg.videoMessage   ||\n  msg.stickerMessage ||\n  msg.documentMessage||\n  msg.locationMessage ||\n  msg.liveLocationMessage\n);\n\nif (esNoTexto) {\n  await this.helpers.httpRequest({\n    method: 'POST',\n    url: `${$env.EVOLUTION_API_URL}/message/sendText/${whatsappInstance}`,\n    headers: { 'apikey': $env.EVOLUTION_API_KEY, 'Content-Type': 'application/json' },\n    body: { number: numeroLimpio, text: 'Solo proceso mensajes de texto 😊 Escríbeme lo que necesitas y con gusto te ayudo.' },\n    json: true\n  });\n  return [];\n}\n\n// ── FECHA HOY ───────────────────────────────────────────────\nconst _fmtTZ = (tz) => {\n  const p = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());\n  const y = parseInt(p.find(x => x.type === 'year').value);\n  const m = parseInt(p.find(x => x.type === 'month').value);\n  const d = parseInt(p.find(x => x.type === 'day').value);\n  return { year: y, month: m, day: d, dow: new Date(Date.UTC(y, m - 1, d)).getUTCDay() };\n};\nconst _hoyTZ = _fmtTZ(timezone);\nconst fechaHoy = `${String(_hoyTZ.day).padStart(2,'0')}/${String(_hoyTZ.month).padStart(2,'0')}/${_hoyTZ.year}`;\n\n// ── CALENDARIO PRÓXIMOS 7 DÍAS ──────────────────────────────\nconst diasSemana = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];\nconst manana = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }));\nmanana.setDate(manana.getDate() + 1);\nconst _fechaBase = new Date(Date.UTC(_hoyTZ.year, _hoyTZ.month - 1, _hoyTZ.day));\nlet calendario = '';\nfor (let i = 0; i < 7; i++) {\n  const d = new Date(_fechaBase.getTime() + (i + 1) * 86400000);\n  const label = i === 0 ? 'Mañana' : diasSemana[d.getUTCDay()];\n  calendario += `${label}: ${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')}/${d.getUTCFullYear()}\\n`;\n}\n\n// ── HORARIO TEXTO PARA PROMPT ───────────────────────────────\nconst toAmPm = h => h < 12 ? `${h === 0 ? 12 : h}:00 AM` : `${h === 12 ? 12 : h-12}:00 PM`;\nlet horarioTextoPrompt = '';\nfor (let d = 0; d <= 6; d++) {\n  const key = String(d);\n  if (scheduleText[key]) {\n    const { open, close } = scheduleText[key];\n    horarioTextoPrompt += `${diasSemana[d]}: ${toAmPm(open)} - ${toAmPm(close)}\\n`;\n  } else {\n    horarioTextoPrompt += `${diasSemana[d]}: Cerrado\\n`;\n  }\n}\n\n// ── EXTRAER MENSAJE ─────────────────────────────────────────\nconst mensaje = $('Webhook').item.json.body.data.message?.conversation ||\n                $('Webhook').item.json.body.data.message?.extendedTextMessage?.text || '';\n\n// ── VALIDACIÓN DE HORARIO ───────────────────────────────────\nfunction detectarFueraDeHorario(texto, schedule, tzName) {\n  const t = (texto || '').toLowerCase()\n    .replace(/[áàä]/g,'a').replace(/[éèë]/g,'e')\n    .replace(/[íìï]/g,'i').replace(/[óòö]/g,'o')\n    .replace(/[úùü]/g,'u');\n\n  const nombresDiasNorm = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];\n  const hoyTZ = new Date(new Date().toLocaleString('en-US', { timeZone: tzName }));\n  let diaIndex = null;\n\n  // Relative dates\n  if (/\\b(pasado\\s*mañana|pasao\\s*mañana|pas\\s*mañana|pasado\\s*manana|pasao\\s*manana|pas\\s*manana)\\b/i.test(t)) {\n    const d = new Date(hoyTZ); d.setDate(d.getDate() + 2); diaIndex = d.getDay();\n  } else if (/\\b(mañana|manana|mñn|mñna)\\b/i.test(t) && !/\\b(pasado|pasao|pas)\\b/i.test(t)) {\n    const d = new Date(hoyTZ); d.setDate(d.getDate() + 1); diaIndex = d.getDay();\n  } else if (/\\b(anteayer|antier|antes\\s*de\\s*ayer|antes\\s*de\\s*allende)\\b/i.test(t)) {\n    const d = new Date(hoyTZ); d.setDate(d.getDate() - 2); diaIndex = d.getDay();\n  } else if (/\\b(ayer|allende)\\b/i.test(t) && !/\\b(anteayer|antier|antes)/i.test(t)) {\n    const d = new Date(hoyTZ); d.setDate(d.getDate() - 1); diaIndex = d.getDay();\n  } else if (/\\b(hoy|oy|oi)\\b/i.test(t)) {\n    diaIndex = hoyTZ.getDay();\n  } else if (/\\b(en\\s*\\d+\\s*(d[ií]as|dias?)|dentro\\s*de\\s*\\d+)\\b/i.test(t)) {\n    const md = t.match(/\\b(\\d+)\\s*(d[ií]as|dias?)/i) || t.match(/\\bdentro\\s*de\\s*(\\d+)\\b/i);\n    if (md) { const d = new Date(hoyTZ); d.setDate(d.getDate() + parseInt(md[1])); diaIndex = d.getDay(); }\n  } else if (/\\beste\\s+(domingo|lunes|martes|miercoles|jueves|viernes|sabado)\\b/i.test(t)) {\n    const md = t.match(/\\beste\\s+(domingo|lunes|martes|miercoles|jueves|viernes|sabado)\\b/i);\n    if (md) {\n      const target = nombresDiasNorm.indexOf(md[1].toLowerCase().normalize(\"NFD\").replace(/[\\u0300-\\u036f]/g, ''));\n      const hoy = hoyTZ.getDay();\n      diaIndex = target;\n      if (target <= hoy) { const d = new Date(hoyTZ); d.setDate(d.getDate() + 7); diaIndex = d.getDay(); }\n    }\n  }\n  if (diaIndex === null) {\n    for (let i = 0; i < nombresDiasNorm.length; i++) {\n      if (t.includes(nombresDiasNorm[i])) { diaIndex = i; break; }\n    }\n  }\n  if (diaIndex === null) {\n    const mf = t.match(/\\b(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})\\b/);\n    if (mf) {\n      const dFecha = new Date(parseInt(mf[3]), parseInt(mf[2])-1, parseInt(mf[1]));\n      diaIndex = dFecha.getDay();\n    }\n  }\n  if (diaIndex === null) {\n    diaIndex = hoyTZ.getDay();\n  }\n\n  const config = schedule[String(diaIndex)];\n  if (!config) return { fueraDeHorario: true, mensajeHorario: `Lo sentimos, ese día no atendemos. ¿Te puedo agendar en otro día? 😊` };\n\n  const abreH = config.open;\n  const cierraH = config.close;\n  let hora = null;\n\n  const mHHMM = t.match(/\\b(\\d{1,2}):(\\d{2})\\s*([ap]\\.?m\\.?)?/);\n  if (mHHMM) {\n    let h = parseInt(mHHMM[1]);\n    const m = parseInt(mHHMM[2]);\n    const suf = (mHHMM[3] || '').replace(/\\./g, '');\n    if (suf.startsWith('p') && h < 12) h += 12;\n    if (suf.startsWith('a') && h === 12) h = 0;\n    hora = h + m / 60;\n    // Fix #8: hora sin AM/PM (ej: \"5:30\") — si AM cae antes de apertura\n    // y PM cae dentro del horario, asumimos PM\n    if (!suf && h < 12 && hora < abreH) {\n      const horaPM = h + 12 + m / 60;\n      if (horaPM >= abreH && horaPM < cierraH) {\n        hora = horaPM;\n      }\n    }\n  }\n  if (hora === null) { const mPm = t.match(/\\b(\\d{1,2})\\s*p\\.?m\\.?\\b/); if (mPm) { let h = parseInt(mPm[1]); if (h < 12) h += 12; hora = h; } }\n  if (hora === null) { const mAm = t.match(/\\b(\\d{1,2})\\s*a\\.?m\\.?\\b/); if (mAm) { let h = parseInt(mAm[1]); if (h === 12) h = 0; hora = h; } }\n  if (hora === null) { const mT = t.match(/(?:a las|las)\\s+(\\d{1,2})(?:\\s+de la|\\s+en la)?\\s+(?:tarde|noche)/); if (mT) { let h = parseInt(mT[1]); if (h < 12) h += 12; hora = h; } }\n  if (hora === null) { const mM = t.match(/(?:a las|las)\\s+(\\d{1,2})(?:\\s+de la)?\\s+manana/); if (mM) { let h = parseInt(mM[1]); if (h === 12) h = 0; hora = h; } }\n\n  if (hora === null) return { fueraDeHorario: false };\n  if (hora >= abreH && hora < cierraH) return { fueraDeHorario: false };\n\n  return {\n    fueraDeHorario: true,\n    mensajeHorario: `Lo sentimos, esa hora está fuera de nuestro horario. Atendemos de ${toAmPm(abreH)} a ${toAmPm(cierraH)}. ¿Te puedo agendar en otro horario? 😊`\n  };\n}\n\nconst validacion = detectarFueraDeHorario(mensaje, scheduleText, timezone);\n\nif (!mensaje.trim()) return [];\n\nreturn [{\n  json: {\n    textoOriginal:    mensaje,\n    numero:           numero,\n    numeroLimpio:     numeroLimpio,\n    timestamp:        $('Webhook').item.json.body.data.messageTimestamp,\n    procesado:        true,\n    fechaHoy:         fechaHoy,\n    calendario:       calendario,\n    fueraDeHorario:   validacion.fueraDeHorario,\n    mensajeHorario:   validacion.mensajeHorario || null,\n    businessId:       businessId,\n    whatsappInstance: whatsappInstance,\n    ownerNumber:      ownerNumber,\n    promptName:       promptName,\n    servicesText:     servicesText,\n    horarioTexto:     horarioTextoPrompt,\n    professionals:     professionals,\n    professionalsText: professionalsText,\n    multiProfessional:  multiProfessional\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        800,
-        2640
+        6640,
+        7904
       ],
-      "id": "18430009-fa7d-45c0-8775-0aade482d607",
+      "id": "25c9177e-a6e3-4ae5-b129-b2e4c649d48b",
       "name": "Procesar Mensaje"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "WITH horario AS (\n  SELECT\n    key::int                              AS dia_semana,\n    (value->>'open')::int                 AS hora_open,\n    (value->>'close')::int * 60 - 30      AS hora_close_last_min\n  FROM businesses,\n       jsonb_each(schedule_text)\n  WHERE id = {{ $('Procesar Mensaje').item.json.businessId }}\n),\nexcepciones AS (\n  SELECT fecha, tipo, hora_inicio, hora_fin\n  FROM schedule_exceptions\n  WHERE business_id = {{ $('Procesar Mensaje').item.json.businessId }}\n    AND professional_id IS NULL\n    AND fecha >= (NOW() AT TIME ZONE 'America/Bogota')::date\n),\nslots AS (\n  SELECT\n    d.fecha_slot,\n    generate_series(\n      d.fecha_slot + (h.hora_open || ' hours')::interval,\n      d.fecha_slot + (h.hora_close_last_min || ' minutes')::interval,\n      '30 minutes'::interval\n    )::time AS hora\n  FROM (\n    SELECT (NOW() AT TIME ZONE 'America/Bogota')::date + n AS fecha_slot\n    FROM generate_series(0, 7) AS n\n  ) d\n  JOIN horario h ON EXTRACT(DOW FROM d.fecha_slot) = h.dia_semana\n  WHERE NOT EXISTS (\n    SELECT 1 FROM excepciones e\n    WHERE e.fecha = d.fecha_slot AND e.tipo = 'cerrado'\n  )\n)\nSELECT\n  s.fecha_slot::text            AS fecha,\n  to_char(s.hora, 'HH12:MI AM') AS slot\nFROM slots s\nWHERE s.hora NOT IN (\n  SELECT hora FROM appointments\n  WHERE business_id = {{ $('Procesar Mensaje').item.json.businessId }}\n    AND fecha = s.fecha_slot\n    AND estado != 'Cancelada'\n)\nAND NOT EXISTS (\n  SELECT 1 FROM excepciones e\n  WHERE e.fecha = s.fecha_slot\n    AND e.tipo = 'horario_especial'\n    AND (s.hora < e.hora_inicio OR s.hora >= e.hora_fin)\n)\nAND (\n  s.fecha_slot > (NOW() AT TIME ZONE 'America/Bogota')::date\n  OR (\n    s.fecha_slot = (NOW() AT TIME ZONE 'America/Bogota')::date\n    AND s.hora > (NOW() AT TIME ZONE 'America/Bogota')::time\n  )\n)\nORDER BY s.fecha_slot, s.hora",
+        "query": "WITH horario AS (\n  SELECT\n    p.id                          AS professional_id,\n    p.name                        AS professional_name,\n    key::int                      AS dia_semana,\n    (value->>'open')::int         AS hora_open,\n    (value->>'close')::int * 60 - 30 AS hora_close_last_min\n  FROM businesses b\n  JOIN professionals p ON p.business_id = b.id AND p.active = true\n  LEFT JOIN professional_schedule ps ON ps.business_id = b.id AND ps.professional_id = p.id\n  CROSS JOIN LATERAL jsonb_each(COALESCE(ps.schedule_text, b.schedule_text)) AS j(key, value)\n  WHERE b.id = {{ $('Procesar Mensaje').item.json.businessId }}\n),\nexcepciones_globales AS (\n  SELECT fecha, tipo, hora_inicio, hora_fin\n  FROM schedule_exceptions\n  WHERE business_id = {{ $('Procesar Mensaje').item.json.businessId }}\n    AND professional_id IS NULL\n    AND fecha >= (NOW() AT TIME ZONE 'America/Bogota')::date\n),\ndias AS (\n  SELECT (NOW() AT TIME ZONE 'America/Bogota')::date + n AS fecha_slot\n  FROM generate_series(0, 7) AS n\n)\nSELECT\n  h.professional_name,\n  h.professional_id,\n  d.fecha_slot::text            AS fecha,\n  to_char(s.hora, 'HH12:MI AM') AS slot\nFROM dias d\nJOIN horario h ON EXTRACT(DOW FROM d.fecha_slot) = h.dia_semana\nCROSS JOIN LATERAL (\n  SELECT generate_series(\n    d.fecha_slot + (h.hora_open || ' hours')::interval,\n    d.fecha_slot + (h.hora_close_last_min || ' minutes')::interval,\n    '30 minutes'::interval\n  )::time AS hora\n) s\nWHERE NOT EXISTS (\n  SELECT 1 FROM excepciones_globales e\n  WHERE e.fecha = d.fecha_slot AND e.tipo = 'cerrado'\n)\nAND NOT EXISTS (\n  SELECT 1 FROM schedule_exceptions e\n  WHERE e.business_id = {{ $('Procesar Mensaje').item.json.businessId }}\n    AND e.fecha = d.fecha_slot\n    AND e.professional_id = h.professional_id\n    AND e.tipo = 'cerrado'\n)\nAND NOT EXISTS (\n  SELECT 1 FROM appointments a\n  WHERE a.business_id = {{ $('Procesar Mensaje').item.json.businessId }}\n    AND a.fecha = d.fecha_slot\n    AND a.estado != 'Cancelada'\n    AND a.professional_id = h.professional_id\n    AND s.hora >= a.hora\n    AND s.hora < a.hora + (30 + COALESCE((SELECT buffer_minutes FROM businesses WHERE id = {{ $('Procesar Mensaje').item.json.businessId }}), 0)) * interval '1 minute'\n)\nAND NOT EXISTS (\n  SELECT 1 FROM excepciones_globales e\n  WHERE e.fecha = d.fecha_slot\n    AND e.tipo = 'horario_especial'\n    AND (s.hora < e.hora_inicio OR s.hora >= e.hora_fin)\n)\nAND NOT EXISTS (\n  SELECT 1 FROM schedule_exceptions e\n  WHERE e.business_id = {{ $('Procesar Mensaje').item.json.businessId }}\n    AND e.fecha = d.fecha_slot\n    AND e.professional_id = h.professional_id\n    AND e.tipo = 'horario_especial'\n    AND (s.hora < e.hora_inicio OR s.hora >= e.hora_fin)\n)\nAND (\n  d.fecha_slot > (NOW() AT TIME ZONE 'America/Bogota')::date\n  OR (\n    d.fecha_slot = (NOW() AT TIME ZONE 'America/Bogota')::date\n    AND s.hora > (NOW() AT TIME ZONE 'America/Bogota')::time\n  )\n)\nORDER BY d.fecha_slot, h.professional_name, s.hora",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        1216,
-        2640
+        7056,
+        7904
       ],
-      "id": "2767194e-b5f4-4eba-af3e-f356592e7259",
+      "id": "a1ab4337-1e71-4ed2-98bf-e970630a8a7c",
       "name": "Leer Slots Disponibles",
       "credentials": {
         "postgres": {
@@ -157,15 +157,15 @@
     },
     {
       "parameters": {
-        "jsCode": "const slots = $input.all();\nconst diasSemana = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];\nconst meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];\n\nconst porFecha = {};\nfor (const item of slots) {\n  const fecha = item.json.fecha;\n  const slot  = item.json.slot;\n  if (!porFecha[fecha]) porFecha[fecha] = [];\n  porFecha[fecha].push(slot);\n}\n\nlet disponibilidad = '';\nfor (const [fecha, horas] of Object.entries(porFecha)) {\n  const d = new Date(fecha + 'T00:00:00');\n  const nombreDia = diasSemana[d.getUTCDay()];\n  const dia = d.getUTCDate();\n  const mes = meses[d.getUTCMonth()];\n  disponibilidad += `${nombreDia} ${dia} de ${mes}: ${horas.join(', ')}\\n`;\n}\n\nlet sesionContexto = '';\nlet debugSesion = '';\nconst _diasSC = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];\nconst _mesesSC = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];\nfunction _fechaNatSC(f){ const dd=new Date(f+'T00:00:00'); return `${_diasSC[dd.getUTCDay()]} ${dd.getUTCDate()} de ${_mesesSC[dd.getUTCMonth()]}`; }\nfunction _horaAmPmSC(h){ const hh=(h||'').substring(0,5); const p=hh.split(':').map(Number); const a=p[0], b=p[1]; const ap=a<12?'AM':'PM'; const h12=a===0?12:a>12?a-12:a; return `${h12}:${String(b).padStart(2,'0')} ${ap}`; }\ntry {\n  const sesion = $('Leer Sesión activa').first().json;\n  debugSesion = JSON.stringify(sesion);\n  if (sesion && sesion.id) {\n    const citas = Array.isArray(sesion.citas) ? sesion.citas : JSON.parse(sesion.citas);\n    if (citas && citas.length > 0) {\n      sesionContexto = `\\nSESIÓN ACTIVA — El cliente está en proceso de ${sesion.accion} una cita.\\nCITAS DISPONIBLES PARA SELECCIÓN:\\n`;\n      citas.forEach((c, i) => {\n        const profStr = c.profesionalNombre ? ` | Profesional: ${c.profesionalNombre}` : '';\n        sesionContexto += `Opción ${i+1}: ID_CITA=${c.id} | ${c.servicio} | ${_fechaNatSC(c.fecha)} | ${_horaAmPmSC(c.hora)}${profStr}\\n`;\n      });\n      sesionContexto += `\\nUsa EXACTAMENTE el día y la hora mostrados arriba (ya vienen en lenguaje natural y AM/PM). NUNCA recalcules el día de la semana por tu cuenta.\\nCuando el cliente diga un número (1, 2, etc.), usa el ID_CITA correspondiente para emitir el código de acción.\\n`;\n    }\n  }\n} catch(e) {\n  debugSesion = 'error: ' + e.message;\n}\n\nconst prev = $('Procesar Mensaje').item.json;\nreturn [{\n  json: {\n    ...prev,\n    disponibilidad: disponibilidad || 'Sin disponibilidad en los próximos 7 días',\n    sesionContexto,\n    debugSesion\n  }\n}];"
+        "jsCode": "const slots = $(\"Leer Slots Disponibles\").all();\nconst diasSemana = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];\nconst meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];\nconst hoy = new Date();\n\nconst porFecha = {};\nfor (const item of slots) {\n  const f = item.json.fecha;\n  const prof = item.json.professional_name || 'Disponible';\n  const slot = item.json.slot;\n  if (!porFecha[f]) porFecha[f] = {};\n  if (!porFecha[f][prof]) porFecha[f][prof] = [];\n  porFecha[f][prof].push(slot);\n}\n\nlet disponibilidad = '';\nlet disponibilidadCompleta = '';\nfor (const [fecha, profesionales] of Object.entries(porFecha)) {\n  const d = new Date(fecha + 'T00:00:00');\n  const nombreDia = diasSemana[d.getUTCDay()];\n  const dia = d.getUTCDate();\n  const mes = meses[d.getUTCMonth()];\n  const anyo = d.getUTCFullYear();\n  const fechaLabel = `${nombreDia} ${dia} de ${mes}${anyo !== hoy.getUTCFullYear() ? ` de ${anyo}` : ''}`;\n\n  disponibilidad += `📅 ${fechaLabel}:\\n`;\n  disponibilidadCompleta += `📅 ${fechaLabel}:\\n`;\n\n  for (const [prof, horas] of Object.entries(profesionales)) {\n    const horasFormateadas = horas.map(h =>\n      h.replace(/\\b0(\\d)/g, '$1')\n    );\n    const maxSlots = 8;\n    const mostradas = horasFormateadas.slice(0, maxSlots);\n    const restantes = horasFormateadas.length - maxSlots;\n    let linea = mostradas.join(', ');\n    if (restantes > 0) linea += ` y ${restantes} más`;\n    disponibilidad += `👤 ${prof}: 🟢 ${linea}\\n`;\n    const todas = horasFormateadas.join(', ');\n    disponibilidadCompleta += `👤 ${prof}: 🟢 ${todas}\\n`;\n  }\n}\n\nlet sesionContexto = '';\nlet debugSesion = '';\nconst _diasSC = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];\nconst _mesesSC = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];\nfunction _fechaNatSC(f){ const dd=new Date(f+'T00:00:00'); return `${_diasSC[dd.getUTCDay()]} ${dd.getUTCDate()} de ${_mesesSC[dd.getUTCMonth()]}`; }\nfunction _horaAmPmSC(h){ const hh=(h||'').substring(0,5); const p=hh.split(':').map(Number); const a=p[0], b=p[1]; const ap=a<12?'AM':'PM'; const h12=a===0?12:a>12?a-12:a; return `${h12}:${String(b).padStart(2,'0')} ${ap}`; }\ntry {\n  const sesion = $('Leer Sesión activa').first().json;\n  debugSesion = JSON.stringify(sesion);\n  if (sesion && sesion.id) {\n    const citas = Array.isArray(sesion.citas) ? sesion.citas : JSON.parse(sesion.citas);\n    if (citas && citas.length > 0) {\n      sesionContexto = `\\nSESIÓN ACTIVA — El cliente está en proceso de ${sesion.accion} una cita.\\nCITAS DISPONIBLES PARA SELECCIÓN:\\n`;\n      citas.forEach((c, i) => {\n        const profStr = c.profesionalNombre ? ` | Profesional: ${c.profesionalNombre}` : '';\n        sesionContexto += `Opción ${i+1}: ID_CITA=${c.id} | ${c.servicio} | ${_fechaNatSC(c.fecha)} | ${_horaAmPmSC(c.hora)}${profStr}\\n`;\n      });\n      sesionContexto += `\\nUsa EXACTAMENTE el día y la hora mostrados arriba (ya vienen en lenguaje natural y AM/PM). NUNCA recalcules el día de la semana por tu cuenta.\\nCuando el cliente diga un número (1, 2, etc.), usa el ID_CITA correspondiente para emitir el código de acción.\\n`;\n    }\n  }\n} catch(e) {\n  debugSesion = 'error: ' + e.message;\n}\n\nconst prev = $('Procesar Mensaje').item.json;\nreturn [{\n  json: {\n    ...prev,\n    disponibilidad: disponibilidad || 'Sin disponibilidad en los próximos 7 días',\n    disponibilidadCompleta,\n    sesionContexto,\n    debugSesion\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1424,
-        2640
+        7264,
+        7904
       ],
-      "id": "d1231194-52ec-4c4e-8b11-77a3a8b0f1d0",
+      "id": "748d576d-fb21-42fd-b5dd-7728d9251a66",
       "name": "Formatear Disponibilidad"
     },
     {
@@ -175,26 +175,26 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        2208,
-        2672
+        8048,
+        7936
       ],
-      "id": "6407f6c0-9888-4c59-b60b-7bc6e3781101",
+      "id": "f9972bf4-61c0-48e3-b440-ba94247e450c",
       "name": "Wait",
       "webhookId": "4ee81907-f6c4-43ea-a460-7503f3834d62"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT COUNT(*) as total FROM appointments WHERE business_id = {{ $('Procesar Mensaje').item.json.businessId }} AND fecha = TO_DATE('{{ $('AI Agent').item.json.output.split('|')[2] }}', 'DD/MM/YYYY') AND hora = '{{ $('AI Agent').item.json.output.split('|')[3].split('\\n')[0].trim() }}'::time AND estado != 'Cancelada'",
+        "query": "WITH datos AS (\n  SELECT\n    {{ $('Procesar Mensaje').item.json.businessId }} AS business_id,\n    TO_DATE('{{ $('AI Agent').item.json.output.split('|')[2] }}', 'DD/MM/YYYY') AS fecha_slot,\n    '{{ $('AI Agent').item.json.output.split('|')[3].split('\\n')[0].trim() }}'::time AS hora_slot,\n    '{{ $('AI Agent').item.json.output.split('|')[4].trim() }}' AS professional_name\n),\nprof_id AS (\n  SELECT id FROM professionals\n  WHERE name = (SELECT professional_name FROM datos)\n    AND business_id = (SELECT business_id FROM datos)\n  LIMIT 1\n),\nprof_schedule AS (\n  SELECT COALESCE(ps.schedule_text, b.schedule_text) AS schedule_text\n  FROM businesses b\n  LEFT JOIN professional_schedule ps ON ps.business_id = b.id AND ps.professional_id = (SELECT id FROM prof_id)\n  WHERE b.id = (SELECT business_id FROM datos)\n)\nSELECT COUNT(*) as total FROM (\n  -- 1. Collision de appointments\n  SELECT 1 FROM appointments a, datos d\n  WHERE a.business_id = d.business_id\n    AND a.fecha = d.fecha_slot\n    AND a.estado != 'Cancelada'\n    AND d.hora_slot >= a.hora\n    AND d.hora_slot < a.hora + (30 + COALESCE((SELECT buffer_minutes FROM businesses WHERE id = d.business_id), 0)) * interval '1 minute'\n    AND (\n      d.professional_name = ''\n      OR a.professional_id IS NULL\n      OR a.professional_id = (SELECT id FROM prof_id)\n    )\n\n  UNION ALL\n\n  -- 2. Dia sin horario (no existe en schedule_text del profesional)\n  SELECT 1 FROM datos d, prof_schedule ps\n  WHERE NOT ps.schedule_text ? EXTRACT(DOW FROM d.fecha_slot)::text\n\n  UNION ALL\n\n  -- 3. Dia cerrado en schedule_exceptions\n  SELECT 1 FROM schedule_exceptions e, datos d\n  WHERE e.business_id = d.business_id\n    AND e.fecha = d.fecha_slot\n    AND e.tipo = 'cerrado'\n    AND (e.professional_id IS NULL OR e.professional_id = (SELECT id FROM prof_id))\n\n  UNION ALL\n\n  -- 4. Hora fuera de rango (horario_especial o schedule_text del profesional)\n  SELECT 1 FROM datos d, prof_schedule ps\n  WHERE EXISTS (\n    SELECT 1 FROM schedule_exceptions e\n    WHERE e.business_id = d.business_id\n      AND e.fecha = d.fecha_slot\n      AND e.tipo = 'horario_especial'\n      AND (e.professional_id IS NULL OR e.professional_id = (SELECT id FROM prof_id))\n      AND (d.hora_slot < e.hora_inicio OR d.hora_slot >= e.hora_fin)\n  )\n  OR (\n    NOT EXISTS (\n      SELECT 1 FROM schedule_exceptions e\n      WHERE e.business_id = d.business_id\n        AND e.fecha = d.fecha_slot\n        AND e.tipo = 'horario_especial'\n        AND (e.professional_id IS NULL OR e.professional_id = (SELECT id FROM prof_id))\n    )\n    AND ps.schedule_text ? EXTRACT(DOW FROM d.fecha_slot)::text\n    AND (\n      d.hora_slot < ((ps.schedule_text->>EXTRACT(DOW FROM d.fecha_slot)::text)::jsonb->>'open')::int * interval '1 hour'\n      OR d.hora_slot >= ((ps.schedule_text->>EXTRACT(DOW FROM d.fecha_slot)::text)::jsonb->>'close')::int * interval '1 hour'\n    )\n  )\n\n  UNION ALL\n\n  -- 5. Fecha/hora en el pasado\n  SELECT 1 FROM datos d\n  WHERE d.fecha_slot < (NOW() AT TIME ZONE 'America/Bogota')::date\n     OR (d.fecha_slot = (NOW() AT TIME ZONE 'America/Bogota')::date AND d.hora_slot <= (NOW() AT TIME ZONE 'America/Bogota')::time)\n) checks",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2736,
-        2256
+        8576,
+        7520
       ],
-      "id": "54a3814d-f57e-4b10-b891-ddd4b046e86d",
+      "id": "c399812a-0b04-4dbd-9aaa-05f895c2090a",
       "name": "Leer Disponibilidad",
       "credentials": {
         "postgres": {
@@ -205,15 +205,15 @@
     },
     {
       "parameters": {
-        "jsCode": "const total  = $input.first().json.total;\nconst numero = ($('Procesar Mensaje').item.json.numero || '').replace(/@s\\.whatsapp\\.net/g, '').replace(/\\D/g, '');\nconst partes = $('AI Agent').item.json.output.split('|');\n  const professionalName = (partes[4] || '').trim();\nreturn [{ json: {\n  disponible:        total == 0,\n  fechaDeseada:      partes[2]?.trim(),\n  horaDeseada:       partes[3]?.split('\\n')[0].trim(),\n  numero,\n  businessId:        $('Procesar Mensaje').item.json.businessId,\n  whatsappInstance:  $('Procesar Mensaje').item.json.whatsappInstance,\n  professionalName,\n  ownerNumber:       $('Procesar Mensaje').item.json.ownerNumber\n} }];"
+        "jsCode": "const total  = $input.first().json.total;\nconst numero = ($('Procesar Mensaje').item.json.numero || '').replace(/@s\\.whatsapp\\.net/g, '').replace(/\\D/g, '');\nconst partes = $('AI Agent').item.json.output.split('|');\nconst professionalName = (partes[4] || '').trim();\n\nconst horaDeseada = partes[3]?.split('\\n')[0].trim();\nconst horaRegex = /^(\\d{1,2}):(\\d{2})\\s*(AM|PM)$/i;\nconst horaMatch = (horaDeseada || '').match(horaRegex);\nlet horaNormalizada = '';\nif (horaMatch) {\n  let hora24 = parseInt(horaMatch[1], 10);\n  const minutos = horaMatch[2];\n  const ampm = horaMatch[3].toUpperCase();\n  if (ampm === 'PM' && hora24 !== 12) hora24 += 12;\n  if (ampm === 'AM' && hora24 === 12) hora24 = 0;\n  horaNormalizada = `${String(hora24).padStart(2, '0')}:${minutos}`;\n}\n\nreturn [{\n  json: {\n    disponible:        total == 0,\n    fechaDeseada:      partes[2]?.trim(),\n    horaDeseada,\n    horaNormalizada,\n    numero,\n    businessId:        $('Procesar Mensaje').item.json.businessId,\n    whatsappInstance:  $('Procesar Mensaje').item.json.whatsappInstance,\n    professionalName,\n    ownerNumber:       $('Procesar Mensaje').item.json.ownerNumber\n  }\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2912,
-        2256
+        8752,
+        7520
       ],
-      "id": "2ce8bcff-b885-47b4-ba39-9adda71fb646",
+      "id": "ef2ae237-53ba-4fc8-82b4-02032550ca20",
       "name": "Verificar Slot"
     },
     {
@@ -244,10 +244,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        3104,
-        2256
+        8944,
+        7520
       ],
-      "id": "16c157f5-3b1f-490f-b924-2aa0bc662722",
+      "id": "a6641fe4-7255-41ea-a963-8571a848fb07",
       "name": "¿Disponible?"
     },
     {
@@ -259,10 +259,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        3296,
-        2256
+        9136,
+        7520
       ],
-      "id": "1469b5df-2b62-4b63-84e9-e4e021cd7ddf",
+      "id": "f2190cac-bbf1-4334-9967-756405645f0b",
       "name": "Insertar Cita",
       "credentials": {
         "postgres": {
@@ -278,10 +278,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3488,
-        2256
+        9328,
+        7520
       ],
-      "id": "66350bb0-d2a0-4df9-8f06-12b7f2770c8b",
+      "id": "7887f893-55bf-44f0-bfa9-1fd3be474941",
       "name": "Construir Mensajes"
     },
     {
@@ -310,10 +310,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        3680,
-        2256
+        9520,
+        7520
       ],
-      "id": "f5432348-c585-4cb2-a236-a5f24a8ce2cd",
+      "id": "24e47723-ad74-4cea-ad5f-1a840143dd67",
       "name": "Notificar Dueño"
     },
     {
@@ -342,10 +342,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        3872,
-        2256
+        9712,
+        7520
       ],
-      "id": "90554054-149d-40aa-90b9-4d8ccdb65259",
+      "id": "e98213c2-f7a9-44dd-8077-ddb09bd416ee",
       "name": "Confirmar Cliente"
     },
     {
@@ -383,10 +383,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        2896,
-        3248
+        8736,
+        8512
       ],
-      "id": "228a3f78-44d9-4671-be9f-25b606202cfb",
+      "id": "c077f1e4-6b3c-4908-883d-ffb771830745",
       "name": "Respuesta Normal"
     },
     {
@@ -416,10 +416,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2592,
-        3216
+        8432,
+        8480
       ],
-      "id": "5a9cee42-4142-46a8-affc-e7d07bdda52d",
+      "id": "ba39c09a-a9f2-4401-95e9-c3b7f080f04e",
       "name": "¿Confirmar o Responder?"
     },
     {
@@ -457,10 +457,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        3728,
-        2448
+        9568,
+        7712
       ],
-      "id": "385414a5-0ba6-428f-bccf-f8e6ab13be65",
+      "id": "93708284-d615-474a-9326-96fe5b56bc2f",
       "name": "Aviso Slot Ocupado"
     },
     {
@@ -573,10 +573,10 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        2352,
-        2624
+        8192,
+        7888
       ],
-      "id": "9d49cf1a-18ac-4ccb-8694-fd5a963ad0bb",
+      "id": "24b70dbe-1331-4c88-9b5f-3557af8ed57d",
       "name": "Switch"
     },
     {
@@ -588,10 +588,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        2736,
-        2640
+        8576,
+        7904
       ],
-      "id": "70442321-7c41-414f-8cf2-15a265118b46",
+      "id": "00efc7e2-21ed-48ec-a504-0ee14d4f412b",
       "name": "Leer Citas Cliente",
       "alwaysOutputData": true,
       "credentials": {
@@ -608,10 +608,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2928,
-        2640
+        8768,
+        7904
       ],
-      "id": "dfe3fb21-379b-487e-8d82-2b4142de3f16",
+      "id": "c24df8d6-b4fe-4fad-84c5-afef2f9eb10d",
       "name": "Formatear Citas"
     },
     {
@@ -649,10 +649,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        3552,
-        2736
+        9472,
+        7920
       ],
-      "id": "4e60eee5-c5e1-4147-9352-6fd703cc3eff",
+      "id": "097505c9-e409-4e81-9241-0ce489770252",
       "name": "Enviar Lista de citas"
     },
     {
@@ -664,10 +664,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        2720,
-        2848
+        8560,
+        8112
       ],
-      "id": "9a525f82-9a06-4879-88d4-161764c00f60",
+      "id": "e4438e4c-b90d-4085-ab47-872ff02ba328",
       "name": "Ejecutar Cancelación",
       "credentials": {
         "postgres": {
@@ -699,13 +699,13 @@
         "body": "={\n  \"appointmentId\": {{ $json.id }},\n  \"businessId\": {{ $('Procesar Mensaje').item.json.businessId }},\n  \"servicio\": \"{{ $json.servicio }}\",\n  \"fecha\": \"{{ $json.fecha }}\",\n  \"hora\": \"{{ $json.hora }}\",\n  \"nombre\": \"{{ $json.nombre }}\",\n  \"estado\": \"{{ $json.estado }}\",\n  \"professional_name\": \"{{ $json.professional_name }}\"\n}",
         "options": {}
       },
-      "id": "e5d08b46-2e19-4bd7-9cff-0db65b50755c",
+      "id": "82eeadaa-1334-4093-ab12-9b20f4f7c771",
       "name": "Sync Cancel Dashboard",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2992,
-        2816
+        8832,
+        8048
       ]
     },
     {
@@ -717,10 +717,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        2704,
-        3072
+        8544,
+        8336
       ],
-      "id": "01df68f1-3422-46ea-b78b-edd13ada5de3",
+      "id": "506f2f1b-b643-4052-99b2-8db17f532521",
       "name": "Ejecutar Reagendamiento",
       "credentials": {
         "postgres": {
@@ -747,18 +747,18 @@
           ]
         },
         "sendBody": true,
-        "options": {},
         "contentType": "raw",
         "rawContentType": "application/json",
-        "body": "={{ $json.body }}"
+        "body": "={{ $json.body }}",
+        "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        2928,
-        3088
+        9200,
+        8352
       ],
-      "id": "5d56f4d1-e48d-4e67-9189-1f386b876d1e",
+      "id": "f9c2a49a-8224-4afb-bbd2-04bea3d0c471",
       "name": "Confirmar Reagendamiento"
     },
     {
@@ -770,10 +770,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        1008,
-        2640
+        6848,
+        7904
       ],
-      "id": "ec364a51-63fc-4de2-ae1d-4d90ef392ded",
+      "id": "4db969dd-ad42-4b6a-b123-a7c86da285fb",
       "name": "Leer Sesión activa",
       "alwaysOutputData": true,
       "credentials": {
@@ -792,10 +792,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        3376,
-        2576
+        9216,
+        7840
       ],
-      "id": "132be1f5-8422-4211-ae18-31ecb0aa54fa",
+      "id": "daf351ea-d81a-465d-8771-d563bbba65d0",
       "name": "Guardar Sesión",
       "credentials": {
         "postgres": {
@@ -813,10 +813,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        3552,
-        3008
+        9648,
+        8096
       ],
-      "id": "d7cd22c5-6f5e-41fa-8d93-f028675e2944",
+      "id": "8e429e30-50fb-41d5-a563-f9f2388dfa58",
       "name": "Limpiar Sesión Cancelación",
       "credentials": {
         "postgres": {
@@ -834,10 +834,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        3136,
-        3104
+        9408,
+        8400
       ],
-      "id": "adfac214-664f-41f8-8fdb-04409da8ce15",
+      "id": "6b3281cf-25b3-4afa-bb5e-a8a3ab8a28fa",
       "name": "Limpiar Sesión Reagendamiento",
       "credentials": {
         "postgres": {
@@ -874,25 +874,25 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        3136,
-        2640
+        8976,
+        7904
       ],
-      "id": "98251388-e426-495a-88b7-72bca48dcde2",
+      "id": "f82043ac-96c5-42ee-9399-f834dbfcf658",
       "name": "If"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT messages, updated_at\nFROM conversation_history\nWHERE business_id = {{ $json.businessId }}\n  AND numero = '{{ $json.numeroLimpio }}'\n  AND expires_at > NOW()\nLIMIT 1",
+        "query": "SELECT messages, updated_at, inactividad_estado\nFROM conversation_history\nWHERE business_id = {{ $json.businessId }}\n  AND numero = '{{ $json.numeroLimpio }}'\n  AND expires_at > NOW()\nLIMIT 1",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        1664,
-        2640
+        7504,
+        7904
       ],
-      "id": "7b57f847-c30b-4020-b0dd-7e30c19cb2d7",
+      "id": "d4e3816c-4b8d-4a7a-865d-aa86cd3f5e8c",
       "name": "Leer Historial",
       "alwaysOutputData": true,
       "credentials": {
@@ -911,10 +911,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        2080,
-        2672
+        7920,
+        7936
       ],
-      "id": "ebffa29d-1bf7-4d0c-8d52-6ca70061604c",
+      "id": "4e375547-01ee-4cd1-8728-762af66104a3",
       "name": "Guardar Historial",
       "credentials": {
         "postgres": {
@@ -925,15 +925,15 @@
     },
     {
       "parameters": {
-        "jsCode": "// ============================================================\n// AI Agent — LLM Orquestador\n// Fallback chain: Gemini 2.5 Flash-Lite → Cerebras gpt-oss-120b → Groq gpt-oss-120b\n// Reemplaza: AI Agent (langchain) + Groq Chat Model + Simple Memory\n// Modo: Run Once for All Items\n// El nodo se llama \"AI Agent\" a propósito: ~13 nodos downstream leen\n// $('AI Agent').item.json.output — renombrarlo evita tocar el Switch y las ramas.\n// ============================================================\n\nconst d = $('Formatear Disponibilidad').first().json;\n\n// Historial previo (de Leer Historial; Postgres JSONB ya viene parseado a array JS)\nlet prior = [];\ntry {\n  const raw = $('Leer Historial').first().json.messages;\n  prior = Array.isArray(raw) ? raw : (raw ? JSON.parse(raw) : []);\n} catch (e) { prior = []; }\n\n// ── RESET POR INACTIVIDAD ──────────────────────────────────\n// Si el último mensaje fue hace más de 1 hora, el cliente\n// empezó una nueva conversación. Ignoramos el historial anterior.\nlet gapMessage = '';\nconst histUpdatedAt = $('Leer Historial').first().json.updated_at;\nif (histUpdatedAt) {\n  const minsSince = (Date.now() - new Date(histUpdatedAt).getTime()) / 60000;\n  if (minsSince > 60) {\n    prior = [];\n  } else if (minsSince > 10) {\n    gapMessage = '\\nNOTA: Pasaron más de ' + Math.round(minsSince) + ' minutos desde el último mensaje del cliente. Si el cliente NO retoma el tema anterior, pregúntale si continuamos con lo que hablábamos o si prefiere empezar de nuevo.';\n  }\n}\n// ───────────────────────────────────────────────────────────\n\nconst priorEsc = JSON.stringify(prior).replace(/'/g, \"''\"); // safe para embeber en '...'::jsonb\n\n// ── 0. SHORT-CIRCUIT FUERA DE HORARIO ───────────────────────\n// [DECISIÓN DE INGENIERÍA AÑADIDA — NO estaba en el diseño aprobado]\n// fueraDeHorario es booleano y determinista. Resolverlo en código evita una\n// llamada al LLM y corrige un bug latente: el prompt original referenciaba\n// \"Si fueraDeHorario = true...\" pero el modelo NUNCA recibía el valor real del\n// booleano, así que no podía cumplir la regla de forma fiable.\n// >>> Si NO quieres este comportamiento, borra este bloque completo. <<<\nif (d.fueraDeHorario === true && d.mensajeHorario) {\n  return [{ json: {\n    output: d.mensajeHorario,\n    rawOutput: d.mensajeHorario,\n    provider: 'short-circuit-horario',\n    reasoning: null,\n    debugError: null,\n    businessId: d.businessId,\n    numeroLimpio: d.numeroLimpio,\n    historyJSON: priorEsc            // no añadimos turnos en un short-circuit\n  }}];\n}\n\n// ── 1. SYSTEM PROMPT ─────────────────────────────────────────\nconst systemPrompt =\n`Eres el asistente virtual de ${d.promptName}.\nSALUDO INICIAL:\nSiempre que un cliente escriba por primera vez (no hay historial previo), saluda con:\n\"¡Hola! Bienvenido a ${d.promptName}. 😊 ¿Te gustaría agendar una cita, cancelar o reagendar?\"\nSi el cliente ya está en medio de un flujo (eligiendo servicio/hora/etc.), NO repitas el saludo.\n\n\nINSTRUCCIÓN PRINCIPAL:\nTienes acceso a los horarios disponibles reales del negocio.\nSOLO muestra horarios cuando el cliente indique una fecha específica.\nSi no hay fecha → pregunta primero qué día prefiere. NUNCA muestres todos los días disponibles sin que el cliente haya dicho un día.\n\nSERVICIOS Y PRECIOS:\n${d.servicesText}\n\nPROFESIONALES DISPONIBLES:\n${d.professionalsText || 'No aplica'}\n\nHORARIOS DE ATENCIÓN:\n${d.horarioTexto}\n\nVALIDACIÓN DE HORARIO:\nSi fueraDeHorario = true, responde ÚNICAMENTE con el contenido de mensajeHorario. No continúes. No agregues nada más.\n\n${d.sesionContexto}${gapMessage}\n\nREGLA DE SESIÓN INTERNA — CRÍTICO:\nEl bloque SESIÓN ACTIVA y CITAS DISPONIBLES PARA SELECCIÓN es información INTERNA. NUNCA lo muestres al cliente. NUNCA menciones IDs, ID_CITA, ni ningún número interno. Al cliente solo muéstrale una lista numerada limpia con servicio, día en lenguaje natural y hora en formato AM/PM.\n\nPRECEDENCIA DE GESTIÓN — CRÍTICO:\nSi NO existe un bloque \"SESIÓN ACTIVA\" en el contexto y el cliente expresa intención de cancelar o reagendar con CUALQUIER palabra o jerga (ej: \"pásala\", \"muévela\", \"cámbiala\", \"para ahorita\", \"para hoy\", \"no puedo ir\", \"anúlala\", \"quítala\"):\n→ Tu ÚNICA respuesta válida es el código GESTIONAR_CITA|cancelar o GESTIONAR_CITA|reagendar. Sin texto adicional.\n→ PROHIBIDO iniciar el diálogo (preguntar \"¿para qué día?\", mostrar horarios, etc.) si NO hay SESIÓN ACTIVA.\nLos PASOS de reagendamiento y la selección por número SOLO aplican cuando YA existe el bloque \"SESIÓN ACTIVA\" en el contexto.\n\nSELECCIÓN DE CITA CON NÚMERO — REGLA ÚNICA:\nCuando el cliente responde con un número (1, 2, 3...) y hay SESIÓN ACTIVA:\n→ PRIMERO revisa la acción de la sesión (cancelar o reagendar).\n\n═══ SI LA ACCIÓN ES CANCELAR ═══\n→ Responde ÚNICAMENTE: CANCELAR_CITA|ID_CITA (el ID de la opción elegida)\n→ SIN texto adicional. SIN preguntar nada más. SIN ofrecer reagendar.\n→ El número es suficiente confirmación. NUNCA pidas confirmación extra.\n\nTAMBIÉN cuando hay una sola cita en la sesión y el cliente dice \"sí\", \"si\", \"1\", \"ok\", \"dale\", \"listo\", \"claro\", \"obvio\", \"confirmo\", \"de una\", \"hagale\", \"va\", \"le doy\":\n→ CANCELAR_CITA|ID_CITA\n\n═══ SI LA ACCIÓN ES REAGENDAR ═══\nPASO 1 — Cuando el cliente dice un número (1, 2, 3...) O confirma (\"sí\", \"si\", \"ok\", \"dale\", etc.):\n→ Identifica el ID_CITA de esa opción y el profesional asignado (de la SESIÓN ACTIVA)\n→ Si la cita tiene profesional asignado:\n  → Respuesta: \"Perfecto, vamos a reagendar tu cita de [servicio] con [profesional]. ¿Para qué día prefieres el nuevo horario? 😊\"\n  → NO preguntes por profesional. Usa el que ya tiene.\n→ Si la cita NO tiene profesional:\n  → PREGUNTA: \"Perfecto, vamos a reagendar tu cita de [servicio]. ¿Con qué profesional quieres agendarla? 😊\"\n  → Muestra la lista de profesionales disponibles\"\n→ NO muestres horarios. NO emitas código todavía.\n\nPASO 2 — Cuando el cliente dice un día (ej: \"martes\", \"pasado mañana\", \"14 de julio\", \"mañana\"):\n→ Calcula la fecha exacta DD/MM/YYYY\n→ Muestra SOLO los horarios de ESE día: \"09:00 AM, 10:00 AM, 10:30 AM\"\n→ Si el profesional no está confirmado (dijo \"otro\" o no sabe), pregunta: \"¿Con qué profesional? 😊\" antes de mostrar horarios\n→ Pregunta la hora. NUNCA muestres horarios sin día confirmado.\n\nPASO 3 — Cuando el cliente elige la hora exacta:\n→ Si dice solo un número, es la posición en el listado de horarios que acabas de mostrar\n→ Identifica el profesional final (el mismo de la cita original o el que el cliente eligió)\n→ Responde ÚNICAMENTE: REAGENDAR_CITA|ID_CITA|DD/MM/YYYY|HH:MM|NombreProfesional\n→ Incluye SIEMPRE el profesional como 5to campo. Si no hay profesionales, omítelo.\n\n⚠️ CÓMO SABER SI UN NÚMERO ES CANCELAR (PASO ÚNICO) O REAGENDAR (PASO 1):\nRevisa la acción en SESIÓN ACTIVA. Esa es la ÚNICA fuente de verdad.\n- Si sesión dice \"cancelar\": el número SIEMPRE es CANCELAR_CITA|ID\n- Si sesión dice \"reagendar\": el número es PASO 1 de reagendar\n\n⚠️ CAMBIO DE INTENCIÓN DEL CLIENTE:\nSi en CUALQUIER momento el cliente dice \"cancelar\", \"cancelela\", \"anúlela\", \"cancele\", \"borre la cita\", \"no voy\", \"no puedo ir\" o similar:\n→ Detén lo que estés haciendo (incluso si estabas en flujo de reagendar)\n→ Responde ÚNICAMENTE: GESTIONAR_CITA|cancelar\n→ La intención de cancelar SIEMPRE prevalece sobre reagendar.\nHORARIOS DISPONIBLES (próximos 7 días):\n${d.disponibilidad}\n\nREGLA CRÍTICA DE DISPONIBILIDAD:\n- Cliente dice fecha específica → muestra SOLO los horarios de ESE día en formato limpio sin numeración: \"09:00 AM, 10:00 AM, 11:00 AM\"\n- Cliente NO dice fecha → pregunta qué día prefiere. PROHIBIDO mostrar horarios sin fecha confirmada.\n- PROHIBIDO mostrar más de un día a la vez\n- PROHIBIDO decir que no tienes información de disponibilidad\n\nAGENDAMIENTO — MÍNIMO DE PREGUNTAS:\nExtrae TODO lo que el cliente ya dijo en su mensaje (servicio, profesional, fecha, hora). \nSolo pregunta lo que falte. NUNCA preguntes algo que el cliente ya haya dicho.\n\n1. SERVICIO — Si el cliente NO ha dicho un servicio específico:\n   → LISTA TODOS los servicios con sus precios (completa, sin truncar)\n   → Pregunta cuál le interesa\n   → Si YA dijo el servicio → confírmalo y continúa sin preguntar\n\n2. PROFESIONAL — Si hay profesionales disponibles:\n   → Si el cliente YA dijo \"cualquiera\", \"el que tenga espacio\", \"no importa\" o similar:\n     → NO preguntes. Elige el primero disponible y continúa.\n   → Si el cliente YA dijo un nombre o número → úsalo, no preguntes\n   → Si NO dijo nada de profesionales → PREGUNTA \"¿Con qué profesional quieres agendar?\"\n   → Si solo hay un profesional (la lista tiene 1) → NO preguntes, úsalo directamente\n\n3. Si no tienes la FECHA → pregunta qué día prefiere. Espera respuesta.\n   ⚠️ Si el cliente YA mencionó una fecha antes (en este mismo flujo o en mensajes anteriores), NO preguntes de nuevo. Usa la fecha que ya dijo.\n\n4. Cuando tengas el día → muestra SOLO los horarios disponibles de ESE día en formato limpio: \"09:00 AM, 10:00 AM\"\n   → Pide elegir hora exacta\n\n5. CONFIRMAR — Solo cuando tengas servicio + profesional + fecha + hora:\n   → Muestra resumen y pide confirmación:\n\"Perfecto, te confirmo los datos:\n✂️ Servicio: [servicio]\n👤 Profesional: [nombre]\n📅 Fecha: [fecha en lenguaje natural]\n⏰ Hora: [hora AM/PM]\n¿Confirmamos la cita? 😊\nCRÍTICO — HORA EXACTA: \"en la tarde\", \"en la mañana\", \"más tarde\" NO son horas válidas. Muestra el listado y pide que elija una hora exacta.\nNUNCA confirmes una hora sin saber si es AM o PM.\n\nCuando el cliente diga una hora sin AM/PM (ej: '3', '6', '9', '1:30', '2:00', '10:15'):\n- Pregunta siempre: '¿Las [hora] AM o [hora] PM? 😊'\n- Ejemplo: si dice \"1:30\" → preguntas \"¿La 1:30 AM o la 1:30 PM? 😊\"\n- Si solo existe en uno de los dos → confírmala directamente.\nNUNCA asumas AM o PM por el contexto del día.\n\n6. CUANDO EL CLIENTE CONFIRMA — Solo cuando el cliente responda \"sí\", \"si\", \"ok\", \"dale\", \"confirmo\", \"confirma\", \"listo\", \"dale\", \"si, confirma\" o similar a la pregunta de confirmación del paso 5:\n   → Identifica servicio exacto, fecha DD/MM/YYYY y hora (con AM/PM)\n   → Responde ÚNICAMENTE con el código exacto: CITA_CONFIRMADA|[servicio]|[DD/MM/YYYY]|[HH:MM AM/PM]\n   → SIN texto adicional. SIN emojis. SIN decoración. SIN saludo.\n   → Ejemplo exacto: CITA_CONFIRMADA|Corte caballero|14/07/2026|10:00 AM\n   → El pipeline downstream se encarga del resto (notificar, guardar, etc.)\n\nCANCELACIONES Y REAGENDAMIENTO:\nDetecta intención aunque el cliente use palabras variadas o jerga:\ncancelar, anular, borrar, no puedo ir, no voy, quitar la cita, cancelar el turno,\nreagendar, cambiar, mover, postergar, no puedo asistir, necesito cambiar la hora.\n\nCuando detectes cancelación → responde ÚNICAMENTE sin texto adicional:\nGESTIONAR_CITA|cancelar\n\nCuando detectes reagendamiento → responde ÚNICAMENTE sin texto adicional:\nGESTIONAR_CITA|reagendar\n\nNUNCA respondas que el equipo lo contactará. Siempre emite el código.\n\nTOLERANCIA A ERRORES ORTOGRÁFICOS — APLICA A TODO:\nEl cliente PUEDE escribir cualquier cosa con errores, sin tildes, con abreviaciones, jerga de chat o palabras pegadas. Aplica a TODOS los campos: servicios, nombres de profesionales, fechas, horas, acciones, etc.\n\nEjemplos de variaciones comunes:\n- Fechas: \"manana\", \"mñn\", \"mñna\" = mañana | \"pasao\", \"pasado\" = pasado | \"psado mñn\", \"pasao mañana\", \"pas mañana\" = pasado mañana | \"antier\", \"anteallende\", \"antes de ayer\" = anteayer | \"oy\", \"oi\", \"hoy\" = hoy | \"en 3 dias\", \"en 3 días\", \"dentro de 3\" = en tres días\n- Días: \"domingo\", \"dom\", \"domi\", \"doming\" = domingo (igual con todos los días: lun/lunes, mar/martes, mie/mier/miercoles, etc.)\n- Servicios: \"corte\", \"cort\", \"crt\" = Corte caballero | \"corte dama\", \"dama\", \"mujer\" = Corte dama | \"tint\", \"tinte\", \"color\" = Tinte completo | \"uñas\", \"unias\", \"uñitas\" = Uñas | \"manicur\", \"manicure\", \"manikur\", \"mano\" = Manicure + pedicure | \"peinado\", \"peinao\", \"peinado especial\" = Peinado especial\n- Profesionales: cualquier variación del nombre (ej: \"cristian\", \"cristhian\", \"crist\", \"cris\" = Cristian)\n- Acciones: \"agendar\", \"agendame\", \"agenda\", \"apuntame\", \"programa\", \"registrame\", \"ponme\", \"dejame\", \"sacame\", \"dame\" = intención de agendar | \"cancela\", \"anula\", \"borra\", \"quita\", \"elimina\" = cancelar\n- Chat: \"x favor\", \"xfa\", \"porfa\", \"plis\" = por favor | \"q\", \"k\", \"ke\" = que | \"toy\", \"estoy\" | \"pa\", \"para\" | \"pq\", \"xq\", \"porque\", \"xke\" = porque/por qué | \"tmb\", \"tb\" = también | \"nada\", \"na\" = nada\n- Cualquier palabra sin tilde debe interpretarse como si la tuviera\n- Cualquier palabra con una o dos letras mal debe interpretarse por contexto\n\nNO corrijas al cliente. NO le digas \"quisiste decir...\", \"quizá quisiste decir...\", \"creo que quisiste decir...\" ni nada similar. Simplemente entiende la intención y continúa naturalmente como si hubiera escrito bien.\n\nSi no entiendes una palabra, usa el contexto de toda la conversación para deducirla. NUNCA te quedes bloqueado por una palabra mal escrita.\n\nTONO Y LENGUAJE:\n- Responde SIEMPRE en español\n- Acepta y entiende jerga colombiana: parce, loca, marica, mi amor, papi, mami, listo pues, hagale, le doy, chévere, bacano, pilas,buena , perro , pana, pa , sisa, sisas, breves ,  entre otros. Nunca te ofendas ni corrijas al cliente.\n- Responde con calidez y naturalidad, como si fuera una persona real del negocio\n- Máximo 5 líneas por respuesta (EXCEPCIÓN: si el cliente pide la lista completa de servicios/precios, incluye TODOS los servicios sin importar cuántas líneas ocupe — NUNCA trunques la lista de servicios)\n- En conversaciones normales termina con una pregunta\n- NUNCA termines con pregunta al confirmar una cita o al emitir un código de acción\n- FORMATO DE FECHA: Usa lenguaje natural. CORRECTO: \"el miércoles 8 de abril\". INCORRECTO: \"08/04/2026\"\n- ASESORÍA: Si el cliente pide recomendación, respóndela brevemente antes de continuar.\n- SINÓNIMOS: \"motilado\", \"motilar\", \"pelar\", \"pelado\" = Corte caballero. \"Arreglo de barba\" = Barba. Entiende el sinónimo pero confirma siempre con el nombre oficial del servicio.\n- SERVICIOS: NUNCA menciones servicios fuera de tu lista. Si no existe: \"Lo sentimos, ese servicio no está disponible. Nuestros servicios son: ${d.servicesText}. ¿Puedo ayudarte con alguno? 😊\"\n- SCOPE: Solo puedes hablar de citas, servicios, horarios y precios de ${d.promptName}. Si el mensaje no tiene relación con ninguno de estos temas, responde en máximo 1 línea redirigiendo: \"Solo puedo ayudarte con citas en ${d.promptName} 😊 ¿Querés agendar, cancelar o reagendar?\" Sin elaborar, sin dar consejos generales, sin salirte del rol.\n- RECOMENDACIONES: Si el cliente pregunta cuál servicio le conviene o qué corte/tratamiento le recomendás, puedes responder brevemente basándote ÚNICAMENTE en los servicios de tu lista y luego invitar a agendar. Ejemplo: \"Para algo rápido te recomiendo el Corte caballero 💈 ¿Te agendo?\" Nunca recomiendes cosas fuera de tu catálogo.`;\n  \n\n// ── 2. CONSTRUIR MESSAGES (system + historial limpio + user nuevo) ──\nconst priorClean = prior\n  .filter(m => m && m.role && m.content)\n  .map(m => ({ role: m.role, content: String(m.content) })); // strip reasoning/provider antes de reenviar\n\nconst messages = [\n  { role: 'system', content: systemPrompt },\n  ...priorClean,\n  { role: 'user', content: String(d.textoOriginal || '') }\n];\n\n// ── 3. FALLBACK CHAIN ───────────────────────────────────────\n// Criterio de fallo (→ siguiente proveedor): non-200, timeout >10s,\n// response sin choices, content vacío/null. Patrón \"multiple fallbacks +\n// graceful degradation\".\nconst providers = [\n  { name: 'gemini',   url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', key: $env.GEMINI_API_KEY,   model: 'gemini-2.5-flash-lite' },\n  { name: 'cerebras', url: 'https://api.cerebras.ai/v1/chat/completions',                                key: $env.CEREBRAS_API_KEY, model: 'gpt-oss-120b' },\n  { name: 'groq',     url: 'https://api.groq.com/openai/v1/chat/completions',                            key: $env.GROQ_API_KEY,     model: 'openai/gpt-oss-120b' } // prefijo \"openai/\" obligatorio en Groq\n];\n\nlet result = null, usedProvider = 'none', lastError = '';\n\nfor (const p of providers) {\n  if (!p.key) { lastError += `[${p.name}: sin API key] `; continue; }\n  try {\n    const resp = await this.helpers.httpRequest({\n      method: 'POST',\n      url: p.url,\n      headers: { 'Authorization': `Bearer ${p.key}`, 'Content-Type': 'application/json' },\n      body: { model: p.model, messages, temperature: 0.4, max_tokens: 2048 },\n      json: true,\n      timeout: 10000,            // timeout >10s lanza → cae al catch → siguiente proveedor\n      returnFullResponse: true\n    });\n    if (resp.statusCode !== 200) throw new Error(`status ${resp.statusCode}`);\n    const choice = resp.body && resp.body.choices && resp.body.choices[0];\n    if (!choice || !choice.message) throw new Error('sin choices');\n    const content = choice.message.content;\n    if (content == null || String(content).trim() === '') throw new Error('content vacio');\n    result = { content: String(content), reasoning: choice.message.reasoning || null };\n    usedProvider = p.name;\n    break;\n  } catch (e) {\n    lastError += `[${p.name}: ${e.message}] `;\n    continue;\n  }\n}\n\n// ── 4. DEGRADACIÓN GRÁCIL (ningún proveedor respondió) ──────\n// Tres horizontes: NO exponer el error al cliente. Mensaje amable + reintento.\n// No envenenamos el historial: lo dejamos igual (sin turnos nuevos).\nif (!result) {\n  return [{ json: {\n    output: 'Disculpa, estoy teniendo un problemita técnico en este momento 🙏 ¿Puedes escribirme de nuevo en un minutico?',\n    rawOutput: '',\n    provider: 'none',\n    reasoning: null,\n    debugError: lastError,\n    businessId: d.businessId,\n    numeroLimpio: d.numeroLimpio,\n    historyJSON: priorEsc\n  }}];\n}\n\n// ── 5. NORMALIZACIÓN DE SALIDA (regex → código limpio) ──────\n// Gemini/gpt-oss pueden anteponer texto o envolver en backticks. Extraemos el\n// código EXACTO con segmentos acotados (no greedy hasta EOL) para que los\n// split('|') downstream caigan perfecto. Si no hay código → texto conversacional.\nfunction normalizar(raw) {\n  let t = String(raw).trim().replace(/```[a-zA-Z]*\\n?/g, '').replace(/```/g, '').trim();\n  const horaSeg = '\\\\d{1,2}:\\\\d{2}(?:\\\\s?[AaPp]\\\\.?[Mm]\\\\.?)?';\n  const patrones = [\n    new RegExp(`CITA_CONFIRMADA\\\\|[^|\\\\n]+\\\\|\\\\d{1,2}\\\\/\\\\d{1,2}\\\\/\\\\d{4}\\\\|${horaSeg}`),\n    new RegExp(`REAGENDAR_CITA\\\\|\\\\d+\\\\|\\\\d{1,2}\\\\/\\\\d{1,2}\\\\/\\\\d{4}\\\\|${horaSeg}(?:\\\\|[^|\\\\n]+)?`),\n    /CANCELAR_CITA\\|\\s*\\d+/,\n    /GESTIONAR_CITA\\|\\s*(?:cancelar|reagendar)/i\n  ];\n  for (const p of patrones) {\n    const m = t.match(p);\n    if (m) return m[0].trim();\n  }\n  return t;\n}\nconst cleaned = normalizar(result.content);\n\n// ── 6. ACTUALIZAR HISTORIAL (máx 20 mensajes = 10 turnos) ───\n// Guardamos reasoning + provider en el turno assistant para debug; se strip-ean\n// al reenviar (paso 2). El system prompt NO se guarda (se reconstruye cada turno).\nconst updated = [\n  ...prior,\n  { role: 'user',      content: String(d.textoOriginal || '') },\n  { role: 'assistant', content: result.content, reasoning: result.reasoning, provider: usedProvider }\n].slice(-20);\n\nreturn [{ json: {\n  output: cleaned,                 // ← lo que leen Switch y las ramas\n  rawOutput: result.content,       // debug\n  provider: usedProvider,          // debug\n  reasoning: result.reasoning,     // debug\n  debugError: lastError || null,\n  businessId: d.businessId,\n  numeroLimpio: d.numeroLimpio,\n  historyJSON: JSON.stringify(updated).replace(/'/g, \"''\")\n}}];\n"
+        "jsCode": "// ============================================================\n// AI Agent — LLM Orquestador\n// Fallback chain: Gemini 2.5 Flash-Lite → Cerebras gpt-oss-120b → Groq gpt-oss-120b\n// Reemplaza: AI Agent (langchain) + Groq Chat Model + Simple Memory\n// Modo: Run Once for All Items\n// El nodo se llama \"AI Agent\" a propósito: ~13 nodos downstream leen\n// $('AI Agent').item.json.output — renombrarlo evita tocar el Switch y las ramas.\n// ============================================================\n\nconst d = $('Formatear Disponibilidad').first().json;\n\n// Historial previo (de Leer Historial; Postgres JSONB ya viene parseado a array JS)\nlet prior = [];\ntry {\n  const raw = $('Leer Historial').first().json.messages;\n  prior = Array.isArray(raw) ? raw : (raw ? JSON.parse(raw) : []);\n} catch (e) { prior = []; }\n\n// ── RESET POR INACTIVIDAD ──────────────────────────────────\n// Si el último mensaje fue hace más de 1 hora, el cliente\n// empezó una nueva conversación. Ignoramos el historial anterior.\nlet gapMessage = '';\nconst histUpdatedAt = $('Leer Historial').first().json.updated_at;\nif (histUpdatedAt) {\n  const minsSince = (Date.now() - new Date(histUpdatedAt).getTime()) / 60000;\n  if (minsSince > 60) {\n    prior = [];\n  } else if (minsSince > 10) {\n    gapMessage = '\\nNOTA: Pasaron más de ' + Math.round(minsSince) + ' minutos desde el último mensaje del cliente. Si el cliente NO retoma el tema anterior, pregúntale si continuamos con lo que hablábamos o si prefiere empezar de nuevo.';\n  }\n}\n// ───────────────────────────────────────────────────────────\n// ── RETOMAR POR INACTIVIDAD BOT ────────────────────────────\n// Si el Inactividad Bot marcó la conversación como 'avisado'\n// (envió \"¿Sigues ahí?\"), el cliente está retomando.\n// Continuamos naturalmente sin saludo.\nconst inactividadEstado = $('Leer Historial').first().json.inactividad_estado;\nif (inactividadEstado === 'avisado') {\n  gapMessage = '\\nNOTA: El cliente retoma la conversación después de que le preguntamos si seguía ahí. Continúa naturalmente donde íbamos. Si parece no recordar, haz un resumen breve de lo último que hablaban.';\n}\n// ───────────────────────────────────────────────────────────\n\nconst priorEsc = JSON.stringify(prior).replace(/'/g, \"''\"); // safe para embeber en '...'::jsonb\n\n// ── 0. SHORT-CIRCUIT FUERA DE HORARIO ───────────────────────\n// [DECISIÓN DE INGENIERÍA AÑADIDA — NO estaba en el diseño aprobado]\n// fueraDeHorario es booleano y determinista. Resolverlo en código evita una\n// llamada al LLM y corrige un bug latente: el prompt original referenciaba\n// \"Si fueraDeHorario = true...\" pero el modelo NUNCA recibía el valor real del\n// booleano, así que no podía cumplir la regla de forma fiable.\n// >>> Si NO quieres este comportamiento, borra este bloque completo. <<<\nif (d.fueraDeHorario === true && d.mensajeHorario) {\n  return [{ json: {\n    output: d.mensajeHorario,\n    rawOutput: d.mensajeHorario,\n    provider: 'short-circuit-horario',\n    reasoning: null,\n    debugError: null,\n    businessId: d.businessId,\n    numeroLimpio: d.numeroLimpio,\n    historyJSON: priorEsc            // no añadimos turnos en un short-circuit\n  }}];\n}\n\n\n// ── 1. SYSTEM PROMPT (modular — 8 layers, 22 sections) ─────\n// Layers: 1=Identity, 2=Priority Rules, 3=Business Data,\n//         4=Appointment Flow, 5=Cancel Flow, 6=Reschedule Flow,\n//         7=Output Format, 8=Tone & Edge Cases\n\n// ── LAYER 1: IDENTITY ─────────────────────────\nconst role = `Eres el asistente virtual de ${d.promptName}.`;\n\nconst saludoInicial = `SALUDO INICIAL:\nSiempre que un cliente escriba por primera vez (no hay historial previo), saluda con:\n\"¡Hola! Bienvenido a ${d.promptName}. 😊 ¿Te gustaría agendar una cita, cancelar o reagendar?\"\nSi el cliente ya está en medio de un flujo (eligiendo servicio/hora/etc.), NO repitas el saludo.`;\n\nconst instruccionPrincipal = `INSTRUCCIÓN PRINCIPAL:\nTienes acceso a los horarios disponibles reales del negocio.\nSOLO muestra horarios cuando el cliente indique una fecha específica.\nSi no hay fecha → pregunta primero qué día prefiere. NUNCA muestres todos los días disponibles sin que el cliente haya dicho un día.`;\n\n// ── LAYER 3: BUSINESS DATA ─────────────────────\nconst servicios = `SERVICIOS Y PRECIOS:\n${d.servicesText}`;\n\nconst profesionales = `PROFESIONALES DISPONIBLES:\n${d.professionalsText || 'No aplica'}`;\n\nconst horariosAtencion = `HORARIOS DE ATENCIÓN:\n${d.horarioTexto}`;\n\nconst fechaHoy = `FECHA DE HOY: ${d.fechaHoy}\nCALENDARIO DE LA SEMANA:\n${d.calendario}`;\n\nconst validacionHorario = `VALIDACIÓN DE HORARIO:\nSi fueraDeHorario = true, responde ÚNICAMENTE con el contenido de mensajeHorario. No continúes. No agregues nada más.`;\n\nconst sesionActiva = `${d.sesionContexto}${gapMessage}`;\n\nconst horariosDisponibles = `HORARIOS DISPONIBLES (próximos 7 días):\n${d.disponibilidad}\n\nHORARIOS COMPLETOS (sin límite):\n${d.disponibilidadCompleta || d.disponibilidad}\n\nREGLAS ESTRICTAS DE DISPONIBILIDAD:\n- SOLO puedes ofrecer días y horas que aparezcan EXACTAMENTE en HORARIOS DISPONIBLES arriba. Si un día u hora no está en esa lista, no existe para ti. NUNCA inventes horarios ni asumas que un horario está disponible si no ves el día y hora exactos en la lista.\n- INSTRUCCIÓN \"MÁS HORARIOS\": Si el cliente pregunta \"más horarios\", \"ver más\", \"más opciones\", \"qué más hay\", \"hay más\" o similar → muestra los horarios adicionales que aparecen en HORARIOS COMPLETOS pero NO en HORARIOS DISPONIBLES. Usa el mismo formato con 🟢.`;\n\n// ── LAYER 2: PRIORITY RULES ────────────────────\nconst reglaSesionInterna = `REGLA DE SESIÓN INTERNA — CRÍTICO:\nEl bloque SESIÓN ACTIVA y CITAS DISPONIBLES PARA SELECCIÓN es información INTERNA. NUNCA lo muestres al cliente. NUNCA menciones IDs, ID_CITA, ni ningún número interno. Al cliente solo muéstrale una lista numerada limpia con servicio, día en lenguaje natural y hora en formato AM/PM.`;\n\nconst precedenciaGestion = `PRECEDENCIA DE GESTIÓN — CRÍTICO:\nSi NO existe un bloque \"SESIÓN ACTIVA\" en el contexto y el cliente expresa intención de cancelar o reagendar con CUALQUIER palabra o jerga (ej: \"pásala\", \"muévela\", \"cámbiala\", \"para ahorita\", \"para hoy\", \"no puedo ir\", \"anúlala\", \"quítala\"):\n→ Tu ÚNICA respuesta válida es el código GESTIONAR_CITA|cancelar o GESTIONAR_CITA|reagendar. Sin texto adicional.\n→ PROHIBIDO iniciar el diálogo (preguntar \"¿para qué día?\", mostrar horarios, etc.) si NO hay SESIÓN ACTIVA.\nLos PASOS de reagendamiento y la selección por número SOLO aplican cuando YA existe el bloque \"SESIÓN ACTIVA\" en el contexto.`;\n\nconst seleccionCita = `SELECCIÓN DE CITA CON NÚMERO — REGLA ÚNICA:\nCuando el cliente responde con un número (1, 2, 3...) y hay SESIÓN ACTIVA:\n→ PRIMERO revisa la acción de la sesión (cancelar o reagendar).`;\n\nconst cancelarAccion = `═══ SI LA ACCIÓN ES CANCELAR ═══\nPRIMERO — Cuando el cliente elige una cita (dice un número, o \"sí\" si es una sola):\n   → Muestra resumen de la cancelación con los datos de la cita:\n\"¿Confirmas que deseas cancelar esta cita?\n📅 Fecha: [fecha en lenguaje natural]\n⏰ Hora: [hora AM/PM]\n✂️ Servicio: [servicio]\n👤 Profesional: [nombre del profesional, si aplica]\nResponde 'sí' para confirmar la cancelación o 'no' para mantenerla.\"\n\nSOLO después — Cuando el cliente responde \"sí\", \"si\", \"ok\", \"confirmo\", \"dale\", \"listo\" o similar:\n→ Responde ÚNICAMENTE: CANCELAR_CITA|ID_CITA\n→ SIN texto adicional.\n\nSi el cliente dice \"no\" o cualquier negación → no canceles. Responde: \"Entendido, no se cancela. ¿Necesitas algo más? 😊\"`;\n\nconst reagendarAccion = `═══ SI LA ACCIÓN ES REAGENDAR ═══\nPASO 1 — Cuando el cliente dice un número (1, 2, 3...) O confirma (\"sí\", \"si\", \"ok\", \"dale\", etc.):\n→ Identifica el ID_CITA de esa opción y el profesional asignado (de la SESIÓN ACTIVA)\n→ Si la cita tiene profesional asignado:\n  → Respuesta: \"Perfecto, vamos a reagendar tu cita de [servicio] con [profesional]. ¿Para qué día prefieres el nuevo horario? 😊\"\n  → Si el cliente NO menciona otro profesional → usa el que ya tiene.\n  → Si el cliente dice que quiere con OTRO profesional o menciona otro nombre → pregúntale: \"¿Con qué profesional quieres agendarla? 😊\" y espera su respuesta.\n→ Si la cita NO tiene profesional:\n  → PREGUNTA: \"Perfecto, vamos a reagendar tu cita de [servicio]. ¿Con qué profesional quieres agendarla? 😊\"\n  → Muestra la lista de profesionales disponibles\"\n→ NO muestres horarios. NO emitas código todavía.\n\nPASO 2 — Cuando el cliente dice un día (ej: \"martes\", \"pasado mañana\", \"14 de julio\", \"mañana\"):\n→ Calcula la fecha exacta DD/MM/YYYY\n→ Muestra SOLO los horarios de ESE día en formato vertical, cada hora en su propia línea. Ejemplo:\n🟢 9:00 a.m.\n🟢 10:00 a.m.\n🟢 11:00 a.m.\n→ Si el profesional no está confirmado (dijo \"otro\" o no sabe), pregunta: \"¿Con qué profesional? 😊\" antes de mostrar horarios\n→ Pregunta la hora. NUNCA muestres horarios sin día confirmado.\n\nPASO 3 — Cuando el cliente elige la hora exacta:\n→ Si dice solo un número, es la posición en el listado de horarios que acabas de mostrar\n→ Identifica el profesional final (el mismo de la cita original o el que el cliente eligió)\n→ Responde ÚNICAMENTE: REAGENDAR_CITA|ID_CITA|DD/MM/YYYY|HH:MM|NombreProfesional\n→ Incluye SIEMPRE el profesional como 5to campo. Si no hay profesionales, omítelo.`;\n\nconst desambiguacion = `⚠️ CÓMO SABER SI UN NÚMERO ES CANCELAR (PASO ÚNICO) O REAGENDAR (PASO 1):\nRevisa la acción en SESIÓN ACTIVA. Esa es la ÚNICA fuente de verdad.\n- Si sesión dice \"cancelar\": el número SIEMPRE es CANCELAR_CITA|ID\n- Si sesión dice \"reagendar\": el número es PASO 1 de reagendar`;\n\nconst cambioIntencion = `⚠️ CAMBIO DE INTENCIÓN DEL CLIENTE:\nSi en CUALQUIER momento el cliente dice \"cancelar\", \"cancelela\", \"anúlela\", \"cancele\", \"borre la cita\", \"no voy\", \"no puedo ir\" o similar:\n→ Detén lo que estés haciendo (incluso si estabas en flujo de reagendar)\n→ Responde ÚNICAMENTE: GESTIONAR_CITA|cancelar\n→ La intención de cancelar SIEMPRE prevalece sobre reagendar.`;\n\n// ── LAYER 2: RULES (continued) ────────────────\nconst reglaDisponibilidad = `REGLA CRÍTICA DE DISPONIBILIDAD:\n- Cliente dice fecha específica → muestra SOLO los horarios de ESE día en formato vertical, cada hora en su propia línea. Ejemplo:\n🟢 9:00 a.m.\n🟢 10:00 a.m.\n🟢 11:00 a.m.\n- Cliente NO dice fecha → pregunta qué día prefiere. PROHIBIDO mostrar horarios sin fecha confirmada.\n- PROHIBIDO mostrar más de un día a la vez\n- PROHIBIDO decir que no tienes información de disponibilidad`;\n\n// ── LAYER 4: APPOINTMENT FLOW ──────────────────\nconst agendamiento = `AGENDAMIENTO — MÍNIMO DE PREGUNTAS:\nExtrae TODO lo que el cliente ya dijo en su mensaje (servicio, profesional, fecha, hora). \nSolo pregunta lo que falte. NUNCA preguntes algo que el cliente ya haya dicho.\n\n1. SERVICIO — Determina el servicio exacto:\n   → Si el cliente NO ha dicho un servicio → LISTA TODOS los servicios con sus precios y pregunta.\n   → Si el cliente dijo palabras que coinciden con MÚLTIPLES servicios de la lista\n     (ej: \"corte\" coincide con \"Corte niño\", \"Corte caballero\", \"Corte dama\"):\n     - LISTA TODOS los servicios que coinciden, numerados, con sus precios\n     - Pregunta: \"¿Cuál de estos te gustaría?\"\n     - Ejemplo: \"Tenemos 3 opciones:\\n1. Corte niño - $20.000\\n2. Corte caballero - $25.000\\n3. Corte dama - $35.000\\n¿Cuál prefieres?\"\n   → Si el cliente dijo un servicio EXACTO o claramente identificable\n     (ej: \"Corte dama\", \"tinte completo\", \"manicure\"):\n     - Confírmalo y continúa sin preguntar de nuevo\n   → NUNCA elijas un servicio por defecto cuando hay múltiples opciones que coinciden\n\n2. PROFESIONAL — Si hay profesionales disponibles:\n   → Si el cliente YA dijo \"cualquiera\", \"el que tenga espacio\", \"no importa\" o similar:\n     → NO preguntes. Elige el primero disponible y continúa.\n   → Si el cliente dice que no sabe qué profesional elegir (ej: \"no sé\", \"cuál me recomiendas\", \"quién es bueno\"):\n     → MUÉSTRALE la lista de profesionales que aparece en PROFESIONALES DISPONIBLES\n     → Pregunta: \"¿Con cuál de estos te gustaría agendar? 😊\"\n     → Si insiste en que no sabe, sugiérele el primero de la lista y pregúntale si le parece bien.\n   → Si el cliente YA dijo un nombre o número → úsalo, no preguntes\n   → Si NO dijo nada de profesionales → PREGUNTA \"¿Con qué profesional quieres agendar?\"\n   → Si solo hay un profesional (la lista tiene 1) → NO preguntes, úsalo directamente\n\n3. Si no tienes la FECHA → pregunta qué día prefiere. Espera respuesta.\n   ⚠️ Si el cliente YA mencionó una fecha antes (en este mismo flujo o en mensajes anteriores), NO preguntes de nuevo. Usa la fecha que ya dijo.\n\n4. Cuando tengas el día → muestra SOLO los horarios disponibles de ESE día en formato vertical, cada hora en su propia línea con \"🟢\". Ejemplo:\n🟢 9:00 a.m.\n🟢 10:00 a.m.\n🟢 11:00 a.m.\n   → Pide elegir hora exacta\n\n5. CONFIRMAR — OBLIGATORIO. NUNCA LO SALTES.\n   Antes de emitir CITA_CONFIRMADA, SIEMPRE debes:\n   a) Mostrar resumen COMPLETO con servicio + profesional + fecha en lenguaje natural + hora AM/PM\n   b) PREGUNTAR explícitamente \"¿Confirmamos la cita?\"\n   \n   Esto aplica SIEMPRE, incluso si el cliente ya agendó otra cita antes en la misma conversación.\n   CADA cita necesita su PROPIA confirmación. No importa que ya hayan agendado una antes.\n\n   Formato EXACTO del resumen:\n\"Perfecto, te confirmo los datos:\n✂️ Servicio: [servicio]\n👤 Profesional: [nombre]\n📅 Fecha: [fecha en lenguaje natural]\n⏰ Hora: [hora AM/PM]\n¿Confirmamos la cita? 😊\"\n\n   CRÍTICO — HORA EXACTA: \"en la tarde\", \"en la mañana\", \"más tarde\" NO son horas válidas. Muestra el listado y pide que elija una hora exacta.\n   NUNCA confirmes una hora sin saber si es AM o PM.\n\n   Cuando el cliente diga una hora sin AM/PM (ej: '3', '6', '9', '1:30', '2:00', '10:15'):\n   - Pregunta siempre: '¿Las [hora] AM o [hora] PM? 😊'\n   - Ejemplo: si dice \"1:30\" → preguntas \"¿La 1:30 AM o la 1:30 PM? 😊\"\n   - Si solo existe en uno de los dos → confírmala directamente.\n   NUNCA asumas AM o PM por el contexto del día.\n\n   EXCEPCIÓN — Todos en PM:\n   Si TODOS los horarios disponibles que mostraste para ESE día están en PM\n   (ej: 2:00 PM, 3:00 PM, 4:00 PM...), NO preguntes AM o PM. Asume PM automáticamente.\n   Esta regla de EXCEPCIÓN prevalece sobre la regla general de \"siempre preguntar AM/PM\".\n\n6. CUANDO EL CLIENTE CONFIRMA — Solo cuando el cliente responda \"sí\", \"si\", \"ok\", \"dale\", \"confirmo\", \"confirma\", \"listo\", \"dale\", \"si, confirma\" o similar a la pregunta de confirmación del paso 5:\n   → Identifica servicio exacto, fecha DD/MM/YYYY y hora (con AM/PM)\n   → Responde ÚNICAMENTE con el código exacto: CITA_CONFIRMADA|[servicio]|[DD/MM/YYYY]|[HH:MM AM/PM]|[nombre profesional]\n   → SIN texto adicional. SIN emojis. SIN decoración. SIN saludo.\n   → Ejemplo exacto: CITA_CONFIRMADA|Corte caballero|14/07/2026|10:00 AM|Cristian\n   → Si el negocio tiene profesionales, incluye SIEMPRE el nombre del profesional como 5to campo\n   → El pipeline downstream se encarga del resto (notificar, guardar, etc.)\n\n   ⚠️ VALIDACIÓN DE HORA — CRÍTICO:\nAntes de emitir CITA_CONFIRMADA, verifica que la hora en el código sea EXACTAMENTE la misma\nque aparece en el resumen del paso 5. Si no coinciden, CORRIGE la hora en CITA_CONFIRMADA.\n\nREGLAS DE FORMATEO DE HORA:\n- \"6pm\" → \"6:00 PM\"\n- \"6:00pm\" → \"6:00 PM\"\n- \"6 p.m.\" → \"6:00 PM\"\n- \"18:00\" → \"6:00 PM\"\n- \"6:00\" (sin AM/PM pero cliente dijo \"6pm\") → \"6:00 PM\"\n- \"11:00\" (si el cliente dijo 6pm) → INCORRECTO. Debe ser \"6:00 PM\"\n\nNUNCA pongas una hora diferente a la que el cliente aceptó en el resumen.\nLa hora en CITA_CONFIRMADA debe ser IDÉNTICA a la hora del resumen.\n\n⚠️ REGLA ABSOLUTA — NUNCA EMITAS CITA_CONFIRMADA sin haber mostrado el resumen del paso 5 y recibido confirmación explícita del cliente. Si el cliente responde con datos que completan la cita pero sin que hayas mostrado el resumen, PRIMERO muestra el resumen y pregunta, aunque el cliente ya haya dado todos los datos. NO IMPORTA si el cliente dijo \"sí\" o \"confirmo\" antes del resumen — el resumen debe ir PRIMERO.\n\n7. RESOLVER REFERENCIAS CONTEXTUALES:\n   Si el cliente dice \"el mismo\", \"el mismo barbero\", \"el mismo profesional\", \"el de antes\",\n   \"el de siempre\", \"el que me atendió\", \"el mismo de la vez pasada\" o similar:\n   → Busca en el HISTORIAL de la conversación quién fue el último profesional mencionado\n     (en una cita, agendamiento, o en el nombre del profesional)\n   → USA ese profesional. NO preguntes \"¿A cuál te refieres?\" NI adivines otro nombre.\n   → Si no hay historial previo, pregunta \"¿Con qué profesional quieres agendar? 😊\"\n\n8. PREGUNTAS GENÉRICAS DE DISPONIBILIDAD:\n   Si el cliente pregunta \"qué hora hay disponible\", \"qué horarios tienen\",\n   \"qué disponibilidad hay\", \"hay cupo\", \"hay espacio\", \"a qué hora se puede\" o similar:\n   → Responde: \"¿Para qué día quieres agendar? 😊\"\n   → NUNCA respondas \"¿Para qué hora?\" — la pregunta del cliente es sobre disponibilidad general,\n     no está dando una hora específica.\n   → Confirma el día PRIMERO antes de mostrar horarios.\n\n9. VALIDACIÓN DE FECHA — NUNCA EN EL PASADO:\n    La fecha de hoy es ${d.fechaHoy}.\n    Si el cliente da una fecha que ya pasó (anterior a hoy):\n    → Responde: \"Lo siento, no podemos agendar para una fecha que ya pasó 😊 ¿Quieres elegir otro día?\"\n    → Pídele que elija una fecha válida (hoy o en adelante).\n    NUNCA emitas CITA_CONFIRMADA ni REAGENDAR_CITA con fecha anterior a hoy.\n    Si la fecha está mal y no sabes cuál quiso decir, pregunta por la fecha correcta.`;\n\n// ── LAYER 5: CANCEL FLOW ───────────────────────\nconst cancelaciones = `CANCELACIONES Y REAGENDAMIENTO:\nDetecta intención aunque el cliente use palabras variadas o jerga:\ncancelar, anular, borrar, no puedo ir, no voy, quitar la cita, cancelar el turno,\nreagendar, cambiar, mover, postergar, no puedo asistir, necesito cambiar la hora.\n\nCuando detectes cancelación → responde ÚNICAMENTE sin texto adicional:\nGESTIONAR_CITA|cancelar\n\nCuando detectes reagendamiento → responde ÚNICAMENTE sin texto adicional:\nGESTIONAR_CITA|reagendar\n\nNUNCA respondas que el equipo lo contactará. Siempre emite el código.`;\n\n// ── LAYER 8: TONE & EDGE CASES ─────────────────\nconst tolerancia = `TOLERANCIA A ERRORES ORTOGRÁFICOS — APLICA A TODO:\nEl cliente PUEDE escribir cualquier cosa con errores, sin tildes, con abreviaciones, jerga de chat o palabras pegadas. Aplica a TODOS los campos: servicios, nombres de profesionales, fechas, horas, acciones, etc.\n\nEjemplos de variaciones comunes:\n- Fechas: \"manana\", \"mñn\", \"mñna\" = mañana | \"pasao\", \"pasado\" = pasado | \"psado mñn\", \"pasao mañana\", \"pas mañana\" = pasado mañana | \"antier\", \"anteallende\", \"antes de ayer\" = anteayer | \"oy\", \"oi\", \"hoy\" = hoy | \"en 3 dias\", \"en 3 días\", \"dentro de 3\" = en tres días\n- Días: \"domingo\", \"dom\", \"domi\", \"doming\" = domingo (igual con todos los días: lun/lunes, mar/martes, mie/mier/miercoles, etc.)\n- Servicios: \"corte\", \"cort\", \"crt\" = coincide con CUALQUIER servicio que contenga \"Corte\" (ej: Corte niño, Corte caballero, Corte dama). APLICA DESAMBIGUACIÓN. | \"tint\", \"tinte\", \"color\" = Tinte completo | \"uñas\", \"unias\", \"uñitas\" = Uñas (si hay múltiples servicios de uñas, desambigua) | \"manicur\", \"manicure\", \"manikur\", \"mano\" = Manicure + pedicure | \"peinado\", \"peinao\", \"peinado especial\" = Peinado especial\n- Profesionales: cualquier variación del nombre (ej: \"cristian\", \"cristhian\", \"crist\", \"cris\" = Cristian)\n- Acciones: \"agendar\", \"agendame\", \"agenda\", \"apuntame\", \"programa\", \"registrame\", \"ponme\", \"dejame\", \"sacame\", \"dame\" = intención de agendar | \"cancela\", \"anula\", \"borra\", \"quita\", \"elimina\" = cancelar\n- Chat: \"x favor\", \"xfa\", \"porfa\", \"plis\" = por favor | \"q\", \"k\", \"ke\" = que | \"toy\", \"estoy\" | \"pa\", \"para\" | \"pq\", \"xq\", \"porque\", \"xke\" = porque/por qué | \"tmb\", \"tb\" = también | \"nada\", \"na\" = nada\n- Cualquier palabra sin tilde debe interpretarse como si la tuviera\n- Cualquier palabra con una o dos letras mal debe interpretarse por contexto\n\nNO corrijas al cliente. NO le digas \"quisiste decir...\", \"quizá quisiste decir...\", \"creo que quisiste decir...\" ni nada similar. Simplemente entiende la intención y continúa naturalmente como si hubiera escrito bien.\n\nSi no entiendes una palabra, usa el contexto de toda la conversación para deducirla. NUNCA te quedes bloqueado por una palabra mal escrita.`;\n\nconst tono = `TONO Y LENGUAJE:\n- Responde SIEMPRE en español colombiano neutro (usa \"tú\" no \"vos\"). Evita modismos argentinos como \"che\", \"vos\", \"sabés\", \"tenés\", \"querés\", \"podés\".\n- Acepta y entiende jerga colombiana: parce, loca, marica, mi amor, papi, mami, listo pues, hagale, le doy, chévere, bacano, pilas, buena, perro, pana, pa, sisa, sisas, breves, qué más, entre otros. Nunca te ofendas ni corrijas al cliente.\n- Responde con calidez y naturalidad, como si fuera una persona real del negocio\n- Usa expresiones colombianas naturales: \"listo\", \"claro\", \"con gusto\", \"¿en qué más puedo ayudarte?\", \"seguimos\", \"ya mismo\", \"ahí te va\", \"dime\"\n- Máximo 5 líneas por respuesta (EXCEPCIÓN: si el cliente pide la lista completa de servicios/precios, incluye TODOS los servicios sin importar cuántas líneas ocupe - NUNCA trunques la lista de servicios)\n- En conversaciones normales termina con una pregunta\n- NUNCA termines con pregunta al confirmar una cita o al emitir un código de acción\n- FORMATO DE FECHA: Usa lenguaje natural. CORRECTO: \"el miércoles 8 de abril\". INCORRECTO: \"08/04/2026\"\n- ASESORÍA: Si el cliente pide recomendación, respóndela brevemente antes de continuar.\n- SINÓNIMOS: \"motilado\", \"motilar\", \"pelar\", \"pelado\" = Corte caballero. \"Arreglo de barba\" = Barba. Entiende el sinónimo pero confirma siempre con el nombre oficial del servicio.\n- SERVICIOS: NUNCA menciones servicios fuera de tu lista. Si no existe: \"Lo sentimos, ese servicio no está disponible. Nuestros servicios son: ${d.servicesText}. ¿Puedo ayudarte con alguno? 😊\"\n- SCOPE: Solo puedes hablar de citas, servicios, horarios y precios de ${d.promptName}. Si el mensaje no tiene relación con ninguno de estos temas, responde en máximo 1 línea redirigiendo: \"Solo puedo ayudarte con citas en ${d.promptName} 😊 ¿Quieres agendar, cancelar o reagendar?\" Sin elaborar, sin dar consejos generales, sin salirte del rol.\n- DATOS PERSONALES (Ley 1581): Si el cliente pregunta sobre el uso de sus datos, privacidad, protección de datos, \"para qué van a usar mi información\", \"dónde guardan mis datos\" o similar → responde: \"Tus datos personales están protegidos conforme a la Ley 1581 de Protección de Datos en Colombia. Solo usamos tu información para gestionar tus citas. Si quieres conocer todos los detalles, puedes consultar nuestra política de privacidad en ${d.politicaPrivacidadUrl || '[enlace a política de privacidad]'}. ¿Necesitas algo más? 😊\" No inventes información adicional sobre protección de datos.\n- RECOMENDACIONES: Si el cliente pregunta cuál servicio le conviene o qué corte/tratamiento le recomiendas, puedes responder brevemente basándote ÚNICAMENTE en los servicios de tu lista y luego invitar a agendar. Ejemplo: \"Para algo rápido te recomendamos el Corte caballero 💈 ¿Te agendo?\" Nunca recomiendes cosas fuera de tu catálogo.`;\n\n// ── ASSEMBLE ──────────────────────────────────────\nconst systemPrompt = `${role}\n${saludoInicial}\n\n\n${instruccionPrincipal}\n\n${servicios}\n\n${profesionales}\n\n${horariosAtencion}\n\n${fechaHoy}\n\n${validacionHorario}\n\n${sesionActiva}\n\n${reglaSesionInterna}\n\n${precedenciaGestion}\n\n${seleccionCita}\n\n${cancelarAccion}\n\n${reagendarAccion}\n\n${desambiguacion}\n\n${cambioIntencion}\n${horariosDisponibles}\n\n${reglaDisponibilidad}\n\n${agendamiento}\n\n${cancelaciones}\n\n${tolerancia}\n\n${tono}`;\n  \n\n// ── 2. CONSTRUIR MESSAGES (system + historial limpio + user nuevo) ──\nconst priorClean = prior\n  .filter(m => m && m.role && m.content)\n  .map(m => ({ role: m.role, content: String(m.content) })); // strip reasoning/provider antes de reenviar\n\nconst messages = [\n  { role: 'system', content: systemPrompt },\n  ...priorClean,\n  { role: 'user', content: String(d.textoOriginal || '') }\n];\n\n// ── 3. FALLBACK CHAIN ───────────────────────────────────────\n// Criterio de fallo (→ siguiente proveedor): non-200, timeout >10s,\n// response sin choices, content vacío/null. Patrón \"multiple fallbacks +\n// graceful degradation\".\nconst providers = [\n  { name: 'gemini',   url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', key: $env.GEMINI_API_KEY,   model: 'gemini-2.5-flash-lite' },\n  { name: 'cerebras', url: 'https://api.cerebras.ai/v1/chat/completions',                                key: $env.CEREBRAS_API_KEY, model: 'gpt-oss-120b' },\n  { name: 'groq',     url: 'https://api.groq.com/openai/v1/chat/completions',                            key: $env.GROQ_API_KEY,     model: 'openai/gpt-oss-120b' } // prefijo \"openai/\" obligatorio en Groq\n];\n\nlet result = null, usedProvider = 'none', lastError = '';\n\nfor (const p of providers) {\n  if (!p.key) { lastError += `[${p.name}: sin API key] `; continue; }\n  try {\n    const resp = await this.helpers.httpRequest({\n      method: 'POST',\n      url: p.url,\n      headers: { 'Authorization': `Bearer ${p.key}`, 'Content-Type': 'application/json' },\n      body: { model: p.model, messages, temperature: 0.4, max_tokens: 2048 },\n      json: true,\n      timeout: 10000,            // timeout >10s lanza → cae al catch → siguiente proveedor\n      returnFullResponse: true\n    });\n    if (resp.statusCode !== 200) throw new Error(`status ${resp.statusCode}`);\n    const choice = resp.body && resp.body.choices && resp.body.choices[0];\n    if (!choice || !choice.message) throw new Error('sin choices');\n    const content = choice.message.content;\n    if (content == null || String(content).trim() === '') throw new Error('content vacio');\n    result = { content: String(content), reasoning: choice.message.reasoning || null };\n    usedProvider = p.name;\n    break;\n  } catch (e) {\n    lastError += `[${p.name}: ${e.message}] `;\n    continue;\n  }\n}\n\n// ── 4. DEGRADACIÓN GRÁCIL (ningún proveedor respondió) ──────\n// Tres horizontes: NO exponer el error al cliente. Mensaje amable + reintento.\n// No envenenamos el historial: lo dejamos igual (sin turnos nuevos).\nif (!result) {\n  return [{ json: {\n    output: 'Disculpa, estoy teniendo un problemita técnico en este momento 🙏 ¿Puedes escribirme de nuevo en un minutico?',\n    rawOutput: '',\n    provider: 'none',\n    reasoning: null,\n    debugError: lastError,\n    businessId: d.businessId,\n    numeroLimpio: d.numeroLimpio,\n    historyJSON: priorEsc\n  }}];\n}\n\n// ── 5. NORMALIZACIÓN DE SALIDA (regex → código limpio) ──────\n// Gemini/gpt-oss pueden anteponer texto o envolver en backticks. Extraemos el\n// código EXACTO con segmentos acotados (no greedy hasta EOL) para que los\n// split('|') downstream caigan perfecto. Si no hay código → texto conversacional.\nfunction normalizar(raw) {\n  let t = String(raw).trim().replace(/```[a-zA-Z]*\\n?/g, '').replace(/```/g, '').trim();\n  const horaSeg = '\\\\d{1,2}:\\\\d{2}(?:\\\\s?[AaPp]\\\\.?[Mm]\\\\.?)?';\n  const patrones = [\n    new RegExp(`CITA_CONFIRMADA\\\\|[^|\\\\n]+\\\\|\\\\d{1,2}\\\\/\\\\d{1,2}\\\\/\\\\d{4}\\\\|${horaSeg}(?:\\\\|[^|\\\\n]+)?`),\n    new RegExp(`REAGENDAR_CITA\\\\|\\\\d+\\\\|\\\\d{1,2}\\\\/\\\\d{1,2}\\\\/\\\\d{4}\\\\|${horaSeg}(?:\\\\|[^|\\\\n]+)?`),\n    /CANCELAR_CITA\\|\\s*\\d+/,\n    /GESTIONAR_CITA\\|\\s*(?:cancelar|reagendar)/i\n  ];\n  for (const p of patrones) {\n    const m = t.match(p);\n    if (m) return m[0].trim();\n  }\n  return t;\n}\nconst cleaned = normalizar(result.content);\n\n// ── 6. ACTUALIZAR HISTORIAL (máx 20 mensajes = 10 turnos) ───\n// Guardamos reasoning + provider en el turno assistant para debug; se strip-ean\n// al reenviar (paso 2). El system prompt NO se guarda (se reconstruye cada turno).\nconst updated = [\n  ...prior,\n  { role: 'user',      content: String(d.textoOriginal || '') },\n  { role: 'assistant', content: result.content, reasoning: result.reasoning, provider: usedProvider }\n].slice(-20);\n\nreturn [{ json: {\n  output: cleaned,                 // ← lo que leen Switch y las ramas\n  rawOutput: result.content,       // debug\n  provider: usedProvider,          // debug\n  reasoning: result.reasoning,     // debug\n  debugError: lastError || null,\n  businessId: d.businessId,\n  numeroLimpio: d.numeroLimpio,\n  historyJSON: JSON.stringify(updated).replace(/'/g, \"''\")\n}}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1856,
-        2640
+        7696,
+        7904
       ],
-      "id": "76d5b94a-5eed-4dcc-95b6-2432036839ea",
+      "id": "f1fee992-b09f-41e6-97c5-dc4573b862cf",
       "name": "AI Agent"
     },
     {
@@ -943,10 +943,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3232,
-        2816
+        9072,
+        8080
       ],
-      "id": "47719769-82b7-4184-aad7-b5cc5a5d0995",
+      "id": "5d22ddb5-a936-43f2-8608-296a66b62aca",
       "name": "Construir Confirmación Cancelación"
     },
     {
@@ -975,10 +975,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        3376,
-        2960
+        9360,
+        8128
       ],
-      "id": "64f56feb-eb25-4f8c-9b2d-c0806ad0ebdc",
+      "id": "65b82ae4-a5d7-4b03-9ce9-df0bfc5d2ed2",
       "name": "Confirmar Cancelación"
     },
     {
@@ -1004,48 +1004,44 @@
         "body": "={\n  \"number\": \"{{ $('Procesar Mensaje').item.json.ownerNumber }}\",\n  \"text\": \"❌ *Cita cancelada por WhatsApp*\\n\\n👤 *Cliente:* {{ $json.nombre }}\\n👤 *Profesional:* {{ $json.professional_name }}\\n✂️ *Servicio:* {{ $json.servicio }}\\n📅 *Fecha:* {{ $json.fecha }}\\n⏰ *Hora:* {{ ($json.hora||'').substring(0,5) }}\"\n}",
         "options": {}
       },
-      "id": "3b75ba95-970f-4f46-8efe-beafb0718061",
+      "id": "f502bd40-1909-4ab8-8bda-9d7b15259843",
       "name": "Notificar Dueño Cancelación",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2880,
-        2944
+        8720,
+        8208
       ]
     },
     {
       "parameters": {
-        "jsCode": "const row = $input.first().json;\nconst servicio = row.servicio || '';\nconst profName = row.professional_name || '';\nconst hora = (row.hora || '').substring(0, 5);\nconst [hh, mm] = hora.split(':').map(Number);\nconst ampm = hh < 12 ? 'AM' : 'PM';\nconst h12 = hh === 0 ? 12 : hh > 12 ? hh - 12 : hh;\nconst horaAmPm = `${h12}:${String(mm).padStart(2,'0')} ${ampm}`;\n\nconst diasSemana = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];\nconst meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];\nconst d = new Date(row.fecha + 'T00:00:00');\nconst fechaNatural = `${diasSemana[d.getUTCDay()]} ${d.getUTCDate()} de ${meses[d.getUTCMonth()]}`;\n\nconst numeroLimpio = $('Procesar Mensaje').item.json.numeroLimpio;\nconst whatsappInstance = $('Procesar Mensaje').item.json.whatsappInstance;\n\nreturn [{\n  json: {\n    numero: numeroLimpio,\n    whatsappInstance,\n    body: JSON.stringify({\n      number: numeroLimpio,\n      text: `✅ ¡Listo! Tu cita de ${servicio}${profName ? ' con ' + profName : ''} quedó reagendada para el ${fechaNatural} a las ${horaAmPm}. ¡Te esperamos! 😊`\n    })\n  }\n}];"
+        "jsCode": "const row = $input.first().json;\nconst rowJson = JSON.stringify(row);\n\nconst servicio = row.servicio || '';\nconst profName = row.professional_name || '';\n\nlet fechaNatural = 'fecha desconocida';\nlet horaAmPm = '';\n\nconst horaRaw = (row.hora || '').substring(0, 5);\nif (horaRaw) {\n  const [hh, mm] = horaRaw.split(':').map(Number);\n  const hhNum = parseInt(hh) || 0;\n  const mmNum = parseInt(mm) || 0;\n  const ampm = hhNum < 12 ? 'AM' : 'PM';\n  const h12 = hhNum === 0 ? 12 : hhNum > 12 ? hhNum - 12 : hhNum;\n  horaAmPm = `${h12}:${String(mmNum).padStart(2,'0')} ${ampm}`;\n}\n\nconst diasSemana = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];\nconst meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];\n\nif (row.fecha) {\n  const d = new Date(row.fecha + 'T00:00:00');\n  if (!isNaN(d.getTime())) {\n    fechaNatural = `${diasSemana[d.getUTCDay()]} ${d.getUTCDate()} de ${meses[d.getUTCMonth()]}`;\n  }\n}\n\nconst numeroLimpio = $('Procesar Mensaje').item.json.numeroLimpio;\nconst whatsappInstance = $('Procesar Mensaje').item.json.whatsappInstance;\n\nreturn [{\n  json: {\n    numero: numeroLimpio,\n    whatsappInstance,\n    body: JSON.stringify({\n      number: numeroLimpio,\n      text: `✅ ¡Listo! Tu cita de ${servicio}${profName ? ' con ' + profName : ''} quedó reagendada para el ${fechaNatural} a las ${horaAmPm}. ¡Te esperamos! 😊`\n    })\n  }\n}];"
       },
-      "id": "6e77274a-309e-4cff-ab1d-fc0ca873a5fe",
+      "id": "c0097316-8841-4996-bec8-529a26ba1d86",
       "name": "Construir Mensaje Reagendamiento",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2704,
-        3040
+        8912,
+        8384
       ]
     },
     {
-      "id": "a54fd525-ad6d-493b-8e00-3d6718e70079",
+      "parameters": {},
+      "id": "76b341db-6f31-468b-9e6a-2f37f4059c13",
       "name": "Construir Notificación Reagend",
       "type": "n8n-nodes-base.code",
-      "parameters": {
-        "jsCode": "const row = $input.first().json;\nconst servicio = row.servicio || '';\nconst hora = (row.hora || '').substring(0, 5);\nconst [hh, mm] = hora.split(':').map(Number);\nconst ampm = hh < 12 ? 'AM' : 'PM';\nconst h12 = hh === 0 ? 12 : hh > 12 ? hh - 12 : hh;\nconst horaAmPm = `${h12}:${String(mm).padStart(2,'0')} ${ampm}`;\n\nconst diasSemana = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];\nconst meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];\nconst d = new Date(row.fecha + 'T00:00:00');\nconst fechaNatural = `${diasSemana[d.getUTCDay()]} ${d.getUTCDate()} de ${meses[d.getUTCMonth()]}`;\n\nconst numeroLimpio = $('Procesar Mensaje').item.json.numeroLimpio;\nconst whatsappInstance = $('Procesar Mensaje').item.json.whatsappInstance;\nconst ownerNumber = $('Procesar Mensaje').item.json.ownerNumber;\nconst profName = row.professional_name || '';\n\nconst profLine = profName ? `\\n👤 *Profesional:* ${profName}` : '';\nconst textoDueno = `🔄 *Cita reagendada por WhatsApp*\\n\\n👤 *Cliente:* ${row.nombre}\\n✂️ *Servicio:* ${servicio}${profLine}\\n📅 *Fecha:* ${fechaNatural}\\n⏰ *Hora:* ${horaAmPm}\\n\\n_Estado: Pendiente_ ✅`;\n\nreturn [{\n  json: {\n    ownerNumber,\n    whatsappInstance,\n    bodyDueno: JSON.stringify({ number: ownerNumber, text: textoDueno })\n  }\n}];"
-      },
       "position": [
-        3104,
-        3372
+        8944,
+        8640
       ],
       "positionAbsolute": [
         3104,
         3372
-      ]
+      ],
+      "typeVersion": 2
     },
     {
-      "id": "c6212006-3060-4dc4-842d-0f5f59e285cf",
-      "name": "Notificar Dueño Reagend",
-      "type": "n8n-nodes-base.httpRequest",
       "parameters": {
         "method": "POST",
         "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $json.whatsappInstance }}",
@@ -1063,24 +1059,25 @@
           ]
         },
         "sendBody": true,
-        "options": {},
         "contentType": "raw",
         "rawContentType": "application/json",
-        "body": "={{ $json.bodyDueno }}"
+        "body": "={{ $json.bodyDueno }}",
+        "options": {}
       },
+      "id": "ba55e42d-79ac-4903-86d8-f0fde5288c8a",
+      "name": "Notificar Dueño Reagend",
+      "type": "n8n-nodes-base.httpRequest",
       "position": [
-        3504,
-        3372
+        9344,
+        8640
       ],
       "positionAbsolute": [
         3504,
         3372
-      ]
+      ],
+      "typeVersion": 4.4
     },
     {
-      "id": "a6609206-0903-4b9f-b568-99f1a73c6b3c",
-      "name": "Sync Reagend Dashboard",
-      "type": "n8n-nodes-base.httpRequest",
       "parameters": {
         "method": "POST",
         "url": "={{ $env.DASHBOARD_URL }}/api/webhooks/sync-reagend",
@@ -1098,29 +1095,25 @@
           ]
         },
         "sendBody": true,
-        "options": {},
         "contentType": "raw",
         "rawContentType": "application/json",
-        "body": "={\n  \"appointmentId\": {{ $json.id }},\n  \"businessId\": {{ $('Procesar Mensaje').item.json.businessId }},\n  \"servicio\": \"{{ $json.servicio }}\",\n  \"fecha\": \"{{ $json.fecha }}\",\n  \"hora\": \"{{ $json.hora }}\",\n  \"nombre\": \"{{ $json.nombre }}\",\n  \"estado\": \"{{ $json.estado }}\",\n  \"professional_name\": \"{{ $json.professional_name }}\"\n}"
+        "body": "={\n  \"appointmentId\": {{ $json.id }},\n  \"businessId\": {{ $('Procesar Mensaje').item.json.businessId }},\n  \"servicio\": \"{{ $json.servicio }}\",\n  \"fecha\": \"{{ $json.fecha }}\",\n  \"hora\": \"{{ $json.hora }}\",\n  \"nombre\": \"{{ $json.nombre }}\",\n  \"estado\": \"{{ $json.estado }}\",\n  \"professional_name\": \"{{ $json.professional_name }}\"\n}",
+        "options": {}
       },
+      "id": "35b0b760-e708-4ba1-830d-0e7cc4254088",
+      "name": "Sync Reagend Dashboard",
+      "type": "n8n-nodes-base.httpRequest",
       "position": [
-        3504,
-        2972
+        9520,
+        8240
       ],
       "positionAbsolute": [
         3504,
         2972
-      ]
+      ],
+      "typeVersion": 4.4
     },
     {
-      "id": "b6e8c1d4-2f3a-4b5c-8d9e-0f1a2b3c4d5e",
-      "name": "Sync New Dashboard",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        3488,
-        2480
-      ],
       "parameters": {
         "method": "POST",
         "url": "={{ $env.DASHBOARD_URL }}/api/webhooks/sync-new",
@@ -1142,7 +1135,15 @@
         "rawContentType": "application/json",
         "body": "={\n  \"appointmentId\": {{ $json.id }},\n  \"businessId\": {{ $('Procesar Mensaje').item.json.businessId }},\n  \"servicio\": \"{{ $json.servicio }}\",\n  \"fecha\": \"{{ $json.fecha }}\",\n  \"hora\": \"{{ $json.hora }}\",\n  \"nombre\": \"{{ $json.nombre }}\",\n  \"estado\": \"{{ $json.estado }}\",\n  \"professional_name\": \"{{ $('Verificar Slot').item.json.professionalName || '' }}\"\n}",
         "options": {}
-      }
+      },
+      "id": "e95b0b6d-6e64-4f12-9f22-dde8b7f969d4",
+      "name": "Sync New Dashboard",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        9344,
+        7328
+      ]
     }
   ],
   "pinData": {},
@@ -1534,11 +1535,6 @@
         ]
       ]
     },
-    "Sync Cancel Dashboard": {
-      "main": [
-        []
-      ]
-    },
     "Construir Mensaje Reagendamiento": {
       "main": [
         [
@@ -1550,7 +1546,7 @@
         ]
       ]
     },
-    "a54fd525-ad6d-493b-8e00-3d6718e70079": {
+    "Construir Notificación Reagend": {
       "main": [
         [
           {
@@ -1560,18 +1556,13 @@
           }
         ]
       ]
-    },
-    "Sync New Dashboard": {
-      "main": [
-        []
-      ]
     }
   },
   "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "4460a178-7578-4763-bb1d-989c448c2943",
+  "versionId": "f75389a0-291a-49db-928c-d1d218156675",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "78865b14428b3461ac0504416eb2ba5903a5482f3190c606719f27159eed62fe"
