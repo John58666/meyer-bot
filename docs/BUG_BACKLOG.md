@@ -170,7 +170,7 @@ Leer `CLAUDE.md` `´CONTEXT.UPDATE 'en la raíz del proyecto para el protocolo c
 - [x] Modularizar el prompt en 22 variables agrupadas en 8 capas lógicas
 - [x] Backup del prompt original en `docs/fixes/B6-backup-pre-modularizacion.md`
 - [x] Documentar cada sección en `docs/prompt-changelog.md`
-- [ ] Agregar smoke test conversacional post-deploy — pendiente
+- [x] Agregar smoke test conversacional post-deploy — implementado como pre-push hook
 
 **Detalle de la modularización:**
 | Capa | Secciones | Propósito |
