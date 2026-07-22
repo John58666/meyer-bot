@@ -86,6 +86,18 @@ export function ProfessionalScheduleList({ businessId, professionalId }: { busin
 
   if (!isOwnerOrAdmin) {
     const prof = displayed[0];
+
+    async function handleProfessionalSave(schedule: ScheduleData) {
+      const result = await updateProfessionalSchedule(businessId, prof.professionalId, schedule);
+      if (result?.error) {
+        setError(result.error);
+        return result;
+      }
+      setError("");
+      loadProfessionals();
+      return result;
+    }
+
     return (
       <div className="space-y-3">
         <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)] p-3">
@@ -96,7 +108,7 @@ export function ProfessionalScheduleList({ businessId, professionalId }: { busin
         <HorarioClient
           businessId={businessId}
           initialSchedule={prof.schedule ?? {}}
-          onSave={handleSave}
+          onSave={handleProfessionalSave}
         />
         {prof.hasCustomSchedule && (
           <button
