@@ -80,7 +80,7 @@ export function ProfessionalScheduleList({ businessId, professionalId }: { busin
 
   const displayed = isOwnerOrAdmin
     ? professionals
-    : professionals.filter(p => p.professionalId === professionalId);
+    : professionals.filter(p => p.professionalId === Number(professionalId));
 
   if (displayed.length === 0) return null;
 
