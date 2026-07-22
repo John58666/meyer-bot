@@ -200,6 +200,101 @@ nginx 1.24.0 — proxies: n8n.zyvenshop.com, dashboard.zyvenshop.com, evolution.
 DNS: Namecheap (zyvenshop.com) — migrar a Cloudflare
 ```
 
+## Backup & Disaster Recovery
+
+Estrategia **3-2-1**: 3 copias, 2 medios distintos, 1 fuera del sitio.
+
+### 1. PostgreSQL (meyer_db)
+
+```bash
+# Backup manual — volcado comprimido
+docker exec meyer_postgres pg_dump -U meyer_user -d meyer_db \
+  --no-owner --no-acl \
+  | gzip > /root/backups/db/meyer_db_$(date +%Y%m%d_%H%M%S).sql.gz
+
+# Restaurar
+gunzip -c /root/backups/db/meyer_db_20260722_120000.sql.gz \
+  | docker exec -i meyer_postgres psql -U meyer_user -d meyer_db
+
+# Backup automático vía cron (evaluar e instalar)
+# 1. Crear script: /root/scripts/backup-db.sh
+# 2. chmod +x /root/scripts/backup-db.sh
+# 3. crontab -e: 0 4 * * * /root/scripts/backup-db.sh
+```
+
+**Recomendación:** backup diario a las 4 AM Bogotá (9 AM UTC) con retención:
+- Últimos 7 días: backups diarios
+- Últimos 30 días: backups semanales
+- Mensual: archivar aparte
+
+Para off-site, agregar sincronización a Backblaze B2, S3 o scp a otro servidor.
+
+### 2. n8n SQLite (workflows + credenciales)
+
+```bash
+# n8n debe estar detenido para backup consistente
+docker stop n8n-n8n-1
+cp /root/n8n/.n8n/database.sqlite /root/backups/n8n/n8n_$(date +%Y%m%d).sqlite
+docker start n8n-n8n-1
+
+# Alternativa (sin downtime, menos confiable)
+docker exec n8n-n8n-1 sqlite3 /home/node/.n8n/database.sqlite \
+  ".backup /backup/n8n-$(date +%Y%m%d).db"
+```
+
+**⚠️ Importante:** los workflows exportados a JSON (`workflows/`) NO contienen credenciales. Las credenciales están cifradas en el vault interno de n8n (SQLite). Si pierdes el SQLite, pierdes las conexiones a PostgreSQL, Evolution API, etc. — tendrías que reconectarlas manualmente desde la UI.
+
+### 3. .env y secrets
+
+| Archivo | Dónde está | Cómo respaldar |
+|---------|-----------|----------------|
+| `/root/n8n/.env` | VPS | Bitwarden (Secure Note) |
+| `/root/meyer-bot/dashboard/.env.local` | VPS | Bitwarden (Secure Note) |
+| `~/Documents/meyer-bot/dashboard/.env.local` | Mac local | Bitwarden (Secure Note) |
+| `~/Documents/meyer-bot/.env` | Mac local | Bitwarden (Secure Note) |
+| `~/Documents/meyer-bot/secrets/google-credentials.json` | Mac local | Bitwarden (Secure Note o attachment) |
+
+**Bitwarden:** crear un Secure Note "meyer-bot env" con el contenido de cada `.env` y los secrets. Si `bw` CLI no está instalado, usar la web UI de Bitwarden.
+
+### 4. Infraestructura Docker
+
+```bash
+# Backup de docker-compose files
+cp /root/meyer-bot/docker-compose.yml /root/backups/infra/
+cp /opt/beszel/docker-compose.yml /root/backups/infra/
+cp /opt/uptime-kuma/docker-compose.yml /root/backups/infra/
+
+# Lista de imágenes usadas (para recrear sin Docker Hub)
+docker images --format "{{.Repository}}:{{.Tag}}" > /root/backups/infra/images_$(date +%Y%m%d).txt
+```
+
+### 5. Código y workflows
+
+✅ Ya respaldado en GitHub. Incluye:
+- Dashboard completo
+- Workflows exportados como JSON (sin credenciales)
+- Documentación
+
+### 6. Restauración completa (pérdida total)
+
+Si el VPS y el Mac local se pierden simultáneamente:
+
+1. **Bitwarden** → recuperar `.env` de todos los servicios
+2. **GitHub** → clonar repo: `git clone https://github.com/John58666/meyer-bot.git`
+3. **VPS nuevo** → aprovisionar Ubuntu + Docker + nginx
+4. **PostgreSQL** → restaurar desde backup SQL (paso 1)
+5. **n8n SQLite** → restaurar desde backup (paso 2) — si no hay backup, crear workflows desde cero a partir de los JSON, reconectar credenciales manualmente
+6. **Dashboard** → `npm run build && pm2 start`
+7. **Evolution API** → crear instancia y escanear QR desde manager UI
+
+### Checklist periódico (recomendado)
+
+- [ ] **Diario:** backup PostgreSQL automático
+- [ ] **Semanal:** verificar que los backups se están generando
+- [ ] **Quincenal:** restaurar backup en entorno de prueba
+- [ ] **Mensual:** rotar todas las API keys + backup de `.env` a Bitwarden
+- [ ] **Post-deploy:** exportar workflow modificado a JSON y pushear a GitHub
+
 ## MCP en Claude Code (Mac)
 - github: HTTP transport, scope user
 - postgres: stdio, `postgres-mcp` via `uv tool install`, restricted/read-only

@@ -218,6 +218,18 @@ No existe hoy (VPS sin recursos). Implementar cuando se haga upgrade a 4 vCPU / 
 - Upsert automático al agendar por WhatsApp: actualiza `ultima_visita`, `total_visitas`, `nombre`.
 - UI en dashboard: vista `/dashboard/clientes` — activa el botón del nav que hoy apunta a 404.
 
+### Backup & Disaster Recovery
+
+Ver `docs/RUNBOOK.md` → sección Backup & Disaster Recovery para procedimientos detallados.
+
+Resumen: 
+- **PostgreSQL:** backups diarios vía `pg_dump` (pendiente de implementar)
+- **n8n SQLite:** backup del vault de credenciales (pendiente de implementar)
+- **.env / secrets:** Bitwarden (pendiente de verificar)
+- **Código/workflows:** ✅ GitHub
+
+Sin backups del VPS, una pérdida total requiere rehacer credenciales manualmente en n8n UI + restaurar DB desde el último dump disponible.
+
 ### Onboarding de nuevo negocio (proceso manual actual)
 1. SQL INSERT en `businesses` con `schedule_text` JSONB y `services_text` en formato `"Nombre $precio, ..."`
 2. Evolution API manager: crear instancia con mismo nombre que `whatsapp_instance`
