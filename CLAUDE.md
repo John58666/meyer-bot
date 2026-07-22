@@ -17,6 +17,7 @@ Plataforma SaaS multi-tenant en construcción para negocios locales.
 - Workflows de n8n exportados en `/workflows`
 - Documentación en `/docs` — leer `docs/README.md` primero para saber qué docs aplicar según tu tarea
 - Credenciales de Google en `/secrets` (ignorado por Git)
+- Hooks de Git en `.githooks/` — activar con: `git config core.hooksPath .githooks` (o `bash scripts/setup-hooks.sh`)
 
 ## Convenciones
 - Commits en español o inglés, formato: tipo: descripción

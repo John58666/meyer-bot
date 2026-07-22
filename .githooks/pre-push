@@ -1,0 +1,10 @@
+#!/bin/bash
+# Pre-push hook: ejecuta smoke test estructural del prompt antes de pushear
+echo "🔍 Ejecutando B6 smoke test..."
+node docs/fixes/B6-smoke-test.js
+if [ $? -ne 0 ]; then
+  echo "❌ Smoke test falló — push cancelado. Revisa el jsCode del AI Agent antes de pushear."
+  exit 1
+fi
+echo "✅ Smoke test OK — push continúa"
+exit 0

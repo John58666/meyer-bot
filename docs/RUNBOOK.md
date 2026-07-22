@@ -8,7 +8,7 @@
 cd ~/Documents/meyer-bot
 git add .
 git commit -m "tipo: descripción"
-git push
+git push                          # ejecuta .githooks/pre-push (smoke test B6)
 
 # En VPS
 ssh root@178.104.27.180
@@ -16,6 +16,13 @@ cd /root/meyer-bot/dashboard
 git pull
 npm run build
 pm2 restart meyer-dashboard   # usar pm2 reload cuando haya 10+ clientes
+```
+
+## Setup inicial (primera vez que clonas el repo)
+```bash
+git clone https://github.com/John58666/meyer-bot.git
+cd meyer-bot
+bash scripts/setup-hooks.sh       # configura .githooks/ como hooks de git
 ```
 
 ## PM2

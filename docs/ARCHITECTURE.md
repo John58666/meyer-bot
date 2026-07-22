@@ -189,6 +189,7 @@ Cuando haya 10+ clientes: usar `pm2 reload` (zero-downtime) en vez de `pm2 resta
 - Siempre verificar con `git diff --staged --name-only` antes de commitear.
 - Commits desde Mac únicamente. Nunca desde VPS.
 - Archivos de documentos temporales (FIX_*.md, etc.) no van al repo — eliminar antes del commit.
+- **Pre-push hook:** en `.githooks/pre-push` (trackeado en git). Activar con `bash scripts/setup-hooks.sh`. Ejecuta smoke test B6 antes de cada push.
 
 ### Staging
 No existe hoy (VPS sin recursos). Implementar cuando se haga upgrade a 4 vCPU / 8GB.

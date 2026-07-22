@@ -23,6 +23,7 @@ Mapa de docs. **NO leas todo** — lee solo lo que corresponde a tu tarea.
 Leer además:
 - `prompt-changelog.md` — versionado del prompt
 - `fixes/B6-smoke-test.js` — test estructural (ejecutar post-deploy)
+- `scripts/setup-hooks.sh` — bootstrap de hooks de git (`.githooks/`)
 
 ## 🚀 Cuando haces deploy / ops
 

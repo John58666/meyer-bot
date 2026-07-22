@@ -1,9 +1,10 @@
 import { auth } from '@/auth'
-import { redirect, notFound } from 'next/navigation'
+import { redirect } from 'next/navigation'
 import { pool } from '@/lib/db'
 import { ServiciosClient } from '@/components/configuracion/servicios-client'
 import { HorarioClient } from '@/components/configuracion/horario-client'
 import { ProfessionalScheduleList } from '@/components/configuracion/professional-schedule-list'
+import { RedirectClient } from '@/components/redirect-client'
 import type { ScheduleData } from '@/lib/actions'
 
 export default async function ConfiguracionPage() {
@@ -14,7 +15,7 @@ export default async function ConfiguracionPage() {
   const role = session.user.role
   const isOwnerOrAdmin = role === 'owner' || role === 'admin'
 
-  if (!isOwnerOrAdmin) notFound()
+  if (!isOwnerOrAdmin) return <RedirectClient to="/dashboard" />
 
   const { rows } = await pool.query(
     `SELECT services_text, schedule_text, multi_professional FROM businesses WHERE id = $1`,

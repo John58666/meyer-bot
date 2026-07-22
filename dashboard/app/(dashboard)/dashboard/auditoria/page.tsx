@@ -1,8 +1,9 @@
 import { auth } from "@/auth";
-import { redirect, notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { getAuditLogs } from "@/lib/audit";
 import { getEquipo } from "@/lib/actions";
 import { AuditoriaClient } from "@/components/auditoria/auditoria-client";
+import { RedirectClient } from "@/components/redirect-client";
 
 interface Props {
   searchParams: Promise<{
@@ -29,7 +30,7 @@ function getWeekBounds() {
 export default async function AuditoriaPage({ searchParams }: Props) {
   const session = await auth();
   if (!session) redirect("/login");
-  if (session.user.role !== "owner" && session.user.role !== "admin") notFound();
+  if (session.user.role !== "owner" && session.user.role !== "admin") return <RedirectClient to="/dashboard" />;
 
   const businessId = session.user.businessId;
   const sp = await searchParams;
