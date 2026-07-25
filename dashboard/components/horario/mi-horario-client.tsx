@@ -6,7 +6,7 @@ import { getBloqueos } from '@/lib/actions'
 import { CalendarView } from './calendar-view'
 import { DayDetailSheet } from './day-detail-sheet'
 import { HorarioRecurrente } from './horario-recurrente'
-import { Settings, Check, ChevronDown } from 'lucide-react'
+import { Check, ChevronDown } from 'lucide-react'
 
 type ProfessionalData = {
   success: true
@@ -143,27 +143,20 @@ export function MiHorarioClient({ data, role: _role, businessId, professionalId 
           onNextMonth={goNextMonth}
         />
 
-        <div className="mt-4 pt-3 border-t border-[var(--border-subtle)] flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1">
-              <div className="w-2.5 h-2.5 rounded-sm bg-[var(--color-danger)]/30" />
-              <span className="text-[10px] text-[var(--text-muted)]">Cerrado</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-2.5 h-2.5 rounded-sm bg-[var(--color-warning)]/30" />
-              <span className="text-[10px] text-[var(--text-muted)]">Horario esp.</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-2.5 h-2.5 rounded-sm border border-dashed border-[var(--border-subtle)]" />
-              <span className="text-[10px] text-[var(--text-muted)]">Sin horario</span>
-            </div>
+        <div className="mt-3 pt-3 border-t border-[var(--border-subtle)] flex items-center justify-center gap-4">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-[var(--color-danger)]" />
+            <span className="text-[11px] text-[var(--text-muted)]">Cerrado</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-[var(--color-warning)]" />
+            <span className="text-[11px] text-[var(--text-muted)]">Horario esp.</span>
           </div>
           <button
             onClick={() => setShowRecurrente(true)}
-            className="flex items-center gap-1 text-[10px] text-[var(--text-accent)] hover:text-[var(--color-accent)] transition-colors"
+            className="text-[11px] text-[var(--text-accent)] hover:text-[var(--color-accent)] transition-colors underline underline-offset-2"
           >
-            <Settings className="h-3 w-3" />
-            Horario recurrente
+            Editar horario recurrente
           </button>
         </div>
       </div>

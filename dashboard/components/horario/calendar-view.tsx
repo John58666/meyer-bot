@@ -37,7 +37,7 @@ export function CalendarView({
     for (let i = 0; i < firstDayOfWeek; i++) days.push(null)
     for (let d = 1; d <= daysInMonth; d++) days.push(d)
     return days
-  }, [currentMonth, currentYear, firstDayOfWeek, daysInMonth])
+  }, [firstDayOfWeek, daysInMonth])
 
   const bloqueoMap = useMemo(() => {
     const map = new Map<string, BloqueoRow[]>()
@@ -70,33 +70,33 @@ export function CalendarView({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-4">
         <button
           onClick={onPrevMonth}
-          className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-colors"
+          className="w-9 h-9 flex items-center justify-center rounded-xl text-[var(--text-secondary)] hover:text-white hover:bg-white/10 transition-colors"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-5 w-5" />
         </button>
-        <span className="text-sm font-medium text-white">
+        <span className="text-base font-semibold text-white tracking-tight">
           {MONTHS[currentMonth]} {currentYear}
         </span>
         <button
           onClick={onNextMonth}
-          className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-colors"
+          className="w-9 h-9 flex items-center justify-center rounded-xl text-[var(--text-secondary)] hover:text-white hover:bg-white/10 transition-colors"
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-5 w-5" />
         </button>
       </div>
 
-      <div className="grid grid-cols-7 gap-0.5 mb-1.5">
+      <div className="grid grid-cols-7 gap-1 mb-2">
         {DAY_HEADERS.map(d => (
-          <div key={d} className="text-center text-xs text-[var(--text-muted)] font-medium py-1">
+          <div key={d} className="text-center text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider py-1">
             {d}
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-0.5">
+      <div className="grid grid-cols-7 gap-1">
         {calendarDays.map((day, i) => {
           if (day == null) return <div key={`e-${i}`} className="aspect-square" />
 
@@ -115,33 +115,33 @@ export function CalendarView({
                 onSelectDate(dateStr)
               }}
               className={cn(
-                'aspect-square flex flex-col items-center justify-center text-xs rounded-lg relative transition-colors',
-                selected ? 'ring-2 ring-[var(--color-accent)] bg-[var(--color-accent)]/10' :
-                  today ? 'ring-1 ring-[var(--color-accent)]' : '',
-                !configured && !hasCerrado && 'opacity-40',
-                'hover:bg-white/5',
+                'aspect-square flex flex-col items-center justify-center rounded-xl relative transition-all',
+                selected
+                  ? 'bg-[var(--color-accent)] shadow-sm shadow-[var(--color-accent)]/20'
+                  : today
+                    ? 'bg-white/8'
+                    : configured
+                      ? 'hover:bg-white/8 bg-white/3'
+                      : 'hover:bg-white/5',
               )}
             >
               <span className={cn(
-                'font-medium',
-                selected ? 'text-white' : today ? 'text-[var(--color-accent)]' : 'text-[var(--text-secondary)]',
+                'text-sm font-semibold leading-none',
+                selected ? 'text-white' : today ? 'text-[var(--color-accent)]' : 'text-white/80',
+                !configured && !selected && 'text-white/40',
               )}>
                 {day}
               </span>
               {(hasCerrado || hasEspecial) && (
-                <div className="flex gap-0.5 mt-0.5">
-                  {hasCerrado && <div className="w-1 h-1 rounded-full bg-[var(--color-danger)]" />}
-                  {hasEspecial && <div className="w-1 h-1 rounded-full bg-[var(--color-warning)]" />}
+                <div className="flex gap-1 mt-1">
+                  {hasCerrado && <div className="w-1.5 h-1.5 rounded-full bg-[var(--color-danger)]" />}
+                  {hasEspecial && <div className="w-1.5 h-1.5 rounded-full bg-[var(--color-warning)]" />}
                 </div>
               )}
             </button>
           )
         })}
       </div>
-
-      {bloqueos.length === 0 && (
-        <p className="text-xs text-[var(--text-muted)] text-center mt-3">No hay bloqueos en este mes</p>
-      )}
     </div>
   )
 }
