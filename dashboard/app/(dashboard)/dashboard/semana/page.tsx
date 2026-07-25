@@ -1,6 +1,5 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { getWeekAppointments } from "@/lib/appointments";
 import { getActiveProfessionals } from "@/lib/actions";
 import { pool } from "@/lib/db";
@@ -42,12 +41,6 @@ export default async function SemanaPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Link
-            href="/dashboard/semana/bloqueos"
-            className="text-xs text-[var(--text-secondary)] hover:text-white border border-[var(--border-subtle)] rounded-lg px-3 py-1.5 transition-colors hover:border-[var(--color-accent)]/50"
-          >
-            Bloqueos
-          </Link>
           <RefreshButton />
         </div>
       </div>

@@ -10,11 +10,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, Home, Calendar, BarChart2, Users, Settings, UserCog, HelpCircle, ClipboardList } from "lucide-react";
+import { LogOut, Home, Calendar, BarChart2, Users, Settings, UserCog, HelpCircle, ClipboardList, Clock } from "lucide-react";
 
 const bottomNavItems = [
   { icon: Home,      href: "/dashboard",          label: "Inicio"   },
   { icon: Calendar,  href: "/dashboard/semana",   label: "Agenda"   },
+  { icon: Clock,     href: "/dashboard/mi-horario", label: "Horario" },
   { icon: BarChart2, href: "/dashboard/metricas", label: "Métricas" },
   { icon: Users,     href: "/dashboard/clientes", label: "Clientes" },
 ];
