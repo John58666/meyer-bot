@@ -25,22 +25,27 @@ export function parsePrice(servicesText: string): Map<string, number> {
 }
 
 /**
- * Devuelve array de {nombre, precio} para usar en selects/forms.
+ * Devuelve array de {nombre, precio, duracion?} para usar en selects/forms.
  * Orden preservado del string original.
+ * Formato soportado: "Nombre $precio" o "Nombre $precio (Nmin)"
  */
 export function parseServices(
   servicesText: string
-): Array<{ nombre: string; precio: number }> {
-  const result: Array<{ nombre: string; precio: number }> = [];
+): Array<{ nombre: string; precio: number; duracion?: number }> {
+  const result: Array<{ nombre: string; precio: number; duracion?: number }> = [];
   if (!servicesText) return result;
 
   servicesText.split(',').forEach(entry => {
-    const match = entry.match(/^(.+?)\s*\$([0-9.,]+)/);
+    const match = entry.match(/^(.+?)\s*\$([0-9.,]+)(?:\s*\((\d+)min\))?/);
     if (!match) return;
     const nombre = match[1].trim();
     const precioStr = match[2].replace(/\./g, '').replace(',', '.');
     const precio = parseFloat(precioStr);
-    if (!isNaN(precio)) result.push({ nombre, precio });
+    if (!isNaN(precio)) {
+      const item: { nombre: string; precio: number; duracion?: number } = { nombre, precio };
+      if (match[3]) item.duracion = parseInt(match[3], 10);
+      result.push(item);
+    }
   });
 
   return result;

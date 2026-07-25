@@ -1,9 +1,82 @@
 services:
   n8n:
-    image: n8nio/n8n
+    image: n8nio/n8n:2.10.3
     ports:
       - "5678:5678"
     env_file:
       - .env
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: meyer_postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: n8n_db
+      DB_POSTGRESDB_USER: meyer_user
+      DB_POSTGRESDB_PASSWORD: ${PG_PASSWORD}
+      EXECUTIONS_MODE: queue
+      QUEUE_BULL_REDIS_HOST: redis
+      QUEUE_BULL_REDIS_PORT: 6379
+      QUEUE_BULL_REDIS_DB: 1
+      QUEUE_HEALTH_CHECK_ACTIVE: "true"
+      OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS: "true"
+      EXECUTIONS_DATA_PRUNE: "true"
+      EXECUTIONS_DATA_MAX_AGE: 168
+      EXECUTIONS_DATA_PRUNE_MAX_COUNT: 50000
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
     volumes:
       - ~/.n8n:/home/node/.n8n
+    depends_on:
+      meyer_postgres:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: >
+      redis-server
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory 1gb
+      --maxmemory-policy noeviction
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      retries: 5
+
+  n8n-worker:
+    image: n8nio/n8n:2.10.3
+    restart: unless-stopped
+    command: worker --concurrency=5
+    env_file:
+      - .env
+    environment:
+      EXECUTIONS_MODE: queue
+      QUEUE_BULL_REDIS_HOST: redis
+      QUEUE_BULL_REDIS_PORT: 6379
+      QUEUE_BULL_REDIS_DB: 1
+      QUEUE_WORKER_LOCK_DURATION: 120000
+      QUEUE_WORKER_LOCK_RENEW_TIME: 15000
+      QUEUE_WORKER_STALLED_INTERVAL: 30000
+      QUEUE_BULL_JOB_OPTIONS_REMOVE_ON_COMPLETE: 1000
+      QUEUE_HEALTH_CHECK_ACTIVE: "true"
+      N8N_GRACEFUL_SHUTDOWN_TIMEOUT: 45
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: meyer_postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: n8n_db
+      DB_POSTGRESDB_USER: meyer_user
+      DB_POSTGRESDB_PASSWORD: ${PG_PASSWORD}
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+    volumes:
+      - ~/.n8n:/home/node/.n8n
+    depends_on:
+      meyer_postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      replicas: 1
+
+volumes:
+  redis_data:

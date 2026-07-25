@@ -1,10 +1,15 @@
 #!/bin/bash
-# Pre-push hook: ejecuta smoke test estructural del prompt antes de pushear
-echo "🔍 Ejecutando B6 smoke test..."
-node docs/fixes/B6-smoke-test.js
-if [ $? -ne 0 ]; then
+# Pre-push hook: verify.sh + B6 smoke test
+SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+
+echo "🔍 Running harness verification..."
+"$SCRIPT_DIR/scripts/verify.sh" || exit 1
+
+echo "🔍 Running B6 smoke test..."
+node "$SCRIPT_DIR/docs/fixes/B6-smoke-test.js" || {
   echo "❌ Smoke test falló — push cancelado. Revisa el jsCode del AI Agent antes de pushear."
   exit 1
-fi
-echo "✅ Smoke test OK — push continúa"
+}
+
+echo "✅ All checks passed — push continúa"
 exit 0

@@ -1,0 +1,6 @@
+#!/bin/bash
+# Pre-commit hook: corre verify.sh antes de cada commit
+# Si falla, el commit se cancela con mensaje claro.
+
+SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+"$SCRIPT_DIR/scripts/verify.sh"

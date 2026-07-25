@@ -61,6 +61,39 @@ export async function createAppointment(formData: FormData) {
         params,
       );
       if (rows.length > 0) return { conflict: true };
+
+      // Validar schedule_exceptions (día bloqueado / horario especial)
+      const blockParams: (string | number)[] = [businessId, fecha];
+      let blockProfCondition: string;
+      if (professionalId != null) {
+        blockProfCondition = `AND (professional_id = $${blockParams.push(professionalId)} OR professional_id IS NULL)`;
+      } else {
+        blockProfCondition = 'AND professional_id IS NULL';
+      }
+
+      const { rows: bloqueos } = await pool.query(
+        `SELECT id, tipo FROM schedule_exceptions
+         WHERE business_id = $1 AND fecha = $2 ${blockProfCondition}`,
+        blockParams
+      );
+
+      for (const b of bloqueos) {
+        if (b.tipo === 'cerrado') {
+          return { error: 'Este día está bloqueado para el profesional seleccionado' };
+        }
+        if (b.tipo === 'horario_especial') {
+          const { rows: ex } = await pool.query(
+            `SELECT hora_inicio, hora_fin FROM schedule_exceptions WHERE id = $1`,
+            [b.id]
+          );
+          if (ex.length > 0) {
+            const horaStr = hora.length === 5 ? hora + ':00' : hora;
+            if (horaStr < ex[0].hora_inicio!.substring(0, 5) + ':00' || horaStr >= ex[0].hora_fin!.substring(0, 5) + ':00') {
+              return { error: 'El horario seleccionado está fuera del horario especial configurado' };
+            }
+          }
+        }
+      }
     }
 
     const insertResult = await pool.query(
@@ -441,6 +474,8 @@ async function fetchOcupacion(
   fechaHasta: string,
   professionalId?: number | null
 ): Promise<{ ocupados: number; total: number }> {
+  // TODO: Use COALESCE(ps.schedule_text, b.schedule_text) when professionalId != null
+  // (pre-existing gap — professional custom schedules not reflected in occupancy)
   const scheduleQuery = await pool.query<{ schedule_text: unknown }>(
     `SELECT schedule_text FROM businesses WHERE id = $1`,
     [businessId]
@@ -469,12 +504,59 @@ async function fetchOcupacion(
     params
   );
 
+  const exParams: (string | number)[] = [businessId, fechaDesde, fechaHasta];
+  const exProfCondition = professionalId != null
+    ? `AND (professional_id = $${exParams.push(professionalId)} OR professional_id IS NULL)`
+    : 'AND professional_id IS NULL';
+
+  const { rows: excepciones } = await pool.query<{
+    fecha: string;
+    tipo: string;
+    hora_inicio: string | null;
+    hora_fin: string | null;
+  }>(
+    `SELECT fecha::text, tipo, hora_inicio::text, hora_fin::text
+     FROM schedule_exceptions
+     WHERE business_id = $1 AND fecha BETWEEN $2 AND $3 ${exProfCondition}`,
+    exParams
+  );
+
+  const exMap = new Map<
+    string,
+    { tipo: string; hora_inicio?: string; hora_fin?: string }
+  >();
+  for (const ex of excepciones) {
+    exMap.set(ex.fecha, {
+      tipo: ex.tipo,
+      hora_inicio: ex.hora_inicio ?? undefined,
+      hora_fin: ex.hora_fin ?? undefined,
+    });
+  }
+
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const fechaStr = d.toISOString().slice(0, 10);
+    const ex = exMap.get(fechaStr);
+
+    if (ex?.tipo === 'cerrado') continue;
+
     const dayOfWeek = d.getDay();
     const daySchedule = schedule[String(dayOfWeek)];
     if (!daySchedule) continue;
-    const slotsForDay = (daySchedule.close - daySchedule.open) * 2;
-    totalSlots += slotsForDay;
+
+    if (ex?.tipo === 'horario_especial' && ex.hora_inicio && ex.hora_fin) {
+      const [oh, om] = ex.hora_inicio.split(':').map(Number);
+      const [ch, cm] = ex.hora_fin.split(':').map(Number);
+      const openMin = oh * 60 + (om ?? 0);
+      const closeMin = ch * 60 + (cm ?? 0);
+      if (Number.isFinite(openMin) && Number.isFinite(closeMin) && closeMin > openMin) {
+        totalSlots += Math.floor((closeMin - openMin) / 30);
+      } else {
+        // Invalid special hours — fall back to regular schedule
+        totalSlots += (daySchedule.close - daySchedule.open) * 2;
+      }
+    } else {
+      totalSlots += (daySchedule.close - daySchedule.open) * 2;
+    }
   }
 
   return { ocupados: aptRows.length, total: totalSlots };
@@ -1755,5 +1837,109 @@ export async function getAvailableSlots(
   } catch (e) {
     console.error('[getAvailableSlots]', e);
     return [];
+  }
+}
+
+// ─── Mi Horario: data unificada ──────────────────────────────────────────────
+
+export interface ProfesionalConHorario {
+  id: number
+  name: string
+  schedule: ScheduleData | null
+}
+
+export interface BloqueoRow {
+  id: number
+  fecha: string
+  tipo: 'cerrado' | 'horario_especial'
+  hora_inicio: string | null
+  hora_fin: string | null
+  motivo: string | null
+  professional_id: number | null
+  professional_name: string | null
+}
+
+export async function getMiHorarioData(businessId: number, role: string, professionalId: number | null) {
+  try {
+    const bizResult = await pool.query(
+      `SELECT schedule_text, multi_professional FROM businesses WHERE id = $1`,
+      [businessId]
+    );
+    const rawSchedule = bizResult.rows[0]?.schedule_text;
+    const businessSchedule: ScheduleData = typeof rawSchedule === 'string'
+      ? JSON.parse(rawSchedule) : (rawSchedule ?? {});
+
+    if (role === 'profesional') {
+      const profSchedule = await getProfessionalSchedule(businessId, professionalId!);
+      const bloqueos = await getBloqueos(businessId, professionalId, false);
+      return { success: true as const, view: 'professional' as const, businessSchedule, schedule: profSchedule, bloqueos };
+    }
+
+    const profs = await pool.query<{ id: number; name: string }>(
+      `SELECT id, name FROM professionals WHERE business_id = $1 AND active = true ORDER BY name`,
+      [businessId]
+    );
+    const profSchedules = await getAllProfessionalSchedules(businessId);
+    const scheduleMap = new Map<number, ScheduleData | null>();
+    for (const ps of profSchedules) {
+      scheduleMap.set(ps.professionalId, ps.schedule as ScheduleData | null);
+    }
+    const profesionales: ProfesionalConHorario[] = profs.rows.map(p => ({
+      id: p.id,
+      name: p.name,
+      schedule: scheduleMap.get(p.id) ?? null,
+    }));
+    const bloqueos = await getBloqueos(businessId, null, true) as BloqueoRow[];
+    return { success: true as const, view: 'ownerAdmin' as const, businessSchedule, profesionales, bloqueos };
+  } catch (e) {
+    console.error('[getMiHorarioData]', e);
+    return { success: false as const, error: 'Error cargando datos de horario' };
+  }
+}
+
+export async function checkConflictosBloqueo(
+  businessId: number,
+  fecha: string,
+  professionalId?: number | null
+) {
+  const params: (string | number)[] = [businessId, fecha];
+  const profCondition = professionalId != null
+    ? `AND professional_id = $${params.push(professionalId)}`
+    : '';
+  const { rows } = await pool.query(
+    `SELECT COUNT(*) FROM appointments
+     WHERE business_id = $1 AND fecha = $2 AND estado != 'Cancelada' ${profCondition}`,
+    params
+  );
+  return parseInt(rows[0].count, 10);
+}
+
+export async function updateServices(data: {
+  businessId: number
+  servicios: { nombre: string; precio: number; duracion: number }[]
+}) {
+  const session = await auth()
+  if (!session) return { error: 'No autenticado' }
+  if (session.user.role !== 'owner' && session.user.role !== 'admin')
+    return { error: 'No autorizado' }
+
+  if (data.servicios.length === 0)
+    return { error: 'Agrega al menos un servicio' }
+
+  const servicesText = data.servicios.map(s => `${s.nombre} $${s.precio.toLocaleString('es-CO')} (${s.duracion}min)`).join(', ')
+
+  try {
+    await pool.query(
+      `UPDATE businesses SET services_text = $1 WHERE id = $2`,
+      [servicesText, data.businessId]
+    )
+    auditar(data.businessId, parseInt(session.user.id), "update_services", "business", data.businessId, {
+      servicios_count: data.servicios.length,
+    })
+    revalidatePath('/dashboard/configuracion')
+    return { ok: true }
+  } catch (e) {
+    console.error('[updateServices]', e)
+    return { error: 'Error guardando servicios' }
   }
 }

@@ -15,13 +15,21 @@ Plataforma SaaS multi-tenant en construcción para negocios locales.
 
 ## Estructura del proyecto
 - Workflows de n8n exportados en `/workflows`
-- Documentación en `/docs` — leer `docs/README.md` primero para saber qué docs aplicar según tu tarea
+- Documentación en `/docs` — leer `AGENTS.md` primero para saber qué docs aplicar según tu tarea
 - Credenciales de Google en `/secrets` (ignorado por Git)
 - Hooks de Git en `.githooks/` — activar con: `git config core.hooksPath .githooks` (o `bash scripts/setup-hooks.sh`)
 
 ## Convenciones
 - Commits en español o inglés, formato: tipo: descripción
 - Tipos: feat, fix, chore, docs
+
+## REGLA GENERAL: Validación antes de implementar
+Aplica a **todo**, no solo bugs:
+
+1. **Explicar plan primero.** Antes de escribir código, modificar archivos, o ejecutar comandos que cambien algo: decir qué vas a hacer exactamente
+2. **Esperar aprobación.** No implementar hasta que el usuario diga "sí" o "adelante"
+3. **Un paso a la vez.** No hacer 3 cambios en paralelo aunque sean independientes. Terminar uno, mostrar resultado, esperar aprobación, seguir.
+4. **Si el plan cambia durante la implementación**, detenerse y avisar antes de desviarse.
 
 ## PROTOCOLO DE CORRECCIÓN DE BUGS — OBLIGATORIO
 
@@ -67,3 +75,16 @@ Todo cambio debe considerar:
 
 ### 8. Subir a GitHub solo cuando se indique
 No hacer commit ni push sin instrucción explícita del usuario.
+
+### 9. PROTOCOLO DE CIERRE DE SESIÓN — OBLIGATORIO
+Cuando el usuario indique que la sesión termina:
+
+- [ ] Preguntar: "¿Cerramos la sesión?"
+- [ ] Actualizar `docs/harness/MEMORY.md` — agregar resumen de lo que se hizo (nunca reemplazar)
+- [ ] Actualizar `docs/sessions/HANDOFF.md`:
+  - Actualizar frontmatter: `status`, `date`, `next_action`
+  - Actualizar tabla 🗂️ Estado de archivos (✅ los modificados, ─ los desactualizados)
+  - Escribir resumen de lo que se hizo y qué queda pendiente
+- [ ] Si se modificó otro archivo, marcar en la tabla de HANDOFF.md
+
+**Sin excepción.** No cerrar sin dejar handoff. Si no hay cambios, decirlo: "Sin cambios, handoff actual sigue vigente."

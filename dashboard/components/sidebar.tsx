@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Calendar, BarChart2, Users, Settings, HelpCircle, UserCog, ClipboardList } from "lucide-react";
+import { Home, Calendar, BarChart2, Users, Settings, HelpCircle, UserCog, ClipboardList, Clock } from "lucide-react";
 
 const navItems = [
-  { icon: Home,      href: "/dashboard",          label: "Inicio"   },
-  { icon: Calendar,  href: "/dashboard/semana",   label: "Agenda"   },
-  { icon: BarChart2, href: "/dashboard/metricas", label: "Métricas" },
-  { icon: Users,     href: "/dashboard/clientes", label: "Clientes" },
+  { icon: Home,      href: "/dashboard",            label: "Inicio"     },
+  { icon: Calendar,  href: "/dashboard/semana",     label: "Agenda"     },
+  { icon: BarChart2, href: "/dashboard/metricas",   label: "Métricas"  },
+  { icon: Clock,     href: "/dashboard/mi-horario", label: "Mi horario" },
+  { icon: Users,     href: "/dashboard/clientes",   label: "Clientes"  },
 ];
 
 interface SidebarProps {

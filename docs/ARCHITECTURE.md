@@ -225,7 +225,7 @@ Ver `docs/RUNBOOK.md` → sección Backup & Disaster Recovery para procedimiento
 
 Resumen: 
 - **PostgreSQL:** backups diarios vía `pg_dump` (pendiente de implementar)
-- **n8n SQLite:** backup del vault de credenciales (pendiente de implementar)
+- **n8n PostgreSQL:** backups automáticos vía `pg_dump` incluidos en el mismo backup de la DB de la app (DB `n8n_db` compartida)
 - **.env / secrets:** Bitwarden (pendiente de verificar)
 - **Código/workflows:** ✅ GitHub
 

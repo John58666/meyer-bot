@@ -223,33 +223,75 @@ docker exec meyer_postgres pg_dump -U meyer_user -d meyer_db \
 gunzip -c /root/backups/db/meyer_db_20260722_120000.sql.gz \
   | docker exec -i meyer_postgres psql -U meyer_user -d meyer_db
 
-# Backup automático vía cron (evaluar e instalar)
-# 1. Crear script: /root/scripts/backup-db.sh
-# 2. chmod +x /root/scripts/backup-db.sh
-# 3. crontab -e: 0 4 * * * /root/scripts/backup-db.sh
+# Backup automático (script del repo)
+# Ver sección "Backup automático con script del repo" abajo
 ```
 
-**Recomendación:** backup diario a las 4 AM Bogotá (9 AM UTC) con retención:
-- Últimos 7 días: backups diarios
-- Últimos 30 días: backups semanales
-- Mensual: archivar aparte
+**Script del repo (recomendado):** `infrastructure/scripts/backup-meyer.sh` hace todo automáticamente — ver abajo.
 
-Para off-site, agregar sincronización a Backblaze B2, S3 o scp a otro servidor.
+### 1b. Backup automático con script del repo (recomendado)
 
-### 2. n8n SQLite (workflows + credenciales)
+El script `infrastructure/scripts/backup-meyer.sh` automatiza los 3 backups:
+1. **PostgreSQL** — `pg_dump -Fc` (formato comprimido)
+2. **n8n** — backup incluido en PostgreSQL (DB `n8n_db`, compartida con el mismo `pg_dump`)
+3. **.env** — copia de archivos de configuración
+
+**Características:**
+- Auto-detección de nombres de contenedores (funciona aunque cambie el project name)
+- Verificación de tamaño de dump (falla si dump vacío)
+- Retención de 30 días (limpieza automática)
+- Offsite opcional vía rclone a Backblaze B2
+
+**Instalación en VPS:**
+```bash
+# 1. Copiar el script al VPS
+scp infrastructure/scripts/backup-meyer.sh root@178.104.27.180:/usr/local/bin/
+ssh root@178.104.27.180 chmod +x /usr/local/bin/backup-meyer.sh
+
+# 2. Crear directorio de backups
+ssh root@178.104.27.180 mkdir -p /root/backups/meyer-bot
+
+# 3. Probar manualmente (debe ejecutarse sin errores)
+ssh root@178.104.27.180 /usr/local/bin/backup-meyer.sh
+
+# 4. Configurar cron — diario a las 3 AM
+ssh root@178.104.27.180 crontab -e
+#   Agregar: 0 3 * * * /usr/local/bin/backup-meyer.sh >> /var/log/backup-meyer.log 2>&1
+```
+
+**Offsite (Backblaze B2 — CONFIGURADO ✅):**
+- rclone v1.60.1 instalado en VPS
+- Bucket `meyer-bot-backups` en B2
+- Ruta en B2: `b2:meyer-bot-backups/{hostname}/`
+- Sync automático dentro del script `backup-meyer.sh` (sección 5)
+- **Costo actual: $0/mes** (<10GB gratis)
 
 ```bash
-# n8n debe estar detenido para backup consistente
-docker stop n8n-n8n-1
-cp /root/n8n/.n8n/database.sqlite /root/backups/n8n/n8n_$(date +%Y%m%d).sqlite
-docker start n8n-n8n-1
+# Verificar backups en B2
+rclone ls b2:meyer-bot-backups/
 
-# Alternativa (sin downtime, menos confiable)
-docker exec n8n-n8n-1 sqlite3 /home/node/.n8n/database.sqlite \
-  ".backup /backup/n8n-$(date +%Y%m%d).db"
+# Restaurar desde B2 a local
+rclone copy b2:meyer-bot-backups/n8nserver/ /root/backups/restore/
 ```
 
-**⚠️ Importante:** los workflows exportados a JSON (`workflows/`) NO contienen credenciales. Las credenciales están cifradas en el vault interno de n8n (SQLite). Si pierdes el SQLite, pierdes las conexiones a PostgreSQL, Evolution API, etc. — tendrías que reconectarlas manualmente desde la UI.
+**RPO/RTO:**
+| Métrica | Actual |
+|---------|--------|
+| RPO (pérdida máxima) | 24 horas |
+| RTO (recuperación) | 1-2 horas |
+
+### 2. n8n PostgreSQL (workflows + credenciales)
+
+n8n ahora usa PostgreSQL (DB `n8n_db`) en el mismo servidor que la DB de la app.
+El backup PostgreSQL del paso 1 ya incluye workflows y credenciales de n8n.
+
+**Export opcional de workflows a JSON** (no reemplaza el backup de DB):
+```bash
+docker exec n8n-n8n-1 n8n export:workflow --all --pretty 2>/dev/null > /root/backups/n8n-workflows.json
+docker exec n8n-n8n-1 n8n export:credentials --all --pretty 2>/dev/null > /root/backups/n8n-credentials.json
+```
+
+**⚠️ Importante:** las credenciales exportadas a JSON están cifradas con `N8N_ENCRYPTION_KEY`. Para restaurarlas se necesita la misma key. La key está en `/root/.n8n/config` en el VPS.
 
 ### 3. .env y secrets
 
@@ -290,7 +332,7 @@ Si el VPS y el Mac local se pierden simultáneamente:
 2. **GitHub** → clonar repo: `git clone https://github.com/John58666/meyer-bot.git`
 3. **VPS nuevo** → aprovisionar Ubuntu + Docker + nginx
 4. **PostgreSQL** → restaurar desde backup SQL (paso 1)
-5. **n8n SQLite** → restaurar desde backup (paso 2) — si no hay backup, crear workflows desde cero a partir de los JSON, reconectar credenciales manualmente
+5. **n8n PostgreSQL** → restaurar desde backup del paso 1 (`pg_dump`). Si no hay backup: crear DB `n8n_db`, importar workflows desde JSON, reconectar credenciales. La `N8N_ENCRYPTION_KEY` debe ser la misma (está en `/root/.n8n/config` del VPS anterior).
 6. **Dashboard** → `npm run build && pm2 start`
 7. **Evolution API** → crear instancia y escanear QR desde manager UI
 

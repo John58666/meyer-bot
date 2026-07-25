@@ -1,4 +1,20 @@
 -- ============================================================
+-- ⚠️ QUERIES DEPRECADAS — usar API del dashboard en su lugar
+-- ============================================================
+-- En lugar de estas queries SQL, los workflows de n8n deben llamar:
+--
+--   POST /api/availability/check
+--     Body: { fecha: "2026-08-15", hora: "14:00", professionalId: 2 }
+--     Response: { available: true/false, reason: "conflict"|"closed"|... }
+--
+--   GET /api/appointments/slots?fecha=2026-08-15&professionalId=2
+--     Response: { slots: ["09:00", "09:30", ...] }
+--
+-- Los endpoints ya incluyen toda la lógica: schedule_text,
+-- schedule_exceptions (cerrado + horario_especial), y colisiones.
+-- ============================================================
+
+-- ============================================================
 -- meyer-bot — Queries PostgreSQL para nodos n8n
 -- Reemplazos directos de los nodos de Google Sheets
 -- ============================================================

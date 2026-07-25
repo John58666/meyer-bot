@@ -14,13 +14,12 @@ interface ProfessionalScheduleItem {
   updatedAt: string | null;
 }
 
-export function ProfessionalScheduleList({ businessId, professionalId }: { businessId: number; professionalId?: number | null }) {
+export function ProfessionalScheduleList({ businessId }: { businessId: number }) {
   const [professionals, setProfessionals] = useState<ProfessionalScheduleItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingSchedule, setEditingSchedule] = useState<ScheduleData | null>(null);
-  const isOwnerOrAdmin = professionalId == null;
 
   useEffect(() => {
     loadProfessionals();
@@ -84,11 +83,7 @@ export function ProfessionalScheduleList({ businessId, professionalId }: { busin
     );
   }
 
-  const displayed = isOwnerOrAdmin
-    ? professionals
-    : professionals.filter(p => p.professionalId === Number(professionalId));
-
-  if (displayed.length === 0) {
+  if (professionals.length === 0) {
     if (error) {
       return (
         <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--color-danger)]/30 p-4">
@@ -105,50 +100,6 @@ export function ProfessionalScheduleList({ businessId, professionalId }: { busin
     );
   }
 
-  if (!isOwnerOrAdmin) {
-    const prof = displayed[0];
-
-    async function handleProfessionalSave(schedule: ScheduleData) {
-      const result = await updateProfessionalSchedule(businessId, prof.professionalId, schedule);
-      if (result?.error) {
-        setError(result.error);
-        return result;
-      }
-      setError("");
-      loadProfessionals();
-      return result;
-    }
-
-    return (
-      <div className="space-y-3">
-        <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)] p-3">
-          <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-            Define tus días y horarios de atención. Si no configuras un horario personalizado, se usará el horario general del negocio.
-          </p>
-        </div>
-        <HorarioClient
-          businessId={businessId}
-          initialSchedule={prof.schedule ?? {}}
-          onSave={handleProfessionalSave}
-        />
-        {prof.hasCustomSchedule && (
-          <button
-            onClick={() => handleRestore(prof.professionalId)}
-            className="w-full rounded-full h-10 text-sm font-semibold text-[var(--color-danger)] border border-[var(--color-danger)]/30 hover:bg-red-500/10 transition-all"
-          >
-            Restaurar horario del negocio
-          </button>
-        )}
-        {error && (
-          <p className="text-sm text-[var(--color-danger)] flex items-center gap-1">
-            <AlertCircle className="h-4 w-4" />
-            {error}
-          </p>
-        )}
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-3">
       <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)] p-3">
@@ -158,7 +109,7 @@ export function ProfessionalScheduleList({ businessId, professionalId }: { busin
         </p>
       </div>
 
-      {displayed.map((prof) => (
+      {professionals.map((prof) => (
         <div key={prof.professionalId}>
           <div className={cn(
             "flex items-center gap-1.5 px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3 rounded-xl border transition-colors",
