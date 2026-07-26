@@ -52,6 +52,8 @@ AAAA-MM-DD — Título corto
 - Page components NO deben tener `max-w` ni `mx-auto` — el `<main>` del layout maneja espaciado.
 - Server actions desde `"use client"` necesitan try/catch o el componente queda en loading forever.
 - COALESCE para per-professional schedules: `COALESCE(ps.schedule_text, b.schedule_text)`.
+- BottomNav/Sidebar breakpoints: usar `lg` (1024px), no `sm` (640px). iPhone landscape mide 812-932px — `sm` deja al usuario sin navegación.
+- Cuando un contenedor con `onClick` tiene un botón dentro, usar `e.stopPropagation()` en el botón para evitar que el click se propague al contenedor.
 
 ### Git
 

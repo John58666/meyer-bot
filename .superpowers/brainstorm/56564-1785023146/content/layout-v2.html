@@ -1,0 +1,264 @@
+<h2>Mi Horario — Layout Final</h2>
+<p class="subtitle">Side-by-side + Horario recurrente visible + Cards de bloqueos</p>
+
+<div class="section">
+  <div class="mockup" style="max-width: 100%;">
+    <div class="mockup-header">Desktop ≥1024px · Vista completa</div>
+    <div class="mockup-body" style="display: flex; gap: 16px; padding: 16px;">
+      
+      <!-- LEFT COLUMN: Calendar -->
+      <div style="flex: 0 0 380px;">
+        <!-- Calendar card -->
+        <div style="background: #1a1a2e; border-radius: 12px; border: 1px solid #2a2a4a; padding: 16px; margin-bottom: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div style="width: 32px; height: 32px; border-radius: 8px; background: #2a2a4a;"></div>
+            <div style="font-size: 14px; color: #fff; font-weight: 600;">Julio 2026</div>
+            <div style="width: 32px; height: 32px; border-radius: 8px; background: #2a2a4a;"></div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 8px;">
+            <div style="text-align: center; font-size: 10px; color: #6b7280; font-weight: 600; padding: 4px 0;">Do</div><div style="text-align: center; font-size: 10px; color: #6b7280; font-weight: 600; padding: 4px 0;">Lu</div><div style="text-align: center; font-size: 10px; color: #6b7280; font-weight: 600; padding: 4px 0;">Ma</div><div style="text-align: center; font-size: 10px; color: #6b7280; font-weight: 600; padding: 4px 0;">Mi</div><div style="text-align: center; font-size: 10px; color: #6b7280; font-weight: 600; padding: 4px 0;">Ju</div><div style="text-align: center; font-size: 10px; color: #6b7280; font-weight: 600; padding: 4px 0;">Vi</div><div style="text-align: center; font-size: 10px; color: #6b7280; font-weight: 600; padding: 4px 0;">Sa</div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">
+            <div style="aspect-ratio: 1; border-radius: 10px;"></div><div style="aspect-ratio: 1; border-radius: 10px;"></div><div style="aspect-ratio: 1; border-radius: 10px;"></div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af;">1</div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af;">2</div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af;">3</div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af;">4</div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af;">5</div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af;">6</div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af;">7</div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af;">8</div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af;">9</div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af;">10</div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af;">11</div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; position: relative;"><span style="color: #9ca3af;">12</span><div style="display: flex; gap: 3px; margin-top: 2px;"><div style="width: 5px; height: 5px; border-radius: 50%; background: #ef4444;"></div></div></div>
+            <div style="aspect-ratio: 1; background: #6366f1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; box-shadow: 0 2px 8px rgba(99,102,241,0.3);"><span style="font-size: 13px; font-weight: 600; color: #fff;">13</span><div style="display: flex; gap: 3px; margin-top: 2px;"><div style="width: 5px; height: 5px; border-radius: 50%; background: #f59e0b;"></div></div></div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af;">14</div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; position: relative;"><span style="color: #9ca3af;">15</span><div style="display: flex; gap: 3px; margin-top: 2px;"><div style="width: 5px; height: 5px; border-radius: 50%; background: #ef4444;"></div></div></div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af;">16</div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af;">17</div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af;">18</div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af;">19</div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af;">20</div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af;">21</div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af; position: relative;"><span style="color: #9ca3af;">22</span><div style="display: flex; gap: 3px; margin-top: 2px;"><div style="width: 5px; height: 5px; border-radius: 50%; background: #ef4444;"></div><div style="width: 5px; height: 5px; border-radius: 50%; background: #f59e0b;"></div></div></div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af;">23</div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af;">24</div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af;">25</div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af;">26</div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af;">27</div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af;">28</div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af; position: relative;"><span style="color: #9ca3af;">29</span><div style="display: flex; gap: 3px; margin-top: 2px;"><div style="width: 5px; height: 5px; border-radius: 50%; background: #f59e0b;"></div></div></div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af;">30</div>
+            <div style="aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 13px; background: #222244; color: #9ca3af;">31</div>
+          </div>
+          <div style="display: flex; justify-content: center; gap: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #2a2a4a;">
+            <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444;"></div><span style="font-size: 10px; color: #6b7280;">Cerrado</span></div>
+            <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 8px; height: 8px; border-radius: 50%; background: #f59e0b;"></div><span style="font-size: 10px; color: #6b7280;">Horario esp.</span></div>
+          </div>
+        </div>
+
+        <!-- Horario Recurrente - Visual Summary -->
+        <div style="background: #1a1a2e; border-radius: 12px; border: 1px solid #2a2a4a; padding: 14px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+            <h4 style="font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">Horario recurrente</h4>
+            <button style="font-size: 10px; color: #818cf8; border: 1px solid rgba(129,140,248,0.2); background: transparent; padding: 3px 10px; border-radius: 6px; cursor: pointer;">Editar</button>
+          </div>
+          
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;">
+              <span style="font-size: 11px; font-weight: 500; width: 32px; color: #9ca3af;">Lun</span>
+              <div style="flex: 1; height: 6px; background: #222244; border-radius: 3px; position: relative; overflow: hidden;">
+                <div style="width: 56%; height: 100%; background: #6366f1; border-radius: 3px;"></div>
+              </div>
+              <span style="font-size: 10px; color: #6b7280; width: 50px; text-align: right;">9:00 — 18:00</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;">
+              <span style="font-size: 11px; font-weight: 500; width: 32px; color: #9ca3af;">Mar</span>
+              <div style="flex: 1; height: 6px; background: #222244; border-radius: 3px; position: relative; overflow: hidden;">
+                <div style="width: 56%; height: 100%; background: #6366f1; border-radius: 3px;"></div>
+              </div>
+              <span style="font-size: 10px; color: #6b7280; width: 50px; text-align: right;">9:00 — 18:00</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;">
+              <span style="font-size: 11px; font-weight: 500; width: 32px; color: #ef4444;">Mié</span>
+              <div style="flex: 1; height: 6px; background: #222244; border-radius: 3px;"></div>
+              <span style="font-size: 10px; color: #ef4444; width: 50px; text-align: right;">Cerrado</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;">
+              <span style="font-size: 11px; font-weight: 500; width: 32px; color: #9ca3af;">Jue</span>
+              <div style="flex: 1; height: 6px; background: #222244; border-radius: 3px; position: relative; overflow: hidden;">
+                <div style="width: 56%; height: 100%; background: #6366f1; border-radius: 3px;"></div>
+              </div>
+              <span style="font-size: 10px; color: #6b7280; width: 50px; text-align: right;">9:00 — 18:00</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;">
+              <span style="font-size: 11px; font-weight: 500; width: 32px; color: #9ca3af;">Vie</span>
+              <div style="flex: 1; height: 6px; background: #222244; border-radius: 3px; position: relative; overflow: hidden;">
+                <div style="width: 56%; height: 100%; background: #6366f1; border-radius: 3px;"></div>
+              </div>
+              <span style="font-size: 10px; color: #6b7280; width: 50px; text-align: right;">9:00 — 18:00</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;">
+              <span style="font-size: 11px; font-weight: 500; width: 32px; color: #f59e0b;">Sáb</span>
+              <div style="flex: 1; height: 6px; background: #222244; border-radius: 3px; position: relative; overflow: hidden;">
+                <div style="width: 27%; height: 100%; background: #6366f1; border-radius: 3px;"></div>
+              </div>
+              <span style="font-size: 10px; color: #6b7280; width: 50px; text-align: right;">9:00 — 13:00</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;">
+              <span style="font-size: 11px; font-weight: 500; width: 32px; color: #6b7280;">Dom</span>
+              <div style="flex: 1; height: 6px; background: #222244; border-radius: 3px;"></div>
+              <span style="font-size: 10px; color: #6b7280; width: 50px; text-align: right;">Cerrado</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: Bloqueos Cards -->
+      <div style="flex: 1; min-width: 0;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+          <h3 style="font-size: 14px; font-weight: 600; color: #fff; margin: 0;">Bloqueos · Julio 2026</h3>
+          <div style="display: flex; gap: 6px; background: #1a1a2e; border-radius: 8px; border: 1px solid #2a2a4a; padding: 3px;">
+            <div style="padding: 4px 10px; border-radius: 6px; font-size: 11px; background: #6366f1; color: #fff; cursor: pointer;">Lista</div>
+            <div style="padding: 4px 10px; border-radius: 6px; font-size: 11px; color: #6b7280; cursor: pointer;">Grid</div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px; max-height: 520px; overflow-y: auto; padding-right: 4px;">
+          
+          <!-- Card: Cerrado -->
+          <div style="display: flex; align-items: center; gap: 12px; background: #1a1a2e; border: 1px solid #2a2a4a; border-left: 3px solid #ef4444; border-radius: 10px; padding: 12px;">
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(239,68,68,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <span style="font-size: 14px; font-weight: 700; color: #ef4444;">12</span>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 13px; font-weight: 500; color: #fff;">Dom, 12 jul</span>
+                <span style="font-size: 10px; background: rgba(239,68,68,0.15); color: #ef4444; padding: 1px 6px; border-radius: 4px; font-weight: 500;">Cerrado</span>
+              </div>
+              <div style="font-size: 11px; color: #6b7280; margin-top: 2px;">Día completo</div>
+            </div>
+            <button style="width: 28px; height: 28px; border-radius: 6px; border: none; background: transparent; color: #4b5563; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px;">🗑️</button>
+          </div>
+
+          <!-- Card: Horario especial -->
+          <div style="display: flex; align-items: center; gap: 12px; background: #1a1a2e; border: 1px solid #2a2a4a; border-left: 3px solid #f59e0b; border-radius: 10px; padding: 12px;">
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(245,158,11,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <span style="font-size: 14px; font-weight: 700; color: #f59e0b;">13</span>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 13px; font-weight: 500; color: #fff;">Lun, 13 jul</span>
+                <span style="font-size: 10px; background: rgba(245,158,11,0.15); color: #f59e0b; padding: 1px 6px; border-radius: 4px; font-weight: 500;">Esp.</span>
+              </div>
+              <div style="font-size: 11px; color: #6b7280; margin-top: 2px;">14:00 — 18:00 · Capacitación</div>
+            </div>
+            <button style="width: 28px; height: 28px; border-radius: 6px; border: none; background: transparent; color: #4b5563; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px;">🗑️</button>
+          </div>
+
+          <!-- Card: Cerrado -->
+          <div style="display: flex; align-items: center; gap: 12px; background: #1a1a2e; border: 1px solid #2a2a4a; border-left: 3px solid #ef4444; border-radius: 10px; padding: 12px;">
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(239,68,68,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <span style="font-size: 14px; font-weight: 700; color: #ef4444;">15</span>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 13px; font-weight: 500; color: #fff;">Mié, 15 jul</span>
+                <span style="font-size: 10px; background: rgba(239,68,68,0.15); color: #ef4444; padding: 1px 6px; border-radius: 4px; font-weight: 500;">Cerrado</span>
+              </div>
+              <div style="font-size: 11px; color: #6b7280; margin-top: 2px;">Mantenimiento</div>
+            </div>
+            <button style="width: 28px; height: 28px; border-radius: 6px; border: none; background: transparent; color: #4b5563; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px;">🗑️</button>
+          </div>
+
+          <!-- Card: Mixed -->
+          <div style="display: flex; align-items: center; gap: 12px; background: #1a1a2e; border: 1px solid #2a2a4a; border-left: 3px solid transparent; border-image: linear-gradient(180deg, #ef4444 50%, #f59e0b 50%) 0 0 0 3; border-radius: 10px; padding: 12px;">
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(239,68,68,0.08); display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative;">
+              <span style="font-size: 14px; font-weight: 700; color: #ef4444;">22</span>
+              <div style="position: absolute; bottom: 2px; right: 2px; width: 6px; height: 6px; border-radius: 50%; background: #f59e0b;"></div>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                <span style="font-size: 13px; font-weight: 500; color: #fff;">Mar, 22 jul</span>
+                <span style="font-size: 10px; background: rgba(239,68,68,0.15); color: #ef4444; padding: 1px 6px; border-radius: 4px; font-weight: 500;">Cerrado</span>
+                <span style="font-size: 10px; background: rgba(245,158,11,0.15); color: #f59e0b; padding: 1px 6px; border-radius: 4px; font-weight: 500;">Esp.</span>
+              </div>
+              <div style="font-size: 11px; color: #6b7280; margin-top: 2px;">Cerrado · 09:00 — 12:00 (Mantenimiento)</div>
+            </div>
+            <button style="width: 28px; height: 28px; border-radius: 6px; border: none; background: transparent; color: #4b5563; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px;">🗑️</button>
+          </div>
+
+          <!-- Card: Horario especial -->
+          <div style="display: flex; align-items: center; gap: 12px; background: #1a1a2e; border: 1px solid #2a2a4a; border-left: 3px solid #f59e0b; border-radius: 10px; padding: 12px;">
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(245,158,11,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <span style="font-size: 14px; font-weight: 700; color: #f59e0b;">29</span>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 13px; font-weight: 500; color: #fff;">Mié, 29 jul</span>
+                <span style="font-size: 10px; background: rgba(245,158,11,0.15); color: #f59e0b; padding: 1px 6px; border-radius: 4px; font-weight: 500;">Esp.</span>
+              </div>
+              <div style="font-size: 11px; color: #6b7280; margin-top: 2px;">10:00 — 15:00 · Evento especial</div>
+            </div>
+            <button style="width: 28px; height: 28px; border-radius: 6px; border: none; background: transparent; color: #4b5563; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px;">🗑️</button>
+          </div>
+
+        </div>
+        
+        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #2a2a4a;">
+          <p style="font-size: 11px; color: #4b5563; margin: 0;">
+            <strong style="color: #6b7280;">5 bloqueos</strong> en julio · Click en un día del calendario para crear o gestionar
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="max-width: 800px;">
+  <h3>¿Qué ves aquí?</h3>
+  
+  <div style="display: flex; flex-direction: column; gap: 12px;">
+    
+    <div style="display: flex; gap: 12px; align-items: flex-start; background: rgba(255,255,255,0.02); border: 1px solid #2a2a4a; border-radius: 10px; padding: 12px;">
+      <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(99,102,241,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 14px;">📅</div>
+      <div>
+        <div style="font-size: 13px; font-weight: 500; color: #fff;">1. Calendario compacto (max-w 380px)</div>
+        <div style="font-size: 11px; color: #6b7280; margin-top: 2px;">Ya no se estira por todo el ancho. Puntos rojos/amarillos en días con bloqueos.</div>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 12px; align-items: flex-start; background: rgba(255,255,255,0.02); border: 1px solid #2a2a4a; border-radius: 10px; padding: 12px;">
+      <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(99,102,241,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 14px;">🔄</div>
+      <div>
+        <div style="font-size: 13px; font-weight: 500; color: #fff;">2. Horario recurrente visible</div>
+        <div style="font-size: 11px; color: #6b7280; margin-top: 2px;">Debajo del calendario. Barritas por día + horario, coloreadas. "Mié Cerrado" en rojo. Botón "Editar" al lado del título.</div>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 12px; align-items: flex-start; background: rgba(255,255,255,0.02); border: 1px solid #2a2a4a; border-radius: 10px; padding: 12px;">
+      <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(99,102,241,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 14px;">🗂️</div>
+      <div>
+        <div style="font-size: 13px; font-weight: 500; color: #fff;">3. Cards de bloqueos a la derecha</div>
+        <div style="font-size: 11px; color: #6b7280; margin-top: 2px;">Todos los bloqueos del mes visibles sin clickear. Borde izquierdo rojo=cerrado, amarillo=esp. Toggle Lista/Grid. Eliminar directo.</div>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 12px; align-items: flex-start; background: rgba(255,255,255,0.02); border: 1px solid #2a2a4a; border-radius: 10px; padding: 12px;">
+      <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(99,102,241,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 14px;">📱</div>
+      <div>
+        <div style="font-size: 13px; font-weight: 500; color: #fff;">4. Mobile: todo apilado</div>
+        <div style="font-size: 11px; color: #6b7280; margin-top: 2px;">Calendario → Horario recurrente → Cards de bloqueos, todo visible, Sheet para crear/editar.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div style="margin-top: 16px; padding: 12px; background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 10px;">
+  <p style="font-size: 12px; color: #a5b4fc; margin: 0;">
+    💡 La sección de <strong>horario recurrente</strong> ahora es autoexplicativa: ves qué días abres/cierras sin tener que abrir nada. 
+    El link "Editar horario recurrente" se reemplaza por un botón visible en esa misma sección.
+  </p>
+</div>

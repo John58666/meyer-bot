@@ -29,7 +29,7 @@ export default async function MiHorarioPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white">Mi horario</h1>
         <p className="text-sm text-[var(--text-secondary)] mt-0.5">
-          {role === 'profesional' ? 'Tu horario laboral y excepciones' : 'Horarios y bloqueos del equipo'}
+          {role === 'profesional' ? 'Gestiona tu disponibilidad laboral' : 'Controla la disponibilidad de tu equipo'}
         </p>
       </div>
       <MiHorarioClient data={result} role={role} businessId={businessId} professionalId={professionalId} />

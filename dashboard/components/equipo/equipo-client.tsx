@@ -7,6 +7,8 @@ import {
   toggleMiembroActivo,
   updateMiembroRole,
   updateMiembroCredenciales,
+  getFutureAppointmentsForProfessional,
+  cancelAppointmentsAndNotify,
   type MiembroEquipo,
 } from "@/lib/actions";
 
@@ -42,6 +44,11 @@ export function EquipoClient({ miembros: initialMiembros, businessId }: Props) {
   const [editShowPassword, setEditShowPassword] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const [editSubmitting, setEditSubmitting] = useState(false);
+
+  const [pendingProfessional, setPendingProfessional] = useState<{ id: number; name: string; professionalId: number } | null>(null);
+  const [futureAppointments, setFutureAppointments] = useState<{ id: number; fecha: string; hora: string; servicio: string; nombre: string }[]>([]);
+  const [showFutureDialog, setShowFutureDialog] = useState(false);
+  const [cancellingFuture, setCancellingFuture] = useState(false);
 
   function startEdit(m: MiembroEquipo) {
     setEditingId(m.id);
@@ -108,10 +115,45 @@ export function EquipoClient({ miembros: initialMiembros, businessId }: Props) {
   }
 
   async function handleToggleActive(userId: number, current: boolean) {
-    await toggleMiembroActivo(userId, businessId, !current);
+    const result = await toggleMiembroActivo(userId, businessId, !current);
+    if ('error' in result) return;
+
     setMiembros((prev) =>
       prev.map((m) => (m.id === userId ? { ...m, active: !current } : m))
     );
+
+    // Si se desactivó y tiene professional_id, mostrar opción de gestionar citas futuras
+    if (current) {
+      const member = miembros.find((m) => m.id === userId);
+      if (member?.professional_id) {
+        const apps = await getFutureAppointmentsForProfessional(businessId, member.professional_id);
+        if (Array.isArray(apps) && apps.length > 0) {
+          setPendingProfessional({ id: userId, name: member.name, professionalId: member.professional_id });
+          setFutureAppointments(apps);
+          setShowFutureDialog(true);
+        }
+      }
+    }
+  }
+
+  async function handleCancelFutureAppointments() {
+    if (!pendingProfessional || futureAppointments.length === 0) return;
+    setCancellingFuture(true);
+    await cancelAppointmentsAndNotify(
+      businessId,
+      futureAppointments.map((a) => a.id),
+      `Profesional ${pendingProfessional.name} desactivado`
+    );
+    setCancellingFuture(false);
+    setShowFutureDialog(false);
+    setPendingProfessional(null);
+    setFutureAppointments([]);
+  }
+
+  function handleLeaveFutureAppointments() {
+    setShowFutureDialog(false);
+    setPendingProfessional(null);
+    setFutureAppointments([]);
   }
 
   async function handleRoleChange(userId: number, newRole: "admin" | "profesional") {
@@ -354,6 +396,44 @@ export function EquipoClient({ miembros: initialMiembros, businessId }: Props) {
           </tbody>
         </table>
       </div>
+
+      {showFutureDialog && pendingProfessional && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-white font-semibold text-lg mb-2">
+              {pendingProfessional.name} tiene {futureAppointments.length} cita{futureAppointments.length !== 1 ? 's' : ''} futura{futureAppointments.length !== 1 ? 's' : ''}
+            </h3>
+            <p className="text-sm text-[var(--text-secondary)] mb-4">
+              Al desactivar {pendingProfessional.name}, sus citas agendadas no se cancelan automáticamente. ¿Quieres cancelarlas ahora o dejarlas como están?
+            </p>
+
+            <div className="max-h-40 overflow-y-auto space-y-1 mb-4">
+              {futureAppointments.map((a) => (
+                <div key={a.id} className="text-xs text-[var(--text-secondary)] flex justify-between">
+                  <span>{a.fecha} — {a.hora}</span>
+                  <span className="text-white truncate ml-2">{a.servicio} — {a.nombre}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={handleLeaveFutureAppointments}
+                className="px-4 py-2 rounded-lg border border-[var(--border-subtle)] text-[var(--text-secondary)] text-sm hover:text-white transition-colors"
+              >
+                Dejarlas como están
+              </button>
+              <button
+                onClick={handleCancelFutureAppointments}
+                disabled={cancellingFuture}
+                className="px-4 py-2 rounded-lg bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition-colors disabled:opacity-50"
+              >
+                {cancellingFuture ? 'Cancelando...' : 'Cancelar citas y notificar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

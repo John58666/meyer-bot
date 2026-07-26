@@ -1113,6 +1113,44 @@ export async function deleteBloqueo(id: number, businessId: number) {
   return { ok: true }
 }
 
+export async function updateBloqueo(data: {
+  id: number
+  businessId: number
+  fecha: string
+  tipo: 'cerrado' | 'horario_especial'
+  hora_inicio?: string
+  hora_fin?: string
+  motivo?: string
+  professionalId?: number | null
+}) {
+  const session = await auth()
+  if (!session) return { error: 'No autenticado' }
+  if (session.user.role !== 'owner' && session.user.role !== 'admin' && session.user.role !== 'profesional')
+    return { error: 'No autorizado' }
+
+  const realBusinessId = session.user.businessId
+  const profFilter = session.user.role === 'profesional'
+    ? ` AND professional_id = $9`
+    : ''
+  const profId = session.user.role === 'profesional' ? session.user.professionalId : (data.professionalId ?? null)
+  const params = [data.fecha, data.tipo, data.hora_inicio ?? null, data.hora_fin ?? null, data.motivo ?? null, profId, data.id, realBusinessId]
+  if (session.user.role === 'profesional') params.push(session.user.professionalId as number)
+
+  await pool.query(
+    `UPDATE schedule_exceptions SET fecha = $1, tipo = $2, hora_inicio = $3, hora_fin = $4, motivo = $5, professional_id = $6 WHERE id = $7 AND business_id = $8${profFilter}`,
+    params
+  )
+
+  auditar(realBusinessId, parseInt(session.user.id), "update_bloqueo", "bloqueo", data.id, {
+    fecha: data.fecha,
+    tipo: data.tipo,
+    motivo: data.motivo,
+  })
+
+  revalidatePath('/dashboard/semana/bloqueos')
+  return { ok: true }
+}
+
 export async function updateServicesText(businessId: number, servicesText: string) {
   const session = await auth()
   if (!session) return { error: 'No autenticado' }
@@ -1876,7 +1914,9 @@ export async function getMiHorarioData(businessId: number, role: string, profess
     }
 
     const profs = await pool.query<{ id: number; name: string }>(
-      `SELECT id, name FROM professionals WHERE business_id = $1 AND active = true ORDER BY name`,
+      `SELECT p.id, p.name FROM professionals p
+       INNER JOIN users u ON u.professional_id = p.id AND u.role = 'profesional'
+       WHERE p.business_id = $1 AND p.active = true ORDER BY p.name`,
       [businessId]
     );
     const profSchedules = await getAllProfessionalSchedules(businessId);
@@ -1897,21 +1937,126 @@ export async function getMiHorarioData(businessId: number, role: string, profess
   }
 }
 
+export interface CitaConflicto {
+  id: number
+  hora: string
+  servicio: string
+  nombre: string
+  numero: string
+  professional_name: string | null
+  estado: string
+}
+
 export async function checkConflictosBloqueo(
   businessId: number,
   fecha: string,
   professionalId?: number | null
-) {
+): Promise<CitaConflicto[]> {
   const params: (string | number)[] = [businessId, fecha];
   const profCondition = professionalId != null
-    ? `AND professional_id = $${params.push(professionalId)}`
+    ? `AND a.professional_id = $${params.push(professionalId)}`
     : '';
   const { rows } = await pool.query(
-    `SELECT COUNT(*) FROM appointments
-     WHERE business_id = $1 AND fecha = $2 AND estado != 'Cancelada' ${profCondition}`,
+    `SELECT a.id, a.hora::text, a.servicio, a.nombre, a.numero,
+            p.name AS professional_name, a.estado
+     FROM appointments a
+     LEFT JOIN professionals p ON p.id = a.professional_id
+     WHERE a.business_id = $1 AND a.fecha = $2 AND a.estado != 'Cancelada' ${profCondition}
+     ORDER BY a.hora`,
     params
   );
-  return parseInt(rows[0].count, 10);
+  return rows;
+}
+
+export async function cancelAppointmentsAndNotify(
+  businessId: number,
+  appointmentIds: number[],
+  motivo?: string
+) {
+  const session = await auth()
+  if (!session) return { error: 'No autenticado' }
+  if (session.user.role !== 'owner' && session.user.role !== 'admin' && session.user.role !== 'profesional')
+    return { error: 'No autorizado' }
+
+  const realBusinessId = session.user.businessId
+
+  const { rows: apps } = await pool.query(
+    `SELECT a.id, a.hora::text, a.servicio, a.nombre, a.numero,
+            a.fecha::text, b.whatsapp_instance, b.owner_number
+     FROM appointments a
+     JOIN businesses b ON b.id = a.business_id
+     WHERE a.id = ANY($1::int[]) AND a.business_id = $2 AND a.estado != 'Cancelada'`,
+    [appointmentIds, realBusinessId]
+  )
+
+  if (apps.length === 0) return { error: 'No se encontraron citas para cancelar' }
+
+  await pool.query(
+    `UPDATE appointments SET estado = 'Cancelada', updated_at = NOW()
+     WHERE id = ANY($1::int[]) AND business_id = $2 AND estado != 'Cancelada'`,
+    [appointmentIds, realBusinessId]
+  )
+
+  for (const app of apps) {
+    auditar(realBusinessId, parseInt(session.user.id), "cancel_appointment", "appointment", app.id, {
+      nombre: app.nombre,
+      servicio: app.servicio,
+      fecha: app.fecha,
+      hora: app.hora,
+      origen: "dashboard",
+      motivo: motivo ?? null,
+    })
+  }
+
+  const { notificarCancelacionPorNegocio } = await import('@/lib/whatsapp')
+  const resultados: { id: number; ok: boolean; error?: string }[] = []
+
+  for (const app of apps) {
+    const msgCliente = motivo
+      ? `El negocio tuvo que hacer un ajuste en la agenda. Tu cita de ${app.servicio} del ${app.fecha} a las ${app.hora} fue cancelada. Motivo: ${motivo}. Contáctanos para reagendar 🙏`
+      : `El negocio tuvo que hacer un ajuste en la agenda. Tu cita de ${app.servicio} del ${app.fecha} a las ${app.hora} fue cancelada. Contáctanos para reagendar 🙏`
+
+    const result = await notificarCancelacionPorNegocio(
+      app.numero,
+      msgCliente,
+      app.whatsapp_instance
+    )
+    resultados.push({ id: app.id, ok: result.success, error: result.success ? undefined : result.error })
+  }
+
+  if (apps.length > 0) {
+    const ownerMsg = `🔔 ${apps.length} cita(s) cancelada(s) por ajuste de agenda.\n\n${apps.map(a => `• ${a.hora} — ${a.servicio} — ${a.nombre}`).join('\n')}${motivo ? `\n\nMotivo: ${motivo}` : ''}`
+    await notificarCancelacionPorNegocio(
+      apps[0].owner_number,
+      ownerMsg,
+      apps[0].whatsapp_instance
+    )
+  }
+
+  revalidatePath('/dashboard/mi-horario')
+  return { ok: true, canceladas: apps.length, resultados }
+}
+
+export async function getFutureAppointmentsForProfessional(
+  businessId: number,
+  professionalId: number
+) {
+  const session = await auth()
+  if (!session || session.user.businessId !== businessId) {
+    return { error: 'No autorizado' }
+  }
+
+  const { rows } = await pool.query(
+    `SELECT a.id, a.fecha::text, a.hora::text, a.servicio, a.nombre, a.estado
+     FROM appointments a
+     WHERE a.business_id = $1 AND a.professional_id = $2
+       AND a.estado IN ('Pendiente', 'Confirmada')
+       AND a.fecha >= (NOW() AT TIME ZONE 'America/Bogota')::date
+     ORDER BY a.fecha, a.hora`,
+    [businessId, professionalId]
+  )
+
+  return rows as { id: number; fecha: string; hora: string; servicio: string; nombre: string; estado: string }[]
 }
 
 export async function updateServices(data: {

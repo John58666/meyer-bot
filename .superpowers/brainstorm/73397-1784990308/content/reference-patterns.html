@@ -1,0 +1,179 @@
+<h2>Patrones de calendario en apps reales</h2>
+<p class="subtitle">Research de productos reales de scheduling/booking — Julio 2026</p>
+
+<div class="section">
+  <h3>Patrón dominante: Staff columns + Day View</h3>
+  <p>La mayoría de apps profesionales (salones, clínicas, spas) usan una variante de vista de día con columnas por profesional. El mes se usa como navegación, no como vista principal.</p>
+</div>
+
+<div class="cards">
+  <div class="card">
+    <div class="card-body">
+      <h3>DaySpark (MX/Brazil)</h3>
+      <div style="background:#0a0a0f; border-radius:12px; padding:16px; font-size:13px; line-height:1.5; color:#e4e4e7; font-family:system-ui, monospace;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <span style="font-weight:600;">◀ 6 feb 2026 ▶</span>
+          <span style="background:#1a1a2e; padding:4px 10px; border-radius:6px; font-size:12px; color:#a78bfa;">Hoy</span>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; font-size:11px;">
+          <div style="background:#1a1a2e; border-radius:8px; padding:8px;">
+            <div style="color:#a78bfa; font-weight:600; margin-bottom:4px;">María</div>
+            <div style="color:#22c55e;">09:00 Corte</div>
+            <div style="color:#22c55e;">10:00 Tintura</div>
+            <div style="color:#666;">11:00 —</div>
+            <div style="color:#eab308; font-size:10px; margin-top:4px;">🟡 Bloqueo 12-13</div>
+          </div>
+          <div style="background:#1a1a2e; border-radius:8px; padding:8px;">
+            <div style="color:#a78bfa; font-weight:600; margin-bottom:4px;">Carlos</div>
+            <div style="color:#22c55e;">09:30 Corte</div>
+            <div style="color:#666;">10:30 —</div>
+            <div style="color:#ef4444; font-size:10px; margin-top:4px;">🔴 Bloqueado</div>
+          </div>
+          <div style="background:#1a1a2e; border-radius:8px; padding:8px;">
+            <div style="color:#a78bfa; font-weight:600; margin-bottom:4px;">Ana</div>
+            <div style="color:#666;">— Fuera</div>
+          </div>
+        </div>
+      </div>
+      <p style="font-size:13px; color:#a1a1aa;">Day view con columnas por profesional. Arriba selector de fecha con flechas y botón "Hoy". Las citas se ven como bloques de colores en cada columna.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <h3>Nabú (Chile/MX)</h3>
+      <div style="background:#0a0a0f; border-radius:12px; padding:16px; font-size:13px; line-height:1.5; color:#e4e4e7; font-family:system-ui, monospace;">
+        <div style="display:flex; gap:8px; margin-bottom:12px;">
+          <span style="background:#1a1a2e; padding:4px 12px; border-radius:20px; font-size:12px;">🏠 Recepción</span>
+          <span style="background:#1a1a2e; padding:4px 12px; border-radius:20px; font-size:12px;">Salas</span>
+          <span style="background:#a78bfa20; border:1px solid #a78bfa60; padding:4px 12px; border-radius:20px; font-size:12px; color:#a78bfa;">Staff</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+          <span>◀</span><span style="font-weight:600;">Febrero 2026</span><span>▶</span>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:2px; font-size:11px; text-align:center;">
+          <span style="color:#666;">L</span><span style="color:#666;">M</span><span style="color:#666;">M</span><span style="color:#666;">J</span><span style="color:#666;">V</span><span style="color:#666;">S</span><span style="color:#666;">D</span>
+          <span style="color:#444;">26</span><span style="color:#444;">27</span><span style="color:#444;">28</span><span style="color:#444;">29</span><span style="color:#444;">30</span><span style="color:#444;">31</span>
+          <span style="background:#1a1a2e; border-radius:4px;">1</span><span>2</span><span>3</span><span>4</span><span>5</span><span style="color:#ef4444;">6</span><span>7</span>
+        </div>
+        <div style="border-top:1px solid #1a1a2e; margin-top:10px; padding-top:8px; font-size:12px;">
+          <div style="display:flex; justify-content:space-between;">
+            <span style="color:#a78bfa;">María</span>
+            <span>09:00 - 16:00</span>
+          </div>
+          <div style="color:#22c55e; font-size:11px;">3 citas agendadas</div>
+        </div>
+      </div>
+      <p style="font-size:13px; color:#a1a1aa;">Calendario mensual arriba + listado por profesional abajo. Click en profesional abre detalle del día. Tabs para filtrar (Recepción/Salas/Staff).</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <h3>Zenoti (Internacional)</h3>
+      <div style="background:#0a0a0f; border-radius:12px; padding:16px; font-size:13px; line-height:1.5; color:#e4e4e7; font-family:system-ui, monospace;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+          <span style="background:#1a1a2e; padding:4px 10px; border-radius:6px; font-size:12px;">Día</span>
+          <span style="border:1px solid #a78bfa60; color:#a78bfa; padding:4px 10px; border-radius:6px; font-size:12px;">Semana</span>
+          <span style="background:#1a1a2e; padding:4px 10px; border-radius:6px; font-size:12px;">Mes</span>
+        </div>
+        <div style="display:grid; grid-template-columns:60px 1fr 1fr 1fr; gap:4px; font-size:11px;">
+          <div style="color:#666; text-align:right; padding-right:4px;">09:00</div>
+          <div style="background:#1a1a2e; border-radius:4px; padding:4px;"><span style="color:#22c55e;">María: Corte</span></div>
+          <div style="background:#1a1a2e; border-radius:4px; padding:4px;"><span style="color:#22c55e;">Carlos: Corte</span></div>
+          <div style="color:#666;">—</div>
+          <div style="color:#666; text-align:right; padding-right:4px;">10:00</div>
+          <div style="background:#1a1a2e; border-radius:4px; padding:4px;"><span style="color:#22c55e;">María: Tintura</span></div>
+          <div style="color:#666;">—</div>
+          <div style="color:#666;">—</div>
+          <div style="color:#666; text-align:right; padding-right:4px;">11:00</div>
+          <div style="color:#666;">—</div>
+          <div style="background:#3b1a1a; border-radius:4px; padding:4px; color:#ef4444;">Bloqueado</div>
+          <div style="color:#666;">—</div>
+        </div>
+      </div>
+      <p style="font-size:13px; color:#a1a1aa;">Vista semanal tipo calendario Outlook con time slots en filas y profesionales en columnas. Tabs Día/Semana/Mes. Zenoti es el más enterprise de la lista.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Lo que NO hacen</h3>
+  <div class="cards">
+    <div class="card" style="border-color:#ef444440;">
+      <div class="card-body">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:24px;">✕</span>
+          <div>
+            <strong style="color:#ef4444;">No usan tabs aislados</strong>
+            <p style="font-size:13px; color:#a1a1aa;">Ninguna app separa horario/bloqueos en tabs diferentes. Todo vive dentro del calendario como acciones contextuales.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="border-color:#ef444440;">
+      <div class="card-body">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:24px;">✕</span>
+          <div>
+            <strong style="color:#ef4444;">No tienen 3 vistas separadas</strong>
+            <p style="font-size:13px; color:#a1a1aa;">Ninguna tiene "grid-profesionales" + "calendario-bloqueos" + "summary-cards" como páginas separadas. Todo está en una sola vista de calendario con drawer.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Resumen: qué podemos aprender</h3>
+  <table>
+    <thead>
+      <tr><th>Patrón</th><th>DaySpark</th><th>Nabú</th><th>Zenoti</th><th>GlossGenius</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Selector profesional</td>
+        <td>✅ Dropdown</td>
+        <td>✅ Tabs</td>
+        <td>✅ Columnas</td>
+        <td>✅ Dropdown</td>
+      </tr>
+      <tr>
+        <td>Calendario mes nav</td>
+        <td>Mini arriba</td>
+        <td>⬆️ Arriba</td>
+        <td>Tab Mes</td>
+        <td>Mini arriba</td>
+      </tr>
+      <tr>
+        <td>Drawer/bottom sheet</td>
+        <td>✅</td>
+        <td>✅</td>
+        <td>Side panel</td>
+        <td>✅ Modal</td>
+      </tr>
+      <tr>
+        <td>Colores x estado</td>
+        <td>✅</td>
+        <td>✅</td>
+        <td>✅</td>
+        <td>✅</td>
+      </tr>
+      <tr>
+        <td>Bloqueos en calendario</td>
+        <td>Inline</td>
+        <td>Inline</td>
+        <td>Inline</td>
+        <td>Inline</td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="font-size:13px; color:#a1a1aa;">Todas comparten el mismo patrón: el bloqueo se maneja como acción contextual dentro del día en el calendario, no como vista separada.</p>
+</div>
+
+<div class="section">
+  <h3>Conclusión para mi-horario</h3>
+  <p>Las 3 opciones de mi diseño (A, B, C) están alineadas con la industria. La diferencia es que <strong>mi-horario maneja solo bloqueos/horario</strong> (sin citas), lo que hace que el patrón sea incluso más simple de implementar.</p>
+  <p style="color:#a78bfa;">→ Elige A, B o C en la pestaña anterior</p>
+</div>

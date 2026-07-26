@@ -110,3 +110,11 @@ Ventaja real: AI conversacional + recordatorios/cancel/reagend por chat. Competi
 ### Monitoreo
 - **Netdata:** sigue gratis para 1 VPS, ~200MB RAM, <5% CPU. Monitores nativos para PostgreSQL, Redis, Docker.
 - Alternativa: Prometheus+Grafana (más pesado ~1-2GB) solo si ya hay infraestructura.
+
+## Scheduling / Booking UX — Patrones de diseño
+- **Calendar-centric:** calendario mensual/semanal como fuente de verdad del estado de disponibilidad. Cada día muestra color: 🔴 cerrado, 🟡 parcial, ✅ disponible. Click → drawer con detalle completo del día (horas, citas, bloqueos, acciones).
+- **Service-level duration:** la duración del servicio CONDUCE la disponibilidad. Sistema calcula slots = duración del servicio + horario laboral + disponibilidad profesional + excepciones. No separar conceptos.
+- **Single source of truth for blocks:** todas las acciones de bloqueo/cierre/edición viven en el drawer del día, no dispersas en múltiples componentes/botones.
+- **Progressive disclosure:** calendario vista general → click → drawer detalle. No mostrar lista de bloqueos separada del calendario.
+- **Referencias:** Interlinked (booking exceptions), Calendly, Acuity, Square Appointments.
+- **Documentación completa del rediseño propuesto:** `docs/ux/mi-horario-ux-redesign-research.md`

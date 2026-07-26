@@ -1,0 +1,84 @@
+<h2>⚡ Bloqueo múltiple — 3 opciones</h2>
+<p class="subtitle">Seleccioná la que prefieras para implementar. Click para elegir.</p>
+
+<div class="options" data-multiselect>
+  <div class="option" data-choice="range" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Selector de rango en el calendario</h3>
+      <p>Click en día inicial → click en día final para seleccionar un rango continuo. Se abren los días seleccionados en el sheet para configurar tipo y motivo.</p>
+      <div class="pros-cons" style="margin-top:8px;">
+        <div class="pros" style="font-size:12px;">
+          <h4 style="font-size:11px;color:#34d399;">Ventajas</h4>
+          <ul style="margin:4px 0;padding-left:14px;">
+            <li>Intuitivo, similar a Google Calendar</li>
+            <li>Visual: ves los días seleccionados</li>
+            <li>Rápido para rangos continuos (ej. vacaciones)</li>
+          </ul>
+        </div>
+        <div class="cons" style="font-size:12px;">
+          <h4 style="font-size:11px;color:#f87171;">Desventajas</h4>
+          <ul style="margin:4px 0;padding-left:14px;">
+            <li>No sirve para días no consecutivos</li>
+            <li>Requiere modificar el calendario</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="daily-repeat" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Repetir todos los [día] por N semanas</h3>
+      <p>Al crear un bloqueo, aparece "Repetir todos los lunes durante 4 semanas". Ideal para horarios especiales recurrentes.</p>
+      <div class="pros-cons" style="margin-top:8px;">
+        <div class="pros" style="font-size:12px;">
+          <h4 style="font-size:11px;color:#34d399;">Ventajas</h4>
+          <ul style="margin:4px 0;padding-left:14px;">
+            <li>Poco código, no toca el calendario</li>
+            <li>Perfecto para patrones semanales</li>
+          </ul>
+        </div>
+        <div class="cons" style="font-size:12px;">
+          <h4 style="font-size:11px;color:#f87171;">Desventajas</h4>
+          <ul style="margin:4px 0;padding-left:14px;">
+            <li>Solo sirve para días de la semana fijos</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="checkboxes" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Checkboxes + bloqueo masivo</h3>
+      <p>Botón "Bloqueo múltiple" → se muestra el calendario con checkboxes en cada día. Seleccionás los que quieras y los bloqueás todos juntos.</p>
+      <div class="pros-cons" style="margin-top:8px;">
+        <div class="pros" style="font-size:12px;">
+          <h4 style="font-size:11px;color:#34d399;">Ventajas</h4>
+          <ul style="margin:4px 0;padding-left:14px;">
+            <li>Total control: seleccionás días específicos</li>
+            <li>Sirve para continuos y no continuos</li>
+            <li>Todos los días se crean con el mismo tipo</li>
+          </ul>
+        </div>
+        <div class="cons" style="font-size:12px;">
+          <h4 style="font-size:11px;color:#f87171;">Desventajas</h4>
+          <ul style="margin:4px 0;padding-left:14px;">
+            <li>Más clicks para seleccionar uno por uno</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:24px;padding:16px;background:linear-gradient(135deg,rgba(99,102,241,0.1),rgba(139,92,246,0.1));border-radius:12px;border:1px solid rgba(99,102,241,0.2)">
+  <p style="margin:0;font-size:13px;color:#e0e7ff;">
+    <strong>Mi recomendación:</strong> Opción A (rango en calendario) + B (repetición semanal) combinadas. 
+    La A cubre rangos continuos (vacaciones), la B cubre patrones semanales (tarde libre los jueves). 
+    La C queda cubierta por la A (los rangos se pueden hacer uno por uno).
+  </p>
+</div>

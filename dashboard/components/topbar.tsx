@@ -24,7 +24,7 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 h-[56px] bg-[var(--bg-sidebar)] border-t border-[var(--border-subtle)] flex items-center justify-around z-40 sm:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 h-[56px] bg-[var(--bg-sidebar)] border-t border-[var(--border-subtle)] flex items-center justify-around z-40 lg:hidden">
       {bottomNavItems.map((item) => {
         const isActive = pathname === item.href;
         return (
@@ -95,7 +95,7 @@ export function Topbar({ user, role }: TopbarProps) {
           {role !== "profesional" && (
             <DropdownMenuItem
               onClick={() => router.push('/dashboard/configuracion')}
-              className="sm:hidden cursor-pointer focus:bg-white/5"
+              className="lg:hidden cursor-pointer focus:bg-white/5"
             >
               <Settings size={16} className="mr-2" />
               Configuración
@@ -104,7 +104,7 @@ export function Topbar({ user, role }: TopbarProps) {
           {role !== "profesional" && (
             <DropdownMenuItem
               onClick={() => router.push('/dashboard/auditoria')}
-              className="sm:hidden cursor-pointer focus:bg-white/5"
+              className="lg:hidden cursor-pointer focus:bg-white/5"
             >
               <ClipboardList size={16} className="mr-2" />
               Auditoría
@@ -113,7 +113,7 @@ export function Topbar({ user, role }: TopbarProps) {
           {role === "owner" && (
             <DropdownMenuItem
               onClick={() => router.push('/dashboard/equipo')}
-              className="sm:hidden cursor-pointer focus:bg-white/5"
+              className="lg:hidden cursor-pointer focus:bg-white/5"
             >
               <UserCog size={16} className="mr-2" />
               Equipo
@@ -121,7 +121,7 @@ export function Topbar({ user, role }: TopbarProps) {
           )}
           <DropdownMenuItem
             onClick={() => router.push('/dashboard/help')}
-            className="sm:hidden cursor-pointer focus:bg-white/5"
+            className="lg:hidden cursor-pointer focus:bg-white/5"
           >
             <HelpCircle size={16} className="mr-2" />
             Ayuda

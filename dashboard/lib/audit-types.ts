@@ -6,6 +6,7 @@ export type AuditAccion =
   | "reschedule_appointment"
   | "create_bloqueo"
   | "delete_bloqueo"
+  | "update_bloqueo"
   | "create_miembro"
   | "toggle_miembro"
   | "update_role"
@@ -49,6 +50,7 @@ export const ACCIONES_LABELS: Record<string, string> = {
   reschedule_appointment: "Reagendar cita",
   create_bloqueo: "Bloquear agenda",
   delete_bloqueo: "Eliminar bloqueo",
+  update_bloqueo: "Editar bloqueo",
   create_miembro: "Crear miembro",
   toggle_miembro: "Estado miembro",
   update_role: "Cambiar role",
@@ -91,6 +93,7 @@ export function describirDetalle(accion: string, detalle: Record<string, unknown
         detalle.professional_name ? `Profesional: ${detalle.professional_name}` : null,
       ].filter(Boolean) as string[];
     case "delete_bloqueo":
+    case "update_bloqueo":
       return [
         detalle.fecha ? `Fecha: ${detalle.fecha}` : null,
         detalle.motivo ? `Motivo: ${detalle.motivo}` : null,

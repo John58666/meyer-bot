@@ -1,0 +1,384 @@
+<h2>Opción A — Diseño final con mejores prácticas aplicadas</h2>
+<p class="subtitle">Calendario mensual + selector profesional + drawer lateral (desktop) / bottom sheet (mobile)</p>
+
+<div class="section">
+  <h3>Layout completo (Desktop 1440px)</h3>
+</div>
+
+<div style="background:#0a0a0f; border-radius:16px; padding:24px; max-width:900px; margin:0 auto; font-family:system-ui, monospace; line-height:1.5;">
+
+  <!-- Header nav -->
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span style="font-size:13px; color:#a1a1aa;">📅</span>
+      <span style="font-size:15px; font-weight:600; color:#e4e4e7;">Mi Horario</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span style="background:#1a1a2e; padding:6px 14px; border-radius:8px; font-size:13px; color:#e4e4e7; display:flex; align-items:center; gap:6px;">
+        <span style="color:#a78bfa;">👤</span> María González <span style="color:#666;">▼</span>
+      </span>
+      <span style="background:#1a1a2e; padding:6px 10px; border-radius:8px; font-size:13px; color:#666;">🔔</span>
+    </div>
+  </div>
+
+  <div style="display:flex; gap:24px;">
+    <!-- Calendar column -->
+    <div style="flex:1; min-width:0;">
+      <!-- Month nav -->
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span style="color:#666; cursor:pointer; font-size:16px;">◀</span>
+          <span style="font-size:16px; font-weight:600; color:#e4e4e7;">Febrero 2026</span>
+          <span style="color:#666; cursor:pointer; font-size:16px;">▶</span>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <span style="background:#1a1a2e; padding:4px 12px; border-radius:6px; font-size:12px; color:#a78bfa;">Hoy</span>
+          <span style="background:#1a1a2e; padding:4px 12px; border-radius:6px; font-size:12px; color:#a1a1aa;">Mes</span>
+          <span style="background:#1a1a2e; padding:4px 12px; border-radius:6px; font-size:12px; color:#a1a1aa;">Semana</span>
+        </div>
+      </div>
+
+      <!-- Day headers -->
+      <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; text-align:center; margin-bottom:8px;">
+        <span style="color:#666; font-size:12px;">Lun</span>
+        <span style="color:#666; font-size:12px;">Mar</span>
+        <span style="color:#666; font-size:12px;">Mié</span>
+        <span style="color:#666; font-size:12px;">Jue</span>
+        <span style="color:#666; font-size:12px;">Vie</span>
+        <span style="color:#666; font-size:12px;">Sáb</span>
+        <span style="color:#666; font-size:12px;">Dom</span>
+      </div>
+
+      <!-- Week 1 -->
+      <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:4px;">
+        <div style="color:#444; font-size:13px; text-align:center; padding:8px 4px;">26</div>
+        <div style="color:#444; font-size:13px; text-align:center; padding:8px 4px;">27</div>
+        <div style="color:#444; font-size:13px; text-align:center; padding:8px 4px;">28</div>
+        <div style="color:#444; font-size:13px; text-align:center; padding:8px 4px;">29</div>
+        <div style="color:#444; font-size:13px; text-align:center; padding:8px 4px;">30</div>
+        <div style="color:#444; font-size:13px; text-align:center; padding:8px 4px;">31</div>
+        <div style="background:#1a1a2e; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer; border:1px solid transparent;">1</div>
+      </div>
+
+      <!-- Week 2 -->
+      <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:4px;">
+        <div style="background:#1a1a2e; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer; border:1px solid transparent;">2</div>
+        <div style="background:#1a1a2e; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer; border:1px solid transparent;">3</div>
+        <div style="background:#1a1a2e; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer; border:1px solid transparent;">4</div>
+        <div style="background:#1a1a2e; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer; border:1px solid transparent;">5</div>
+        <div style="background:#2a1a1a; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer; color:#ef4444; border:1px solid #ef444430;">
+          <div>6</div>
+          <div style="font-size:9px; color:#ef4444; margin-top:2px;">Cerrado</div>
+        </div>
+        <div style="background:#1a1a2e; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer; border:2px solid #a78bfa80;">
+          <div>7</div>
+          <div style="font-size:9px; color:#22c55e; margin-top:2px;">Disponible</div>
+        </div>
+        <div style="background:#1a1a2e; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer; border:1px solid transparent;">
+          <div>8</div>
+          <div style="font-size:9px; color:#22c55e; margin-top:2px;">Disponible</div>
+        </div>
+      </div>
+
+      <!-- Week 3 -->
+      <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:4px;">
+        <div style="background:#1a1a2e; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer; border:1px solid transparent;">
+          <div>9</div>
+          <div style="font-size:9px; color:#22c55e; margin-top:2px;">Disponible</div>
+        </div>
+        <div style="background:#2a2820; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer; color:#eab308; border:1px solid #eab30830;">
+          <div>10</div>
+          <div style="font-size:9px; color:#eab308; margin-top:2px;">Parcial</div>
+        </div>
+        <div style="background:#1a1a2e; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer; border:1px solid transparent;">
+          <div>11</div>
+          <div style="font-size:9px; color:#22c55e; margin-top:2px;">Disponible</div>
+        </div>
+        <div style="background:#1a1a2e; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer; border:1px solid transparent;">
+          <div>12</div>
+          <div style="font-size:9px; color:#22c55e; margin-top:2px;">Disponible</div>
+        </div>
+        <div style="background:#2a1a1a; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer; color:#ef4444; border:1px solid #ef444430;">
+          <div>13</div>
+          <div style="font-size:9px; color:#ef4444; margin-top:2px;">Cerrado</div>
+        </div>
+        <div style="background:#1a1a2e; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer; border:1px solid transparent;">
+          <div>14</div>
+          <div style="font-size:9px; color:#22c55e; margin-top:2px;">Disponible</div>
+        </div>
+        <div style="background:#1a1a2e; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer; border:1px solid transparent;">
+          <div>15</div>
+          <div style="font-size:9px; color:#a1a1aa; margin-top:2px;">—</div>
+        </div>
+      </div>
+
+      <!-- Week 4 -->
+      <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:4px;">
+        <div style="background:#1a1a2e; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer;">16</div>
+        <div style="background:#1a1a2e; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer;">17</div>
+        <div style="background:#1a1a2e; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer;">18</div>
+        <div style="background:#1a1a2e; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer;">19</div>
+        <div style="background:#1a1a2e; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer;">20</div>
+        <div style="background:#2a1a1a; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer; color:#ef4444;">
+          <div>21</div>
+          <div style="font-size:9px; color:#ef4444;">Cerrado</div>
+        </div>
+        <div style="background:#1a1a2e; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer;">22</div>
+      </div>
+
+      <!-- Week 5 -->
+      <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:4px;">
+        <div style="background:#1a1a2e; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer;">23</div>
+        <div style="background:#1a1a2e; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer;">24</div>
+        <div style="background:#1a1a2e; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer;">25</div>
+        <div style="background:#1a1a2e; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer;">26</div>
+        <div style="background:#1a1a2e; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer;">27</div>
+        <div style="background:#1a1a2e; border-radius:8px; text-align:center; padding:8px 4px; font-size:13px; cursor:pointer;">28</div>
+        <div style="color:#444; font-size:13px; text-align:center; padding:8px 4px;">1</div>
+      </div>
+
+      <!-- Legend -->
+      <div style="display:flex; gap:16px; margin-top:16px; font-size:12px; color:#a1a1aa;">
+        <span>● <span style="color:#22c55e;">Disponible</span></span>
+        <span>● <span style="color:#eab308;">Parcial</span></span>
+        <span>● <span style="color:#ef4444;">Cerrado</span></span>
+        <span style="color:#666;">— Sin configurar</span>
+      </div>
+    </div>
+
+    <!-- Drawer (desktop - day selected) -->
+    <div style="flex:0 0 340px; background:#12121a; border-radius:12px; border:1px solid #1a1a2e; padding:20px;">
+
+      <!-- Drawer header -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <div>
+          <div style="font-size:14px; font-weight:600; color:#e4e4e7;">Viernes 7 Feb</div>
+          <div style="font-size:12px; color:#666;">2026</div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <span style="background:#1a2a1a; padding:4px 10px; border-radius:20px; font-size:11px; color:#22c55e; display:flex; align-items:center; gap:4px;">
+            <span>●</span> Disponible
+          </span>
+          <span style="color:#666; cursor:pointer; font-size:16px;">✕</span>
+        </div>
+      </div>
+
+      <!-- Day schedule info -->
+      <div style="background:#0a0a0f; border-radius:8px; padding:12px; margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+          <span style="font-size:12px; color:#a1a1aa;">Horario base</span>
+          <span style="font-size:12px; color:#e4e4e7;">09:00 - 18:00</span>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span style="font-size:12px; color:#a1a1aa;">Descanso</span>
+          <span style="font-size:12px; color:#e4e4e7;">13:00 - 14:00</span>
+        </div>
+      </div>
+
+      <!-- Blocking entries -->
+      <div style="margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:12px; font-weight:600; color:#a1a1aa;">Bloqueos</span>
+          <span style="font-size:11px; color:#a78bfa; cursor:pointer;">+ Agregar</span>
+        </div>
+        <div style="background:#2a1a1a; border-radius:8px; padding:10px 12px; border-left:3px solid #ef4444;">
+          <div style="display:flex; justify-content:space-between;">
+            <span style="font-size:12px; color:#e4e4e7;">Inventario mensual</span>
+            <span style="font-size:11px; color:#ef4444;">🔴</span>
+          </div>
+          <div style="font-size:11px; color:#a1a1aa;">10:00 - 12:00</div>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button style="background:#a78bfa; color:#0a0a0f; border:none; border-radius:8px; padding:10px; font-size:13px; font-weight:500; cursor:pointer;">
+          + Agregar bloqueo
+        </button>
+        <button style="background:#1a1a2e; color:#e4e4e7; border:1px solid #2a2a3e; border-radius:8px; padding:10px; font-size:13px; cursor:pointer;">
+          Editar horario del día
+        </button>
+        <button style="background:transparent; color:#ef4444; border:1px solid #ef444430; border-radius:8px; padding:10px; font-size:13px; cursor:pointer;">
+          Cerrar día completo
+        </button>
+      </div>
+
+      <!-- Loading state (hidden preview) -->
+      <div style="margin-top:16px; padding-top:12px; border-top:1px solid #1a1a2e;">
+        <details>
+          <summary style="font-size:11px; color:#666; cursor:pointer;">Estados alternos (preview)</summary>
+
+          <!-- Empty state -->
+          <div style="background:#0a0a0f; border-radius:8px; padding:20px; text-align:center; margin-top:8px;">
+            <div style="font-size:24px; margin-bottom:8px;">📅</div>
+            <div style="font-size:13px; color:#a1a1aa;">Selecciona un día</div>
+            <div style="font-size:11px; color:#666;">para ver su detalle aquí</div>
+          </div>
+
+          <!-- Loading state -->
+          <div style="background:#0a0a0f; border-radius:8px; padding:16px; margin-top:8px;">
+            <div style="display:flex; gap:8px; align-items:center;">
+              <div style="width:100%;">
+                <div style="height:12px; background:#1a1a2e; border-radius:4px; margin-bottom:8px; animation:none;"></div>
+                <div style="height:12px; background:#1a1a2e; border-radius:4px; width:60%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Error state -->
+          <div style="background:#2a1a1a; border-radius:8px; padding:16px; text-align:center; margin-top:8px;">
+            <div style="font-size:13px; color:#ef4444; margin-bottom:4px;">Error al cargar</div>
+            <div style="font-size:11px; color:#a1a1aa; margin-bottom:8px;">No pudimos obtener la info del día</div>
+            <span style="background:#ef444420; color:#ef4444; padding:4px 12px; border-radius:6px; font-size:12px; cursor:pointer;">Reintentar</span>
+          </div>
+        </details>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:32px;">
+  <h3>Mobile (bottom sheet)</h3>
+  <p>En mobile (&lt;768px): el drawer lateral se convierte en bottom sheet con grab handle.</p>
+</div>
+
+<div style="max-width:380px; margin:0 auto;">
+  <div style="background:#0a0a0f; border-radius:16px 16px 0 0; padding:16px 20px 20px; border:1px solid #1a1a2e; font-family:system-ui, monospace;">
+    <!-- Grab handle -->
+    <div style="text-align:center; margin-bottom:12px;">
+      <div style="width:36px; height:4px; background:#2a2a3e; border-radius:4px; margin:0 auto;"></div>
+    </div>
+
+    <!-- Header -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <div>
+        <div style="font-size:14px; font-weight:600; color:#e4e4e7;">Viernes 7 Feb</div>
+        <div style="font-size:12px; color:#666;">2026</div>
+      </div>
+      <span style="background:#1a2a1a; padding:4px 10px; border-radius:20px; font-size:11px; color:#22c55e;">● Disponible</span>
+    </div>
+
+    <!-- Schedule -->
+    <div style="background:#12121a; border-radius:8px; padding:12px; margin-bottom:10px;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+        <span style="font-size:12px; color:#a1a1aa;">Horario</span>
+        <span style="font-size:12px; color:#e4e4e7;">09:00 - 18:00</span>
+      </div>
+      <div style="display:flex; justify-content:space-between;">
+        <span style="font-size:12px; color:#a1a1aa;">Descanso</span>
+        <span style="font-size:12px; color:#e4e4e7;">13:00 - 14:00</span>
+      </div>
+    </div>
+
+    <!-- Block -->
+    <div style="background:#2a1a1a; border-radius:8px; padding:10px 12px; border-left:3px solid #ef4444; margin-bottom:10px;">
+      <div style="display:flex; justify-content:space-between;">
+        <span style="font-size:12px; color:#e4e4e7;">Inventario mensual</span>
+        <span style="font-size:11px; color:#ef4444;">🔴</span>
+      </div>
+      <div style="font-size:11px; color:#a1a1aa;">10:00 - 12:00</div>
+    </div>
+
+    <!-- Actions -->
+    <button style="width:100%; background:#a78bfa; color:#0a0a0f; border:none; border-radius:8px; padding:12px; font-size:13px; font-weight:500; cursor:pointer;">
+      + Agregar bloqueo
+    </button>
+    <div style="display:flex; gap:8px; margin-top:8px;">
+      <button style="flex:1; background:#1a1a2e; color:#e4e4e7; border:1px solid #2a2a3e; border-radius:8px; padding:10px; font-size:12px; cursor:pointer;">Editar horario</button>
+      <button style="flex:1; background:transparent; color:#ef4444; border:1px solid #ef444430; border-radius:8px; padding:10px; font-size:12px; cursor:pointer;">Cerrar día</button>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:32px;">
+  <h3>Resumen: mejores prácticas aplicadas</h3>
+</div>
+
+<div class="cards">
+  <div class="card">
+    <div class="card-body">
+      <h4>1. Drawer lateral (desktop)</h4>
+      <ul style="font-size:12px; color:#a1a1aa; margin:8px 0 0; padding-left:16px;">
+        <li>Scrim semitransparente sobre el calendario</li>
+        <li>Focus trap + Escape cierra + Tab cíclico</li>
+        <li>Close button visible (✕) — no solo gesture</li>
+        <li>Ancho fijo 340px, no cambia con scroll</li>
+        <li>Al cerrar: focus vuelve al día seleccionado</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <h4>2. Bottom sheet (mobile)</h4>
+      <ul style="font-size:12px; color:#a1a1aa; margin:8px 0 0; padding-left:16px;">
+        <li>Grab handle + 3 detents: peek (25%) / half (50%) / full (95%)</li>
+        <li>Swipe down + close button para cerrar</li>
+        <li>No stacking: solo un sheet abierto a la vez</li>
+        <li>Keyboard ajusta posición del sheet</li>
+        <li>Touch targets ≥ 44px (WCAG 2.2 SC 2.5.8)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <h4>3. Calendario responsive</h4>
+      <ul style="font-size:12px; color:#a1a1aa; margin:8px 0 0; padding-left:16px;">
+        <li>grid-cols-7 con min-width:0 — sin overflow horizontal</li>
+        <li>320px: textos más chicos pero legibles, sin scroll</li>
+        <li>Días con indicador de estado: color + icono + texto</li>
+        <li>Leyenda siempre visible debajo del calendario</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <h4>4. Estados de datos</h4>
+      <ul style="font-size:12px; color:#a1a1aa; margin:8px 0 0; padding-left:16px;">
+        <li><strong>Loading:</strong> skeleton en drawer, calendario intacto</li>
+        <li><strong>Empty:</strong> "Selecciona un día para ver detalle"</li>
+        <li><strong>Error:</strong> mensaje + botón "Reintentar" dentro del drawer</li>
+        <li>Nunca se cierra el drawer en error — el usuario no pierde contexto</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <h4>5. Accesibilidad</h4>
+      <ul style="font-size:12px; color:#a1a1aa; margin:8px 0 0; padding-left:16px;">
+        <li>Keyboard nav: flechas en calendario, Tab en drawer</li>
+        <li>ARIA: role="dialog" + aria-modal="true" en drawer modal</li>
+        <li>Screen reader: cada día lee "Viernes 7 Febrero 2026"</li>
+        <li>Color no es única fuente: ● + texto + icono</li>
+        <li>Dark mode nativo con shadcn</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>¿Qué pasa con...</h3>
+</div>
+
+<table>
+  <thead>
+    <tr><th>Pregunta</th><th>Respuesta</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>¿Dónde va "Horario recurrente"?</td>
+      <td>Sigue siendo un modal aparte. El drawer del día puede tener un link "Usar horario recurrente" que abre el modal actual.</td>
+    </tr>
+    <tr>
+      <td>¿Y si el profesional no tiene horario ese día?</td>
+      <td>El día se muestra sin color (— Sin configurar). El drawer muestra "Este día no tiene horario. ¿Quieres configurarlo?" con botón "Crear horario".</td>
+    </tr>
+    <tr>
+      <td>¿Cuándo se cierra el drawer?</td>
+      <td>Al hacer clic fuera (scrim), presionar Escape, clic en ✕, o seleccionar otro día (se actualiza el contenido).</td>
+    </tr>
+    <tr>
+      <td>¿Multi-profesional?</td>
+      <td>El dropdown de profesional permite cambiar. Al seleccionar otro, el calendario se recarga con los datos de ese profesional.</td>
+    </tr>
+  </tbody>
+</table>

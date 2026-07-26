@@ -1,0 +1,221 @@
+<h2>Mejores prácticas + Validación final</h2>
+<p class="subtitle">Basado en research de UX Patterns, NNGroup, Eleken, MyShyft, Cal.com, Vaadin y más — Julio 2026</p>
+
+<div class="section">
+  <h3>Checklist de validación para mi-horario</h3>
+  <p>Basado en las <strong>6 mejores prácticas</strong> que cruzan todas las fuentes investigadas:</p>
+</div>
+
+<div class="cards">
+  <div class="card" style="border-color:#22c55e40;">
+    <div class="card-body">
+      <div style="display:flex; gap:12px;">
+        <span style="font-size:24px; color:#22c55e;">✓</span>
+        <div>
+          <strong>1. Información jerárquica (broad → specific)</strong>
+          <p style="font-size:13px; color:#a1a1aa; margin-top:4px;">
+            Calendario mensual como navegación broad → click día → drawer con detalle specific.<br>
+            <span style="color:#22c55e;">✅ Nuestra opción A/C cumple exactamente</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="border-color:#22c55e40;">
+    <div class="card-body">
+      <div style="display:flex; gap:12px;">
+        <span style="font-size:24px; color:#22c55e;">✓</span>
+        <div>
+          <strong>2. Acciones visibles y contextuales</strong>
+          <p style="font-size:13px; color:#a1a1aa; margin-top:4px;">
+            "+ Bloquear" y "Editar horario" en el drawer del día, no escondidos en menús o tabs separados.<br>
+            <span style="color:#22c55e;">✅ Soluciona el SheetTrigger roto actual</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="border-color:#22c55e40;">
+    <div class="card-body">
+      <div style="display:flex; gap:12px;">
+        <span style="font-size:24px; color:#22c55e;">✓</span>
+        <div>
+          <strong>3. Drawer responsive: lateral en desktop, bottom sheet en mobile</strong>
+          <p style="font-size:13px; color:#a1a1aa; margin-top:4px;">
+            <strong>Desktop:</strong> drawer lateral derecho con scrim, focus trap, Escape cierra, close button visible.<br>
+            <strong>Mobile:</strong> bottom sheet con grab handle, detents (peek → half → expanded), swipe dismiss + close button.<br>
+            <span style="color:#22c55e;">✅ Patrón estándar de la industria</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="border-color:#22c55e40;">
+    <div class="card-body">
+      <div style="display:flex; gap:12px;">
+        <span style="font-size:24px; color:#22c55e;">✓</span>
+        <div>
+          <strong>4. Estados de datos completos</strong>
+          <p style="font-size:13px; color:#a1a1aa; margin-top:4px;">
+            <span style="color:#eab308;">🟡 Loading:</span> skeleton del calendario, no blank screen<br>
+            <span style="color:#ef4444;">🔴 Empty:</span> "Selecciona un día para ver detalle" en drawer<br>
+            <span style="color:#ef4444;">🔴 Error:</span> mensaje + retry dentro del drawer, no se cierra<br>
+            <span style="color:#22c55e;">✅ Diseñar data lifecycle upfront</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="border-color:#22c55e40;">
+    <div class="card-body">
+      <div style="display:flex; gap:12px;">
+        <span style="font-size:24px; color:#22c55e;">✓</span>
+        <div>
+          <strong>5. Colores + iconos (nunca color solo)</strong>
+          <p style="font-size:13px; color:#a1a1aa; margin-top:4px;">
+            Estados de día: 🔴 Cerrado / 🟡 Parcial / ✅ Abierto — usamos <strong>color + símbolo + texto</strong>.<br>
+            WCAG 2.2 SC 1.4.1: no usar color como único medio de información.<br>
+            <span style="color:#22c55e;">✅ Ya lo tenemos diseñado así</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="border-color:#22c55e40;">
+    <div class="card-body">
+      <div style="display:flex; gap:12px;">
+        <span style="font-size:24px; color:#22c55e;">✓</span>
+        <div>
+          <strong>6. Responsive sin overflow horizontal</strong>
+          <p style="font-size:13px; color:#a1a1aa; margin-top:4px;">
+            WCAG 2.2 SC 1.4.10 (Reflow): calendario debe reflow sin overflow a 320px.<br>
+            En mobile: grid se achica, días siguen siendo tappables (mín 24×24px, ideal 44×48px).<br>
+            <span style="color:#22c55e;">✅ Usar grid-cols-7 con min-width 0, overflow-hidden</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr style="border-color:#1a1a2e; margin:24px 0;">
+
+<div class="section">
+  <h3>Comparativa: lo que la industria hace vs. nuestro diseño</h3>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Dimensión</th>
+      <th>Industry standard</th>
+      <th>Nuestro diseño (A/C)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Navegación principal</td>
+      <td>Calendario mensual o semanal</td>
+      <td style="color:#22c55e;">✅ Mensual + selector profesional</td>
+    </tr>
+    <tr>
+      <td>Selector de profesional</td>
+      <td>Dropdown / tabs / columnas</td>
+      <td style="color:#22c55e;">✅ Dropdown arriba</td>
+    </tr>
+    <tr>
+      <td>Detalle del día</td>
+      <td>Drawer / side panel / bottom sheet</td>
+      <td style="color:#22c55e;">✅ Drawer lateral (desktop) / bottom sheet (mobile)</td>
+    </tr>
+    <tr>
+      <td>Colores x estado</td>
+      <td>Color + icono + texto</td>
+      <td style="color:#22c55e;">✅ 🔴🟡✅ con leyenda</td>
+    </tr>
+    <tr>
+      <td>Acción "bloquear"</td>
+      <td>Contextual en día/evento</td>
+      <td style="color:#22c55e;">✅ En drawer del día</td>
+    </tr>
+    <tr>
+      <td>Vistas separadas</td>
+      <td>❌ No existe</td>
+      <td style="color:#22c55e;">✅ Eliminamos tabs aislados</td>
+    </tr>
+    <tr>
+      <td>Estados loading/empty/error</td>
+      <td>Requerido</td>
+      <td style="color:#eab308;">🟡 Pendiente diseñar</td>
+    </tr>
+    <tr>
+      <td>Keyboard nav + screen reader</td>
+      <td>WCAG 2.2 AA</td>
+      <td style="color:#eab308;">🟡 Pendiente implementar</td>
+    </tr>
+    <tr>
+      <td>Dark mode</td>
+      <td>Esperado</td>
+      <td style="color:#eab308;">🟡 Pendiente (shadcn ya lo soporta)</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="section">
+  <h3>Lo que viene de la industria que refuerza nuestro diseño</h3>
+</div>
+
+<div class="cards">
+  <div class="card">
+    <div class="card-body">
+      <h4>UX Patterns — Calendar View</h4>
+      <p style="font-size:13px; color:#a1a1aa;">
+        "Use calendar view when users compare activity across many days. Use for operational scheduling and booking."<br><br>
+        "Keep filters, summaries, and data visibly connected. Preserve scannability as the viewport shrinks."
+      </p>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <h4>NNGroup — Bottom Sheets</h4>
+      <p style="font-size:13px; color:#a1a1aa;">
+        "Bottom sheets preserve substantial visibility of the underlying information — useful when users need to refer to main content while interacting with the sheet."<br><br>
+        Include visible Close button. Don't rely on gesture alone.
+      </p>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <h4>Eleken — Calendar Design</h4>
+      <p style="font-size:13px; color:#a1a1aa;">
+        "Show event details in side panels instead of disruptive modal windows."<br><br>
+        "Make 'add event' obvious and one-tap accessible."<br><br>
+        "Don't hide key actions behind tiny buttons or deep menus."
+      </p>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <h4>MyShyft — Scheduling UX</h4>
+      <p style="font-size:13px; color:#a1a1aa;">
+        "Clear organization from broad (monthly view) to specific (individual shift details)."<br><br>
+        "Consistent access to core functions regardless of where users are."
+      </p>
+    </div>
+  </div>
+</div>
+
+<hr style="border-color:#1a1a2e; margin:24px 0;">
+
+<div class="section">
+  <h3>Veredicto: Opción A (o C)</h3>
+  <p>Basado en todo el research de industria, referencias reales, y buenas prácticas de UX:</p>
+  <p><strong style="color:#a78bfa;">Opción A —</strong> Calendario mensual + drawer lateral (desktop) / bottom sheet (mobile) + selector de profesional. Es la que más se alinea con DaySpark, Nabú, Zenoti, GlossGenius y las mejores prácticas de calendar scheduling UX.</p>
+  <p><strong style="color:#a78bfa;">Opción C —</strong> Solo calendario mensual (aún más minimalista). También válida, especialmente si el selector de profesional se mueve a un filtro arriba.</p>
+  <p>¿Cuál de las dos prefieres para escribir la spec y empezar implementación?</p>
+</div>

@@ -315,6 +315,36 @@ Si el LLM inventa un día/hora que no estaba en `disponibilidad`, la verificaci�
 
 ---
 
+### B15 — Evolution API key sin rotar (leak en git history)
+
+**Síntoma:** La Evolution API key actual en VPS (`8CB6F53ED141-4636-BC58-CB6D38C755BD`) es la misma que aparece en 2 leaks del git history (commits `a573d9c`, `c827b95`). Cualquiera con acceso al repo histórico puede enviar mensajes WhatsApp desde los números configurados.
+
+**Causa raíz:** La key nunca se rotó después de que gitleaks detectara los leaks en la auditoría de seguridad (6 julio 2026).
+
+**Estado:** Pendiente — requiere acceso al VPS
+
+**Pasos:**
+- [ ] Generar nueva API key desde Evolution API manager (http://178.104.27.180:8080/manager)
+- [ ] Actualizar `EVOLUTION_API_KEY` en `.env` del VPS
+- [ ] Reiniciar containers n8n: `docker compose down && docker compose up -d`
+- [ ] Verificar webhooks funcionando (enviar mensaje de prueba)
+
+---
+
+### B16 — Express `==` en bodyParameter de HTTP Request (Respuesta Normal)
+
+**Síntoma:** El nodo "Respuesta Normal" (HTTP Request) tenía `"value": "=={{ $('Webhook').item.json... }}"` en el bodyParameter `number`. Esto puede causar que Evolution API reciba un número malformado y no entregue el mensaje.
+
+**Causa raíz:** El `==` es sintaxis de IF node condition (expresión con string compare), NO de parámetros HTTP Request. En bodyParameters debe ser `={{ }}` (un solo `=`).
+
+**Estado:** ✅ Aplicado en JSON local (2026-07-25) — Pendiente importar en n8n UI
+
+**Cambios:**
+- [x] Fix en `WhatsApp Bot - Genérico.json` (91KB)
+- [x] Fix en `WhatsApp Bot - Genérico IMPORTABLE.json` (107KB)
+
+---
+
 ## Prioridad MEDIA
 
 ### B10 — Información de tratamiento de datos

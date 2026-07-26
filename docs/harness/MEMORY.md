@@ -8,9 +8,9 @@
 > - `docs/harness/MEMORY.md` = resumen acumulado de lo que ha pasado. Se edita (no se reemplaza) al final de cada sesión.
 
 ## Última sesión
-- **Fecha**: 2026-07-22
-- **Objetivo**: Dashboard fixes + UX
-- **Estado**: En progreso — Bugs 1-6 identificados, pendientes de implementar
+- **Fecha**: 2026-07-25
+- **Objetivo**: Dashboard refinements + diseño final bloqueos multi-profesional
+- **Estado**: 4 bugs/UX issues corregidos y deployados. Diseño final aprobado y archivado en `docs/superpowers/specs/03-diseno-final-bloqueos-multiprofesional.md`.
 
 ## Bugs activos
 | # | Bug | Prioridad | Estado |
@@ -22,25 +22,16 @@
 | 5 | Gateo de configuración funciona | ✅ Corregido | Verificado |
 | 6 | Citas del día sin resumen | 🟡 Medio | Pendiente |
 
-## UX issues identificados (pendientes de aprobación)
-- Contraste de texto #555 sobre #0A0A0A = 2.67:1 (WCAG exige 4.5:1)
-- Sidebar solo íconos sin tooltips
-- Touch targets 40px (recomendado 44px)
-- Sin skeletons/loading states
-- Acento morado sin sistema semántico de colores
-
-## Reglas agregadas en sesiones recientes
-- (ninguna aún — harness recién creado)
-
 ## Archivos tocados recientemente
-- `dashboard/lib/actions.ts` — server actions
-- `dashboard/components/new-appointment-sheet.tsx` — nueva cita
-- `dashboard/components/sidebar.tsx` — sidebar gates
-- `dashboard/components/clientes/clientes-client.tsx` — clientes
-- `dashboard/app/(dashboard)/semana/SemanaClient.tsx` — vista semanal
+- `dashboard/components/horario/` — 6 componentes de mi-horario
+- `dashboard/components/topbar.tsx` — BottomNav breakpoints
+- `dashboard/app/(dashboard)/layout.tsx` — layout breakpoints
+- `dashboard/lib/actions.ts` — updateBloqueo, SQL fix
+- `dashboard/lib/audit-types.ts` — update_bloqueo
+- `docs/superpowers/specs/03-diseno-final-bloqueos-multiprofesional.md` — diseño final
 
 ## Próximo paso sugerido
-Bug 1: Bloqueos — agregar validación de schedule_exceptions en createAppointment
+Implementar spec completo en `docs/superpowers/specs/03-diseno-final-bloqueos-multiprofesional.md` (7 items sección 11)
 
 ## 2026-07-24 — Investigación de gaps + organización + backup + compliance
 
@@ -300,6 +291,221 @@ Bug 1: Bloqueos — agregar validación de schedule_exceptions en createAppointm
 - `docs/sessions/HANDOFF.md` (actualizado)
 - `docs/sessions/CURRENT.md` (reemplazado)
 - `docs/harness/MEMORY.md` (este entry)
+
+## 2026-07-25 — Deploy + UX feedback + Research
+
+### Qué se hizo
+- Code review + fixes: P1 (duration data loss en parseServices/updateServices), P2 (drawer empty, no refresh, preselectFecha), P3 (unused imports)
+- Deploy a VPS: main → git push → VPS pull/build/restart. Build: 0 TS errors, 26 routes
+- Post-deploy UX feedback recibido del usuario: 6 problemas en mi-horario (info dispersa, redundancia drawer/calendario, +Agregar bloqueo roto, no responsive, doble camino cerrar día/bloquear, días sin resumen visual)
+- Web research: patrones UX de Calendly, Acuity, Square, Interlinked, shadcn Schedule
+- Investigación UX documentada en `docs/ux/mi-horario-ux-redesign-research.md`
+- RESEARCH.md actualizado con sección "Scheduling / Booking UX — Patrones de diseño"
+- HANDOFF.md + CURRENT.md actualizados
+
+### Qué quedó pendiente
+- **P1 (prioridad):** Rediseño calendar-centric de mi-horario
+- **P2:** Sync servicios vs horario (updateServices, getAvailableSlots, createAppointment vs exceptions)
+- **P3:** Responsive (375px, 768px, 1440px)
+- **P4:** Bug "+ Agregar bloqueo" (SheetTrigger)
+- **P5:** Investigación adicional
+- Bugs backlog: B1 (createAppointment sin validar exceptions), B2 (fetchOcupacion ignora exceptions)
+
+### Archivos modificados
+- `docs/sessions/HANDOFF.md` (actualizado)
+- `docs/sessions/CURRENT.md` (reemplazado)
+- `docs/harness/MEMORY.md` (este entry)
+- `docs/reference/RESEARCH.md` (sección UX agregada)
+- `docs/ux/mi-horario-ux-redesign-research.md` (nuevo)
+
+## 2026-07-25 — n8n audit + VPS diagnóstico + fix `==` Respuesta Normal
+
+### Qué se hizo
+- Investigación de buenas prácticas n8n producción: queue mode, sub-workflows, error triggers, gateway multi-tenant, credential management
+- Análisis completo de archivos workflow en `/workflows` (13 archivos identificados)
+- Fix `==` en Respuesta Normal (bodyParameter `number` — tenía `=={{ }}` en vez de `={{ }}`) — aplicado en `WhatsApp Bot - Genérico.json` y `WhatsApp Bot - Genérico IMPORTABLE.json`
+- Confirmado que `Content-Type ` trailing space NO existe en JSONs locales (ya corregido)
+- Confirmado que Evolution API key ya usa `$env.EVOLUTION_API_KEY` en todos los nodos HTTP (no hardcodeada)
+- Conexión SSH al VPS (178.104.27.180): todos los contenedores activos (n8n queue mode + worker, PostgreSQL, Redis, Evolution API, dashboard PM2, nginx SSL)
+- Encontrado: Evolution API key actual en VPS = misma del leak en git history (pendiente rotación)
+- Identificadas 13 queries SQL en el workflow n8n, todas candidatas a reemplazo por HTTP calls
+- Leídos/analizados: BUG_BACKLOG.md, HANDOFF.md, MEMORY.md, ARCHITECTURE.md, KEY_LEARNINGS.md, SPRINTS.md, CURRENT.md, CONTEXT_UPDATED.md, SECURITY_AUDIT.md, ARCHITECTURE_FUTURE.md, prompt-changelog.md, README.md, CLAUDE.md
+
+### Qué quedó pendiente
+- Rotar Evolution API key en VPS (generar nueva, actualizar .env, reiniciar containers)
+- Importar workflow fixeado en n8n UI (subir JSON)
+- B1 Fase 2 bug post-deploy (profesional no ve editor horario)
+- Reemplazar SQL queries → HTTP calls (3 prioritarias: availability/check, appointments GET, appointments POST)
+- Inconsistencia colisión dashboard vs bot (match exacto vs rango)
+- Servicios nuevos no reflejados en bot (orden variables system prompt)
+
+### Archivos modificados
+- `workflows/WhatsApp Bot - Genérico.json` (fix `==`)
+- `workflows/WhatsApp Bot - Genérico IMPORTABLE.json` (fix `==`)
+- `docs/harness/MEMORY.md` (este entry)
+- `docs/sessions/HANDOFF.md` (actualizado)
+- `docs/sessions/CURRENT.md` (reemplazado)
+
+## 2026-07-25 — Dashboard refinements: responsive, SQL, edit bloqueo, deploy
+
+### Qué se hizo
+- **BottomNav landscape fix**: Cambiados breakpoints de `sm` (640px) a `lg` (1024px) en BottomNav (topbar.tsx), Sidebar (sidebar.tsx), y layout margins (layout.tsx). iPhone landscape (812-932px) ahora muestra BottomNav correctamente.
+- **Dropdown en todos los dispositivos**: Reemplazadas pills + dropdown con un solo `<select>` nativo en todos los breakpoints (mi-horario-client.tsx).
+- **SQL fix getMiHorarioData**: Agregado `INNER JOIN users u ON u.professional_id = p.id AND u.role = 'profesional'` para filtrar filas huérfanas de admin/owner en la tabla professionals (actions.ts:1878-1881).
+- **Editar bloqueo desde tarjeta**: Click en tarjeta (vista lista o grid) abre DayDetailSheet con campos pre-poblados. Agregado estado `editBloqueo` en mi-horario-client.tsx. Botón de eliminar tiene `stopPropagation()`.
+- **updateBloqueo server action**: Nueva server action con audit (actions.ts:1116-1142). Usa UPDATE directo en lugar de DELETE+INSERT.
+- **Audit types**: Agregado `update_bloqueo` a `AuditAccion` con label y descripción (audit-types.ts).
+- **Copy mejorado**: Subtítulos de page.tsx actualizados.
+- **Sin comentarios**: Se agregó regla de no comentarios en DayDetailSheet (edit mode).
+- **Build + Deploy**: Todos los cambios construidos y desplegados a producción via rsync → npm run build → pm2 reload.
+
+### Investigación sync (sin cambios de código)
+- Semana view NO muestra visualmente días bloqueados, pero `getAvailableSlots` y `createAppointment` AMBOS respetan `schedule_exceptions` con filtro `professional_id`.
+- n8n lee misma tabla con mismo filtro — no hay gap de sync.
+
+### Qué quedó pendiente
+- Multi-day blocking: discutido pero no implementado (usuario no ha decidido approach)
+- Bugs backlog: B1 (createAppointment sin validar exceptions), B2 (fetchOcupacion ignora exceptions), servicios nuevos no reflejados en bot
+- Rotar Evolution API key leakada (P3 de sesión anterior)
+
+### Regla nueva (si aplica)
+- BottomNav/Sidebar breakpoints para landscape mobile: usar `lg` (1024px) como mínimo, no `sm` (640px), porque iPhone landscape mide 812-932px de ancho.
+- Al agregar `onClick` a una tarjeta que también tiene botón de delete: aplicar `stopPropagation()` en el botón.
+
+### Archivos modificados
+- `dashboard/components/topbar.tsx`
+- `dashboard/components/sidebar.tsx`
+- `dashboard/app/(dashboard)/layout.tsx`
+- `dashboard/components/horario/mi-horario-client.tsx`
+- `dashboard/components/horario/day-detail-sheet.tsx`
+- `dashboard/lib/actions.ts`
+- `dashboard/lib/audit-types.ts`
+- `dashboard/app/(dashboard)/dashboard/mi-horario/page.tsx`
+- `docs/sessions/HANDOFF.md` (actualizado)
+- `docs/harness/MEMORY.md` (este entry)
+- `docs/sessions/CURRENT.md` (reemplazado)
+
+## 2026-07-25 — Validación spec + Item 1 implementación identificación rediseñada
+
+### Qué se hizo
+- Cargado HANDOFF.md, MEMORY.md, RULES.md y spec `03-diseno-final-bloqueos-multiprofesional.md`
+- Validación completa del spec contra código local (schema DB 10 tablas, componentes, server actions, n8n workflows)
+- Validación en VPS via SSH (`root@178.104.27.180`): confirmadas 10 tablas, 9 profesionales activos, `professional_schedule` (2 overrides), `schedule_exceptions` (bloqueos mixtos), Evolution API `peluqueria-beta` instancia OPEN
+- **Item 1 del spec implementado — Identificación rediseñada:**
+  - `dashboard/lib/utils.ts` — helpers `getAvatarColor(id)` (12 colores determinísticos) y `getInitials(name)`
+  - `dashboard/components/horario/professional-avatar.tsx` — componente avatar con iniciales + color + tamaños sm/md/lg + showName opcional
+  - `mi-horario-client.tsx` refactorizado:
+    - Nuevo `ProfessionalSelector` con avatar+nombre + búsqueda (<8 profs oculta búsqueda)
+    - Nuevas tarjetas `BloqueoCard` (lista) y `BloqueoGridCard` (grid) con avatar
+    - Agrupación de bloqueos por profesional con secciones colapsables + contador
+  - `day-detail-sheet.tsx` actualizado — muestra `ProfessionalAvatar` en items de bloqueo
+- **Item 2 verificado**: permisos por rol ya implementados correctamente en server actions y UI
+- **Build verificado**: `npm run build` → 26 rutas, 0 errores
+- Documentos de handoff actualizados para próxima sesión
+
+### Archivos creados
+- `dashboard/lib/utils.ts`
+- `dashboard/components/horario/professional-avatar.tsx`
+
+### Archivos modificados
+- `dashboard/components/horario/mi-horario-client.tsx`
+- `dashboard/components/horario/day-detail-sheet.tsx`
+- `docs/sessions/HANDOFF.md` (actualizado)
+- `docs/sessions/CURRENT.md` (reemplazado)
+- `docs/harness/MEMORY.md` (este entry)
+
+### Qué quedó pendiente
+- Item 3 finalizar: toggle "Usar horario propio" en `HorarioRecurrente` + badges "Personalizado" por día
+- Item 4: Flujo de advertencia + cancelación + notificación al chocar con citas
+- Item 5: Query de selección de profesional en bot sin caché
+- Item 6: Separar "desactivar profesional" de "gestionar citas futuras"
+- Item 7: Función server-side `notificarCancelacionPorNegocio`
+- Bugs backlog: B1, B2, servicios no reflejados en bot
+- Rotar Evolution API key leakada
+
+### Regla nueva
+- Al crear componentes de avatar: colores determinísticos vía hash del id (getAvatarColor), no aleatorios. Paleta de 12 colores visibles sobre fondo oscuro.
+
+## 2026-07-25 — Item 3 spec: toggle horario propio + badges personalizados
+
+### Qué se hizo
+- Item 3 del spec implementado completo en `HorarioRecurrente`:
+  - Nuevo prop `hasCustomSchedule` para detectar si el profesional tiene override o hereda
+  - Toggle "Usar horario propio": OFF = read-only (muestra horario heredado, selects deshabilitados), ON = editable (copia business schedule como punto de partida)
+  - Al desactivar: confirmación si hay cambios → llama `deleteProfessionalSchedule` y restaura herencia
+  - Badge "Personalizado" por día individual que difiere del horario del negocio
+  - Botón Guardar solo visible en modo personalizado
+- `mi-horario-client.tsx` actualizado para pasar `hasCustomSchedule` al componente
+- Build verificado: 26 rutas, 0 errores
+- Sin cambios DB — `professional_schedule` ya existía con estructura correcta
+
+### Qué quedó pendiente
+- Item 4: Flujo advertencia + cancelación + notificación al chocar con citas
+- Item 5: Query de selección de profesional en bot sin caché
+- Item 6: Separar "desactivar profesional" de "gestionar citas futuras"
+- Item 7: Función server-side `notificarCancelacionPorNegocio`
+- Bugs backlog: B1, B2, servicios no reflejados en bot
+- Rotar Evolution API key leakada
+
+### Archivos modificados
+- `dashboard/components/horario/horario-recurrente.tsx` (reescrito)
+- `dashboard/components/horario/mi-horario-client.tsx`
+- `docs/sessions/HANDOFF.md` (actualizado)
+- `docs/sessions/CURRENT.md` (reemplazado)
+- `docs/harness/MEMORY.md` (este entry)
+
+## 2026-07-26 — Items 4 y 7 del spec: flujo conflicto + cancelación + notificación WhatsApp
+
+### Qué se hizo
+- Item 4 del spec implementado: flujo de advertencia + cancelación + notificación al chocar con citas existentes
+- Item 7 del spec implementado (como prerequisito): `notificarCancelacionPorNegocio` en `dashboard/lib/whatsapp.ts`
+- `checkConflictosBloqueo` mejorado: ahora retorna `CitaConflicto[]` con detalles (id, hora, servicio, nombre, numero, professional_name)
+- Nueva server action `cancelAppointmentsAndNotify`: marca Cancelada + audita + notifica WhatsApp a cada cliente + notifica al owner
+- `DayDetailSheet` actualizado: reemplazado el viejo `conflictCount`/`forceOverride` por modal con lista de citas afectadas y botones "Cancelar acción" / "Confirmar y cancelar citas"
+- `EVOLUTION_API_URL` y `EVOLUTION_API_KEY` agregados a `dashboard/.env.local` y `dashboard/.env.example`
+- Build verificado: 26 rutas, 0 errores
+
+### Archivos creados
+- `dashboard/lib/whatsapp.ts` — notificarCancelacionPorNegocio
+
+### Archivos modificados
+- `dashboard/lib/actions.ts` — checkConflictosBloqueo mejorado + cancelAppointmentsAndNotify
+- `dashboard/components/horario/day-detail-sheet.tsx` — modal de conflictos
+- `dashboard/.env.local` — EVOLUTION_API_URL, EVOLUTION_API_KEY
+- `dashboard/.env.example` — EVOLUTION_API_URL, EVOLUTION_API_KEY (ejemplo)
+- `docs/sessions/HANDOFF.md` (actualizado)
+- `docs/harness/MEMORY.md` (este entry)
+
+### Qué quedó pendiente
+- Item 5: Query de selección de profesional en bot sin caché
+- Item 6: Separar "desactivar profesional" de "gestionar citas futuras"
+- Bugs backlog: B1 (createAppointment sin validar exceptions), B2 (fetchOcupacion ignora exceptions), servicios no reflejados en bot
+- Rotar Evolution API key leakada
+
+## 2026-07-26 — Items 5 y 6 spec bloqueos: query bot sin caché + separar desactivar de citas futuras
+
+### Qué se hizo
+- **Item 5 verificado**: n8n "Lookup Negocio" ya consulta `professionals` con `p.active = true` en cada webhook. Sin caché ni hardcode. No requirió cambios.
+- **Item 6 implementado**:
+  - Nueva server action `getFutureAppointmentsForProfessional` en `dashboard/lib/actions.ts` — retorna citas Pendiente/Confirmada >= hoy para un profesional
+  - `dashboard/components/equipo/equipo-client.tsx` actualizado: al desactivar un profesional, si tiene citas futuras aparece modal con opción "Cancelar citas y notificar" (reusa `cancelAppointmentsAndNotify`) o "Dejarlas como están"
+  - `toggleMiembroActivo` sigue siendo soft-toggle — no toca citas existentes
+- **Spec completo de bloqueos multi-profesional finalizado** (7/7 items de sección 11)
+- **Build verificado**: 26 rutas, 0 errores TS
+- **Deploy a VPS**: git push → pull → build → pm2 reload
+
+### Archivos modificados
+- `dashboard/lib/actions.ts` — nueva `getFutureAppointmentsForProfessional`
+- `dashboard/components/equipo/equipo-client.tsx` — modal post-desactivación
+- `docs/sessions/HANDOFF.md` (actualizado)
+- `docs/harness/MEMORY.md` (este entry)
+
+### Qué quedó pendiente
+- B1: `createAppointment` no valida `schedule_exceptions` — puede agendar en bloqueos
+- B2: `fetchOcupacion` ignora `schedule_exceptions` — ocupación incorrecta
+- Servicios nuevos no reflejados en bot (orden system prompt n8n)
+- Rotar Evolution API key leakada
+- Fase 2-6 spec escalabilidad: PgBouncer, WhatsApp abstraction layer, gateway, prompts fuera de n8n, onboarding
 
 ## Template para nueva sesión
 ```

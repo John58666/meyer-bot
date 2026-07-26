@@ -1,0 +1,312 @@
+<h2>Responsive + Data model + Bot integration</h2>
+<p class="subtitle">Cómo aplicar el diseño en desktop, mobile, y asegurar que el bot funcione sin problemas</p>
+
+<div class="section">
+  <h3>1. Responsive: Drawer lateral → Bottom Sheet</h3>
+  <p>Basado en shadcn/ui, NNGroup, UI Anatomy, y responsive dialog/drawer patterns:</p>
+</div>
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+
+<div style="background:#0a0a0f; border-radius:12px; padding:16px; font-family:system-ui, monospace; font-size:12px;">
+  <div style="font-weight:600; color:#a78bfa; margin-bottom:8px;">Desktop ≥ 1024px</div>
+  <div style="color:#e4e4e7; line-height:1.6;">
+    <div>┌─────────────────────┬──────────────┐</div>
+    <div>│                     │  Drawer      │</div>
+    <div>│   Calendario        │  340px       │</div>
+    <div>│   mensual           │  con scrim   │</div>
+    <div>│                     │  focus trap  │</div>
+    <div>│                     │  Escape cierra│</div>
+    <div>└─────────────────────┴──────────────┘</div>
+  </div>
+  <div style="margin-top:8px; color:#a1a1aa; font-size:11px;">
+    • shadcn Drawer component con <code style="background:#1a1a2e; padding:1px 6px; border-radius:4px;">side="right"</code><br>
+    • Modal: scrim + focus trap + aria-modal<br>
+    • Click fuera o Escape cierra
+  </div>
+</div>
+
+<div style="background:#0a0a0f; border-radius:12px; padding:16px; font-family:system-ui, monospace; font-size:12px;">
+  <div style="font-weight:600; color:#a78bfa; margin-bottom:8px;">Mobile &lt; 768px</div>
+  <div style="color:#e4e4e7; line-height:1.6;">
+    <div>┌──────────────────────┐</div>
+    <div>│                      │</div>
+    <div>│    Calendario        │</div>
+    <div>│    mensual           │</div>
+    <div>│                      │</div>
+    <div>├──────────────────────┤ ← grab handle</div>
+    <div>│  Bottom Sheet (50%)  │</div>
+    <div>└──────────────────────┘</div>
+  </div>
+  <div style="margin-top:8px; color:#a1a1aa; font-size:11px;">
+    • shadcn Drawer component con <code style="background:#1a1a2e; padding:1px 6px; border-radius:4px;">side="bottom"</code><br>
+    • 3 detents: peek (25%) / half (50%) / full (95%)<br>
+    • Grab handle + ✕ button + swipe down
+  </div>
+</div>
+
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <h4>Breakpoints exactos</h4>
+</div>
+
+<table>
+  <thead>
+    <tr><th>Breakpoint</th><th>Calendario</th><th>Drawer</th><th>Touch targets</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>≥ 1024px (desktop)</td>
+      <td>grid-cols-7 normal</td>
+      <td>Lateral derecho, 340px, modal</td>
+      <td>Mouse</td>
+    </tr>
+    <tr>
+      <td>768 - 1023px (tablet)</td>
+      <td>grid-cols-7, texto 12px</td>
+      <td>Lateral (70% viewport) o bottom sheet</td>
+      <td>≥ 32px</td>
+    </tr>
+    <tr>
+      <td>375 - 767px (mobile)</td>
+      <td>grid-cols-7, font-size 11px</td>
+      <td>Bottom sheet con detents</td>
+      <td>≥ 44px (WCAG 2.2)</td>
+    </tr>
+    <tr>
+      <td>320 - 374px (small)</td>
+      <td>grid-cols-7, sin overflow, estado con ●</td>
+      <td>Bottom sheet full (95%)</td>
+      <td>≥ 44px</td>
+    </tr>
+  </tbody>
+</table>
+
+<p style="font-size:12px; color:#a1a1aa;">La magia: <strong>no renderizamos dos componentes</strong>. shadcn Drawer acepta <code>side</code> como prop reactivo. En mobile renderiza bottom, en desktop renderiza right. Mismo componente, diferente <code>side</code> según viewport.</p>
+
+<hr style="border-color:#1a1a2e; margin:24px 0;">
+
+<div class="section">
+  <h3>2. Data model: que el bot nunca falle</h3>
+  <p>Basado en Butterbase, Booking Chatbot Guide, CodeLink block approach, y Postgres exclusion constraints:</p>
+</div>
+
+<div style="background:#0a0a0f; border-radius:12px; padding:20px; font-family:system-ui, monospace; font-size:13px; line-height:1.6;">
+  <div style="color:#a78bfa; font-weight:600; margin-bottom:12px;">Las 3 tablas que importan (simplificado)</div>
+
+  <div style="margin-bottom:16px;">
+    <div style="color:#22c55e;">-- Reglas de disponibilidad (recurrente semanal)</div>
+    <div style="color:#e4e4e7;">
+availability_rules {<br>
+  <span style="color:#666;">  id</span>             uuid PK<br>
+  <span style="color:#666;">  professional_id</span> uuid FK → professionals<br>
+  <span style="color:#666;">  weekday</span>         int <span style="color:#666;">-- 0=Dom, 1=Lun ... 6=Sáb</span><br>
+  <span style="color:#666;">  start_time</span>      time <span style="color:#666;">-- ej: "09:00"</span><br>
+  <span style="color:#666;">  end_time</span>        time <span style="color:#666;">-- ej: "18:00"</span><br>
+  <span style="color:#666;">  break_start</span>     time <span style="color:#666;">-- null si no hay descanso</span><br>
+  <span style="color:#666;">  break_end</span>       time <span style="color:#666;">-- null si no hay descanso</span><br>
+}
+    </div>
+  </div>
+
+  <div style="margin-bottom:16px;">
+    <div style="color:#eab308;">-- Bloqueos (excepciones puntuales)</div>
+    <div style="color:#e4e4e7;">
+time_blocks {<br>
+  <span style="color:#666;">  id</span>             uuid PK<br>
+  <span style="color:#666;">  professional_id</span> uuid FK → professionals<br>
+  <span style="color:#666;">  date</span>           date <span style="color:#666;">-- día específico</span><br>
+  <span style="color:#666;">  start_time</span>      time <span style="color:#666;">-- ej: "10:00"</span><br>
+  <span style="color:#666;">  end_time</span>        time <span style="color:#666;">-- ej: "12:00"</span><br>
+  <span style="color:#666;">  reason</span>          text <span style="color:#666;">-- "Inventario", "Personal", etc</span><br>
+  <span style="color:#666;">  is_full_day</span>     boolean <span style="color:#666;">-- true = día cerrado completo</span><br>
+}
+    </div>
+  </div>
+
+  <div>
+    <div style="color:#ef4444;">-- Booking del bot (solo referencia — existe en otra tabla)</div>
+    <div style="color:#e4e4e7;">
+bookings {<br>
+  <span style="color:#666;">  id</span>             uuid PK<br>
+  <span style="color:#666;">  professional_id</span> uuid FK → professionals<br>
+  <span style="color:#666;">  starts_at</span>       timestamptz <span style="color:#666;">-- ⚠️ SIEMPRE UTC</span><br>
+  <span style="color:#666;">  ends_at</span>         timestamptz<br>
+  <span style="color:#666;">  status</span>          text <span style="color:#666;">-- pending|confirmed|cancelled</span><br>
+}
+    </div>
+  </div>
+</div>
+
+<div class="cards" style="margin-top:16px;">
+  <div class="card">
+    <div class="card-body">
+      <h4>🔑 Principio: Availability is derived, not stored</h4>
+      <p style="font-size:13px; color:#a1a1aa;">
+        El bot no consulta "slots disponibles" de una tabla. Calcula en el momento:<br><br>
+        <code style="background:#1a1a2e; padding:2px 8px; border-radius:4px;">
+          slots = availability_rules - time_blocks - bookings - past - min_advance
+        </code><br><br>
+        Esto hace que agregar un bloqueo en mi-horario <strong>inmediatamente</strong> afecte la disponibilidad del bot. Sin sync, sin webhooks, sin magia.
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <h4>⏰ Timezone: store UTC, render local</h4>
+      <p style="font-size:13px; color:#a1a1aa;">
+        availability_rules guarda hora local del profesional (ej: "09:00" sin timezone).<br>
+        Al calcular slots: combina date + rule_time y convierte a UTC para comparar con bookings.<br><br>
+        <strong>El bot siempre pregunta al backend.</strong> El backend conoce la timezone del profesional y hace la conversión.
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <h4>🧱 Por qué bloques de 5 min (CodeLink approach)</h4>
+      <p style="font-size:13px; color:#a1a1aa;">
+        Dividir el día en 288 bloques de 5 min permite:<br>
+        • Calcular disponibilidad como <strong>operaciones numéricas</strong>, no comparación de strings<br>
+        • Cachear resultados fácilmente<br>
+        • Soportar cualquier duración de servicio (15, 30, 45, 60 min)<br>
+        • Escalar sin degradación<br><br>
+        <span style="color:#eab308;">Opcional:</span> podemos empezar con el modelo simple de reglas + bookings e introducir blocks después si hay problemas de performance.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <h3>3. Lógica de roles: Admin vs Profesional</h3>
+</div>
+
+<table>
+  <thead>
+    <tr><th>Dimensión</th><th>Admin</th><th>Profesional</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Selector de profesional</td>
+      <td>✅ Dropdown con TODOS</td>
+      <td>❌ Oculto — ve solo su horario</td>
+    </tr>
+    <tr>
+      <td>Calendario</td>
+      <td>Del profesional seleccionado</td>
+      <td>De sí mismo</td>
+    </tr>
+    <tr>
+      <td>Acciones</td>
+      <td>Bloquear, editar, cerrar día</td>
+      <td>Bloquear, editar, cerrar día (solo propio)</td>
+    </tr>
+    <tr>
+      <td>Horario recurrente</td>
+      <td>Puede editar cualquiera</td>
+      <td>Solo su horario</td>
+    </tr>
+    <tr>
+      <td>Bot afectado</td>
+      <td>Bloqueos afectan disponibilidad global</td>
+      <td>Bloqueos afectan su propia disponibilidad</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="section" style="margin-top:24px;">
+  <h3>4. Cómo se conecta con el bot</h3>
+</div>
+
+<div style="background:#0a0a0f; border-radius:12px; padding:20px; font-family:system-ui, monospace; font-size:13px; line-height:1.6;">
+  <div style="color:#a78bfa; font-weight:600; margin-bottom:12px;">Flujo completo: bloqueo en mi-horario → disponibilidad en bot</div>
+
+  <div style="display:flex; gap:8px; align-items:flex-start; margin-bottom:8px;">
+    <span style="background:#a78bfa; color:#0a0a0f; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0;">1</span>
+    <div>
+      <span style="color:#e4e4e7;">Admin/profesional crea bloqueo en el drawer del día</span><br>
+      <span style="color:#666; font-size:12px;">"Inventario — 10:00 a 12:00"</span>
+    </div>
+  </div>
+
+  <div style="display:flex; gap:8px; align-items:flex-start; margin-bottom:8px;">
+    <span style="background:#a78bfa; color:#0a0a0f; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0;">2</span>
+    <div>
+      <span style="color:#e4e4e7;">Backend inserta en <code style="background:#1a1a2e; padding:1px 6px; border-radius:4px;">time_blocks</code></span><br>
+      <span style="color:#666; font-size:12px;">Misma tabla, mismo store. Sin replicación.</span>
+    </div>
+  </div>
+
+  <div style="display:flex; gap:8px; align-items:flex-start; margin-bottom:8px;">
+    <span style="background:#a78bfa; color:#0a0a0f; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0;">3</span>
+    <div>
+      <span style="color:#e4e4e7;">Bot consulta disponibilidad vía API</span><br>
+      <span style="color:#666; font-size:12px;">GET /api/professionals/:id/availability?date=2026-02-07</span>
+    </div>
+  </div>
+
+  <div style="display:flex; gap:8px; align-items:flex-start; margin-bottom:8px;">
+    <span style="background:#a78bfa; color:#0a0a0f; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0;">4</span>
+    <div>
+      <span style="color:#e4e4e7;">Backend calcula slots disponibles</span><br>
+      <span style="color:#666; font-size:12px;">
+        rules[weekday] = 09:00-18:00 | break 13:00-14:00<br>
+        - time_blocks[10:00-12:00] | - bookings[15:00-16:00]<br>
+        = slots disponibles: 09:00, 09:30, 12:00, 16:00, 16:30, 17:00
+      </span>
+    </div>
+  </div>
+
+  <div style="display:flex; gap:8px; align-items:flex-start;">
+    <span style="background:#a78bfa; color:#0a0a0f; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0;">5</span>
+    <div>
+      <span style="color:#e4e4e7;">Bot presenta slots al cliente → cliente reserva</span><br>
+      <span style="color:#666; font-size:12px;">"Tengo disponible: 9:00, 9:30, 12:00. ¿Cuál prefieres?"</span>
+    </div>
+  </div>
+</div>
+
+<div class="cards" style="margin-top:16px;">
+  <div class="card" style="border-color:#22c55e40;">
+    <div class="card-body">
+      <h4>✅ Lo que garantiza que el bot no falle</h4>
+      <ul style="font-size:13px; color:#a1a1aa; margin:8px 0 0; padding-left:16px;">
+        <li><strong>Single source of truth:</strong> availability_rules + time_blocks + bookings son las únicas fuentes. No hay cache inconsistente.</li>
+        <li><strong>Exclusion constraint</strong> en bookings (Postgres): dos bookings no pueden solaparse en el mismo profesional. Race condition imposible.</li>
+        <li><strong>Min advance window:</strong> ej: no se puede reservar con menos de 2h de anticipación. Controlado por el backend, no por el frontend.</li>
+        <li><strong>Buffer time:</strong> entre booking y booking hay X min de buffer. Configurable por servicio.</li>
+        <li><strong>Full-day block:</strong> con <code>is_full_day=true</code> en time_blocks, el día entero se marca cerrado. Un solo insert.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <h3>Resumen: lo que implementamos</h3>
+</div>
+
+<table>
+  <thead>
+    <tr><th>Capa</th><th>Qué hacemos</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Frontend responsive</td>
+      <td>shadcn Drawer con side reactivo: lateral en desktop, bottom en mobile. Mismo componente.</td>
+    </tr>
+    <tr>
+      <td>Data model</td>
+      <td>availability_rules (semanal) + time_blocks (excepciones) + bookings (citas). Availability derived.</td>
+    </tr>
+    <tr>
+      <td>Roles</td>
+      <td>Admin: dropdown con todos. Profesional: solo su horario. Misma URL, diferente UI.</td>
+    </tr>
+    <tr>
+      <td>Bot integration</td>
+      <td>API unificada GET /availability. Bloqueos en mi-horario afectan disponibilidad del bot inmediatamente.</td>
+    </tr>
+  </tbody>
+</table>

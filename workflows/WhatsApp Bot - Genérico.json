@@ -370,7 +370,7 @@
           "parameters": [
             {
               "name": "number",
-              "value": "=={{ $('Webhook').item.json.body.data.key.remoteJid.split('@')[0] }}"
+              "value": "={{ $('Webhook').item.json.body.data.key.remoteJid.split('@')[0] }}"
             },
             {
               "name": "text",

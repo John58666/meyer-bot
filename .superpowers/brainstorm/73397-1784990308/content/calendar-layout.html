@@ -1,0 +1,156 @@
+<h2>Diseño calendar-centric para Mi Horario</h2>
+<p class="subtitle">Elegí la variante que más te guste visualmente</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-body">
+      <h3>A — Calendario + Drawer lateral</h3>
+      <div style="background:#0a0a0f; border-radius:12px; padding:16px; margin:8px 0; font-size:13px; line-height:1.5; color:#e4e4e7; font-family:system-ui, monospace;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+          <span style="background:#1a1a2e; padding:4px 10px; border-radius:6px; color:#a78bfa; font-size:12px;">María ▼</span>
+          <span style="color:#666;">◀</span><span style="font-weight:600;">Febrero 2026</span><span style="color:#666;">▶</span>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:2px; text-align:center; margin-bottom:8px;">
+          <span style="color:#666;font-size:11px;">L</span><span style="color:#666;font-size:11px;">M</span><span style="color:#666;font-size:11px;">M</span><span style="color:#666;font-size:11px;">J</span><span style="color:#666;font-size:11px;">V</span><span style="color:#666;font-size:11px;">S</span><span style="color:#666;font-size:11px;">D</span>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; text-align:center;">
+          <span style="color:#444;">26</span><span style="color:#444;">27</span><span style="color:#444;">28</span><span style="color:#444;">29</span><span style="color:#444;">30</span><span style="color:#444;">31</span>
+          <span style="background:#1a1a2e; border-radius:6px; padding:2px;">1</span>
+          <span>2</span><span>3</span><span>4</span><span>5</span>
+          <span style="background:#3b1a1a; border-radius:6px; padding:2px; color:#ef4444;">6</span>
+          <span style="background:#1a1a2e; border-radius:6px; padding:2px;">7</span>
+          <span>8</span><span>9</span>
+          <span style="background:#3b3520; border-radius:6px; padding:2px; color:#eab308;">10</span>
+          <span>11</span><span>12</span>
+          <span style="background:#3b1a1a; border-radius:6px; padding:2px; color:#ef4444;">13</span>
+          <span>14</span><span>15</span><span>16</span><span>17</span><span>18</span><span>19</span><span>20</span>
+          <span style="background:#3b1a1a; border-radius:6px; padding:2px; color:#ef4444;">21</span>
+          <span>22</span><span>23</span><span>24</span><span>25</span><span>26</span><span>27</span><span>28</span>
+        </div>
+        <div style="display:flex; gap:12px; margin-top:8px; font-size:11px; color:#666;">
+          <span><span style="color:#ef4444;">●</span> Cerrado</span>
+          <span><span style="color:#eab308;">●</span> Parcial</span>
+          <span><span style="color:#22c55e;">●</span> Abierto</span>
+        </div>
+      </div>
+      <p style="font-size:13px; color:#a1a1aa;">Calendario ocupa todo el ancho. Al click en un día, drawer lateral (desktop) o bottom sheet (mobile) con detalle + acciones.</p>
+      <div style="display:flex; gap:4px; flex-wrap:wrap; margin-top:8px;">
+        <span style="background:#1a1a2e; padding:2px 8px; border-radius:4px; font-size:11px; color:#a78bfa;">✅ Unificado</span>
+        <span style="background:#1a1a2e; padding:2px 8px; border-radius:4px; font-size:11px; color:#a78bfa;">✅ Responsive nativo</span>
+        <span style="background:#1a1a2e; padding:2px 8px; border-radius:4px; font-size:11px; color:#a78bfa;">✅ Drawer lateral</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-body">
+      <h3>B — Timeline semanal + Calendario compacto</h3>
+      <div style="background:#0a0a0f; border-radius:12px; padding:16px; margin:8px 0; font-size:13px; line-height:1.5; color:#e4e4e7; font-family:system-ui, monospace;">
+        <div style="display:flex; gap:16px;">
+          <div style="flex:0 0 180px;">
+            <div style="display:flex; align-items:center; gap:4px; margin-bottom:8px;">
+              <span style="color:#666;">◀</span><span style="font-size:12px;">Feb</span><span style="color:#666;">▶</span>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:2px; font-size:10px; text-align:center;">
+              <span style="color:#666;">L</span><span style="color:#666;">M</span><span style="color:#666;">M</span><span style="color:#666;">J</span><span style="color:#666;">V</span><span style="color:#666;">S</span><span style="color:#666;">D</span>
+              <span style="color:#444;">26</span><span style="color:#444;">27</span><span style="color:#444;">28</span><span style="color:#444;">29</span><span style="color:#444;">30</span><span style="color:#444;">31</span><span>1</span>
+              <span>2</span><span>3</span><span>4</span><span>5</span><span style="color:#ef4444;">6</span><span style="background:#1a1a2e; border-radius:4px;">7</span><span>8</span>
+              <span>9</span><span style="color:#eab308;">10</span><span>11</span><span>12</span><span style="color:#ef4444;">13</span><span>14</span><span>15</span>
+            </div>
+          </div>
+          <div style="flex:1; border-left:1px solid #1a1a2e; padding-left:12px;">
+            <div style="font-size:12px; font-weight:600; margin-bottom:8px;">Semana del 3 Feb</div>
+            <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; font-size:11px;">
+              <div style="background:#1a1a2e; border-radius:6px; padding:6px; text-align:center;">
+                <div style="color:#666;">Lun</div>
+                <div>3</div>
+                <div style="color:#22c55e; font-size:10px;">Disponible</div>
+              </div>
+              <div style="background:#1a1a2e; border-radius:6px; padding:6px; text-align:center;">
+                <div style="color:#666;">Mar</div>
+                <div>4</div>
+                <div style="color:#22c55e; font-size:10px;">Disponible</div>
+              </div>
+              <div style="background:#3b1a1a; border-radius:6px; padding:6px; text-align:center;">
+                <div style="color:#666;">Mié</div>
+                <div>5</div>
+                <div style="color:#ef4444; font-size:10px;">Cerrado</div>
+              </div>
+              <div style="background:#1a1a2e; border-radius:6px; padding:6px; text-align:center;">
+                <div style="color:#666;">Jue</div>
+                <div>6</div>
+                <div style="color:#22c55e; font-size:10px;">Disponible</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p style="font-size:13px; color:#a1a1aa;">Calendario compacto a la izquierda + timeline semanal detallado a la derecha. Click en día → drawer.</p>
+      <div style="display:flex; gap:4px; flex-wrap:wrap; margin-top:8px;">
+        <span style="background:#1a1a2e; padding:2px 8px; border-radius:4px; font-size:11px; color:#a78bfa;">✅ Más info visible</span>
+        <span style="background:#1a1a2e; padding:2px 8px; border-radius:4px; font-size:11px; color:#a78bfa;">⚠️ Más denso</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-body">
+      <h3>C — Minimal puro (solo calendario mensual)</h3>
+      <div style="background:#0a0a0f; border-radius:12px; padding:16px; margin:8px 0; font-size:13px; line-height:1.5; color:#e4e4e7; font-family:system-ui, monospace;">
+        <div style="text-align:center; margin-bottom:12px;">
+          <span style="font-size:16px; font-weight:600;">Febrero 2026</span>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:2px; text-align:center; margin-bottom:6px;">
+          <span style="color:#666;font-size:11px;">L</span><span style="color:#666;font-size:11px;">M</span><span style="color:#666;font-size:11px;">M</span><span style="color:#666;font-size:11px;">J</span><span style="color:#666;font-size:11px;">V</span><span style="color:#666;font-size:11px;">S</span><span style="color:#666;font-size:11px;">D</span>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:6px; text-align:center;">
+          <span style="color:#444;font-size:13px;">26</span><span style="color:#444;font-size:13px;">27</span><span style="color:#444;font-size:13px;">28</span><span style="color:#444;font-size:13px;">29</span><span style="color:#444;font-size:13px;">30</span><span style="color:#444;font-size:13px;">31</span>
+          <div style="background:#1a1a2e; border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; margin:auto; font-size:13px; cursor:pointer;">1</div>
+          <div style="width:32px; height:32px; display:flex; align-items:center; justify-content:center; margin:auto; font-size:13px;">2</div>
+          <div style="width:32px; height:32px; display:flex; align-items:center; justify-content:center; margin:auto; font-size:13px;">3</div>
+          <div style="width:32px; height:32px; display:flex; align-items:center; justify-content:center; margin:auto; font-size:13px;">4</div>
+          <div style="width:32px; height:32px; display:flex; align-items:center; justify-content:center; margin:auto; font-size:13px;">5</div>
+          <div style="background:#3b1a1a; border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; margin:auto; font-size:13px; color:#ef4444; cursor:pointer;">6</div>
+          <div style="background:#1a1a2e; border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; margin:auto; font-size:13px; cursor:pointer;">7</div>
+          <div style="width:32px; height:32px; display:flex; align-items:center; justify-content:center; margin:auto; font-size:13px;">8</div>
+          <div style="width:32px; height:32px; display:flex; align-items:center; justify-content:center; margin:auto; font-size:13px;">9</div>
+          <div style="background:#3b3520; border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; margin:auto; font-size:13px; color:#eab308; cursor:pointer;">10</div>
+        </div>
+        <div style="display:flex; justify-content:center; gap:16px; margin-top:10px; font-size:11px; color:#666;">
+          <span><span style="color:#ef4444;">●</span> Cerrado</span>
+          <span><span style="color:#eab308;">●</span> Parcial</span>
+          <span><span style="color:#22c55e;">●</span> Abierto</span>
+        </div>
+      </div>
+      <p style="font-size:13px; color:#a1a1aa;">Solo calendario. Sin sidebar ni timeline extra. Días clickeables con indicador de estado. Drawer al click. El más limpio y simple.</p>
+      <div style="display:flex; gap:4px; flex-wrap:wrap; margin-top:8px;">
+        <span style="background:#1a1a2e; padding:2px 8px; border-radius:4px; font-size:11px; color:#a78bfa;">✅ Máximo simple</span>
+        <span style="background:#1a1a2e; padding:2px 8px; border-radius:4px; font-size:11px; color:#a78bfa;">✅ Responsive fácil</span>
+        <span style="background:#1a1a2e; padding:2px 8px; border-radius:4px; font-size:11px; color:#a78bfa;">✅ Mobile-first</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Drawer de día (compartido en todas las opciones)</h3>
+  <div style="background:#0a0a0f; border-radius:12px; padding:16px; font-size:13px; line-height:1.6; color:#e4e4e7; font-family:system-ui, monospace; max-width:360px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <div><span style="font-weight:600;">Jueves 6 Feb</span><br><span style="color:#666;font-size:12px;">2026</span></div>
+      <span style="background:#3b3520; padding:3px 10px; border-radius:20px; font-size:12px; color:#eab308;">🟡 Parcial</span>
+    </div>
+    <div style="border-top:1px solid #1a1a2e; padding-top:10px;">
+      <div style="font-size:12px; color:#a1a1aa; margin-bottom:6px;">Horario: 09:00 - 18:00</div>
+      <div style="font-size:12px; color:#a1a1aa; margin-bottom:8px;">Bloqueo: 13:00 - 15:00 · Inventario</div>
+      <div style="display:flex; gap:8px;">
+        <span style="background:#a78bfa10; border:1px solid #a78bfa40; padding:4px 12px; border-radius:6px; font-size:12px; cursor:pointer;">+ Bloquear</span>
+        <span style="background:#1a1a2e; padding:4px 12px; border-radius:6px; font-size:12px; cursor:pointer;">Editar horario</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Mobile (bottom sheet)</h3>
+  <p class="subtitle">Abajo en mobile, lateral en desktop</p>
+</div>
