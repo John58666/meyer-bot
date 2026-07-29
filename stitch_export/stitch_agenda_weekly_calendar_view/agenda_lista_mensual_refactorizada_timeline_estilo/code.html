@@ -1,0 +1,277 @@
+<!DOCTYPE html><html lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<style>
+        @layer base {
+            html, body {
+                margin: 0;
+                padding: 0;
+                background-color: #FAF9F6;
+            }
+            body {
+                overscroll-behavior: none;
+            }
+            main > :first-child {
+                margin-top: 0 !important;
+            }
+            main > :last-child {
+                margin-bottom: 0 !important;
+            }
+        }
+        ::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#F97316",
+                        "on-primary": "#ffffff",
+                        "surface": "#FAF9F6",
+                        "surface-container": "#F1F0EC",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface": "#251913",
+                        "on-surface-variant": "#584237",
+                        "outline-variant": "#e0c0b1",
+                        "secondary-container": "#fd8c6f"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-mobile": "20px",
+                        "lg": "40px",
+                        "xs": "8px",
+                        "xl": "64px",
+                        "md": "24px",
+                        "margin-desktop": "auto",
+                        "base": "4px",
+                        "max-width": "1200px",
+                        "sm": "16px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "body": ["Inter", "sans-serif"],
+                        "headline": ["Inter", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "label-bold": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-md": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet">
+</head>
+<body class="bg-surface font-body text-on-surface">
+<main class="max-w-[1200px] mx-auto px-gutter py-xl min-h-screen">
+<div class="flex flex-col gap-xl">
+<!-- Header Section -->
+<header class="flex flex-col gap-lg">
+<div class="flex flex-wrap items-center justify-between gap-md">
+<div class="flex items-center gap-sm">
+<h1 class="font-headline-lg text-on-surface">Agenda</h1>
+<div class="flex items-center gap-xs bg-surface-container/50 px-md py-2 rounded-full ml-sm">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors text-[20px]">chevron_left</button>
+<span class="font-headline-md text-on-surface text-[18px]">Julio 2026</span>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors text-[20px]">chevron_right</button>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<!-- Team Filter -->
+<div class="flex -space-x-3 hover:space-x-1 transition-all duration-300 mr-md items-center">
+<div class="w-10 h-10 rounded-full border-2 border-surface bg-gray-200 overflow-hidden ring-2 ring-transparent hover:ring-primary cursor-pointer transition-all">
+<img alt="Camila Ruiz" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBx3RL2UbJtA111AT7cVfB-xMNbcHqxl0NIT7Ij-Ga9pxNMl0cjuiiamQ1sj3CbQhBBfQpW09p4aWZclQAjUizKNeGYEkc5wx2oYmSGOBuC8scp2h1LOToiRMnl6dwpJr7ZN-bGFdY7ngFb1VI4CjWF3G9w5JpO2I7HKYUnTKmuQpVeAV1F_icLt50F0BT_8W46XQADJFPn7y18vR9x7zTqLvEo10H3P_RKCo85q-y9BCtxHuqrQ0IZEg">
+</div>
+<div class="w-10 h-10 rounded-full border-2 border-surface bg-gray-300 flex items-center justify-center text-label-bold ring-2 ring-transparent hover:ring-primary cursor-pointer transition-all">AL</div>
+<div class="w-10 h-10 rounded-full border-2 border-surface bg-surface-container flex items-center justify-center ring-2 ring-transparent hover:ring-primary cursor-pointer transition-all">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">add</span>
+</div>
+</div>
+<button class="flex items-center gap-sm px-xl py-4 bg-primary text-on-primary rounded-2xl shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:scale-[1.02] active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined font-bold">add</span>
+<span class="font-label-bold text-[14px]">NUEVA CITA</span>
+</button>
+</div>
+</div>
+<!-- View Switcher & Filters -->
+<div class="flex flex-col gap-md">
+<div class="flex flex-wrap items-center justify-between gap-md">
+<!-- View Switcher -->
+<div class="flex bg-surface-container/50 p-1.5 rounded-2xl">
+<button class="flex items-center gap-xs px-md py-sm rounded-xl text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">calendar_month</span>
+<span class="font-label-bold">Calendario</span>
+</button>
+<button class="flex items-center gap-xs px-md py-sm rounded-xl bg-white shadow-sm text-primary">
+<span class="material-symbols-outlined text-[20px]">format_list_bulleted</span>
+<span class="font-label-bold">Lista</span>
+</button>
+</div>
+<!-- Occupancy -->
+<div class="flex items-center gap-md">
+<div class="flex flex-col items-end gap-1">
+<div class="flex items-center gap-3">
+<span class="text-body-sm text-on-surface-variant">Ocupación hoy: <span class="font-bold text-on-surface">75% (8/10 citas)</span></span>
+</div>
+<div class="w-48 h-2 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full transition-all duration-1000" style="width: 75%"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Filter Pills -->
+<div class="flex flex-wrap gap-sm">
+<button class="px-md py-2.5 rounded-full bg-primary text-on-primary text-label-bold shadow-md shadow-primary/10">TODOS</button>
+<button class="px-md py-2.5 rounded-full bg-white border border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary transition-all text-label-bold">PENDIENTES</button>
+<button class="px-md py-2.5 rounded-full bg-white border border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary transition-all text-label-bold">CONFIRMADAS</button>
+<button class="px-md py-2.5 rounded-full bg-white border border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary transition-all text-label-bold">COMPLETADAS</button>
+<button class="px-md py-2.5 rounded-full bg-white border border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary transition-all text-label-bold">CANCELADAS</button>
+<button class="px-md py-2.5 rounded-full bg-white border border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary transition-all text-label-bold">BLOQUEOS HORARIOS</button>
+</div>
+</div>
+</header>
+<!-- Timeline View / Accordions -->
+<div class="flex flex-col gap-md">
+<!-- Day Group: Today (Expanded) -->
+<div class="flex flex-col gap-sm">
+<div class="flex items-center justify-between py-2 px-1">
+<div class="flex items-center gap-md">
+<h2 class="font-headline-md text-on-surface">Lunes 27 de julio</h2>
+<span class="bg-primary/10 text-primary px-3 py-1 rounded-full text-label-bold">8 CITAS</span>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-transform rotate-180">expand_more</button>
+</div>
+<div class="flex flex-col gap-sm">
+<!-- Card: Regular Active -->
+<div class="bg-white p-md rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-wrap items-center gap-lg">
+<div class="w-24">
+<span class="font-headline-md text-primary">10:00 AM</span>
+</div>
+<div class="flex-1 min-w-[200px]">
+<p class="font-headline-md text-[18px]">Miguel Ángel Duarte</p>
+<p class="text-body-sm text-on-surface-variant">+57 300 123 4567</p>
+</div>
+<div class="flex items-center gap-sm min-w-[180px]">
+<div class="w-9 h-9 rounded-full bg-surface-container overflow-hidden">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBx3RL2UbJtA111AT7cVfB-xMNbcHqxl0NIT7Ij-Ga9pxNMl0cjuiiamQ1sj3CbQhBBfQpW09p4aWZclQAjUizKNeGYEkc5wx2oYmSGOBuC8scp2h1LOToiRMnl6dwpJr7ZN-bGFdY7ngFb1VI4CjWF3G9w5JpO2I7HKYUnTKmuQpVeAV1F_icLt50F0BT_8W46XQADJFPn7y18vR9x7zTqLvEo10H3P_RKCo85q-y9BCtxHuqrQ0IZEg">
+</div>
+<span class="text-body-sm font-medium">Camila Ruiz</span>
+</div>
+<div class="min-w-[150px]">
+<p class="text-body-sm font-semibold">Corte Caballero</p>
+<p class="text-primary font-bold">$35.000</p>
+</div>
+<div class="flex items-center gap-md ml-auto">
+<button class="w-10 h-10 flex items-center justify-center text-[#25D366] bg-[#25D366]/10 rounded-full hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[22px]">chat</span>
+</button>
+<div class="flex items-center gap-md">
+<span class="h-10 px-md flex items-center bg-primary text-on-primary rounded-xl text-label-bold shadow-sm">PENDIENTE</span>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary">more_vert</button>
+</div>
+</div>
+</div>
+<!-- Card: Block -->
+<div class="bg-surface-container/30 border border-dashed border-outline-variant p-md rounded-2xl flex items-center gap-lg">
+<div class="w-24">
+<span class="font-headline-md text-on-surface-variant">11:00 AM</span>
+</div>
+<div class="flex items-center gap-md flex-1">
+<span class="material-symbols-outlined text-on-surface-variant">lock</span>
+<p class="text-body-lg italic text-on-surface-variant">Horario Inhabilitado: Almuerzo – Camila Ruiz</p>
+</div>
+<button class="px-md py-2 border border-primary text-primary hover:bg-primary hover:text-on-primary transition-all rounded-xl text-label-bold">LIBERAR</button>
+</div>
+<!-- Card: Cancelled -->
+<div class="bg-white p-md rounded-2xl shadow-sm opacity-40 flex flex-wrap items-center gap-lg">
+<div class="w-24">
+<span class="font-headline-md text-on-surface-variant line-through">11:30 AM</span>
+</div>
+<div class="flex-1 min-w-[200px]">
+<p class="font-headline-md text-[18px] line-through">Lucas Rivas</p>
+<p class="text-body-sm text-on-surface-variant">+57 321 987 6543</p>
+</div>
+<div class="flex items-center gap-sm min-w-[180px]">
+<div class="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant">person</span>
+</div>
+<span class="text-body-sm font-medium">Andrés López</span>
+</div>
+<div class="min-w-[150px]">
+<p class="text-body-sm font-semibold line-through">Color Global</p>
+<p class="text-on-surface-variant font-bold">$85.000</p>
+</div>
+<div class="flex items-center gap-md ml-auto">
+<span class="h-10 px-md flex items-center bg-red-100 text-red-700 rounded-xl text-label-bold">CANCELADA</span>
+<button class="material-symbols-outlined text-on-surface-variant">more_vert</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Day Group: Collapsed -->
+<div class="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all cursor-pointer group">
+<div class="flex items-center justify-between p-md">
+<div class="flex items-center gap-lg">
+<div class="flex flex-col">
+<h2 class="font-headline-md text-on-surface group-hover:text-primary transition-colors">Martes 28 de julio</h2>
+</div>
+<span class="bg-surface-container text-on-surface-variant px-3 py-1 rounded-full text-label-bold">14 CITAS</span>
+</div>
+<div class="flex items-center gap-xl">
+<div class="flex flex-col items-end gap-1">
+<div class="w-32 h-1 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 95%"></div>
+</div>
+<span class="text-[10px] font-bold text-primary uppercase">Casi lleno</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant transition-transform">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Day Group: Collapsed -->
+<div class="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all cursor-pointer group">
+<div class="flex items-center justify-between p-md">
+<div class="flex items-center gap-lg">
+<div class="flex flex-col">
+<h2 class="font-headline-md text-on-surface group-hover:text-primary transition-colors">Miércoles 29 de julio</h2>
+</div>
+<span class="bg-surface-container text-on-surface-variant px-3 py-1 rounded-full text-label-bold">5 CITAS</span>
+</div>
+<div class="flex items-center gap-xl">
+<div class="flex flex-col items-end gap-1">
+<div class="w-32 h-1 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-green-500" style="width: 30%"></div>
+</div>
+<span class="text-[10px] font-bold text-green-600 uppercase">Disponible</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant transition-transform">expand_more</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<script>
+        // Simple interaction for expanding/collapsing sections (visual only for now)
+        document.querySelectorAll('.group.cursor-pointer').forEach(el => {
+            el.addEventListener('click', () => {
+                // Mimic expansion
+                el.style.transform = 'translateY(2px)';
+                setTimeout(() => el.style.transform = 'translateY(0)', 100);
+            });
+        });
+    </script>
+</body></html>

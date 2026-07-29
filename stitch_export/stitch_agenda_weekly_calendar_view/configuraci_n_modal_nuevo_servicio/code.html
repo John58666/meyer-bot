@@ -1,0 +1,259 @@
+<!DOCTYPE html><html lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Peluquería Meyer - Gestión de Servicios</title>
+<!-- Tailwind CSS v3 CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'meyer-orange': '#D2694E',
+            'meyer-cream': '#FAF9F6',
+            'meyer-purple-light': '#E5E1F9',
+            'meyer-purple-text': '#5A4A9B',
+          },
+          borderRadius: {
+            '2xl': '16px',
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="typography">
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+<style data-purpose="custom-shadows">
+    .card-shadow {
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+    .dropdown-shadow {
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    }
+    .table-header-sticky {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body class="bg-meyer-cream min-h-screen text-gray-800">
+<!-- BEGIN: MainHeader -->
+<header class="w-full px-8 py-4 flex justify-between items-center bg-transparent">
+<div class="text-xl font-semibold text-gray-700" data-purpose="brand-logo">
+      Peluquería Meyer
+    </div>
+<div class="relative flex items-center gap-2 cursor-pointer" data-purpose="user-menu-trigger">
+<!-- User Avatar Placeholder -->
+<div class="w-8 h-8 rounded-full overflow-hidden bg-gray-200">
+<img alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-Acl-gU5KRj9qf9wIT-0ZaEUjvJz1xzAKz3BXSG2ayC8c7I8eKmTPqgzQgbLgPxOCcPl2lBqLNlUvh5C0ndOU6jaFnPxr9dvf8XPodGTCqhpYjEXElrozaU9CMJgriKI3ALv-rYNLA8dHdKF6JVQczpdBraSE6OAT4ER15E9JW4P6LBZApmGExWijMJpIhnrgsCd-OI3__s_V4kumvX9Yi2QtZhLADkplL5u6_tAtdI1r7v8cXmsi72Eo_CyxVlL30tQ2yvREGBRu">
+</div>
+<!-- Dropdown Arrow -->
+<svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<!-- BEGIN: User Dropdown Menu -->
+<div class="absolute right-0 top-10 w-64 bg-white rounded-lg dropdown-shadow z-50 border border-gray-100 py-1" data-purpose="user-dropdown">
+<a class="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-50" href="#">Ayuda / FAQ</a>
+<a class="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-50" href="#">Términos Legales &amp; Privacidad (Ley 1581)</a>
+<a class="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50" href="#">Cerrar Sesión</a>
+</div>
+<!-- END: User Dropdown Menu -->
+</div>
+</header>
+<!-- END: MainHeader -->
+<!-- BEGIN: MainContent -->
+<main class="max-w-6xl mx-auto px-4 mt-4 pb-12">
+<div class="bg-white rounded-2xl card-shadow p-8 min-h-[600px]" data-purpose="content-card">
+<!-- BEGIN: Navigation Tabs -->
+<div class="flex items-center border-b border-gray-100 mb-8 overflow-x-auto whitespace-nowrap" data-purpose="navigation-tabs">
+<div class="relative px-6 py-4 text-meyer-orange font-medium border-b-2 border-meyer-orange">
+          Servicios &amp; Precios
+        </div>
+<div class="px-6 py-4 text-gray-500 font-medium hover:text-gray-700 cursor-pointer">
+          Equipo &amp; Roles
+        </div>
+<div class="px-6 py-4 text-gray-500 font-medium hover:text-gray-700 cursor-pointer">
+          Horarios Generales
+        </div>
+<div class="px-6 py-4 text-gray-500 font-medium hover:text-gray-700 cursor-pointer">
+          Auditoría e Historial
+        </div>
+</div>
+<!-- END: Navigation Tabs -->
+<!-- BEGIN: Action Bar -->
+<div class="flex justify-end mb-6">
+<button class="bg-meyer-orange hover:bg-opacity-90 text-white px-6 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-colors shadow-sm">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+          Nuevo Servicio
+        </button>
+</div>
+<!-- END: Action Bar -->
+<!-- BEGIN: Services Table -->
+<div class="border border-gray-100 rounded-xl overflow-hidden" data-purpose="services-container">
+<table class="w-full text-left border-collapse" id="services-table">
+<thead class="bg-[#FAF9F6] text-gray-500 uppercase text-[11px] tracking-wider font-semibold">
+<tr>
+<th class="px-6 py-3 border-b border-gray-100">Nombre del Servicio</th>
+<th class="px-6 py-3 border-b border-gray-100">Duración</th>
+<th class="px-6 py-3 border-b border-gray-100 text-center">Comisión</th>
+<th class="px-6 py-3 border-b border-gray-100">Precio</th>
+<th class="px-6 py-3 border-b border-gray-100">Profesionales</th>
+<th class="px-6 py-3 border-b border-gray-100 text-center">Acciones</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-100">
+<!-- CATEGORY: Peluquería & Corte -->
+<tr class="bg-gray-50/50">
+<td class="px-6 py-3 text-sm font-semibold text-gray-700" colspan="6">
+<span class="flex items-center gap-2">
+<span>💇‍♂️</span> Peluquería &amp; Corte
+                </span>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 transition-colors">
+<td class="px-6 py-4 text-gray-700 font-medium pl-10">Corte Dama</td>
+<td class="px-6 py-4 text-gray-500 text-sm">45 min</td>
+<td class="px-6 py-4 text-center text-gray-400 text-xs">40%</td>
+<td class="px-6 py-4 text-gray-700 font-semibold">$45.000</td>
+<td class="px-6 py-4">
+<div class="flex gap-1.5">
+<span class="bg-meyer-purple-light text-meyer-purple-text px-2.5 py-0.5 rounded-full text-[10px] font-medium">Ana</span>
+<span class="bg-meyer-purple-light text-meyer-purple-text px-2.5 py-0.5 rounded-full text-[10px] font-medium">Laura</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex justify-center gap-3 text-gray-400">
+<button class="hover:text-meyer-orange transition-colors"><svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></button>
+<button class="hover:text-red-500 transition-colors"><svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 transition-colors">
+<td class="px-6 py-4 text-gray-700 font-medium pl-10">Corte Caballero</td>
+<td class="px-6 py-4 text-gray-500 text-sm">30 min</td>
+<td class="px-6 py-4 text-center text-gray-400 text-xs">40%</td>
+<td class="px-6 py-4 text-gray-700 font-semibold">$25.000</td>
+<td class="px-6 py-4">
+<div class="flex gap-1.5">
+<span class="bg-meyer-purple-light text-meyer-purple-text px-2.5 py-0.5 rounded-full text-[10px] font-medium">Carlos</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex justify-center gap-3 text-gray-400">
+<button class="hover:text-meyer-orange transition-colors"><svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></button>
+<button class="hover:text-red-500 transition-colors"><svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></button>
+</div>
+</td>
+</tr>
+<!-- CATEGORY: Color & Tratamientos -->
+<tr class="bg-gray-50/50">
+<td class="px-6 py-3 text-sm font-semibold text-gray-700 border-t border-gray-100" colspan="6">
+<span class="flex items-center gap-2">
+<span>🎨</span> Color &amp; Tratamientos
+                </span>
+</td>
+</tr>
+<!-- Parent Service with Variants -->
+<tr class="bg-white border-b-0">
+<td class="px-6 py-3 text-gray-700 font-medium pl-10" colspan="6">Tinte</td>
+</tr>
+<!-- Variant 1 -->
+<tr class="hover:bg-gray-50 transition-colors bg-gray-50/20">
+<td class="px-6 py-2.5 text-gray-500 text-sm pl-16 flex items-center gap-2">
+<div class="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
+                Tinte Cabello Corto
+              </td>
+<td class="px-6 py-2.5 text-gray-500 text-sm">60 min</td>
+<td class="px-6 py-2.5 text-center text-gray-400 text-xs">35%</td>
+<td class="px-6 py-2.5 text-gray-700 font-semibold">$80.000</td>
+<td class="px-6 py-2.5">
+<div class="flex gap-1.5">
+<span class="bg-meyer-purple-light text-meyer-purple-text px-2.5 py-0.5 rounded-full text-[10px] font-medium">Ana</span>
+</div>
+</td>
+<td class="px-6 py-2.5">
+<div class="flex justify-center gap-3 text-gray-400">
+<button class="hover:text-meyer-orange transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></button>
+<button class="hover:text-red-500 transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></button>
+</div>
+</td>
+</tr>
+<!-- Variant 2 -->
+<tr class="hover:bg-gray-50 transition-colors bg-gray-50/20">
+<td class="px-6 py-2.5 text-gray-500 text-sm pl-16 flex items-center gap-2">
+<div class="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
+                Tinte Cabello Largo
+              </td>
+<td class="px-6 py-2.5 text-gray-500 text-sm">120 min</td>
+<td class="px-6 py-2.5 text-center text-gray-400 text-xs">35%</td>
+<td class="px-6 py-2.5 text-gray-700 font-semibold">$120.000</td>
+<td class="px-6 py-2.5">
+<div class="flex gap-1.5">
+<span class="bg-meyer-purple-light text-meyer-purple-text px-2.5 py-0.5 rounded-full text-[10px] font-medium">Ana</span>
+<span class="bg-meyer-purple-light text-meyer-purple-text px-2.5 py-0.5 rounded-full text-[10px] font-medium">Carlos</span>
+</div>
+</td>
+<td class="px-6 py-2.5">
+<div class="flex justify-center gap-3 text-gray-400">
+<button class="hover:text-meyer-orange transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></button>
+<button class="hover:text-red-500 transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 transition-colors">
+<td class="px-6 py-4 text-gray-700 font-medium pl-10">Hidratación Profunda</td>
+<td class="px-6 py-4 text-gray-500 text-sm">45 min</td>
+<td class="px-6 py-4 text-center text-gray-400 text-xs">50%</td>
+<td class="px-6 py-4 text-gray-700 font-semibold">$35.000</td>
+<td class="px-6 py-4">
+<div class="flex gap-1.5">
+<span class="bg-meyer-purple-light text-meyer-purple-text px-2.5 py-0.5 rounded-full text-[10px] font-medium">Laura</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex justify-center gap-3 text-gray-400">
+<button class="hover:text-meyer-orange transition-colors"><svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></button>
+<button class="hover:text-red-500 transition-colors"><svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></button>
+</div>
+</td>
+</tr>
+<!-- CATEGORY: Estética & Uñas -->
+<tr class="bg-gray-50/50">
+<td class="px-6 py-3 text-sm font-semibold text-gray-700 border-t border-gray-100" colspan="6">
+<span class="flex items-center gap-2">
+<span>💅</span> Estética &amp; Uñas
+                </span>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 transition-colors">
+<td class="px-6 py-4 text-gray-700 font-medium pl-10">Manicura Semi-permanente</td>
+<td class="px-6 py-4 text-gray-500 text-sm">60 min</td>
+<td class="px-6 py-4 text-center text-gray-400 text-xs">45%</td>
+<td class="px-6 py-4 text-gray-700 font-semibold">$55.000</td>
+<td class="px-6 py-4">
+<div class="flex gap-1.5">
+<span class="bg-meyer-purple-light text-meyer-purple-text px-2.5 py-0.5 rounded-full text-[10px] font-medium">Laura</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex justify-center gap-3 text-gray-400">
+<button class="hover:text-meyer-orange transition-colors"><svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></button>
+<button class="hover:text-red-500 transition-colors"><svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- END: Services Table -->
+</div>
+</main>
+<!-- END: MainContent -->
+<div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm" id="new-service-modal"><div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200"><div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center"><h2 class="text-lg font-semibold text-gray-800">Nuevo Servicio</h2><button class="text-gray-400 hover:text-gray-600 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></button></div><div class="flex border-b border-gray-100 bg-gray-50/50"><button class="px-6 py-3 text-sm font-medium text-meyer-orange border-b-2 border-meyer-orange">Información General</button><button class="px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700">Profesionales &amp; Comisiones</button></div><div class="p-6 overflow-y-auto max-h-[70vh]"><div class="space-y-6" id="tab-info-general"><div class="grid grid-cols-2 gap-6"><div><label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Nombre del Servicio<span class="text-red-500 ml-0.5">*</span></label><input class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-meyer-orange/20 focus:border-meyer-orange outline-none transition-all text-sm" placeholder="Ej. Corte de Puntas" type="text"></div><div><label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Categoría<span class="text-red-500 ml-0.5">*</span></label><select class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-meyer-orange/20 focus:border-meyer-orange outline-none transition-all text-sm bg-white"><option>Peluquería &amp; Corte</option><option>Color &amp; Tratamientos</option><option>Estética &amp; Uñas</option></select></div><div><label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Duración del Servicio<span class="text-red-500 ml-0.5">*</span></label><select class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-meyer-orange/20 focus:border-meyer-orange outline-none transition-all text-sm bg-white"><option>30 min</option><option>45 min</option><option>60 min</option><option>90 min</option><option>120 min</option></select></div><div><label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Precio Base Público ($)<span class="text-red-500 ml-0.5">*</span></label><input class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-meyer-orange/20 focus:border-meyer-orange outline-none transition-all text-sm" placeholder="0.00" type="number"></div></div><div class="bg-gray-50 rounded-xl p-4 flex items-center justify-between border border-gray-100"><div class="flex items-center gap-3"><input checked="" class="w-5 h-5 rounded border-gray-300 text-meyer-orange focus:ring-meyer-orange" type="checkbox"><span class="text-sm font-medium text-gray-700">IVA Incluido</span></div><div class="flex items-center gap-3"><span class="text-xs text-gray-500 font-medium uppercase">Porcentaje IVA</span><select class="px-3 py-1.5 rounded-lg border border-gray-200 text-sm bg-white"><option>19%</option><option>5%</option><option>0%</option></select></div></div></div><div class="hidden space-y-4" id="tab-profesionales"><div class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors border border-transparent hover:border-gray-100"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-gray-200"></div><span class="text-sm font-medium text-gray-700">Camila</span></div><div class="flex items-center gap-4"><div class="w-10 h-5 bg-meyer-orange rounded-full relative cursor-pointer"><div class="absolute right-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow-sm"></div></div><input class="w-24 px-3 py-1.5 rounded-lg border border-gray-200 text-sm" placeholder="Comisión %" type="text"></div></div></div></div><div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3"><button class="px-6 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors">Cancelar</button><button class="px-6 py-2.5 text-sm font-medium bg-[#F97316] hover:bg-opacity-90 text-white rounded-xl shadow-sm transition-all">Guardar Servicio</button></div></div></div></body></html>

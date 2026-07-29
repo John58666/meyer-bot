@@ -1,0 +1,94 @@
+<!DOCTYPE html><html lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Peluquería Meyer - Gestión de Equipo &amp; Roles</title>
+<!-- Tailwind CSS v3 CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'meyer-orange': '#D2694E',
+            'meyer-cream': '#F9F7F2',
+            'meyer-purple-light': '#E5E1F9',
+            'meyer-purple-text': '#5A4A9B',
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="typography">
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+<style data-purpose="custom-shadows">
+    .card-shadow {
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+    .dropdown-shadow {
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body class="bg-[#FAF9F6] min-h-screen text-gray-800">
+<!-- BEGIN: MainHeader -->
+<header class="w-full px-8 py-4 flex justify-between items-center bg-transparent">
+<div class="text-xl font-semibold text-gray-700" data-purpose="brand-logo">
+      Peluquería Meyer
+    </div>
+<div class="relative flex items-center gap-2 cursor-pointer group" data-purpose="user-menu-trigger">
+<!-- User Avatar Placeholder -->
+<div class="w-8 h-8 rounded-full overflow-hidden bg-gray-200">
+<img alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-Acl-gU5KRj9qf9wIT-0ZaEUjvJz1xzAKz3BXSG2ayC8c7I8eKmTPqgzQgbLgPxOCcPl2lBqLNlUvh5C0ndOU6jaFnPxr9dvf8XPodGTCqhpYjEXElrozaU9CMJgriKI3ALv-rYNLA8dHdKF6JVQczpdBraSE6OAT4ER15E9JW4P6LBZApmGExWijMJpIhnrgsCd-OI3__s_V4kumvX9Yi2QtZhLADkplL5u6_tAtdI1r7v8cXmsi72Eo_CyxVlL30tQ2yvREGBRu">
+</div>
+<!-- Dropdown Arrow -->
+<svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<!-- BEGIN: User Dropdown Menu -->
+<div class="absolute right-0 top-10 w-64 bg-white rounded-lg dropdown-shadow z-50 border border-gray-100 py-1 hidden group-hover:block" data-purpose="user-dropdown">
+<a class="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-50" href="#">Ayuda / FAQ</a>
+<a class="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-50" href="#">Términos Legales &amp; Privacidad (Ley 1581)</a>
+<a class="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50" href="#">Cerrar Sesión</a>
+</div>
+<!-- END: User Dropdown Menu -->
+</div>
+</header>
+<!-- END: MainHeader -->
+<!-- BEGIN: MainContent -->
+<main class="max-w-7xl mx-auto px-4 mt-4 pb-12">
+<div class="bg-white rounded-2xl card-shadow p-8 min-h-[600px]" data-purpose="content-card">
+<!-- BEGIN: Navigation Tabs -->
+<div class="flex items-center border-b border-gray-100 mb-8 overflow-x-auto whitespace-nowrap" data-purpose="navigation-tabs"><div class="relative px-6 py-4 font-medium text-gray-400 hover:text-gray-600 cursor-pointer">Servicios &amp; Precios</div><div class="px-6 py-4 font-medium text-gray-400 hover:text-gray-600 cursor-pointer">Equipo &amp; Roles</div><div class="px-6 py-4 text-gray-400 font-medium hover:text-gray-600 cursor-pointer">Horarios Generales</div><div class="px-6 py-4 font-semibold text-meyer-orange border-b-2 border-meyer-orange relative">Auditoría e Historial</div></div>
+<!-- END: Navigation Tabs -->
+<!-- BEGIN: Action Bar -->
+<div class="flex items-center gap-4 mb-6 p-3 bg-white rounded-xl border border-gray-200 shadow-sm">
+  <div class="relative w-1/3">
+    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">🔍</span>
+    <input type="text" placeholder="Buscar por cliente o ID..." class="w-full pl-8 pr-3 py-1.5 bg-transparent border-none text-sm focus:ring-0 placeholder-gray-400">
+  </div>
+  <div class="h-4 w-px bg-gray-200"></div>
+  <div class="flex items-center gap-6">
+    <button class="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1">Acción <span class="text-[10px] text-gray-400">▼</span></button>
+    <button class="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1">Usuario <span class="text-[10px] text-gray-400">▼</span></button>
+    <button class="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1">Fechas <span class="text-[10px] text-gray-400">▼</span></button>
+  </div>
+  <div class="ml-auto flex items-center">
+    <button class="text-xs text-gray-400 hover:text-gray-600 transition-colors px-2">× Limpiar</button>
+  </div>
+</div>
+<!-- END: Action Bar -->
+<!-- BEGIN: Team Table -->
+<div class="border border-gray-100 rounded-xl overflow-hidden bg-white"><table class="w-full text-left border-collapse"><thead class="bg-[#FAF9F6] text-gray-500 uppercase text-[11px] tracking-wider"><tr class="border-b border-gray-100"><th class="px-6 py-4 font-bold">Acción</th><th class="px-6 py-4 font-bold">Usuario</th><th class="px-6 py-4 font-bold">Entidad</th><th class="px-6 py-4 font-bold">Fecha</th><th class="px-6 py-4 font-bold">Detalle</th></tr></thead><tbody class="divide-y divide-gray-100 text-sm"><tr class="hover:bg-gray-50"><td class="px-6 py-4"><span class="bg-green-50 text-green-600 px-2 py-1 rounded text-xs font-bold uppercase">Crear Cita</span></td><td class="px-6 py-4 text-gray-700">Camila</td><td class="px-6 py-4 text-gray-500">Cita #145</td><td class="px-6 py-4 text-gray-400">Hoy, 10:30 AM</td><td class="px-6 py-4 text-gray-400">-</td></tr><tr class="hover:bg-gray-50"><td class="px-6 py-4"><span class="bg-red-50 text-red-500 px-2 py-1 rounded text-xs font-bold uppercase">Bloqueo</span></td><td class="px-6 py-4 text-gray-700">Julian</td><td class="px-6 py-4 text-gray-500">Agenda: Julian</td><td class="px-6 py-4 text-gray-400">Hoy, 09:15 AM</td><td class="px-6 py-4 text-gray-400">Mantenimiento local</td></tr><tr class="bg-blue-50/30"><td class="px-6 py-4"><span class="bg-meyer-purple-light text-meyer-purple-text px-2 py-1 rounded text-xs font-bold uppercase">Descuento Aplicado</span></td><td class="px-6 py-4 text-gray-700 font-medium">Cristian</td><td class="px-6 py-4 text-gray-500">Cita #142</td><td class="px-6 py-4 text-gray-400">Ayer, 06:45 PM</td><td class="px-6 py-4 flex justify-between items-center"><span class="">Ver detalles</span><span class="text-gray-400">🔽</span></td></tr><tr><td class="px-6 py-4 bg-gray-50/50" colspan="5"><div class="flex flex-col gap-4"><div class="flex gap-4"><div class="flex-1 p-3 rounded-lg border border-red-100 bg-red-50/50"><p class="text-[10px] uppercase font-bold text-red-500 mb-1">Antes</p><p class="text-gray-700">Valor Catálogo: <span class="font-semibold">$65.000</span></p><p class="text-gray-500 text-xs">Método: Efectivo</p></div><div class="flex-1 p-3 rounded-lg border border-green-100 bg-green-50/50"><p class="text-[10px] uppercase font-bold text-green-600 mb-1">Después</p><p class="text-gray-700">Valor Cobrado: <span class="font-semibold">$52.000</span> <span class="text-green-600 text-xs">(Descuento 20%)</span></p><p class="text-gray-500 text-xs">Método: Efectivo</p></div></div><div class="flex justify-between items-center"><p class="text-gray-600 italic text-xs"><strong>Motivo:</strong> Cliente indica que no le gustó el acabado final.</p><div class="flex items-center gap-1 bg-yellow-50 text-yellow-700 px-2 py-1 rounded border border-yellow-100 text-[10px] font-bold"><span class="">⚠️</span> REALIZADO FUERA DE HORARIO LABORAL</div></div></div></td></tr><tr class="hover:bg-gray-50"><td class="px-6 py-4"><span class="bg-blue-50 text-blue-600 px-2 py-1 rounded text-xs font-bold uppercase">Edición Perfil</span></td><td class="px-6 py-4 text-gray-700">Camila</td><td class="px-6 py-4 text-gray-500">Laura Gómez</td><td class="px-6 py-4 text-gray-400">Ayer, 02:00 PM</td><td class="px-6 py-4 text-gray-400">Cambio de rol</td></tr><tr class="hover:bg-gray-50"><td class="px-6 py-4"><span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold uppercase">Login</span></td><td class="px-6 py-4 text-gray-700">Carlos Ruiz</td><td class="px-6 py-4 text-gray-500">Sistema</td><td class="px-6 py-4 text-gray-400">Ayer, 08:00 AM</td><td class="px-6 py-4 text-gray-400">IP: 181.12.44.1</td></tr><tr class="hover:bg-gray-50"><td class="px-6 py-4"><span class="bg-green-50 text-green-600 px-2 py-1 rounded text-xs font-bold uppercase">Pago Recibido</span></td><td class="px-6 py-4 text-gray-700">Cristian</td><td class="px-6 py-4 text-gray-500">Cita #139</td><td class="px-6 py-4 text-gray-400">24 Oct, 05:30 PM</td><td class="px-6 py-4 text-gray-400">$120.000 (Tarjeta)</td></tr><tr class="hover:bg-gray-50"><td class="px-6 py-4"><span class="bg-red-50 text-red-500 px-2 py-1 rounded text-xs font-bold uppercase">Cita Cancelada</span></td><td class="px-6 py-4 text-gray-700">Julian</td><td class="px-6 py-4 text-gray-500">Cita #135</td><td class="px-6 py-4 text-gray-400">24 Oct, 11:20 AM</td><td class="px-6 py-4 text-gray-400">No asistió</td></tr><tr class="hover:bg-gray-50"><td class="px-6 py-4"><span class="bg-meyer-purple-light text-meyer-purple-text px-2 py-1 rounded text-xs font-bold uppercase">Nuevo Servicio</span></td><td class="px-6 py-4 text-gray-700">Camila</td><td class="px-6 py-4 text-gray-500">Catálogo</td><td class="px-6 py-4 text-gray-400">23 Oct, 04:15 PM</td><td class="px-6 py-4 text-gray-400">Corte Pixie</td></tr></tbody></table></div>
+<!-- END: Team Table -->
+<!-- BEGIN: Management Tooltip/Hint -->
+<!-- END: Management Tooltip/Hint -->
+</div>
+</main>
+<!-- END: MainContent -->
+
+
+</body></html>

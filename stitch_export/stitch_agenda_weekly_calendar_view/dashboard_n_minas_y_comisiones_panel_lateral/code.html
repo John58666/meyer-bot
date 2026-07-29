@@ -1,0 +1,579 @@
+<!DOCTYPE html><html lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<style>
+        @layer base {
+            html, body {
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                overscroll-behavior: none;
+                background-color: #FAF9F6;
+            }
+            main > :first-child {
+                margin-top: 0 !important;
+            }
+            main > :last-child {
+                margin-bottom: 0 !important;
+            }
+        }
+        ::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-background": "#261812",
+                        "on-primary-fixed-variant": "#7a3000",
+                        "surface-dim": "#efd5ca",
+                        "surface-container-high": "#fee3d8",
+                        "background": "#FAF9F6",
+                        "on-surface-variant": "#5a4136",
+                        "primary-fixed": "#ffdbcc",
+                        "inverse-surface": "#3d2d26",
+                        "on-surface": "#261812",
+                        "surface-variant": "#f8ddd2",
+                        "surface-container-highest": "#f8ddd2",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "surface": "#ffffff",
+                        "secondary": "#555f6f",
+                        "on-tertiary": "#ffffff",
+                        "outline-variant": "#e2bfb0",
+                        "inverse-on-surface": "#ffede6",
+                        "on-primary-container": "#572000",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed-variant": "#00497b",
+                        "primary-container": "#ff6b00",
+                        "on-secondary-container": "#596373",
+                        "on-secondary": "#ffffff",
+                        "primary": "#a04100",
+                        "on-secondary-fixed": "#121c2a",
+                        "tertiary-container": "#059eff",
+                        "on-error-container": "#93000a",
+                        "outline": "#8e7164",
+                        "surface-tint": "#a04100",
+                        "secondary-container": "#d6e0f3",
+                        "on-tertiary-fixed": "#001d35",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed-dim": "#bdc7d9",
+                        "tertiary-fixed-dim": "#9ccaff",
+                        "surface-bright": "#FAF9F6",
+                        "surface-container": "#ffeae1",
+                        "inverse-primary": "#ffb693",
+                        "tertiary-fixed": "#d0e4ff",
+                        "on-secondary-fixed-variant": "#3d4756",
+                        "surface-container-low": "#fff1eb",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-container": "#003357",
+                        "tertiary": "#0062a1",
+                        "primary-fixed-dim": "#ffb693",
+                        "secondary-fixed": "#d9e3f6",
+                        "on-primary-fixed": "#351000"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "16px",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "container-padding": "32px",
+                        "component-padding-x": "16px",
+                        "component-padding-y": "12px",
+                        "gutter": "24px",
+                        "section-gap": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "display": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "headline-lg": ["28px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "headline-md": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "display": ["36px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet">
+</head>
+<body class="bg-surface-bright font-body-md text-on-surface">
+<!-- Sidebar -->
+<aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-lowest z-50 flex flex-col py-8 shadow-[1px_0_0_rgba(0,0,0,0.05)]">
+<div class="px-8 mb-12 flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[32px]">content_cut</span>
+<div class="font-display text-headline-md tracking-tight text-on-surface uppercase font-bold">MEYER</div>
+</div>
+<nav class="flex-1 px-4 space-y-2">
+<a class="flex items-center px-6 py-4 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all group" href="#">
+<span class="material-symbols-outlined mr-4">calendar_today</span>
+<span class="font-body-lg">Agenda</span>
+</a>
+<a class="flex items-center px-6 py-4 rounded-xl bg-primary text-on-primary shadow-sm transition-all group duration-1000" href="#">
+<span class="material-symbols-outlined mr-4">analytics</span>
+<span class="font-body-lg font-medium">Dashboard</span>
+</a>
+<a class="flex items-center px-6 py-4 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all group" href="#">
+<span class="material-symbols-outlined mr-4">group</span>
+<span class="font-body-lg">Clientes</span>
+</a>
+<a class="flex items-center px-6 py-4 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all group" href="#">
+<span class="material-symbols-outlined mr-4">payments</span>
+<span class="font-body-lg">Caja</span>
+</a>
+<a class="flex items-center px-6 py-4 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all group" href="#">
+<span class="material-symbols-outlined mr-4">inventory_2</span>
+<span class="font-body-lg">Inventario / Catálogo</span>
+</a>
+<a class="flex items-center px-6 py-4 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all group" href="#">
+<span class="material-symbols-outlined mr-4">settings</span>
+<span class="font-body-lg">Configuración</span>
+</a>
+<a class="flex items-center px-6 py-4 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all group" href="#">
+<span class="material-symbols-outlined mr-4">help</span>
+<span class="font-body-lg">Ayuda</span>
+</a>
+</nav>
+</aside>
+<div class="pl-72">
+<!-- Top Bar -->
+<header class="fixed top-0 left-72 right-0 h-20 bg-surface/80 backdrop-blur-xl z-40 flex items-center justify-between px-container-padding border-b border-outline-variant/10">
+<div class="flex items-center h-full">
+<h1 class="font-headline-lg text-on-surface">Dashboard - Métricas del Negocio</h1>
+</div>
+<div class="flex items-center gap-6">
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center cursor-pointer shadow-sm">
+<span class="material-symbols-outlined text-on-primary text-[20px]">person</span>
+</div>
+</div>
+</header>
+<main class="relative pt-20 min-h-screen">
+<div class="flex flex-col w-full p-gutter lg:p-container-padding space-y-6">
+<!-- Unified Global Filters -->
+<div class="flex justify-end items-center gap-3">
+<div class="relative group">
+<button class="flex items-center gap-2 px-4 py-2.5 bg-surface-container-lowest border border-outline-variant/30 rounded-xl font-body-md text-on-surface hover:border-primary transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[20px] text-primary">group</span>
+<span class="">Todos los Profesionales</span>
+<span class="material-symbols-outlined text-[18px] text-outline">expand_more</span>
+</button>
+</div>
+<div class="relative group">
+<button class="flex items-center gap-2 px-4 py-2.5 bg-surface-container-lowest border border-outline-variant/30 rounded-xl font-body-md text-on-surface hover:border-primary transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[20px] text-primary">calendar_month</span>
+<span class="">Este Mes</span>
+<span class="material-symbols-outlined text-[18px] text-outline">expand_more</span>
+</button>
+</div>
+</div>
+<!-- Row 1: KPI Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<!-- Ventas Totales -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-outline-variant/10">
+<div class="flex flex-col gap-2">
+<span class="font-label-caps text-on-surface-variant uppercase tracking-widest text-[10px]">Ventas Totales</span>
+<div class="flex items-baseline justify-between">
+<span class="text-3xl font-bold text-on-surface tracking-tight">$2.450.000</span>
+<span class="bg-green-100 text-green-700 px-2 py-1 rounded-full font-label-caps text-[10px] flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+                                    +12.5%
+                                </span>
+</div>
+</div>
+</div>
+<!-- Citas Completadas -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-outline-variant/10">
+<div class="flex flex-col gap-2">
+<span class="font-label-caps text-on-surface-variant uppercase tracking-widest text-[10px]">Citas Completadas</span>
+<div class="flex items-baseline justify-between">
+<span class="text-3xl font-bold text-on-surface tracking-tight">48</span>
+<span class="bg-primary/10 text-primary px-2 py-1 rounded-full font-label-caps text-[10px]">
+                                    92% EFECTIVIDAD
+                                </span>
+</div>
+</div>
+</div>
+<!-- Ticket Promedio -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-outline-variant/10">
+<div class="flex flex-col gap-2">
+<span class="font-label-caps text-on-surface-variant uppercase tracking-widest text-[10px]">Ticket Promedio</span>
+<div class="flex items-baseline justify-between">
+<span class="text-3xl font-bold text-on-surface tracking-tight">$51.000</span>
+<span class="material-symbols-outlined text-outline-variant">receipt_long</span>
+</div>
+</div>
+</div>
+<!-- Clientes Nuevos -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-outline-variant/10">
+<div class="flex flex-col gap-2">
+<span class="font-label-caps text-on-surface-variant uppercase tracking-widest text-[10px]">Clientes Nuevos</span>
+<div class="flex items-baseline justify-between">
+<span class="text-3xl font-bold text-on-surface tracking-tight">14</span>
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest bg-[#E2E8F0]"></div>
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest bg-[#CBD5E1]"></div>
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest bg-primary/20"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Row 2: Revenue Trend Chart -->
+<section class="bg-surface-container-lowest p-8 rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-outline-variant/10">
+<div class="mb-8">
+<h2 class="font-headline-md text-on-surface">Tendencia de Ingresos</h2>
+<p class="font-body-md text-on-surface-variant">Flujo de caja mensual proyectado</p>
+</div>
+<div class="h-[400px] w-full relative">
+<svg class="w-full h-full overflow-visible" viewBox="0 0 1000 300">
+<defs>
+<linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#a04100" stop-opacity="0.2"></stop>
+<stop offset="100%" stop-color="#a04100" stop-opacity="0"></stop>
+</linearGradient>
+</defs>
+<!-- Grid Lines -->
+<line class="text-outline-variant/10" stroke="currentColor" stroke-width="1" x1="0" x2="1000" y1="50" y2="50"></line>
+<line class="text-outline-variant/10" stroke="currentColor" stroke-width="1" x1="0" x2="1000" y1="150" y2="150"></line>
+<line class="text-outline-variant/10" stroke="currentColor" stroke-width="1" x1="0" x2="1000" y1="250" y2="250"></line>
+<!-- Area Fill -->
+<path d="M0,250 L0,200 C150,180 250,220 400,100 C550,-20 700,150 850,80 L1000,120 L1000,250 Z" fill="url(#chartGradient)"></path>
+<!-- Main Line -->
+<path class="text-primary" d="M0,200 C150,180 250,220 400,100 C550,-20 700,150 850,80 L1000,120" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="4"></path>
+<!-- Data Points -->
+<circle class="text-primary" cx="400" cy="100" fill="white" r="6" stroke="currentColor" stroke-width="3"></circle>
+<circle class="text-primary" cx="850" cy="80" fill="white" r="6" stroke="currentColor" stroke-width="3"></circle>
+<line stroke="#E5E7EB" stroke-width="1" x1="0" x2="1000" y1="250" y2="250"></line></svg>
+<!-- Chart Labels -->
+<div class="absolute bottom-0 left-0 right-0 flex justify-between px-4 py-2 border-t border-outline-variant/10 font-label-caps text-on-surface-variant text-[11px] uppercase tracking-wider bg-surface-container-lowest/80 backdrop-blur-sm"><span class="">Semana 1</span><span class="">Semana 2</span><span class="">Semana 3</span><span class="">Semana 4</span></div>
+</div>
+</section>
+<!-- Row 3: Two Columns -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+<!-- Left: Top Servicios -->
+<div class="bg-surface-container-lowest p-8 rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-outline-variant/10 flex flex-col">
+<div class="flex items-center justify-between mb-8">
+<h3 class="font-headline-md text-on-surface">Top Servicios</h3>
+<span class="material-symbols-outlined text-outline-variant">bar_chart</span>
+</div>
+<div class="space-y-6 flex-1">
+<div class="space-y-2">
+<div class="flex justify-between items-center">
+<span class="font-body-lg text-on-surface">Corte Caballero</span>
+<span class="font-bold text-on-surface">$840.000 <span class="text-on-surface-variant font-normal text-sm ml-2 text-outline">(85%)</span></span>
+</div>
+<div class="w-full h-2.5 bg-surface-container-low rounded-full">
+<div class="bg-primary h-full rounded-full transition-all duration-1000" style="width: 85%;"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center">
+<span class="font-body-lg text-on-surface">Tinte Premium</span>
+<span class="font-bold text-on-surface">$620.000 <span class="text-on-surface-variant font-normal text-sm ml-2 text-outline">(65%)</span></span>
+</div>
+<div class="w-full h-2.5 bg-surface-container-low rounded-full">
+<div class="bg-primary h-full rounded-full transition-all duration-1000" style="width: 65%;"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center">
+<span class="font-body-lg text-on-surface">Barbaterapia Ritual</span>
+<span class="font-bold text-on-surface">$410.000 <span class="text-on-surface-variant font-normal text-sm ml-2 text-outline">(45%)</span></span>
+</div>
+<div class="w-full h-2.5 bg-surface-container-low rounded-full">
+<div class="bg-primary h-full rounded-full transition-all duration-1000" style="width: 45%;"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center">
+<span class="font-body-lg text-on-surface">Tratamiento Capilar</span>
+<span class="font-bold text-on-surface">$380.000 <span class="text-on-surface-variant font-normal text-sm ml-2 text-outline">(40%)</span></span>
+</div>
+<div class="w-full h-2.5 bg-surface-container-low rounded-full">
+<div class="bg-primary h-full rounded-full transition-all duration-1000" style="width: 40%;"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center">
+<span class="font-body-lg text-on-surface">Manicura Express</span>
+<span class="font-bold text-on-surface">$200.000 <span class="text-on-surface-variant font-normal text-sm ml-2 text-outline">(25%)</span></span>
+</div>
+<div class="w-full h-2.5 bg-surface-container-low rounded-full">
+<div class="bg-primary h-full rounded-full transition-all duration-1000" style="width: 25%;"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right: Rendimiento del Equipo -->
+<div class="bg-surface-container-lowest p-8 rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-outline-variant/10 flex flex-col">
+<div class="flex items-center justify-between mb-8">
+<h3 class="font-headline-md text-on-surface">Rendimiento del Equipo</h3>
+<span class="material-symbols-outlined text-outline-variant">person_check</span>
+</div>
+<div class="space-y-4 flex-1">
+<div class="flex items-center p-4 rounded-xl border border-transparent hover:border-outline-variant/20 hover:bg-surface-bright transition-all">
+<img alt="Julian Meyer" class="w-12 h-12 rounded-full object-cover mr-4 ring-2 ring-surface-container" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0ajh3p_jF7QJWH1r3PLKqqvoURyXZw2Y0ZEJpOlDQL1PKUHGAVq8Na5wP9dlWVJv4DnSe7at9sUuvDZ4uzEkHfEp8svQ__UfV0RmWSWcqTZlLP8OrOxwrP7Q38EgRXV6nexpqZEA8THWcum-zF6p8nSKituZMRCtIg2rPlxWyy8YkgEVUy5oUqxDifgv4MukFoGWN-VtZMi6-WEroUu3YQa1Wz78bhPgyOHgwCAlj2iZFROwKGqroKQ">
+<div class="flex-1">
+<h4 class="font-bold text-on-surface">Julian Meyer</h4>
+<p class="text-sm text-on-surface-variant">24 citas completadas</p>
+</div>
+<div class="text-right">
+<div class="font-bold text-on-surface">$1.240.000</div>
+</div>
+</div>
+<div class="flex items-center p-4 rounded-xl border border-transparent hover:border-outline-variant/20 hover:bg-surface-bright transition-all">
+<img alt="Elena Rivas" class="w-12 h-12 rounded-full object-cover mr-4 ring-2 ring-surface-container" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWh7pE7bvyXFSSTzJSbf7qUEQjVcgAUyIm0BA4JXFXmcv4n6THc_oWy55ZXJfv6_Pfo_yQYcf_x_1JPV6yXLVEMEPZpx1hI0Sdu7Al3QBiAqpRRi_iWz3Obluyk16PYIuAdwtt5DLg7Mei7ekbaN3gnWHSFzcJaY_oxNU8BI08w8KW9VynugHfn5nfC3dqmqPee6jkHs2y3I-sNtFOq_4_oi_DC2-JoOLVGsCa2kMvyJOsD4vNw0AErg">
+<div class="flex-1">
+<h4 class="font-bold text-on-surface">Elena Rivas</h4>
+<p class="text-sm text-on-surface-variant">18 citas completadas</p>
+</div>
+<div class="text-right">
+<div class="font-bold text-on-surface">$980.000</div>
+</div>
+</div>
+<div class="flex items-center p-4 rounded-xl border border-transparent hover:border-outline-variant/20 hover:bg-surface-bright transition-all">
+<img alt="Carlos Torres" class="w-12 h-12 rounded-full object-cover mr-4 ring-2 ring-surface-container" src="https://lh3.googleusercontent.com/aida-public/AB6AXuATjbKb45piROL_BilD1rMFsyQgPmO2Yj8EofuAmv-1xn-FKh7kYYXB3AZPINr0hTj0Spn1cOny3XNSrHMZqnu0AcetyH8TV7e-eqmxlw1NQ5DnwXsNr20DnGx6OSjlNRaG612vOXKJv_wvkovohIU8Il9t3oFEOB9wYfywVtRIwQRUa5xOXnzC14m0jfRd1ZSiYyL-MB9dKgVBuICXYA4z-kZReoXC8bClFOpu_1n7rfqIch2ctOa7gQ">
+<div class="flex-1">
+<h4 class="font-bold text-on-surface">Carlos Torres</h4>
+<p class="text-sm text-on-surface-variant">6 citas completadas</p>
+</div>
+<div class="text-right">
+<div class="font-bold text-on-surface">$230.000</div>
+</div>
+</div>
+<div class="flex items-center p-4 rounded-xl border border-transparent hover:border-outline-variant/20 hover:bg-surface-bright transition-all">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center mr-4 ring-2 ring-surface-container text-outline">
+<span class="material-symbols-outlined">person</span>
+</div>
+<div class="flex-1">
+<h4 class="font-bold text-on-surface">Ana Belén</h4>
+<p class="text-sm text-on-surface-variant">0 citas completadas</p>
+</div>
+<div class="text-right">
+<div class="font-bold text-on-surface">$0</div>
+</div>
+</div>
+</div>
+<div class="mt-8 text-center pt-4 border-t border-outline-variant/10"><button class="inline-flex items-center gap-2 px-8 py-3 bg-primary text-on-primary font-bold rounded-full hover:bg-primary/90 transition-all shadow-md group">
+<span class="material-symbols-outlined text-[20px]">analytics</span>
+<span>[ 📊 Ver Nóminas y Comisiones ]</span>
+</button></div>
+</div>
+<div class="bg-surface-container-lowest p-8 rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-outline-variant/10 flex flex-col"><div class="flex items-center justify-between mb-8"><h3 class="font-headline-md text-on-surface">Comportamiento de Clientes</h3><span class="material-symbols-outlined text-outline-variant">analytics</span></div><div class="space-y-8 flex-1"><div class="space-y-3"><div><div class="flex justify-between text-sm mb-1"><span class="text-on-surface-variant">Recurrentes vs Nuevos</span><span class="font-bold text-on-surface">75% / 25%</span></div><div class="flex h-2.5 w-full rounded-full bg-surface-container-low overflow-hidden"><div class="bg-primary h-full transition-all duration-1000" style="width: 75%;"></div><div class="bg-primary/20 h-full" style="width: 25%"></div></div><div class="flex justify-end mt-2">
+<button class="flex items-center gap-1 text-[12px] text-primary font-medium hover:underline cursor-pointer">
+    Ver detalles <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div></div></div><div class="space-y-4"><h4 class="font-label-caps text-[10px] text-on-surface-variant uppercase tracking-widest">Canales de Reserva</h4><div class="flex justify-between items-center p-3 rounded-lg bg-surface-container-low/50"><span class="text-sm text-on-surface">Agenda Manual</span><span class="font-medium text-on-surface">60%</span></div><div class="flex justify-between items-center p-3 rounded-lg bg-surface-container-low/50"><span class="text-sm text-on-surface">Reserva Online</span><span class="font-medium text-on-surface">40%</span></div></div></div></div></div>
+<!-- Row 4: Occupancy Heatmap -->
+<section class="bg-surface-container-lowest p-8 rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-outline-variant/10">
+<div class="mb-8">
+<h3 class="font-headline-md text-on-surface">🔥 Ocupación Horaria (Flujo de Citas)</h3>
+</div>
+<div class="overflow-x-auto">
+<div class="min-w-[800px]">
+<div class="grid grid-cols-7 gap-3 mb-4">
+<div class="h-8"></div>
+<div class="h-8 flex items-center justify-center font-label-caps text-on-surface-variant uppercase text-[10px]">Lunes</div>
+<div class="h-8 flex items-center justify-center font-label-caps text-on-surface-variant uppercase text-[10px]">Martes</div>
+<div class="h-8 flex items-center justify-center font-label-caps text-on-surface-variant uppercase text-[10px]">Miércoles</div>
+<div class="h-8 flex items-center justify-center font-label-caps text-on-surface-variant uppercase text-[10px]">Jueves</div>
+<div class="h-8 flex items-center justify-center font-label-caps text-on-surface-variant uppercase text-[10px]">Viernes</div>
+<div class="h-8 flex items-center justify-center font-label-caps text-on-surface-variant uppercase text-[10px]">Sábado</div>
+</div>
+<div class="space-y-3">
+<!-- 09:00 -->
+<div class="grid grid-cols-7 gap-3">
+<div class="flex items-center justify-end pr-4 font-label-caps text-on-surface-variant text-[12px]">09:00</div>
+<div class="h-14 rounded-lg bg-[#f3f4f6] flex items-center justify-center text-on-surface-variant/40 font-bold cursor-pointer hover:scale-[1.02] transition-transform">15%</div>
+<div class="h-14 rounded-lg bg-[#ffedd5] flex items-center justify-center text-primary/80 font-bold cursor-pointer hover:scale-[1.02] transition-transform">42%</div>
+<div class="h-14 rounded-lg bg-[#ffedd5] flex items-center justify-center text-primary/80 font-bold cursor-pointer hover:scale-[1.02] transition-transform">45%</div>
+<div class="h-14 rounded-lg bg-[#ffedd5] flex items-center justify-center text-primary/80 font-bold cursor-pointer hover:scale-[1.02] transition-transform">48%</div>
+<div class="h-14 rounded-lg bg-[#ffedd5] flex items-center justify-center text-primary/80 font-bold cursor-pointer hover:scale-[1.02] transition-transform">52%</div>
+<div class="h-14 rounded-lg bg-[#f97316] flex items-center justify-center text-white font-bold cursor-pointer hover:scale-[1.02] transition-transform">82%</div>
+</div>
+<!-- 11:00 -->
+<div class="grid grid-cols-7 gap-3">
+<div class="flex items-center justify-end pr-4 font-label-caps text-on-surface-variant text-[12px]">11:00</div>
+<div class="h-14 rounded-lg bg-[#ffedd5] flex items-center justify-center text-primary/80 font-bold cursor-pointer hover:scale-[1.02] transition-transform">55%</div>
+<div class="h-14 rounded-lg bg-[#ffedd5] flex items-center justify-center text-primary/80 font-bold cursor-pointer hover:scale-[1.02] transition-transform">58%</div>
+<div class="h-14 rounded-lg bg-[#ffedd5] flex items-center justify-center text-primary/80 font-bold cursor-pointer hover:scale-[1.02] transition-transform">60%</div>
+<div class="h-14 rounded-lg bg-[#ffedd5] flex items-center justify-center text-primary/80 font-bold cursor-pointer hover:scale-[1.02] transition-transform">65%</div>
+<div class="h-14 rounded-lg bg-[#f97316] flex items-center justify-center text-white font-bold cursor-pointer hover:scale-[1.02] transition-transform">88%</div>
+<div class="h-14 rounded-lg bg-[#f97316] flex items-center justify-center text-white font-bold cursor-pointer hover:scale-[1.02] transition-transform">92%</div>
+</div>
+<!-- 13:00 -->
+<div class="grid grid-cols-7 gap-3">
+<div class="flex items-center justify-end pr-4 font-label-caps text-on-surface-variant text-[12px]">13:00</div>
+<div class="h-14 rounded-lg bg-[#f3f4f6] flex items-center justify-center text-on-surface-variant/40 font-bold cursor-pointer hover:scale-[1.02] transition-transform">25%</div>
+<div class="h-14 rounded-lg bg-[#f3f4f6] flex items-center justify-center text-on-surface-variant/40 font-bold cursor-pointer hover:scale-[1.02] transition-transform">30%</div>
+<div class="h-14 rounded-lg bg-[#f3f4f6] flex items-center justify-center text-on-surface-variant/40 font-bold cursor-pointer hover:scale-[1.02] transition-transform">35%</div>
+<div class="h-14 rounded-lg bg-[#ffedd5] flex items-center justify-center text-primary/80 font-bold cursor-pointer hover:scale-[1.02] transition-transform">40%</div>
+<div class="h-14 rounded-lg bg-[#ffedd5] flex items-center justify-center text-primary/80 font-bold cursor-pointer hover:scale-[1.02] transition-transform">55%</div>
+<div class="h-14 rounded-lg bg-[#f97316] flex items-center justify-center text-white font-bold cursor-pointer hover:scale-[1.02] transition-transform">92%</div>
+</div>
+<!-- 15:00 -->
+<div class="grid grid-cols-7 gap-3">
+<div class="flex items-center justify-end pr-4 font-label-caps text-on-surface-variant text-[12px]">15:00</div>
+<div class="h-14 rounded-lg bg-[#ffedd5] flex items-center justify-center text-primary/80 font-bold cursor-pointer hover:scale-[1.02] transition-transform">45%</div>
+<div class="h-14 rounded-lg bg-[#ffedd5] flex items-center justify-center text-primary/80 font-bold cursor-pointer hover:scale-[1.02] transition-transform">50%</div>
+<div class="h-14 rounded-lg bg-[#ffedd5] flex items-center justify-center text-primary/80 font-bold cursor-pointer hover:scale-[1.02] transition-transform">55%</div>
+<div class="h-14 rounded-lg bg-[#f97316] flex items-center justify-center text-white font-bold cursor-pointer hover:scale-[1.02] transition-transform">80%</div>
+<div class="h-14 rounded-lg bg-[#f97316] flex items-center justify-center text-white font-bold cursor-pointer hover:scale-[1.02] transition-transform">92%</div>
+<div class="h-14 rounded-lg bg-[#f97316] flex items-center justify-center text-white font-bold cursor-pointer hover:scale-[1.02] transition-transform">92%</div>
+</div>
+<!-- 17:00 -->
+<div class="grid grid-cols-7 gap-3">
+<div class="flex items-center justify-end pr-4 font-label-caps text-on-surface-variant text-[12px]">17:00</div>
+<div class="h-14 rounded-lg bg-[#ffedd5] flex items-center justify-center text-primary/80 font-bold cursor-pointer hover:scale-[1.02] transition-transform">60%</div>
+<div class="h-14 rounded-lg bg-[#ffedd5] flex items-center justify-center text-primary/80 font-bold cursor-pointer hover:scale-[1.02] transition-transform">65%</div>
+<div class="h-14 rounded-lg bg-[#f97316] flex items-center justify-center text-white font-bold cursor-pointer hover:scale-[1.02] transition-transform">85%</div>
+<div class="h-14 rounded-lg bg-[#f97316] flex items-center justify-center text-white font-bold cursor-pointer hover:scale-[1.02] transition-transform">90%</div>
+<div class="h-14 rounded-lg bg-[#f97316] flex items-center justify-center text-white font-bold cursor-pointer hover:scale-[1.02] transition-transform">95%</div>
+<div class="h-14 rounded-lg bg-[#f97316] flex items-center justify-center text-white font-bold cursor-pointer hover:scale-[1.02] transition-transform">92%</div>
+</div>
+<!-- 19:00 -->
+<div class="grid grid-cols-7 gap-3">
+<div class="flex items-center justify-end pr-4 font-label-caps text-on-surface-variant text-[12px]">19:00</div>
+<div class="h-14 rounded-lg bg-[#f3f4f6] flex items-center justify-center text-on-surface-variant/40 font-bold cursor-pointer hover:scale-[1.02] transition-transform">30%</div>
+<div class="h-14 rounded-lg bg-[#f3f4f6] flex items-center justify-center text-on-surface-variant/40 font-bold cursor-pointer hover:scale-[1.02] transition-transform">35%</div>
+<div class="h-14 rounded-lg bg-[#ffedd5] flex items-center justify-center text-primary/80 font-bold cursor-pointer hover:scale-[1.02] transition-transform">45%</div>
+<div class="h-14 rounded-lg bg-[#ffedd5] flex items-center justify-center text-primary/80 font-bold cursor-pointer hover:scale-[1.02] transition-transform">55%</div>
+<div class="h-14 rounded-lg bg-[#ffedd5] flex items-center justify-center text-primary/80 font-bold cursor-pointer hover:scale-[1.02] transition-transform">65%</div>
+<div class="h-14 rounded-lg bg-[#ffedd5] flex items-center justify-center text-primary/80 font-bold cursor-pointer hover:scale-[1.02] transition-transform">70%</div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-8 flex flex-col md:flex-row md:items-center justify-between gap-6 border-t border-outline-variant/10 pt-6">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<div class="w-4 h-4 rounded bg-[#f3f4f6]"></div>
+<span class="font-body-md text-on-surface-variant">Baja (Gris)</span>
+</div>
+<div class="text-outline-variant">──►</div>
+<div class="flex items-center gap-2">
+<div class="w-4 h-4 rounded bg-[#ffedd5]"></div>
+<span class="font-body-md text-on-surface-variant">Media (Naranja Claro)</span>
+</div>
+<div class="text-outline-variant">──►</div>
+<div class="flex items-center gap-2">
+<div class="w-4 h-4 rounded bg-[#f97316]"></div>
+<span class="font-body-md text-on-surface-variant">Alta (Naranja Intenso)</span>
+</div>
+</div>
+<div class="flex items-center gap-2 text-primary bg-primary/5 px-5 py-2.5 rounded-xl border border-primary/10">
+<span class="material-symbols-outlined text-[20px]">lightbulb</span>
+<p class="font-body-md font-medium">Las horas con ocupación mayor al 80% son ideales para precios premium.</p>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+<script>
+        // Simple observer for progress bar animations
+        const observerOptions = { threshold: 0.1 };
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const bars = entry.target.querySelectorAll('.bg-primary');
+                    bars.forEach(bar => {
+                        const targetWidth = bar.style.width;
+                        bar.style.width = '0%';
+                        setTimeout(() => {
+                            bar.classList.add('transition-all', 'duration-1000');
+                            bar.style.width = targetWidth;
+                        }, 100);
+                    });
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('section, .bg-surface-container-lowest').forEach(section => {
+            observer.observe(section);
+        });
+    </script>
+<!-- Side Drawer -->
+<div class="fixed inset-0 z-[100] hidden" id="payroll-drawer">
+<div class="absolute inset-0 bg-on-surface/20 backdrop-blur-sm"></div>
+<aside class="absolute right-0 top-0 h-full w-[400px] bg-surface-container-lowest shadow-xl flex flex-col animate-in slide-in-from-right duration-300">
+<!-- Header -->
+<div class="p-6 border-b border-outline-variant/10 flex items-center justify-between">
+<h2 class="font-headline-md text-on-surface">Nóminas y Comisiones</h2>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Content -->
+<div class="flex-1 overflow-y-auto p-6 space-y-6">
+<!-- Professional 1 -->
+<div class="flex items-center gap-4 p-4 rounded-xl bg-surface-container-low/30 border border-outline-variant/10">
+<img alt="Julian" class="w-12 h-12 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0ajh3p_jF7QJWH1r3PLKqqvoURyXZw2Y0ZEJpOlDQL1PKUHGAVq8Na5wP9dlWVJv4DnSe7at9sUuvDZ4uzEkHfEp8svQ__UfV0RmWSWcqTZlLP8OrOxwrP7Q38EgRXV6nexpqZEA8THWcum-zF6p8nSKituZMRCtIg2rPlxWyy8YkgEVUy5oUqxDifgv4MukFoGWN-VtZMi6-WEroUu3YQa1Wz78bhPgyOHgwCAlj2iZFROwKGqroKQ">
+<div class="flex-1">
+<div class="font-bold text-on-surface">Julian Meyer</div>
+<div class="text-sm text-on-surface-variant">Facturación: $1.240.000</div>
+</div>
+<div class="text-right">
+<div class="text-[10px] font-label-caps text-primary uppercase">Comisión (15%)</div>
+<div class="font-bold text-on-surface">$186.000</div>
+</div>
+</div>
+<!-- Professional 2 -->
+<div class="flex items-center gap-4 p-4 rounded-xl bg-surface-container-low/30 border border-outline-variant/10">
+<img alt="Elena" class="w-12 h-12 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWh7pE7bvyXFSSTzJSbf7qUEQjVcgAUyIm0BA4JXFXmcv4n6THc_oWy55ZXJfv6_Pfo_yQYcf_x_1JPV6yXLVEMEPZpx1hI0Sdu7Al3QBiAqpRRi_iWz3Obluyk16PYIuAdwtt5DLg7Mei7ekbaN3gnWHSFzcJaY_oxNU8BI08w8KW9VynugHfn5nfC3dqmqPee6jkHs2y3I-sNtFOq_4_oi_DC2-JoOLVGsCa2kMvyJOsD4vNw0AErg">
+<div class="flex-1">
+<div class="font-bold text-on-surface">Elena Rivas</div>
+<div class="text-sm text-on-surface-variant">Facturación: $980.000</div>
+</div>
+<div class="text-right">
+<div class="text-[10px] font-label-caps text-primary uppercase">Comisión (15%)</div>
+<div class="font-bold text-on-surface">$147.000</div>
+</div>
+</div>
+<!-- Professional 3 -->
+<div class="flex items-center gap-4 p-4 rounded-xl bg-surface-container-low/30 border border-outline-variant/10">
+<img alt="Carlos" class="w-12 h-12 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuATjbKb45piROL_BilD1rMFsyQgPmO2Yj8EofuAmv-1xn-FKh7kYYXB3AZPINr0hTj0Spn1cOny3XNSrHMZqnu0AcetyH8TV7e-eqmxlw1NQ5DnwXsNr20DnGx6OSjlNRaG612vOXKJv_wvkovohIU8Il9t3oFEOB9wYfywVtRIwQRUa5xOXnzC14m0jfRd1ZSiYyL-MB9dKgVBuICXYA4z-kZReoXC8bClFOpu_1n7rfqIch2ctOa7gQ">
+<div class="flex-1">
+<div class="font-bold text-on-surface">Carlos Torres</div>
+<div class="text-sm text-on-surface-variant">Facturación: $230.000</div>
+</div>
+<div class="text-right">
+<div class="text-[10px] font-label-caps text-primary uppercase">Comisión (15%)</div>
+<div class="font-bold text-on-surface">$34.500</div>
+</div>
+</div>
+</div>
+<!-- Footer -->
+<div class="p-8 border-t border-outline-variant/10 bg-surface-container-low/50">
+<div class="flex justify-between items-center mb-4">
+<span class="font-body-lg text-on-surface-variant">Total a Pagar</span>
+<span class="text-2xl font-bold text-on-surface">$367.500</span>
+</div>
+<button class="w-full py-4 bg-primary text-on-primary font-bold rounded-xl shadow-md hover:bg-primary/90 transition-all">
+        Procesar Pagos del Periodo
+      </button>
+</div>
+</aside>
+</div></body></html>

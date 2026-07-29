@@ -1,0 +1,306 @@
+<!DOCTYPE html><html lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Peluquería Meyer - Agenda Semanal</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style data-purpose="custom-config">
+    @layer base {
+      :root {
+        --bg-main: #faf9f6;
+        --bg-sidebar: #f5f0e8;
+        --accent-terracotta: #c47b59;
+        --accent-mint: #a7f3d0;
+        --accent-purple: #d8b4fe;
+        --accent-peach: #fed7aa;
+        --text-dark: #374151;
+        --border-color: #e5e7eb;
+      }
+    }
+  </style>
+<style data-purpose="ui-elements">
+    .sidebar-item-active {
+      background-color: #f3e8d6;
+      border-right: 3px solid var(--accent-terracotta);
+    }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: 80px repeat(3, 1fr);
+    }
+    .grid-cell {
+      border-right: 1px solid #e5e7eb;
+      border-bottom: 1px solid #e5e7eb;
+      min-height: 100px;
+      padding: 0; /* Changed to 0 for strict alignment */
+      position: relative;
+    }
+    .appointment-card {
+      border-radius: 0 4px 4px 0;
+      padding: 10px 12px;
+      font-size: 0.8125rem;
+      height: 100%;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      cursor: pointer;
+      transition: filter 0.2s;
+    }
+    .appointment-card:hover {
+      filter: brightness(0.98);
+    }
+    .progress-bar-container {
+      height: 10px;
+      background-color: #e5e7eb;
+      border-radius: 9999px;
+      overflow: hidden;
+      width: 160px;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background-color: #6ee7b7;
+      width: 75%;
+    }
+    .segmented-control {
+      background-color: #efe6d9;
+      padding: 3px;
+      border-radius: 8px;
+      display: flex;
+      gap: 2px;
+    }
+    .segmented-item {
+      padding: 6px 12px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .segmented-item.active {
+      background-color: white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      color: #374151;
+    }
+    .blocked-slot {
+      background-color: #f3f4f6;
+      background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255, 255, 255, 0.5) 10px, rgba(255, 255, 255, 0.5) 20px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      width: 100%;
+      color: #6b7280;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    .hover-plus:hover::after {
+      content: '+';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 1.5rem;
+      color: #cbd5e1;
+      font-weight: 300;
+    }
+  </style>
+</head>
+<body class="bg-[#faf9f6] text-gray-800 font-sans flex h-screen overflow-hidden">
+<!-- BEGIN: LeftSidebar -->
+<aside class="w-20 bg-[#f5f0e8] border-r border-gray-200 flex flex-col items-center py-6 gap-8">
+<div class="mb-4" data-purpose="logo">
+<button class="p-2 hover:bg-[#f3e8d6] rounded-lg transition-colors">
+<svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+<nav class="flex flex-col gap-6 w-full items-center">
+<div class="flex flex-col items-center gap-1 w-full py-2 sidebar-item-active" data-purpose="nav-item">
+<svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+<span class="text-[10px] font-medium">Agenda</span>
+</div>
+<div class="flex flex-col items-center gap-1 w-full py-2 opacity-60" data-purpose="nav-item">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+<span class="text-[10px] font-medium">Business</span>
+</div>
+<div class="flex flex-col items-center gap-1 w-full py-2 opacity-60" data-purpose="nav-item">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+<span class="text-[10px] font-medium">Clients</span>
+</div>
+<div class="flex flex-col items-center gap-1 w-full py-2 opacity-60" data-purpose="nav-item">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path></svg>
+<span class="text-[10px] font-medium">Settings</span>
+</div>
+</nav>
+<div class="mt-auto flex flex-col items-center gap-1 w-full py-2 opacity-60" data-purpose="nav-item-bottom">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+<span class="text-[10px] font-medium">Help</span>
+</div>
+</aside>
+<!-- END: LeftSidebar -->
+<!-- BEGIN: MainContent -->
+<main class="flex-1 flex flex-col overflow-hidden">
+<!-- BEGIN: TopHeader -->
+<header class="h-16 flex items-center justify-between px-8 bg-[#faf9f6]">
+<div class="flex items-center gap-3">
+<svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span class="text-lg font-bold">Peluquería Meyer</span>
+</div>
+<div class="flex items-center gap-6">
+<button class="relative">
+<svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+<span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-[#faf9f6]"></span>
+</button>
+<div class="w-10 h-10 rounded-full bg-[#b29f8a] flex items-center justify-center text-white font-medium">M</div>
+</div>
+</header>
+<!-- END: TopHeader -->
+<!-- BEGIN: DashboardHeader -->
+<section class="px-8 py-4 flex items-center justify-between">
+<div class="flex items-baseline gap-4">
+<h1 class="text-3xl font-bold">Agenda</h1>
+<span class="text-gray-500 font-medium">Lun 27 Jul</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center bg-white rounded-lg border border-gray-200 px-3 py-1.5 gap-3 shadow-sm">
+<span class="text-sm text-gray-600">Filtro de equipo</span>
+<div class="flex -space-x-2">
+<img alt="Avatar" class="w-6 h-6 rounded-full ring-2 ring-white" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2ft3LaZO-ZETUfvc9fI7FzgbLhY0KcVJvyuONkfW1O-CH6IbPYc5vkCdPVBKJG8nDrDUfvbVUXy8u98h8WuWrMuxRRR6AcdvGLockfKlEobK0Nwuye8ahHHaLGi0UEkJW248CO0aBYoSCR1MeTgAyZg3CwdxR72l6_4NZRDC52jN0eqdPjmK7GLCAzIh3gcYFQC_qW_WTAU01kV90wbzObDqcoku6xG9hQDoEDSel77UyWnOXVZT8PJKZxAF7kBzvauqvJcXjdM3C">
+<img alt="Avatar" class="w-6 h-6 rounded-full ring-2 ring-white" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBraEYvNznGIXtYZFFpkUULx4dEkaXzkCI4WF_ngKbxFdBvyHnYSj21cuJCoYNkDXblnCg4ScVRmXzjtjwAr-i5PQ2WbflanBfuXSYUFdnNoeEWyvrudMMyLG8QsqHeZ4ox6KERvgPRbIV7O0iJuIsHFTRwBYYzMCEaHtuhuGEA3dfCI-3Mgd7vuVnh1MNx_XYiiBngVVvaLMrX4CwOl4Rf1KkAf8wKLhvDnASdzNuIkEX146hYA6C10Wo8-nkpBwZ6vKTDwYcu4n8C">
+</div>
+<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"></path></svg>
+</div>
+<button class="bg-[#c47b59] text-white px-5 py-2 rounded-lg font-semibold shadow-sm hover:bg-[#b06d4e] transition-colors flex items-center gap-2">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path></svg> 
+          Nueva Cita
+        </button>
+</div>
+</section>
+<!-- END: DashboardHeader -->
+<!-- BEGIN: ViewControls -->
+<section class="px-8 py-2 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<!-- Group 1: Format -->
+<div class="segmented-control">
+<button class="segmented-item active flex items-center gap-1.5">
+<span>📅</span> Calendario
+          </button>
+<button class="segmented-item flex items-center gap-1.5 text-gray-500 hover:bg-white/50">
+<span>📋</span> Lista
+          </button>
+</div>
+<!-- Group 2: Time -->
+<div class="segmented-control">
+<button class="segmented-item active">Día</button>
+<button class="segmented-item text-gray-500 hover:bg-white/50">Semana</button>
+<button class="segmented-item text-gray-500 hover:bg-white/50">Mes</button>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<span class="text-sm font-medium text-gray-600">Ocupación hoy: 75% (8/10 citas)</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="progress-bar-container">
+<div class="progress-bar-fill"></div>
+</div>
+<span class="text-sm font-bold text-gray-700">75%</span>
+</div>
+</div>
+</section>
+<!-- END: ViewControls -->
+<!-- BEGIN: CalendarScrollArea -->
+<section class="flex-1 overflow-y-auto px-8 py-4">
+<div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+<!-- BEGIN: GridHeader -->
+<div class="calendar-grid bg-[#fcfaf7] border-b border-gray-200">
+<div class="grid-cell flex items-center justify-center font-semibold text-xs text-gray-500 uppercase tracking-wider">Hora</div>
+<div class="grid-cell text-center py-4">
+<div class="flex flex-col items-center gap-1">
+<img alt="Ana" class="w-8 h-8 rounded-full border border-white" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2ft3LaZO-ZETUfvc9fI7FzgbLhY0KcVJvyuONkfW1O-CH6IbPYc5vkCdPVBKJG8nDrDUfvbVUXy8u98h8WuWrMuxRRR6AcdvGLockfKlEobK0Nwuye8ahHHaLGi0UEkJW248CO0aBYoSCR1MeTgAyZg3CwdxR72l6_4NZRDC52jN0eqdPjmK7GLCAzIh3gcYFQC_qW_WTAU01kV90wbzObDqcoku6xG9hQDoEDSel77UyWnOXVZT8PJKZxAF7kBzvauqvJcXjdM3C">
+<span class="font-bold text-sm">Ana Martínez</span>
+</div>
+</div>
+<div class="grid-cell text-center py-4">
+<div class="flex flex-col items-center gap-1">
+<img alt="Laura" class="w-8 h-8 rounded-full border border-white" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBraEYvNznGIXtYZFFpkUULx4dEkaXzkCI4WF_ngKbxFdBvyHnYSj21cuJCoYNkDXblnCg4ScVRmXzjtjwAr-i5PQ2WbflanBfuXSYUFdnNoeEWyvrudMMyLG8QsqHeZ4ox6KERvgPRbIV7O0iJuIsHFTRwBYYzMCEaHtuhuGEA3dfCI-3Mgd7vuVnh1MNx_XYiiBngVVvaLMrX4CwOl4Rf1KkAf8wKLhvDnASdzNuIkEX146hYA6C10Wo8-nkpBwZ6vKTDwYcu4n8C">
+<span class="font-bold text-sm">Laura Gómez</span>
+</div>
+</div>
+<div class="grid-cell text-center py-4">
+<div class="flex flex-col items-center gap-1">
+<img alt="Carlos" class="w-8 h-8 rounded-full border border-white" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMytJ9fkao-v3q1gki6kU5ixfiMC9UGXNKlGxP8mNVQjWTLA6911scxQfsEVgiUFTkXrummr-h2nZJvP8mBU50iFo_S61R_Nsbnj_zJvlo5SMH9AggE-Q9EySCle1iJTPkv8eRv7PmZOM8WEc6K-_4am1RZjFcRm6Tx041_4JDdzv22c4r18afi0d1x3MXFa_qQ3nyVkoAQcUsSFZrP44Jfwm7f5rOto72qyqB7QD_ntRZRXw3lTD4YAxylWxYKTWs-OYzpKnMvhE-">
+<span class="font-bold text-sm">Carlos Ruiz</span>
+</div>
+</div>
+</div>
+<!-- END: GridHeader -->
+<!-- BEGIN: GridBody -->
+<div class="calendar-grid">
+<!-- Row 9:00 AM -->
+<div class="grid-cell flex items-center justify-center text-xs text-gray-400 font-medium border-r border-gray-200">9:00 AM</div>
+<div class="grid-cell"></div>
+<div class="grid-cell">
+<div class="appointment-card bg-[#f5f0ff] border-l-[4px] border-[#a78bfa]">
+<div class="mb-1"><span class="bg-[#e0d6ff] text-[#5b21b6] px-1.5 py-0.5 rounded text-[9px] font-bold uppercase">Confirmada</span></div>
+<div class="font-bold text-gray-900">Sofia Castro</div>
+<div class="text-gray-500 text-[11px]">Manicure</div>
+</div>
+</div>
+<div class="grid-cell"></div>
+<!-- Row 10:00 AM -->
+<div class="grid-cell flex items-center justify-center text-xs text-gray-400 font-medium border-r border-gray-200">10:00 AM</div>
+<div class="grid-cell">
+<div class="appointment-card bg-[#f5f0ff] border-l-[4px] border-[#a78bfa]">
+<div class="mb-1"><span class="bg-[#e0d6ff] text-[#5b21b6] px-1.5 py-0.5 rounded text-[9px] font-bold uppercase">Confirmada</span></div>
+<div class="font-bold text-gray-900">Maria Peña</div>
+<div class="text-gray-500 text-[11px]">Corte dama</div>
+</div>
+</div>
+<div class="grid-cell"></div>
+<div class="grid-cell">
+<div class="appointment-card bg-[#ecfdf5] border-l-[4px] border-[#10b981]">
+<div class="mb-1"><span class="bg-[#d1fae5] text-[#065f46] px-1.5 py-0.5 rounded text-[9px] font-bold uppercase">Completada</span></div>
+<div class="font-bold text-gray-900">Carlos V.</div>
+<div class="text-gray-500 text-[11px]">Corte caballero</div>
+</div>
+</div>
+<!-- Row 11:00 AM -->
+<div class="grid-cell flex items-center justify-center text-xs text-gray-400 font-medium border-r border-gray-200">11:00 AM</div>
+<div class="grid-cell"></div>
+<div class="grid-cell">
+<div class="appointment-card bg-[#fff7ed] border-l-[4px] border-[#f97316]">
+<div class="mb-1"><span class="bg-[#ffedd5] text-[#9a3412] px-1.5 py-0.5 rounded text-[9px] font-bold uppercase">En proceso</span></div>
+<div class="font-bold text-gray-900">Sofia Castro</div>
+<div class="text-gray-500 text-[11px]">Tinte Balayage</div>
+</div>
+</div>
+<div class="grid-cell"></div>
+<!-- Row 12:00 PM -->
+<div class="grid-cell flex items-center justify-center text-xs text-gray-400 font-medium border-r border-gray-200">12:00 PM</div>
+<div class="grid-cell">
+<div class="blocked-slot">🔒 Bloqueado: Almuerzo</div>
+</div>
+<div class="grid-cell hover-plus"></div>
+<div class="grid-cell"></div>
+</div>
+<!-- END: GridBody -->
+</div>
+</section>
+<!-- END: CalendarScrollArea -->
+<!-- BEGIN: Footer -->
+<footer class="h-12 flex items-center justify-between px-8 text-[10px] text-gray-500 border-t border-gray-200 bg-white">
+<div>
+        © 2026 Peluquería Meyer. Todos los derechos reservados.
+      </div>
+<div class="flex gap-4">
+<a class="underline hover:text-gray-800 transition-colors" href="#">Política de tratamiento de datos</a>
+<a class="underline hover:text-gray-800 transition-colors" href="#">Términos de servicio</a>
+</div>
+</footer>
+<!-- END: Footer -->
+</main>
+<!-- END: MainContent -->
+</body></html>

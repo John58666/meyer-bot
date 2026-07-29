@@ -8,9 +8,9 @@
 > - `docs/harness/MEMORY.md` = resumen acumulado de lo que ha pasado. Se edita (no se reemplaza) al final de cada sesión.
 
 ## Última sesión
-- **Fecha**: 2026-07-25
-- **Objetivo**: Dashboard refinements + diseño final bloqueos multi-profesional
-- **Estado**: 4 bugs/UX issues corregidos y deployados. Diseño final aprobado y archivado en `docs/superpowers/specs/03-diseno-final-bloqueos-multiprofesional.md`.
+- **Fecha**: 2026-07-28
+- **Objetivo**: Backend v2 — servicios normalizados, duración variable, colisión por rango
+- **Estado**: Implementado y deployado. Migración DB 018 ejecutada + seed. Dashboard build exitoso, PM2 restart. n8n workflow actualizado pendiente de importar.
 
 ## Bugs activos
 | # | Bug | Prioridad | Estado |
@@ -18,6 +18,7 @@
 | 1 | createAppointment no valida schedule_exceptions | 🔴 Crítico | Pendiente |
 | 2 | fetchOcupacion ignora schedule_exceptions | 🔴 Alto | Pendiente |
 | 3 | Clientes sin detección de duplicados | 🟡 Medio | Pendiente |
+| 4 | Duraciones reales no configuradas (default 30min) | 🟡 Medio | Pendiente |
 | 4 | Editor de servicios confuso (textarea vs filas) | 🟡 Medio | Pendiente |
 | 5 | Gateo de configuración funciona | ✅ Corregido | Verificado |
 | 6 | Citas del día sin resumen | 🟡 Medio | Pendiente |
@@ -507,19 +508,113 @@ Implementar spec completo en `docs/superpowers/specs/03-diseno-final-bloqueos-mu
 - Rotar Evolution API key leakada
 - Fase 2-6 spec escalabilidad: PgBouncer, WhatsApp abstraction layer, gateway, prompts fuera de n8n, onboarding
 
-## Template para nueva sesión
-```
-## [Fecha] — [Objetivo]
+## 2026-07-28 — Backend v2: Servicios + Duración Variable + Colisión por Rango
 
 ### Qué se hizo
-- 
+- Migración DB 018: tablas services, professional_services, columna hora_fin + índices + trigger
+- Seed ejecutado: 14 servicios migrados, 72 asignaciones profesional-servicio, 169 citas con hora_fin
+- generateSlots() modificado para duración variable + buffer. Trunca slots donde no cabe servicio completo.
+- createAppointment() calcula hora_fin. Colisión por rango [hora, hora_fin) en vez de hora exacta.
+- rescheduleAppointment() recalcula hora_fin al reagendar.
+- getMetricas/getMetricasDrawer reemplazan parsePrice(services_text) por buildPriceMap(services table).
+- updateServices/updateServicesText sincronizan ambas fuentes (tabla + legacy).
+- Nuevo módulo dashboard/lib/services.ts: CRUD completo services + professional_services.
+- n8n workflow actualizado: 4 nodos con hora_fin (Insertar Cita, Leer Slots, Leer Disponibilidad, Reagendar).
+- 3 filtros de industria implementados: rango horario, especialidades, overlap.
 
 ### Qué quedó pendiente
-- 
+- Importar workflow n8n actualizado en producción (acción usuario)
+- Configurar duraciones reales por servicio (hoy 30min default)
+- UI editor de servicios con duración + toggle
+- UI asignación servicios → profesionales
+- UI mostrar duración real en card de cita
+- Endpoint REST POST /api/appointments/create
 
 ### Regla nueva (si aplica)
-- 
+- Al migrar columna de horario a rango, mantener COALESCE(hora_fin, hora+'30min') para backward compatibility
+- Los nodos n8n que crean/leen citas deben incluir hora_fin para colisión por rango correcta
+- Al sincronizar services con services_text, preservar formato legacy "$precio" para compatibilidad de parseo
 
 ### Archivos modificados
-- 
-```
+- database/migrations/018_services_duration.sql (nuevo)
+- database/seeds/migrate-services-duration.js (nuevo)
+- dashboard/lib/services.ts (nuevo)
+- dashboard/lib/actions.ts (modificado)
+- workflows/WhatsApp Bot - Genérico restored.json (modificado)
+- workflows/nodes-gestion-citas.md (modificado)
+- database/n8n-queries.sql (modificado)
+- docs/ARCHITECTURE.md, docs/backend-reference.md, docs/sessions/CURRENT.md, docs/sessions/HANDOFF.md, docs/harness/MEMORY.md (modificado)
+
+## 2026-07-28 — Auditoría Arquitectónica + Estructura Destino
+
+### Qué se hizo
+- Cargados AGENTS.md, HANDOFF.md, MEMORY.md, CURRENT.md
+- Investigación completa del codebase usando agente explore: inventario de ~80 archivos (53 componentes, 11 lib/, 23 rutas app/, hooks, types)
+- Web research: Feature-Sliced Design, patrones Fresha, consenso industria Next.js 2026 (15+ fuentes)
+- Auditoría arquitectónica: 22 issues encontrados en `docs/refactoring/01-ARCHITECTURAL_AUDIT.md`
+  - 5 críticos: actions.ts monolito (2,138 líneas), pool.query() directo en páginas, lógica de colisión duplicada en 3 lugares, 0 Error Boundaries, sin validación runtime de DB
+  - 6 altos: sin DAL, 5 patrones de retorno, duplicación HorarioRecurrente/HorarioClient, 6 drawers con boilerplate idéntico, SemanaClient duplica WeekView
+- Estructura destino diseñada y documentada en `docs/refactoring/02-ESTRUCTURA_DESTINO.md`:
+  - Árbol completo feature-first (80+ rutas)
+  - Mapeo 1:1 de cada archivo actual → destino (tablas por lib/, components/, app/api/)
+  - Desglose de actions.ts en 21 archivos en 6 dominios
+  - Estrategia de re-exports temporales para build continuo
+- Doc de handoff actualizado para próxima sesión
+
+### Qué quedó pendiente
+- Importar workflow n8n actualizado (Backend v2 hora_fin)
+- Configurar duraciones reales por servicio (hoy 30min default)
+- Escribir 03-ROADMAP.md con orden de ejecución de refactor
+- Partir actions.ts en features/*/actions/ (Fase 1)
+- Mover componentes a features/
+- Crear DAL con server-only + zod
+- Bugs: B1 (createAppointment sin validar exceptions), B2 (fetchOcupacion ignora exceptions)
+
+### Regla nueva
+- Antes de refactorizar: auditar primero (01-ARCHITECTURAL_AUDIT.md), diseñar estructura destino segundo (02-ESTRUCTURA_DESTINO.md), roadmap tercero (03-ROADMAP.md). Documentar cada fase antes de escribir código.
+- Feature-First: componentes van en features/{dominio}/components/, no planos en components/. No crear componentes nuevos sin carpeta de dominio.
+- Al investigar arquitectura de código existente: usar agente explore con inventario completo antes de proponer cambios.
+
+### Archivos creados
+- `docs/refactoring/01-ARCHITECTURAL_AUDIT.md`
+- `docs/refactoring/02-ESTRUCTURA_DESTINO.md`
+
+### Archivos modificados
+- `docs/sessions/HANDOFF.md`
+- `docs/sessions/CURRENT.md`
+- `docs/harness/MEMORY.md` (este entry)
+
+## 2026-07-29 — Refactor V2: Plan Docs + Stitch Analysis
+
+### Qué se hizo
+- Leídos y analizados docs/frontend-reference.md (1073 líneas), HANDOFF.md, MEMORY.md, RULES.md
+- Descargado y extraído stitch_agenda_weekly_calendar_view.zip a stitch_export/
+- Analizados 20 diseños HTML de Stitch mapeados a 7 módulos del dashboard
+- Identificados 2 sistemas de diseño: Zero-Friction (pastel, #F97316) y Grooming Pro (corporate, #ff6b00)
+- Decidido: target = **Zero-Friction** (pastel), paleta `#9d4300` / `#f97316`
+- Descubierto: dashboard actual dark theme (#0A0A0A), Stitch diseños light/warm (#fff8f6)
+- Descubierto: Stitch usa Material Symbols, proyecto usa lucide-react (icon mapping creado)
+- Auditado el código real: `lib/actions.ts` (2138 líneas), `components/` (15 componentes), rutas, tipos
+- Descubiertos **backend gaps**: Inventario, Caja/POS, Pagos no tienen server actions
+- Descubierta **duplicación WeekView**: components/week-view.tsx + SemanaClient.tsx
+- Descubierto: dark theme forzado en layout (`className="dark"`), no hay ThemeProvider
+- Escritos **13 plan docs** en docs/refactoring-v2/
+
+### Archivos creados
+- `docs/refactoring-v2/INDEX.md` — Master plan con reglas, design system, icon mapping, estructura carpetas
+- `docs/refactoring-v2/01-agenda.md` a `12-equipo-roles.md` — 12 plan docs de módulos
+- `docs/sessions/HANDOFF.md` — Actualizado con estado y próxima acción
+
+### Qué quedó pendiente
+- Implementar Fase 0: Shared Components (page-shellV2, stat-cardV2, empty-stateV2, etc.)
+- Implementar módulos en orden de dependencia (ver INDEX.md)
+- Crear backend faltante: Inventario, Caja/POS, Pagos (requiere acceso VPS para crear tablas y server actions)
+
+### Regla nueva
+- Plan docs antes de implementar: INDEX.md + un doc por módulo. Cada doc debe ser autocontenido para que otro chat/agente lo ejecute sin contexto previo.
+- Diseños Stitch y código real pueden divergir en theme (dark vs light). Documentar la diferencia antes de implementar.
+- **Antes de escribir V2**: verificar server actions reales en `lib/actions.ts` y `lib/*.ts`. No asumir nombres.
+- **Backend gaps**: Si un módulo necesita server actions que no existen, documentar en el plan del módulo con ⚠️ y crear `features/[modulo]/actionsV2.ts`
+
+### Archivos modificados
+- `docs/harness/MEMORY.md` (este entry)

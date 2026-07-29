@@ -1,0 +1,289 @@
+<!DOCTYPE html><html lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Peluquería Meyer - Gestión de Equipo &amp; Roles</title>
+<!-- Tailwind CSS v3 CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'meyer-orange': '#D2694E',
+            'meyer-cream': '#F9F7F2',
+            'meyer-purple-light': '#E5E1F9',
+            'meyer-purple-text': '#5A4A9B',
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="typography">
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+<style data-purpose="custom-shadows">
+    .card-shadow {
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+    .dropdown-shadow {
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body class="bg-[#FAF9F6] min-h-screen text-gray-800">
+<!-- BEGIN: MainHeader -->
+<header class="w-full px-8 py-4 flex justify-between items-center bg-transparent">
+<div class="text-xl font-semibold text-gray-700" data-purpose="brand-logo">
+      Peluquería Meyer
+    </div>
+<div class="relative flex items-center gap-2 cursor-pointer group" data-purpose="user-menu-trigger">
+<!-- User Avatar Placeholder -->
+<div class="w-8 h-8 rounded-full overflow-hidden bg-gray-200">
+<img alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-Acl-gU5KRj9qf9wIT-0ZaEUjvJz1xzAKz3BXSG2ayC8c7I8eKmTPqgzQgbLgPxOCcPl2lBqLNlUvh5C0ndOU6jaFnPxr9dvf8XPodGTCqhpYjEXElrozaU9CMJgriKI3ALv-rYNLA8dHdKF6JVQczpdBraSE6OAT4ER15E9JW4P6LBZApmGExWijMJpIhnrgsCd-OI3__s_V4kumvX9Yi2QtZhLADkplL5u6_tAtdI1r7v8cXmsi72Eo_CyxVlL30tQ2yvREGBRu">
+</div>
+<!-- Dropdown Arrow -->
+<svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<!-- BEGIN: User Dropdown Menu -->
+<div class="absolute right-0 top-10 w-64 bg-white rounded-lg dropdown-shadow z-50 border border-gray-100 py-1 hidden group-hover:block" data-purpose="user-dropdown">
+<a class="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-50" href="#">Ayuda / FAQ</a>
+<a class="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-50" href="#">Términos Legales &amp; Privacidad (Ley 1581)</a>
+<a class="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50" href="#">Cerrar Sesión</a>
+</div>
+<!-- END: User Dropdown Menu -->
+</div>
+</header>
+<!-- END: MainHeader -->
+<!-- BEGIN: MainContent -->
+<main class="max-w-7xl mx-auto px-4 mt-4 pb-12">
+<div class="bg-white rounded-2xl card-shadow p-8 min-h-[600px]" data-purpose="content-card">
+<!-- BEGIN: Navigation Tabs -->
+<div class="flex items-center border-b border-gray-100 mb-8 overflow-x-auto whitespace-nowrap" data-purpose="navigation-tabs">
+<div class="relative px-6 py-4 font-medium text-gray-400 hover:text-gray-600 cursor-pointer">
+          Servicios &amp; Precios
+        </div>
+<div class="px-6 py-4 font-semibold text-meyer-orange border-b-2 border-meyer-orange relative">
+          Equipo &amp; Roles
+        </div>
+<div class="px-6 py-4 text-gray-400 font-medium hover:text-gray-600 cursor-pointer">
+          Horarios Generales
+        </div>
+<div class="px-6 py-4 text-gray-400 font-medium hover:text-gray-600 cursor-pointer">
+          Auditoría e Historial
+        </div>
+</div>
+<!-- END: Navigation Tabs -->
+<!-- BEGIN: Action Bar -->
+<div class="flex justify-end mb-6">
+<button class="bg-meyer-orange hover:bg-opacity-90 text-white px-6 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-colors">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+          Agregar Miembro
+        </button>
+</div>
+<!-- END: Action Bar -->
+<!-- BEGIN: Team Table -->
+<div class="border border-gray-100 rounded-xl overflow-hidden" data-purpose="services-container">
+<table class="w-full text-left border-collapse">
+<thead class="bg-[#FAF9F6] text-gray-500 uppercase text-[11px] tracking-wider">
+<tr>
+<th class="px-6 py-4 font-bold">Profesional</th>
+<th class="px-6 py-4 font-bold">Rol</th>
+<th class="px-6 py-4 font-bold">Especialidades</th>
+<th class="px-6 py-4 font-bold">Estado</th>
+<th class="px-6 py-4 font-bold text-center">Acciones de Gestión</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-100">
+<!-- Professional Row 1 -->
+<tr class="hover:bg-gray-50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<img alt="Camila" class="w-10 h-10 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBo6NwYsWgDmMnCeJQga-eehMK3-tVaNl2MNuLi-PCrOCTduua5QEIzM6LtMRrRLczvraXxOB1UwqV0PY7YjBBV1n0j9Kd0KzDsKiTewbqfWqrc88HDL59YlIHy2V_4iFSBXh-T-mPnhSq00CLeQxmDidB6tjIR7heGe-LOcQhmchAJyNTfNbsoMgMD3kuMpNE0dZlveto23kmZXErmTEY36z7s7KGVUy3Y1_8PHMQDo2HRNxdQHL6AhU2TeecKVobQZuRELbgh1fn6">
+<div class="flex flex-col">
+<span class="font-bold text-gray-800">Camila</span>
+<span class="text-xs text-gray-400">camila@meyer.com</span>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-wrap gap-1">
+<span class="bg-meyer-purple-light text-meyer-purple-text px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase">Admin</span>
+<span class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase">Estilista Senior</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-wrap gap-1">
+<span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs">Corte Dama</span>
+<span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs">Tinte</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="bg-green-50 text-green-600 px-3 py-1 rounded-full text-xs font-medium">Activo</span>
+</td>
+<td class="px-6 py-4"><div class="flex justify-center relative group">
+<button class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
+<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"></path></svg>
+</button>
+<div class="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg dropdown-shadow z-50 border border-gray-100 py-1 hidden group-hover:block">
+<a class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" href="#">
+<span>⚙️</span> Editar Permisos
+    </a>
+<a class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" href="#">
+<span>🕒</span> Configurar Turno
+    </a>
+<div class="border-t border-gray-50 my-1"></div>
+<button class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+      Eliminar
+    </button>
+</div>
+</div></td>
+</tr>
+<!-- Professional Row 2 -->
+<tr class="hover:bg-gray-50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<img alt="Julian" class="w-10 h-10 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCLs34Mi-vf8bditYI1BKtwd256z1bhVSGDWw2eELa0epz7dE-Wq_8NV1NSb60XQ84QWjY-_QP8Es1Lw-3OLt27410eav5tyteE9dMTc6y-3CrH8SAkJ45Eok_8Gyc3IKExhylgYEhAsjNBvwoWySym_1r5vyRGgQFui2HQ7dR_xuJUUo2OzuFkJOSb5Gzf5hQDssSAWCsSWyyHFoicg17FcfRo7jrKJ2_8Af8mx7q9aNvquwRi_rG7MnebIVGYmeHxOo1A-ISjQC9-">
+<div class="flex flex-col">
+<span class="font-bold text-gray-800">Julian</span>
+<span class="text-xs text-gray-400">julian@meyer.com</span>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="bg-green-50 text-green-600 px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase">Barbero</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-wrap gap-1">
+<span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs">Corte Caballero</span>
+<span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs">Barba</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="bg-green-50 text-green-600 px-3 py-1 rounded-full text-xs font-medium">Activo</span>
+</td>
+<td class="px-6 py-4"><div class="flex justify-center relative group">
+<button class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
+<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"></path></svg>
+</button>
+<div class="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg dropdown-shadow z-50 border border-gray-100 py-1 hidden group-hover:block">
+<a class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" href="#">
+<span>⚙️</span> Editar Permisos
+    </a>
+<a class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" href="#">
+<span>🕒</span> Configurar Turno
+    </a>
+<div class="border-t border-gray-50 my-1"></div>
+<button class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+      Eliminar
+    </button>
+</div>
+</div></td>
+</tr>
+<!-- Professional Row 3 -->
+<tr class="hover:bg-gray-50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<img alt="Laura Gómez" class="w-10 h-10 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUnfxNKkZ_sE4yjbXXLDh-eCcqUk-OVFrcMLrcbTdvWKkDdsveN2T6kbHjLpu1JgsfGkiE7EMJHnFydKTsu9hoq4OX-x76r9ST3Nhn0uQvDBhpAfBnBbSTdyrSmdTnI6VbpX1d24lC4Q7VeRoCbWnnz-onSikMYzoJH4ZvhWrsrJDD54xebDfs4f3yShKXnJvaC6SwBvjaV3UF66aTxAYAlURP8Hd0YhYBn__zkMzTy6eZeg5OC9thRzpF4KJaMJS2fhA662Dyzf8U">
+<div class="flex flex-col">
+<span class="font-bold text-gray-800">Laura Gómez</span>
+<span class="text-xs text-gray-400">laura@meyer.com</span>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase">Estilista</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-wrap gap-1">
+<span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs">Peinado Especial</span>
+<span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs">Uñas</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="bg-green-50 text-green-600 px-3 py-1 rounded-full text-xs font-medium">Activo</span>
+</td>
+<td class="px-6 py-4"><div class="flex justify-center relative group">
+<button class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
+<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"></path></svg>
+</button>
+<div class="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg dropdown-shadow z-50 border border-gray-100 py-1 hidden group-hover:block">
+<a class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" href="#">
+<span>⚙️</span> Editar Permisos
+    </a>
+<a class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" href="#">
+<span>🕒</span> Configurar Turno
+    </a>
+<div class="border-t border-gray-50 my-1"></div>
+<button class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+      Eliminar
+    </button>
+</div>
+</div></td>
+</tr>
+<!-- Professional Row 4 -->
+<tr class="hover:bg-gray-50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<img alt="Carlos Ruiz" class="w-10 h-10 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgzZa12DmXMBt_7Ai3MXBbHDoltsmFyvLUZKn129pJRqEH7l-BLQbWCRKPGw6lM0J52LYIYE-J0NzJzh3_XjUqzxZ1QzEJVhC0sLCiVQZySNtVYsrp0XLfQDv1T4eJtVguvlDQVjn2lmMNlvdZaAjpRMGxhwhOQQhPlgXCOArJzxgslMz97zVWAumAuHwwhXFsELewVT0nt-rar8MMgYxfGXCqNZFqSEQiRHVR8IKlsdcM2T_mgZYzud81bP7qO_OAHCTPuvakvRC3">
+<div class="flex flex-col">
+<span class="font-bold text-gray-800">Carlos Ruiz</span>
+<span class="text-xs text-gray-400">carlos@meyer.com</span>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="bg-green-50 text-green-600 px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase">Barbero</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-wrap gap-1">
+<span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs">Corte Caballero</span>
+<span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs">Barba</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-xs font-medium">Ausente</span>
+<div class="mt-2 text-[10px] text-red-500 font-medium flex items-center gap-1">
+<span>🚫</span> Inactivo en agenda (Bloqueado automáticamente)
+</div></td>
+<td class="px-6 py-4"><div class="flex justify-center relative group">
+<button class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
+<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"></path></svg>
+</button>
+<div class="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg dropdown-shadow z-50 border border-gray-100 py-1 hidden group-hover:block">
+<a class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" href="#">
+<span>⚙️</span> Editar Permisos
+    </a>
+<a class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" href="#">
+<span>🕒</span> Configurar Turno
+    </a>
+<div class="border-t border-gray-50 my-1"></div>
+<button class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+      Eliminar
+    </button>
+</div>
+</div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- END: Team Table -->
+<!-- BEGIN: Management Tooltip/Hint -->
+<div class="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100 flex items-start gap-3">
+<svg class="w-5 h-5 text-blue-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<p class="text-sm text-blue-700 leading-relaxed">
+<strong>Tip de Gestión:</strong> Usa <span class="font-semibold">Editar Permisos</span> para definir si el profesional puede ver solo su agenda propia o si tiene acceso a la caja global y reportes de la peluquería. Los <span class="font-semibold">Horarios</span> se configuran por semana para cada empleado.
+        </p>
+</div>
+<!-- END: Management Tooltip/Hint -->
+</div>
+</main>
+<!-- END: MainContent -->
+</body></html>

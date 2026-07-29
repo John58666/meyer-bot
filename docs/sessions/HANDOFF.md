@@ -1,63 +1,108 @@
----
-status: active
-date: 2026-07-26
-session: "Items 5 y 6 del spec: query bot sin caché + separar desactivar de citas futuras"
-branch: main
-next_action: "Bugs backlog: B1 (createAppointment sin validar exceptions), B2 (fetchOcupacion ignora exceptions), servicios no reflejados en bot"
----
+# HANDOFF — Refactor V2 Inicio
 
-# HANDOFF.md
+## Estado Actual
 
-> **Leer esto PRIMERO.** Luego: `docs/harness/MEMORY.md` → `docs/harness/RULES.md` → preguntar al usuario qué prioridad atacar.
+**Sesión**: Planificación completa del refactor UI V2.
+**Modo**: Plans written, implementation NOT started.
+**Contexto**: El agente que escribió esto ya no está disponible. Leer este doc + INDEX.md para continuar.
 
-## Resumen del estado actual
+## Credenciales VPS
 
-Spec completo de bloqueos multi-profesional (sección 11) **completado al 100%:**
+Archivo: `secrets/vps-credentials.env` (gitignored, seguro)
+```
+Host: 178.104.27.180
+User: root
+Pass: (en el archivo)
+```
 
-- **Item 5** — Query de selección de profesional en bot sin caché: **verificado.** El nodo "Lookup Negocio" en n8n ya hace `LEFT JOIN professionals p ON p.business_id = b.id AND p.active = true` en cada webhook. Sin caché, sin hardcode.
-- **Item 6** — Separar desactivar profesional de gestionar citas futuras: **implementado.** `toggleMiembroActivo` sigue siendo soft-toggle (no toca citas). Al desactivar, si hay citas futuras, aparece modal: "cancelar ahora o dejarlas como están". Reusa `cancelAppointmentsAndNotify` para el flujo de cancelación.
+Usar para crear server actions de módulos con backend gap (Caja, Inventario, Pagos).
 
-## Prioridades
+## Instrucciones para el próximo agente
 
-### P1 — Bugs backlog
-1. **B1**: `createAppointment` no valida `schedule_exceptions` — puede agendar en días/horarios bloqueados
-2. **B2**: `fetchOcupacion` ignora `schedule_exceptions` — muestra ocupación incorrecta
-3. Servicios nuevos no reflejados en el bot (orden en system prompt de n8n)
+1. LEER `docs/refactoring-v2/INDEX.md` completo primero
+2. LEER el módulo que toque implementar
+3. NO implementar nada de backend sin acceso VPS confirmado
+4. Seguir orden de módulos del INDEX.md
+5. Recordar: `className="dark"` en layout — V2 usan colores hardcodeados (Zero-Friction pastel)
+6. Workflow n8n correcto: **"WhatsApp Bot - Genérico restored"** — es el principal. Hay otros pero no usarlos.
+7. No tocar: `/api/webhooks/sync-*`, `middleware.ts`, nombres de nodos n8n, RETURNING de queries SQL
 
-### P2 — Rotar Evolution API key en VPS
+## Qué se hizo
 
-### P3 — Fases 2-6 del spec de escalabilidad (PgBouncer, WhatsApp abstraction layer, gateway, prompts fuera de n8n, onboarding)
+1. Se leyeron y analizaron los 20 diseños HTML de Stitch
+2. Se mapearon los diseños a los módulos existentes del dashboard
+3. Se identificaron los dos sistemas de diseño: "Zero-Friction" y "Grooming Pro"
+4. Se definió la estrategia V2 paralela (nunca tocar originales)
+5. Se escribieron **13 plan docs** en `docs/refactoring-v2/`
 
-## Archivos clave
-| Ruta | Propósito |
-|------|-----------|
-| `docs/superpowers/specs/03-diseno-final-bloqueos-multiprofesional.md` | Spec completo — ✅ todos los items completados |
-| `dashboard/lib/actions.ts` | getFutureAppointmentsForProfessional (nuevo) |
-| `dashboard/components/equipo/equipo-client.tsx` | Modal post-desactivación con opción de cancelar citas |
-| `workflows/WhatsApp Bot - Genérico.json` | Lookup Negocio con p.active = true live |
+## Docs Creados
 
-## Lo que ya existe (no crear desde cero)
-- `getFutureAppointmentsForProfessional` en `actions.ts`
-- `cancelAppointmentsAndNotify` reutilizado para cancelación masiva
-- Modal de confirmación post-desactivación en equipo-client.tsx
+| Archivo | Contenido |
+|---------|-----------|
+| `INDEX.md` | Master plan: reglas, design system, estructura carpetas, icon mapping, orden módulos |
+| `01-agenda.md` | 5 componentes V2: calendario semanal + modales/sheets/drawers |
+| `02-clientes.md` | 4 componentes V2: tabla + drawer + historial + formulario |
+| `03-caja.md` | 5 componentes V2: POS 60/40 + carrito + checkout + éxito |
+| `04-config-perfil.md` | Perfil negocio |
+| `05-config-servicios.md` | Servicios con modal 2 pestañas |
+| `06-config-equipo.md` | Lista empleados |
+| `07-config-horarios.md` | Horarios por sub-pestañas + bloqueos |
+| `08-config-pagos.md` | Toggle cards métodos pago |
+| `09-config-auditoria.md` | Auditoría con filtros |
+| `10-inventario.md` | Catálogo + modal producto |
+| `11-dashboard.md` | Dashboard con payroll + comisiones |
+| `12-equipo-roles.md` | Modal detalle empleado |
 
-## Reglas clave del proyecto (The Ratchet)
-- Migraciones DB siempre aditivas. Rollback SQL listo antes.
-- Server actions: `success: true/false` como discriminante
-- Horario profesional: `COALESCE(ps.schedule_text, b.schedule_text)` — NULL = hereda
-- Breakpoints: `lg` (1024px) no `sm` (640px) — landscape mobile
-- `stopPropagation()` en botones dentro de contenedores con onClick
-- No agregar comentarios al código
-- Colores avatar: determinísticos vía hash del id (getAvatarColor), paleta 12 colores
-- NUNCA leer/imprimir `.env`. NUNCA hardcodear API keys.
+## Hallazgos Clave (de auditoría de código)
 
-## Lo que NO debe hacer el próximo agente
-- No crear archivos nuevos si puede modificar los existentes
-- No agregar comentarios al código
-- No hardcodear API keys ni tokens
-- No modificar DB de producción directamente
-- No deployar a producción sin confirmación del usuario
-- No asumir que ARCHITECTURE.md refleja el schema actual — validar contra código real
+1. **Dark → Light theme**: El dashboard actual es **dark-only** (`app/layout.tsx` línea 24 forza `className="dark"`). Los diseños Stitch son **light/warm**. Las V2 deben usar clases CSS inline con los grooming tokens en lugar de cambiar el tema global.
+2. **Icon mapping**: Stitch usa Material Symbols. El proyecto usa lucide-react. Tabla completa en INDEX.md.
+3. **Tailwind v4**: Sin JS config, todo via `@theme` en CSS.
+4. **shadcn/ui style**: `base-nova`.
+5. **Server actions reales vs asumidas**: Ver sección "Hallazgos de Auditoría" en INDEX.md. Varias acciones no existen aún.
+6. **Backend gaps**: Inventario, Caja/POS, Pagos NO TIENEN backend. Requieren crear server actions nuevas con acceso VPS.
+7. **Duplicación WeekView**: Existe `components/week-view.tsx` Y `app/(dashboard)/semana/SemanaClient.tsx` que duplican el calendario. Unificar en V2.
+8. **Tipos dispersos**: No hay `lib/types.ts`. Los tipos están en `lib/appointments.ts`, `lib/services.ts`, `lib/audit-types.ts`, `lib/actions.ts`.
 
-## Al cerrar esta sesión
-Actualizar: MEMORY.md (resumen histórico) + HANDOFF.md (estado)
+## Target de Diseño
+
+**Zero-Friction** (pastel, `#F97316` primary). Confirmado por el usuario. NO Grooming Pro.
+
+## Próximo Paso
+
+Implementar Fase 0: Componentes compartidos (shared components en INDEX.md). Luego empezar con módulos independientes (Config: Perfil, Servicios, Equipo, etc.).
+
+## Secuencia Recomendada
+
+```
+Fase 0: Shared Components (page-shellV2, stat-cardV2, empty-stateV2, search-inputV2, 
+         badgeV2, modalV2, drawerV2, sheetV2)
+
+Fase 1: Módulos sin dependencias (paralelo):
+  - Config: Perfil Negocio
+  - Config: Servicios
+  - Config: Métodos Pago  
+  - Config: Equipo
+  - Config: Auditoría
+
+Fase 2: Módulos con dependencias:
+  - Config: Horarios (necesita Equipo)
+  - Agenda (necesita Servicios + Equipo + Horarios)
+  - Clientes (necesita Agenda)
+  - Inventario
+
+Fase 3: Módulos complejos:
+  - Caja/POS (necesita Servicios + Clientes + Inventario + Pagos)
+
+Fase 4: Final:
+  - Dashboard Home (necesita todos los módulos)
+  - Equipo Roles (necesita Equipo)
+```
+
+## Bugs Conocidos (sin tocar)
+
+Del BUG_BACKLOG.md original. No trabajar en bugs ahora — solo UI refactor.
+
+## Reglas
+
+Ver `docs/harness/RULES.md` y `docs/refactoring-v2/INDEX.md` (Golden Rules).
