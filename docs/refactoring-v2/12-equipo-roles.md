@@ -1,24 +1,43 @@
 # Plan: Equipo — Roles & Modales (Módulo 12)
 
-> 1 diseño Stitch: horario heredado + feedback de estado.
+> Completado ✅ — 26 líneas originales → implementación completa.
 
 ## Contexto
 
-Modales de detalle de empleado: horario semanal, feedback de clientes, rendimiento.
+Modal de detalle de empleado integrado en la tabla de equipo (`team-listV2.tsx`). Muestra perfil, horario, estadísticas, servicios asignados y reseñas de clientes.
 
-## Stitch Export
+## Implementado
 
-`inherited_schedule_and_feedback_status.html`
+### Migration 021
+`database/migrations/021_reviews.sql` — tabla `reviews` (rating 1-5, comment, FKs a professionals, customers, appointments) + 2 índices.
 
-## Componentes V2
+### Server actions (`features/equipo-roles/actionsV2.ts`)
+| Acción | Descripción |
+|--------|------------|
+| `getEmployeeStatsV2(businessId, professionalId)` | Completadas, canceladas, total, ingresos del mes (JOIN services.price) |
+| `getEmployeeReviewsV2(businessId, professionalId)` | Últimas 20 reseñas con nombre del cliente y rating ★ |
 
-### 1. `features/equipo-roles/components/employee-detail-modalV2.tsx`
-- Modal completo con:
-  - Info del empleado (nombre, rol, contacto)
-  - Horario semanal (heredado del módulo 07)
-  - Feedback/rating de clientes (estrellas, comentarios recientes)
-  - Métricas: citas completadas, puntualidad, ingresos generados
+### Componente (`features/equipo-roles/components/employee-detail-modalV2.tsx`)
 
-## Reglas
-- Feedback es solo lectura en este modal
-- Las estrellas deben ser de lucide-react (Star, StarHalf)
+Modal con 5 secciones:
+| Sección | Fuente de datos | Estados |
+|---------|----------------|---------|
+| Perfil | Props (`MiembroEquipo`) | — |
+| Estadísticas | `getEmployeeStatsV2` | Skeleton cards → Stats (Completadas, Cancelación%, Ingresos) |
+| Horario | `getTeamMemberScheduleV2` (reusado de Módulo 4) | Skeleton → Grid 7 días (Heredado/Personalizado) → "Sin horario" |
+| Servicios | `getTeamMemberServicesNamesV2` (reusado de Módulo 4) | Skeleton pills → Badges de servicios → "Sin servicios" |
+| Reseñas | `getEmployeeReviewsV2` | Skeleton cards → ★★★★★ + comentarios → "Sin reseñas aún" |
+
+### Integración
+- `team-listV2.tsx`: menú de 3-puntos → opción "Ver detalle" → abre modal
+- Sin modificar estructura del Módulo 4, solo aditivo
+
+## Verificación
+- `tsc --noEmit` → 0 errores
+- `eslint` → 0 problemas
+- Sin conflictos con código legacy
+
+## Archivos
+- `database/migrations/021_reviews.sql`
+- `features/equipo-roles/actionsV2.ts`
+- `features/equipo-roles/components/employee-detail-modalV2.tsx`

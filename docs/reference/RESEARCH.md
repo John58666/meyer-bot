@@ -118,3 +118,67 @@ Ventaja real: AI conversacional + recordatorios/cancel/reagend por chat. Competi
 - **Progressive disclosure:** calendario vista general → click → drawer detalle. No mostrar lista de bloqueos separada del calendario.
 - **Referencias:** Interlinked (booking exceptions), Calendly, Acuity, Square Appointments.
 - **Documentación completa del rediseño propuesto:** `docs/ux/mi-horario-ux-redesign-research.md`
+
+---
+
+## Multi-industria 2026 — Módulo Caja, Productos, Comisiones
+
+### Decisión
+Arquitectura multi-industria desde el inicio. Todo es aditivo, nada modifica el flujo actual de citas/bot WhatsApp. Diseñado para peluquerías, clínicas, talleres, gimnasios.
+
+### Schema acordado
+
+**products** — catálogo con inventario:
+```
+id, business_id, sku (nullable), name, category (TEXT), product_type ('retail'|'supply'),
+cost_price NUMERIC(12,2) NOT NULL, sale_price NUMERIC(12,2) (nullable — 'supply' no se vende),
+current_stock INT DEFAULT 0, min_stock_alert INT DEFAULT 5,
+iva_included BOOLEAN DEFAULT true, iva_percentage NUMERIC(5,2) DEFAULT 0,
+active, created_at, updated_at
+```
+
+**transactions** — caja al completar una cita:
+```
+id, business_id, appointment_id, subtotal NUMERIC(12,2), iva_monto NUMERIC(12,2),
+total NUMERIC(12,2), propina NUMERIC(12,2), tipo_documento ('boleta'|'factura'|'recibo'),
+detalle_fiscal JSONB, created_at
+```
+- Cálculo: `net = round(total / (1 + iva/100))`, `tax = total - net`
+- Propina: separada, sin IVA, sin comisión
+
+**transaction_items** — items que componen la transacción:
+```
+id, transaction_id, item_type ('service'|'product'), item_id, name,
+quantity, unit_price, iva_percentage, commission_amount (precalculado)
+```
+
+**payment_methods** — métodos configurados por negocio:
+```
+id, business_id, name, tipo ('cash'|'card'|'transfer'|'digital'), instructions JSONB,
+is_active BOOLEAN
+```
+- No activar método digital si `instructions` está vacío (error 400)
+
+**professionals** (modificar — aditivo):
+```
+ADD comision_servicio_pct INTEGER DEFAULT NULL
+ADD comision_producto_pct INTEGER DEFAULT NULL
+```
+
+**services** (modificar — aditivo):
+```
+ADD precio_incluye_impuesto BOOLEAN DEFAULT true
+ADD porcentaje_impuesto NUMERIC(5,2) DEFAULT 0
+```
+
+### Reglas de negocio
+- Comisión dual: si `item_type = 'service'` usa `comision_servicio_pct`, si es `'product'` usa `comision_producto_pct`
+- Método de pago digital no activable sin `instructions` relleno
+- Stock se descuenta al crear `transaction_items` con `item_type = 'product'`
+- Todo es migración aditiva — tocar solo tablas nuevas + columnas nullable en existentes
+- Sin UI aún — solo schema + backend. Se habilita en producción cuando esté listo.
+
+### Referencia
+- Investigación y diseño UX: otra IA (frontend)
+- Validación técnica y schema: this session
+- Pendiente de implementar: migraciones + server actions + UI

@@ -7,10 +7,18 @@
 
 ```sql
 businesses (id, slug, name, whatsapp_instance, owner_number, timezone, active,
-            multi_professional, services_text, prompt_name, schedule_text)
+            multi_professional, services_text, prompt_name, schedule_text,
+            buffer_minutes)
 
-appointments (id, business_id, professional_id, fecha, hora, nombre, servicio,
-              numero, estado, calendar_event_id, created_at, updated_at)
+appointments (id, business_id, professional_id, fecha, hora, hora_fin, nombre,
+              servicio, numero, estado, calendar_event_id, created_at, updated_at)
+-- hora_fin agregado en migración 018 (Backend v2). Calculado desde services.duration_minutes + buffer_minutes.
+
+services (id, business_id, name, price, duration_minutes, active, created_at, updated_at)
+-- Normalizado desde services_text. Migración 018 (Backend v2).
+
+professional_services (professional_id, service_id) PK compuesta
+-- Asignación de especialidades por profesional. Migración 018.
 
 users (id, email, password_hash, name, business_id, role, active,
        last_login_at, created_at, updated_at, professional_id)
@@ -32,7 +40,8 @@ conversation_history (business_id, numero, messages JSONB, updated_at, expires_a
 
 ### Notas de schema
 - `schedule_text` JSONB: `{"0":{"open":10,"close":17},"1":{"open":9,"close":19},...}`. Clave = día semana 0-6 (domingo=0). Día sin clave = cerrado. Portable a Redis.
-- `services_text` formato: `"Nombre $precio, Nombre2 $precio2"`. Coma como separador. **La coma NO se usa en nombres de servicios.** Parseado en dashboard con split+regex. A futuro: tabla `services` normalizada.
+- `services_text` formato: `"Nombre $precio, Nombre2 $precio2"`. Coma como separador. **La coma NO se usa en nombres de servicios.** Parseado en dashboard con split+regex.
+- **Backend v2 (Jul 2026):** `services_text` ahora se sincroniza con la tabla normalizada `services` (name, price, duration_minutes). El CRUD moderno usa `services.ts` directamente. `services_text` se mantiene por compatibilidad legacy.
 - `professional_id` en `users`: nullable. NULL = dueño/admin (ve todo). Con valor = profesional (ve solo lo suyo).
 - `schedule_exceptions`: `professional_id IS NULL` = bloqueo del negocio completo. `professional_id = N` = bloqueo del profesional N. El SQL del bot filtra `professional_id IS NULL` hasta implementar multi-profesional.
 - `schedule_exceptions.tipo = 'horario_especial'`: define el rango en que el negocio **ABRE** ese día (no el rango bloqueado). Los slots fuera de ese rango quedan excluidos.
@@ -58,7 +67,7 @@ conversation_history (business_id, numero, messages JSONB, updated_at, expires_a
 ### Fase 2: Procesamiento
 5. **Procesar Mensaje** → filtro fromMe, filtro multimedia (audio/imagen/video/sticker/doc/ubicación responde mensaje amable y corta), rate limit 50msg/hora, fechas, validación horario, numeroLimpio
 6. **Leer Sesión activa** → lee `sessions` activas (Always Output Data ON)
-7. **Leer Slots Disponibles** → generate_series con schedule_text JSONB; slots cada **30 minutos** (`hora_close_last_min = close * 60 - 30`); filtra slots pasados; JOIN con `schedule_exceptions` para días cerrados y horarios especiales (`professional_id IS NULL`).
+7. **Leer Slots Disponibles** → generate_series con schedule_text JSONB; slots cada **30 minutos** (`hora_close_last_min = close * 60 - 30`); colisión usa `s.hora >= a.hora AND s.hora < COALESCE(a.hora_fin, a.hora + INTERVAL '30 minutes')`; filtra slots pasados; JOIN con `schedule_exceptions` para días cerrados y horarios especiales (`professional_id IS NULL`).
 8. **Formatear Disponibilidad** → agrupa slots + inyecta sesionContexto con fecha/hora PRECALCULADAS
 
 ### Fase 3: IA
@@ -67,8 +76,14 @@ conversation_history (business_id, numero, messages JSONB, updated_at, expires_a
 11. **Guardar Historial** → upsert en `conversation_history`
 12. **Wait** → 3 segundos
 
-### Fase 4: Switch de 5 ramas
-13. **Switch** → CITA_CONFIRMADA / GESTIONAR_CITA / CANCELAR_CITA / REAGENDAR_CITA / Fallback
+### Fase 4: Switch de 6 ramas
+13. **Switch** → CITA_CONFIRMADA / GESTIONAR_CITA / CANCELAR_CITA / REAGENDAR_CITA / MOSTRAR_SLOTS / Respuesta Normal (fallback)
+
+### Fase 4b: Flujo MOSTRAR_SLOTS (lazy loading días lejanos)
+14. **Leer Slots Fecha** → query PostgreSQL para una fecha específica (TO_DATE del output del AI Agent)
+15. **Formatear Slots Fecha** → formatea slots del día con rangos por profesional
+16. **Enviar Slots Fecha** → HTTP Request a Evolution API envía el texto formateado por WhatsApp
+17. **Guardar Historial Fecha** → upsert en `conversation_history`, sobrescribe el código MOSTRAR_SLOTS con el texto real mostrado
 
 ### Nodos críticos
 - **Leer Sesión activa / Leer Citas Cliente / Leer Historial**: Always Output Data = ON
@@ -202,17 +217,19 @@ No existe hoy (VPS sin recursos). Implementar cuando se haga upgrade a 4 vCPU / 
 5. Exportar JSON antes de tocar nada — rollback = reimportar JSON anterior
 6. **SQL de n8n no verificable via API REST con auth básica — verificar visualmente en la UI.**
 
-### Workflows activos en n8n (5)
+### Workflows activos en n8n (7)
 
 | # | Workflow | Trigger | Propósito |
 |---|----------|---------|-----------|
-| 1 | `WhatsApp Bot - Genérico` | Webhook | Bot conversacional IA — agendar, cancelar, reagendar, historial |
+| 1 | `WhatsApp Bot - Genérico` | Webhook | Bot conversacional IA — agendar, cancelar, reagendar, historial, MOSTRAR_SLOTS |
 | 2 | `Recordatorios 24h - Peluquería Meyer` | Cron 3 PM | Recordatorio de cita al día siguiente |
 | 3 | `Recordatorios 2h - Genérico` | Cron c/2h | Recordatorio de cita en 2 horas |
 | 4 | `Inactividad Bot - Proactivo` | Cron c/5min | Detecta conversaciones inactivas y envía "¿Sigues ahí?" |
 | 5 | `No-Shows - Auto Completar` | Cron 23:59 | Marca citas del día como completadas |
+| 6 | `Error Handler - Notificación` | Error trigger | Alerta errores de workflow al dueño por WhatsApp |
+| 7 | `Peluqueria Beta` | Webhook | Workflow de prueba (business_id=2, misma estructura que #1) |
 
-> **No activos:** `Peluqueria Beta` (beta anterior, reemplazado por #1), `rotar-evolution-api-key` (utilitario manual), `llm-orquestador-nodes` (extracto de #1 para referencia).
+> **No activos:** `rotar-evolution-api-key` (utilitario manual), `llm-orquestador-nodes` (extracto de #1 para referencia).
 
 ### CRM
 - Tabla `customers` ya existe.

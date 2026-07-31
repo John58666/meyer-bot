@@ -71,25 +71,27 @@ export function DrawerIngresos({ open, onClose, businessId, professionalId, rang
               <table className="w-full mt-4 text-sm">
                 <thead>
                   <tr className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide">
-                    <th className="text-left py-2 pr-2">Profesional</th>
-                    <th className="text-left py-2 pr-2">Servicio</th>
-                    <th className="text-right py-2 pr-2">Cant</th>
-                    <th className="text-right py-2">Total</th>
+                    <th className="text-left py-2 pr-2">Ticket #</th>
+                    <th className="text-left py-2 pr-2">Cliente</th>
+                    <th className="text-left py-2 pr-2">Método</th>
+                    <th className="text-right py-2 pr-2">Total</th>
+                    <th className="text-right py-2">Fecha</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.filas.map((fila, i) => (
                     <tr key={i} className="border-t border-[var(--border-subtle,#2a2a2a)]">
-                      <td className="py-2 pr-2 text-[var(--text-primary)]">{fila.profesional}</td>
-                      <td className="py-2 pr-2 text-[var(--text-secondary)]">{fila.servicio}</td>
-                      <td className="py-2 pr-2 text-right">{fila.cantidad}</td>
-                      <td className="py-2 text-right font-medium">{formatPesos(fila.total)}</td>
+                      <td className="py-2 pr-2 text-[var(--text-secondary)] font-mono text-xs">#{fila.ticketId}</td>
+                      <td className="py-2 pr-2 text-[var(--text-primary)]">{fila.cliente}</td>
+                      <td className="py-2 pr-2 text-[var(--text-secondary)]">{fila.metodoPago}</td>
+                      <td className="py-2 pr-2 text-right font-medium">{formatPesos(fila.total)}</td>
+                      <td className="py-2 text-right text-[var(--text-secondary)] text-xs">{fila.fecha}</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr className="border-t-2 border-[var(--border-subtle,#2a2a2a)]">
-                    <td colSpan={3} className="py-3 text-right font-semibold">Total</td>
+                    <td colSpan={4} className="py-3 text-right font-semibold">Total</td>
                     <td className="py-3 text-right font-semibold">{formatPesos(data.total)}</td>
                   </tr>
                 </tfoot>

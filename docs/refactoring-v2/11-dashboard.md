@@ -1,34 +1,46 @@
 # Plan: Dashboard Home (Módulo 11)
 
-> 2 diseños Stitch: dashboard con nóminas y comisiones.
+> Completado ✅ — 34 líneas originales → implementación completa.
 
 ## Contexto
 
-Pantalla principal post-login con resumen de métricas del negocio: ingresos, citas, clientes nuevos, y panel de nóminas/comisiones.
+Pantalla principal post-login con resumen de métricas del negocio. Reemplaza el dashboard legacy (StatsCards + AppointmentList de 78 líneas) por un dashboard V2 con KPIs, charts, ranking de profesionales y heatmap de ocupación.
 
-## Stitch Exports
+## Implementado
 
-| Archivo | Contenido |
-|---------|-----------|
-| `dashboard_home_with_payroll.html` | Dashboard con payroll/nóminas |
-| `dashboard_home_commission_rates.html` | Dashboard con comisiones |
+### Server actions (`features/dashboard-home/actionsV2.ts`)
+| Acción | Descripción |
+|--------|------------|
+| `getMetricasV2(businessId, rango, professionalId?)` | Wrapper con auth de `getMetricas` — retorna MetricasData completo |
+| `getOcupacionHeatmapV2(businessId, professionalId?, rango?)` | Wrapper de `getMetricasDrawer('ocupacion')` — retorna grid para heatmap |
 
-## Componentes V2
+### Componente (`features/dashboard-home/components/dashboard-pageV2.tsx`)
 
-### 1. `features/dashboard-home/components/dashboard-gridV2.tsx`
-- Layout de cards con métricas clave
-- Fila superior: Ingresos Hoy, Citas Hoy, Clientes Nuevos (semana), Tasa Ocupación
-- Cada card: icono, valor, cambio %, sparkline (opcional)
+| Sección | Fuente de datos | Estados |
+|---------|----------------|---------|
+| Range selector | `useState<RangoMetricas>` | Hoy / Semana / Mes |
+| 4 KPI cards | `getMetricas().ingresos, totalCitas, ocupacion, clientesNuevos` + variaciones + sparklines | Con datos / Skeleton |
+| Bar chart | `historialPorDia[]` → recharts BarChart | Con datos / "Sin datos" |
+| Top profesionales | `profesionales[]` ordenado por ingresos | Con ranking / "Sin profesionales" |
+| Clientes | `clientesNuevos` + `clientesRecurrentes` con barra visual | Con datos / "Sin datos" |
+| Heatmap ocupación | `getMetricasDrawer('ocupacion')` → grid horas×días coloreado | Solo semana / Skeleton |
 
-### 2. `features/dashboard-home/components/payroll-sectionV2.tsx`
-- Tabla de nóminas por empleado: nombre, horas trabajadas, comisiones, bonos, total
-- Filtro por semana/mes
+### Lo que NO se implementó
 
-### 3. `features/dashboard-home/components/commission-sectionV2.tsx`
-- Tabla de comisiones: empleado, servicio, comisión %, monto generado
-- Charts con recharts (bar chart de ingresos por empleado)
+| Feature | Motivo |
+|---------|--------|
+| Payroll/nóminas panel | Sin tabla `payroll` en DB |
+| Panel de comisiones | Sin tabla `commissions` en DB |
+| Canales de reserva | Sin columna `channel` en `appointments` (documentado para futuro: ALTER TABLE) |
 
-## Reglas
-- Métricas en tiempo real del backend (no hardcodear)
-- Charts solo con recharts (librería existente)
-- Los datos financieros deben formatearse con locale es-CO
+## Verificación
+- `tsc --noEmit` → 0 errores
+- `eslint` → 0 problemas
+- `recharts` ya estaba en package.json
+- 0 migraciones DB nuevas
+- Profesional ve solo sus métricas (filtro por `professionalId`)
+
+## Archivos
+- `features/dashboard-home/actionsV2.ts`
+- `features/dashboard-home/components/dashboard-pageV2.tsx`
+- `app/(dashboard)/dashboard/page.tsx` (modificado: 78→22 líneas)

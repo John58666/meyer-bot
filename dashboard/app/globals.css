@@ -46,6 +46,22 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --color-zf-bg: var(--zf-bg);
+  --color-zf-surface: var(--zf-surface);
+  --color-zf-primary: var(--zf-primary);
+  --color-zf-text: var(--zf-text);
+  --color-zf-text-secondary: var(--zf-text-secondary);
+  --color-zf-text-muted: var(--zf-text-muted);
+  --color-zf-border: var(--zf-border);
+  --color-zf-accent-bg: var(--zf-accent-bg);
+  --color-zf-accent-text: var(--zf-accent-text);
+  --color-zf-success-bg: var(--zf-success-bg);
+  --color-zf-success-text: var(--zf-success-text);
+  --color-zf-warning-bg: var(--zf-warning-bg);
+  --color-zf-warning-text: var(--zf-warning-text);
+  --color-zf-error-bg: var(--zf-error-bg);
+  --color-zf-error-text: var(--zf-error-text);
+  --color-zf-neutral-bg: var(--zf-neutral-bg);
 }
 
 :root {
@@ -81,6 +97,24 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Zero-Friction V2 theme tokens */
+  --zf-bg: #fff8f6;
+  --zf-surface: #ffffff;
+  --zf-primary: #f97316;
+  --zf-text: #251913;
+  --zf-text-secondary: #584237;
+  --zf-text-muted: #8c7164;
+  --zf-border: #e0c0b1;
+  --zf-accent-bg: #fff1eb;
+  --zf-accent-text: #9d4300;
+  --zf-success-bg: #e8f5e9;
+  --zf-success-text: #2e7d32;
+  --zf-warning-bg: #fff3e0;
+  --zf-warning-text: #e65100;
+  --zf-error-bg: #ffebee;
+  --zf-error-text: #ba1a1a;
+  --zf-neutral-bg: #f5f5f5;
 
   /* Custom design tokens (referencia: contextdashboard.json) */
   --bg-primary: #0A0A0A;

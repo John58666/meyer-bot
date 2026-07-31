@@ -12,13 +12,22 @@ export type AuditAccion =
   | "update_role"
   | "update_services"
   | "update_professional_schedule"
-  | "delete_professional_schedule";
+  | "delete_professional_schedule"
+  | "update_business_profile"
+  | "create_cliente"
+  | "update_cliente"
+  | "create_product"
+  | "update_product"
+  | "toggle_product"
+  | "delete_product";
 
 export type AuditEntidad =
   | "appointment"
   | "bloqueo"
   | "user"
   | "business"
+  | "cliente"
+  | "product"
   | "professional_schedule";
 
 export interface AuditLogEntry {
@@ -57,6 +66,13 @@ export const ACCIONES_LABELS: Record<string, string> = {
   update_services: "Actualizar servicios",
   update_professional_schedule: "Actualizar horario profesional",
   delete_professional_schedule: "Restaurar horario profesional",
+  update_business_profile: "Actualizar perfil del negocio",
+  create_cliente: "Registrar cliente",
+  update_cliente: "Actualizar cliente",
+  create_product: "Registrar producto",
+  update_product: "Actualizar producto",
+  toggle_product: "Cambiar estado producto",
+  delete_product: "Eliminar producto",
 };
 
 export const ENTIDAD_LABELS: Record<string, string> = {
@@ -64,6 +80,8 @@ export const ENTIDAD_LABELS: Record<string, string> = {
   bloqueo: "Bloqueo",
   user: "Usuario",
   business: "Negocio",
+  cliente: "Cliente",
+  product: "Producto",
   professional_schedule: "Horario profesional",
 };
 

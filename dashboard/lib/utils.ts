@@ -25,9 +25,24 @@ export function getAvatarColor(id: number | string): string {
   return AVATAR_PALETTE[hashId(id) % AVATAR_PALETTE.length]
 }
 
-export function getInitials(name: string): string {
+export function getInitials(name: string | null): string {
+  if (!name) return "?"
   const parts = name.trim().split(/\s+/)
   if (parts.length === 0) return '?'
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
+export function formatHora(hora: string): string {
+  const [h, m] = hora.split(":")
+  const hour = parseInt(h)
+  const suffix = hour >= 12 ? "PM" : "AM"
+  const display = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour
+  return `${display}:${m} ${suffix}`
+}
+
+export function formatDate(iso: string | null): string {
+  if (!iso) return "—"
+  const d = new Date(iso + "T00:00:00")
+  return d.toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric", timeZone: "America/Bogota" })
 }

@@ -7,18 +7,14 @@
 
 ## Bugs confirmados
 
-### Bug 1: Bloqueos — createAppointment no valida schedule_exceptions (🔴 Crítico)
-- **Archivo**: `dashboard/lib/actions.ts:22-98`
-- **Problema**: `createAppointment` revisa colisiones de citas pero NUNCA consulta `schedule_exceptions`
-- **UI correcta**: `getAvailableSlots` (línea 1683) SÍ filtra bloqueos → la UI muestra slots correctos
-- **Server action incorrecta**: Al guardar, no hay validación de bloqueos → force-override o API directa puede agendar en día/hora bloqueado
-- **Fix**: Agregar `SELECT 1 FROM schedule_exceptions WHERE business_id=$1 AND fecha=$2 AND (professional_id IS NULL OR professional_id=$3)` antes del INSERT
+### Bug 1: Bloqueos — createAppointment no valida schedule_exceptions (✅ Resuelto Jul 25)
+- **Archivo**: `dashboard/lib/actions.ts:79-109`
+- **Fix aplicado**: Validación de `schedule_exceptions` (cerrado + horario_especial) con filtro por profesional. Commit `4847091`.
+- **Nota**: Si `forceOverride=true`, la validación se salta (intencional para forzar citas urgentes).
 
-### Bug 2: Métricas — fetchOcupacion ignora schedule_exceptions (🔴 Alto)
-- **Archivo**: `dashboard/lib/actions.ts:438-481`
-- **Problema**: Calcula total de slots solo desde `schedule_text`, ignora días con `tipo='cerrado'` y horarios con `tipo='horario_especial'`
-- **Consecuencia**: Ocupación parece más baja de lo real (días bloqueados inflan el denominador)
-- **Fix**: Al calcular totalSlots, restar días cerrados y ajustar por horarios especiales consultando schedule_exceptions
+### Bug 2: Métricas — fetchOcupacion ignora schedule_exceptions (✅ Resuelto Jul 25)
+- **Archivo**: `dashboard/lib/actions.ts:527-580`
+- **Fix aplicado**: `fetchOcupacion` consulta `schedule_exceptions` en el rango de fechas. Días `cerrado` se excluyen del total. Días `horario_especial` ajustan el conteo de slots. Commit `ad404c3`.
 
 ### Bug 3: Clientes — Sin detección de duplicados (🟡 Medio)
 - **Archivo**: `dashboard/components/clientes/clientes-client.tsx`

@@ -1,57 +1,53 @@
-# Plan: Caja / POS (Módulo 03)
+# Plan: Caja / POS (Módulo 10)
 
-> 2 diseños Stitch: pantalla POS 60/40 + checkout exitoso.
+> Completado ✅ — 57 líneas originales → implementación demo visual.
 
 ## Contexto
 
-Punto de venta para cobrar servicios y productos. Layout 60/40: izquierda (catálogo) + derecha (carrito/resumen).
+Punto de venta 60/40: panel izquierdo catálogo (servicios + productos), panel derecho carrito con IVA, métodos de pago y cobro. Versión demo visual para inversionista — sin persistencia de transacciones.
 
-## Dependencias
+## Implementado
 
-- Servicios (catálogo de servicios)
-- Inventario (productos)
-- Clientes (para asociar venta)
-- Config: Métodos de Pago
-- **Backend**: `createSale()` — **NO EXISTE**. Este módulo requiere crear server actions nuevas en `features/caja/actionsV2.ts` con acceso VPS.
-- **⚠️ Backend gaps**: No hay `getProducts()`, `getPaymentMethods()`, `createSale()`, `getSales()`. Todo hay que crearlo.
+### Server actions (`features/caja/actionsV2.ts`)
+| Acción | Descripción |
+|--------|------------|
+| `getCatalogServicesV2(businessId)` | Wrapper de `getServices` (active only) |
+| `getCatalogProductsV2(businessId)` | Wrapper de `getProductsV2`, filtra activos con stock > 0 |
+| `getPaymentMethodsV2(businessId)` | Wrapper de `getPaymentMethods` (config-payments) |
 
-## Stitch Exports
+### Componentes
 
-| Archivo | Contenido |
-|---------|-----------|
-| `pos_60_40_view.html` | POS con catálogo a la izquierda, carrito a la derecha |
-| `successful_checkout.html` | Pantalla de éxito post-pago |
+| Componente | Rol |
+|-----------|-----|
+| `pos-layoutV2.tsx` | Orquestador: carga datos, maneja carrito en estado local, layout 60/40 responsive |
+| `pos-catalogV2.tsx` | Panel izquierdo: tabs Servicios/Productos, grid de items con nombre+precio+duración/stock, click agrega |
+| `pos-cartV2.tsx` | Panel derecho: carrito con +/- cantidad, subtotal/IVA 19%/total, selector método pago (íconos), "Cobrar" → success screen → "Nueva Venta" |
 
-## Componentes V2
+### Features
+- ✅ Layout 60/40 (desktop: 3fr/2fr grid, mobile: catálogo arriba, carrito abajo)
+- ✅ Catálogo conectado a DB real (servicios + productos activos con stock)
+- ✅ IVA cálculo inverso (total / 1.19)
+- ✅ Métodos de pago con íconos por tipo (cash/card/transfer/digital)
+- ✅ Carrito en estado local (quantity +/- , remove, add)
+- ✅ Success screen con resumen + botón "Nueva Venta"
+- ✅ States: loading (skeleton 60/40) → error → data
 
-### 1. `features/caja/components/pos-layoutV2.tsx`
-- **Diseño**: `pos_60_40_view.html`
-- Layout 60/40 grid responsivo (en mobile: catálogo arriba, carrito abajo)
-- Header con nombre del negocio, empleado actual, caja abierta/cerrada
+### Lo que NO hace (demo visual)
+- ❌ Persistir transacciones en DB (requiere migration 023: `transactions` + `transaction_items`)
+- ❌ Descontar stock real
+- ❌ Cálculo de comisiones por profesional
+- ❌ Cierre de cita integrado
+- ❌ Impresión de ticket POS
 
-### 2. `features/caja/components/pos-catalogV2.tsx`
-- Panel izquierdo: categorías (tabs/pills) + grid de servicios/productos
-- Cada item: nombre, precio, duración (si es servicio), stock (si es producto)
-- Click agrega al carrito
+## Verificación
+- `tsc --noEmit` → 0 errores
+- `eslint` → 0 problemas
+- 0 migraciones DB nuevas
+- Conectado a `products` (Inventario), `services`, `payment_methods`
 
-### 3. `features/caja/components/pos-cartV2.tsx`
-- Panel derecho: items agregados con cantidad, precio unitario, subtotal
-- Selector de cliente (opcional)
-- Total general
-- Botón "Cobrar" → abre checkout
-
-### 4. `features/caja/components/pos-checkoutV2.tsx`
-- Modal/resumen de pago: métodos de pago (efectivo, tarjeta, transferencia, etc.)
-- Desglose: subtotal, descuento (si aplica), total
-- Input de efectivo recibido (si método es efectivo) para calcular cambio
-
-### 5. `features/caja/components/checkout-successV2.tsx`
-- **Diseño**: `successful_checkout.html`
-- Pantalla de éxito: check animation, resumen venta, opciones: Nueva Venta, Ticket, Cerrar
-
-## Reglas
-
-- No hardcodear métodos de pago — leer de server action
-- Cálculo de cambio en tiempo real si método es efectivo
-- Ticket se genera del lado del servidor (no implementar PDF ahora)
-- Mobile: catálogo se vuelve scroll vertical, carrito es sheet deslizable
+## Archivos
+- `features/caja/actionsV2.ts`
+- `features/caja/components/pos-layoutV2.tsx`
+- `features/caja/components/pos-catalogV2.tsx`
+- `features/caja/components/pos-cartV2.tsx`
+- `app/(dashboard)/dashboard/caja/page.tsx`

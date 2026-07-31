@@ -279,23 +279,26 @@ Los diseños están en `stitch_export/stitch_agenda_weekly_calendar_view/`. Cada
 
 ## Módulos — Orden de Implementación
 
-| # | Módulo | Diseños | Depende de | Archivo Plan |
-|---|--------|---------|-----------|-------------|
-| 0 | Shared Components | (base) | Nada | INDEX.md |
-| 1 | Config: Perfil Negocio | 2 HTML | Nada | `04-config-perfil.md` |
-| 2 | Config: Servicios | 2 HTML | Nada | `05-config-servicios.md` |
-| 3 | Config: Métodos Pago | 1 HTML | Nada | `08-config-pagos.md` |
-| 4 | Config: Equipo | 1 HTML | Nada | `06-config-equipo.md` |
-| 5 | Config: Auditoría | 1 HTML | Nada | `09-config-auditoria.md` |
-| 6 | **Config: Horarios** | 2 HTML | Equipo | `07-config-horarios.md` |
-| 7 | **Agenda** ★ | 5 HTML | Servicios, Equipo, Horarios | `01-agenda.md` |
-| 8 | **Clientes** | 2 HTML | Agenda (historial) | `02-clientes.md` |
-| 9 | **Inventario** | 1 HTML | ⚠️ backend gap | `10-inventario.md` |
-| 10 | **Caja/POS** ★ | 2 HTML | Servicios, Clientes, Inventario, Pagos | `03-caja.md` |
-| 11 | Dashboard Home | 2 HTML | Todos (datos agregados) | `11-dashboard.md` |
-| 12 | Equipo Roles Modals | 1 HTML | Equipo | `12-equipo-roles.md` |
+| # | Módulo | Diseños | Depende de | Archivo Plan | Estado |
+|---|--------|---------|-----------|-------------|--------|
+| 0 | Shared Components | (base) | Nada | INDEX.md | ✅ Fase 0 |
+| 1 | Config: Perfil Negocio | 2 HTML | Nada | `04-config-perfil.md` | ✅ Fase 1 |
+| 2 | Config: Servicios | 2 HTML | Nada | `05-config-servicios.md` | ✅ Fase 1 |
+| 3 | Config: Métodos Pago | 1 HTML | Nada | `08-config-pagos.md` | ✅ Fase 1 |
+| 4 | Config: Equipo | 1 HTML | Nada | `06-config-equipo.md` | ✅ Fase 2 |
+| 5 | Config: Auditoría | 1 HTML | Nada | `09-config-auditoria.md` | ✅ Fase 2 |
+| 6 | **Config: Horarios** | 2 HTML | Equipo | `07-config-horarios.md` | ✅ Fase 3 |
+| 7 | **Agenda** ★ | 5 HTML | Servicios, Equipo, Horarios | `01-agenda.md` | ✅ Fase 4 |
+| 8 | **Clientes** | 2 HTML | Agenda (historial) | `02-clientes.md` | ✅ Fase 5 |
+| 9 | **Inventario** | 1 HTML | ⚠️ backend gap | `10-inventario.md` | ✅ Fase 8 |
+| 10 | **Caja/POS** ★ | 2 HTML | Servicios, Clientes, Inventario, Pagos | `03-caja.md` | ✅ Fase 9 |
+| 11 | Dashboard Home | 2 HTML | Todos (datos agregados) | `11-dashboard.md` | ✅ Fase 7 |
+| 12 | Equipo Roles Modals | 1 HTML | Equipo | `12-equipo-roles.md` | ✅ Fase 6 |
 
-> **Orden sugerido**: 0 → 1→2→3→4→5 (paralelo) → 6 → 7 → 8 → 9 → 10 → 11 → 12
+> **Orden sugerido**: 0 → 1→2→3→4→5 (paralelo) → 6 → 7 → 8 → 12 → 11 → 9 → 10
+> **Avance actual**: ¡12/12 módulos completados (100%)! ✅
+>
+> **Cambio de orden**: Los módulos 12, 11 y 9 se adelantaron por no tener backend gaps. Caja/POS (10) se implementó como versión demo visual (sin persistencia de transacciones).
 >
 > Los módulos 1-5 no tienen dependencias entre sí — se pueden hacer en paralelo.
 >
@@ -344,9 +347,10 @@ Estos módulos NO tienen backend y necesitarán crear nuevas server actions:
 | Módulo | Server Actions Faltantes | Prioridad |
 |--------|------------------------|-----------|
 | Inventario | `getProducts()`, `createProduct()`, `updateProduct()`, `deleteProduct()` | Alta |
-| Caja/POS | `createSale()`, `getSales()`, `getPaymentMethods()` | Alta |
-| Config: Pagos | `getPaymentMethods()`, `togglePaymentMethod()` | Media |
+| Caja/POS | `createSale()`, `getSales()` | Alta |
 | Dashboard Home | `getPayrollData()`, `getCommissionData()` | Media |
+>
+> **Actualizado Jul 30**: Config: Pagos resuelto — `getPaymentMethods()`, `togglePaymentMethod()` ya existen en `features/config-payments/actionsV2.ts`.
 
 ### 5. Tipos Existentes
 
@@ -405,6 +409,18 @@ El plan de migración Fase 2→3→4 elimina los originales y renombra los V2. N
 - [ ] No rompe ningún import existente
 - [ ] No hay Material Symbols — todos traducidos a lucide-react
 
+## Features sin diseño Stitch — ¿Qué hacer?
+
+No todos los features del dashboard actual tienen un diseño correspondiente en Stitch. La regla:
+
+1. **Prioridad**: rebuildear V2 solo los 12 módulos con diseño (tabla de orden)
+2. **Después de Fase 1-12**: auditar los features restantes sin diseño:
+   - Si **tiene valor real** → skinear con variables `--zf-*` (cambiar el theme del layout, no rebuild)
+   - Si **está obsoleto o reemplazado** por un V2 → deprecar y eliminar
+3. **Nunca rebuildear sin diseño** — es crear deuda técnica. Sin diseño, no hay V2.
+
+Los features sin diseño heredan las `--zf-*` classes en su contenedor principal para integración visual, sin tocar su lógica interna. Esto aplica a: mi horario, sidebar, topbar, y cualquier módulo no listado en la tabla de orden.
+
 ## Migración a Producción
 
 1. **Fase 1** — Crear todos los V2 en `features/`. Las rutas originales no cambian.
@@ -412,6 +428,138 @@ El plan de migración Fase 2→3→4 elimina los originales y renombra los V2. N
 3. **Fase 2.5** — Probar en VPS (staging, puerto 3001). Verificar datos reales con el nuevo tema. Probar webhooks n8n no rotos.
 4. **Fase 3** — Cuando todo funciona en staging: eliminar archivos originales de `components/` y renombrar V2s (quitar sufijo `V2`).
 5. **Fase 4** — Deploy a producción. Monitorear webhooks n8n por 24h.
+
+## Patrones V2 — Aprendidos de Agenda (Módulo 7)
+
+> Aplicar estos patrones en todos los módulos siguientes. Extraídos de la implementación real.
+
+### Server Action Wrapper (forma canónica)
+
+```typescript
+"use server"
+import { auth } from "@/auth"
+
+export async function xyzV2(businessId: number, ...args) {
+  const session = await auth()
+  if (!session) return { error: "No autenticado", data: DEFAULT }
+  if (session.user.businessId !== businessId) return { error: "No autorizado", data: DEFAULT }
+
+  try {
+    const result = await existingLibFunction(businessId, ...args)
+    return { data: result }
+  } catch {
+    return { error: "Error descriptivo", data: DEFAULT }
+  }
+}
+```
+
+**Reglas:**
+- Siempre `businessId` como primer param. Verificar ownership vs session.
+- Siempre try/catch con error descriptivo + default value del dato.
+- Retorno con discriminante: `{ appointments: [] }` + `error` opcional para queries. `{ ok: true } | { error: string }` para mutaciones.
+- Wrappear funciones de `lib/`, nunca llamar `pool.query()` directamente desde feature/.
+- Nunca `as unknown as`. Usar tipo exacto del return.
+
+### Estructura de feature
+
+```
+features/{modulo}/
+├── actionsV2.ts          ← Server action wrappers con auth
+├── constants.ts           ← DAYS_FULL, MONTHS_ES, STATUS_BADGE, MOTIVOS_BLOQUEO
+└── components/
+    ├── main-componentV2.tsx
+    ├── secondary-componentV2.tsx
+    └── tertiary-componentV2.tsx
+```
+
+### Componente canónico (5 estados)
+
+```typescript
+"use client"
+// 1. Imports: react, actionsV2, constants, lucide-react, shared components
+// 2. Props: interface (no type)
+// 3. Constants module-level
+// 4. Component: useState(loading, error, data) → useEffect(loadData) → render por estado
+
+export function MyFeatureV2({ businessId }: Props) {
+  // State: loading, error, data, UI state (modalOpen, selectedItem, etc.)
+  // loadData with useCallback([businessId, ...filters])
+  // useEffect → loadData()  [eslint-disable set-state-in-effect]
+  // if (loading) return <Skeleton />
+  // if (error) return <ErrorState onRetry={loadData} />
+  // if (data.length === 0) return <EmptyState />
+  // return <DataView />
+}
+```
+
+### Colores
+
+| Contexto | Usar |
+|----------|------|
+| Layout (bg, text, border) | `zf-*` CSS variables via Tailwind: `bg-zf-surface`, `text-zf-text`, `border-zf-border/50` |
+| Status badges | STATUS_BADGE hardcodeado de `constants.ts` (Stitch palette) |
+| Botones primarios | `bg-zf-primary text-white` |
+| Botones secundarios | `border border-zf-border text-zf-text-secondary` |
+| Errores | `bg-zf-error-bg text-zf-error-text` |
+| Success | `bg-zf-success-bg text-zf-success-text` |
+| Skeletons | `bg-zf-border/30 animate-pulse` o `bg-zf-border/20 animate-pulse` |
+
+### Mobile/Desktop
+
+| Desktop | Mobile (375px) |
+|---------|---------------|
+| Grid/table multi-columna | Card list vertical |
+| Drawer lateral (max-w-sm) | Drawer full-width |
+| Modal centrado (max-w-md) | Modal centrado (mismo) |
+| Tablas con `overflow-x-auto` | Scroll horizontal si no cabe |
+
+### Interactividad
+
+- Todos los botones: `active:scale-[0.97]` (Emil Kowalski)
+- Hover: `transition-all hover:opacity-90` o `hover:bg-zf-accent-bg`
+- Disabled: `disabled:opacity-50`
+- Loading: reemplazar texto con `<Loader2 className="h-4 w-4 animate-spin" />`
+
+### Anti-patrones (NO hacer)
+
+| ❌ | ✅ |
+|----|----|
+| `fetch("/api/...")` en componentes | Server action wrapper |
+| Lógica de negocio en TSX (validaciones, cálculos) | Server action en `lib/` o `actionsV2.ts` |
+| `as unknown as` en returns | Tipo exacto del return |
+| Duplicar `formatHora`, `DAYS_FULL`, `STATUS_BADGE` | Importar de `constants.ts` o `lib/utils.ts` |
+| `"use server"` en componente | Separar server actions en `actionsV2.ts` |
+| Props con `type` | Props con `interface` |
+| `any` | Tipo concreto o discriminated union |
+| Hardcodear colores de layout | `zf-*` CSS variables |
+| Crear server action nueva si ya existe en `lib/` | Wrappear con auth en `actionsV2.ts` |
+
+### Type safety
+
+- Server action returns: `"error" in result` para discriminated unions
+- Tipos importados de `lib/*` y re-exportados de `actionsV2.ts`: `export type { WeekAppointment, ServiceRow, Cliente }`
+- Props: `interface Props { ... }` (nunca `type Props = { ... }`)
+- Estado de drawer/modal: `useState<T | null>(null)`
+
+### Shared components (ya existen)
+
+| Componente | Import | Para |
+|-----------|--------|------|
+| `ModalV2` | `@/components/shared/modalV2` | Modales centrados |
+| `DrawerV2` | `@/components/shared/drawerV2` | Paneles laterales derecho |
+| `SheetV2` | `@/components/shared/sheetV2` | Bottom sheets mobile |
+| `PageShellV2` | `@/components/shared/page-shellV2` | Layout de página con header |
+| `EmptyStateV2` | `@/components/shared/empty-stateV2` | Estado vacío |
+| `SearchInputV2` | `@/components/shared/search-inputV2` | Input de búsqueda |
+| `BadgeV2` | `@/components/shared/badgeV2` | Badges de estado |
+| `StatCardV2` | `@/components/shared/stat-cardV2` | Tarjetas de estadística |
+
+### Verificación antes de cerrar
+
+```bash
+cd dashboard && npx tsc --noEmit          # 0 errores
+cd dashboard && npx eslint features/{modulo}/ --ext .ts,.tsx  # 0 warnings, 0 errors
+```
 
 ## Errores Conocidos (The Ratchet)
 

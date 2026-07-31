@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { pool } from "@/lib/db";
 import { auth } from "@/auth";
 import { parsePrice } from "@/lib/parse-services";
+import { buildPriceMap, getServiceDuration } from "@/lib/services";
 import bcrypt from "bcryptjs";
 import { auditar } from "@/lib/audit";
 
@@ -45,24 +46,36 @@ export async function createAppointment(formData: FormData) {
     return { error: "Todos los campos son obligatorios" };
   }
 
+  const duracionMinutos = await getServiceDuration(businessId, servicio);
+  const totalMinutos = duracionMinutos + 15;
+  const [hh, mm] = hora.split(":").map(Number);
+  const horaMin = hh * 60 + mm;
+  const horaFinMin = horaMin + totalMinutos;
+  const hhFin = Math.floor(horaFinMin / 60);
+  const mmFin = horaFinMin % 60;
+  const horaFin = `${String(hhFin).padStart(2, "0")}:${String(mmFin).padStart(2, "0")}`;
+
   try {
     if (!forceOverride) {
-      // Si se eligió un profesional específico, el choque solo aplica contra
-      // ESE profesional (dos barberos pueden atender a la misma hora).
-      // Si no se eligió (negocio de 1 profesional, o "cualquiera"), se
-      // mantiene el chequeo global por horario como antes.
-      const params: (string | number)[] = [businessId, fecha, hora];
-      const profFilter = professionalId != null
-        ? ` AND professional_id = $${params.push(professionalId)}`
-        : '';
+      const params: (string | number)[] = [businessId, fecha];
+      let profCondition: string;
+      let profIdx = 3;
+      if (professionalId != null) {
+        profCondition = ` AND professional_id = $${profIdx}`;
+        params.push(professionalId);
+      } else {
+        profCondition = "";
+      }
+
       const { rows } = await pool.query(
         `SELECT id FROM appointments
-         WHERE business_id = $1 AND fecha = $2 AND hora = $3::time AND estado != 'Cancelada'${profFilter}`,
+         WHERE business_id = $1 AND fecha = $2 AND estado != 'Cancelada'${profCondition}
+           AND hora < $${params.push(horaFin + ":00")}::time
+           AND COALESCE(hora_fin, hora + INTERVAL '30 minutes') > $${params.push(hora + ":00")}::time`,
         params,
       );
       if (rows.length > 0) return { conflict: true };
 
-      // Validar schedule_exceptions (día bloqueado / horario especial)
       const blockParams: (string | number)[] = [businessId, fecha];
       let blockProfCondition: string;
       if (professionalId != null) {
@@ -97,11 +110,12 @@ export async function createAppointment(formData: FormData) {
     }
 
     const insertResult = await pool.query(
-      `INSERT INTO appointments (business_id, fecha, hora, nombre, servicio, numero, estado, professional_id)
+      `INSERT INTO appointments (business_id, fecha, hora, nombre, servicio, numero, estado, professional_id, hora_fin)
        VALUES ($1, $2, $3::time, $4, $5, $6, 'Pendiente',
-         COALESCE($7, (SELECT id FROM professionals WHERE business_id = $1 AND active = true ORDER BY id LIMIT 1)))
+         COALESCE($7, (SELECT id FROM professionals WHERE business_id = $1 AND active = true ORDER BY id LIMIT 1)),
+         $8::time)
        RETURNING id`,
-      [businessId, fecha, hora, nombre.trim(), servicio, numero.trim(), professionalId]
+      [businessId, fecha, hora, nombre.trim(), servicio, numero.trim(), professionalId, horaFin]
     );
     const appointmentId = insertResult.rows[0].id;
 
@@ -198,17 +212,23 @@ export async function rescheduleAppointment(
   if (!fecha || !hora) return { error: "Fecha y hora son obligatorias" };
 
   try {
-    // Obtener datos anteriores para auditoría
     const { rows: oldRows } = await pool.query(
       `SELECT nombre, servicio, fecha::text, hora::text FROM appointments WHERE id = $1`,
       [id],
     );
 
+    const servicio = oldRows[0]?.servicio ?? "";
+    const duracionMinutos = await getServiceDuration(session.user.businessId, servicio);
+    const totalMinutos = duracionMinutos + 15;
+    const [hh, mm] = hora.split(":").map(Number);
+    const horaFinMin = (hh * 60 + mm) + totalMinutos;
+    const horaFin = `${String(Math.floor(horaFinMin / 60)).padStart(2, "0")}:${String(horaFinMin % 60).padStart(2, "0")}`;
+
     await pool.query(
       `UPDATE appointments
-       SET fecha = $1, hora = $2::time, estado = 'Pendiente', updated_at = NOW()
-       WHERE id = $3 AND business_id = $4`,
-      [fecha, hora, id, session.user.businessId]
+       SET fecha = $1, hora = $2::time, estado = 'Pendiente', hora_fin = $3::time, updated_at = NOW()
+       WHERE id = $4 AND business_id = $5`,
+      [fecha, hora, horaFin, id, session.user.businessId]
     );
 
     if (oldRows.length > 0) {
@@ -310,7 +330,7 @@ export interface MetricasData {
 export type DrawerTipo = 'ingresos' | 'citas-del-dia' | 'ocupacion' | 'servicio-detalle' | 'cancelaciones' | 'clientes-nuevos';
 
 export type DrawerData =
-  | { tipo: 'ingresos'; filas: Array<{ profesional: string; servicio: string; cantidad: number; total: number }>; total: number }
+  | { tipo: 'ingresos'; filas: Array<{ ticketId: number; cliente: string; total: number; metodoPago: string; fecha: string }>; total: number }
   | { tipo: 'citas-del-dia'; filas: Array<{ hora: string; nombre: string; servicio: string; profesional: string; estado: string }> }
   | { tipo: 'ocupacion'; grid: Array<{ dia: string; hora: string; ocupados: number; total: number; ratio: number }> }
   | { tipo: 'servicio-detalle'; servicio: string; profesionales: Array<{ name: string; citas: number; ingresos: number }>; tendenciaMensual: Array<{ mes: string; citas: number }> }
@@ -585,16 +605,13 @@ export async function getMetricas(
       fetchOcupacion(businessId, fechaDesde, fechaHasta, professionalId),
     ]);
 
-    const negocioResult = await pool.query<{ services_text: string }>(
-      `SELECT services_text FROM businesses WHERE id = $1 LIMIT 1`, [businessId]
-    );
     const profResult = await pool.query<{ id: number; name: string }>(
       `SELECT id, name FROM professionals WHERE business_id = $1 AND active = true ORDER BY name`,
       [businessId]
     );
 
     const { nuevos, recurrentes } = clientesData;
-    const precioMap = parsePrice(negocioResult.rows[0]?.services_text ?? '');
+    const precioMap = await buildPriceMap(businessId);
 
     const totalCitas = filas.length;
     const completadas = filas.filter(f => f.estado === 'Completada').length;
@@ -759,29 +776,25 @@ export async function getMetricasDrawer(
         ? ` AND a.professional_id = $${queryParams.push(params.professionalId)}`
         : '';
 
-      const [aptRows, bizRows] = await Promise.all([
-        pool.query(
-          `SELECT COALESCE(p.name, 'Sin asignar') AS profesional, a.servicio,
-                  COUNT(*)::int AS cantidad,
-                  COUNT(*) FILTER (WHERE a.estado = 'Completada')::int AS completadas
-           FROM appointments a
-           LEFT JOIN professionals p ON p.id = a.professional_id
-           WHERE a.business_id = $1 AND a.fecha BETWEEN $2 AND $3 ${profFilter}
-           GROUP BY p.name, a.servicio
-           ORDER BY cantidad DESC`,
-          queryParams
-        ),
-        pool.query<{ services_text: string }>(
-          `SELECT services_text FROM businesses WHERE id = $1`, [businessId]
-        ),
-      ]);
+      const { rows } = await pool.query(
+        `SELECT t.id AS ticket_id, c.name AS cliente, t.total,
+                COALESCE(pm.name, 'Efectivo') AS metodo_pago,
+                t.created_at::date AS fecha
+         FROM transactions t
+         JOIN customers c ON c.id = t.customer_id
+         LEFT JOIN payment_methods pm ON pm.id = t.payment_method_id
+         LEFT JOIN appointments a ON a.id = t.appointment_id
+         WHERE t.business_id = $1 AND t.created_at BETWEEN $2 AND $3 ${profFilter}
+         ORDER BY t.created_at DESC`,
+        queryParams
+      );
 
-      const precioMap = parsePrice(bizRows.rows[0]?.services_text ?? '');
-      const filas = aptRows.rows.map(r => ({
-        profesional: r.profesional,
-        servicio: r.servicio,
-        cantidad: parseInt(r.cantidad),
-        total: parseInt(r.completadas) * (precioMap.get(r.servicio) ?? 0),
+      const filas = rows.map(r => ({
+        ticketId: r.ticket_id,
+        cliente: r.cliente,
+        total: parseFloat(r.total),
+        metodoPago: r.metodo_pago,
+        fecha: r.fecha,
       }));
       const total = filas.reduce((s, f) => s + f.total, 0);
 
@@ -888,12 +901,7 @@ export async function getMetricasDrawer(
         [businessId, params.servicio]
       );
 
-      // Precio del servicio
-      const { rows: bizRow } = await pool.query(
-        `SELECT services_text FROM businesses WHERE id = $1`, [businessId]
-      );
-      const precioMap = parsePrice(bizRow[0]?.services_text ?? '');
-      const precio = precioMap.get(params.servicio) ?? 0;
+      const precio = (await buildPriceMap(businessId)).get(params.servicio) ?? 0;
 
       const profesionales = profRows.map(r => ({
         name: r.name,
@@ -1171,6 +1179,22 @@ export async function updateServicesText(businessId: number, servicesText: strin
     `UPDATE businesses SET services_text = $1 WHERE id = $2`,
     [entries.join(', '), businessId]
   )
+
+  // Sincronizar tabla services
+  await pool.query(`DELETE FROM services WHERE business_id = $1`, [businessId]);
+  for (const entry of entries) {
+    const match = entry.match(/^(.+?)\s+\$?([0-9.,]+)$/);
+    if (match) {
+      const name = match[1].trim();
+      const price = parseInt(match[2].replace(/\./g, ''));
+      await pool.query(
+        `INSERT INTO services (business_id, name, price, duration_minutes)
+         VALUES ($1, $2, $3, 30)
+         ON CONFLICT (business_id, name) DO UPDATE SET price = $3`,
+        [businessId, name, price]
+      );
+    }
+  }
 
   auditar(businessId, parseInt(session.user.id), "update_services", "business", businessId, {
     servicios_count: entries.length,
@@ -1746,6 +1770,75 @@ export async function updateMiembroCredenciales(data: {
   }
 }
 
+// ─── Eliminar miembro (soft-delete: desactiva user + professional) ──────────────
+// El flujo de eliminación es en dos fases desde el frontend:
+//   1. El frontend pregunta con confirm() y, si el usuario tiene professional_id,
+//      llama a getFutureAppointmentsForProfessional para mostrar el diálogo de
+//      citas futuras (igual que el toggle). Si hay citas, ofrece cancelarlas.
+//   2. Una vez confirmado (y después de cancelar las citas que el usuario decida),
+//      se llama a deleteTeamMember que hace el soft-delete definitivo.
+// "Soft-delete" significa: users.active=false + professionals.active=false.
+// No se borra la fila — se conserva para integridad histórica (audit, citas).
+export async function deleteTeamMember(userId: number, businessId: number) {
+  const session = await auth();
+  if (!session || session.user.role !== "owner") {
+    return { error: "No autorizado" };
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const { rows } = await client.query<{ role: string; professional_id: number | null; name: string; email: string }>(
+      `SELECT role, professional_id, name, email FROM users WHERE id = $1 AND business_id = $2`,
+      [userId, businessId]
+    );
+    if (rows.length === 0) {
+      await client.query("ROLLBACK");
+      return { error: "Usuario no encontrado" };
+    }
+    if (rows[0].role === "owner") {
+      await client.query("ROLLBACK");
+      return { error: "No se puede eliminar al dueño del negocio" };
+    }
+
+    const userInfo = rows[0];
+    const professionalId = userInfo.professional_id;
+
+    await client.query(
+      `UPDATE users SET active = false, updated_at = NOW() WHERE id = $1 AND business_id = $2`,
+      [userId, businessId]
+    );
+
+    if (professionalId != null) {
+      await client.query(
+        `UPDATE professionals SET active = false, updated_at = NOW() WHERE id = $1`,
+        [professionalId]
+      );
+    }
+
+    await client.query("COMMIT");
+
+    auditar(businessId, parseInt(session.user.id), "toggle_miembro", "user", userId, {
+      nombre: userInfo.name,
+      email: userInfo.email,
+      role: userInfo.role,
+      estado: "Eliminado (desactivado)",
+      professional_id: professionalId,
+    });
+
+    revalidatePath("/dashboard/equipo");
+    revalidatePath("/dashboard/configuracion");
+    return { ok: true };
+  } catch (e) {
+    await client.query("ROLLBACK");
+    console.error("[deleteTeamMember]", e);
+    return { error: "Error eliminando el usuario" };
+  } finally {
+    client.release();
+  }
+}
+
 export async function getClienteHistorial(
   businessId: number,
   clienteId: number
@@ -1791,11 +1884,23 @@ export async function getClienteHistorial(
 
 // ─── Slots disponibles ─────────────────────────────────────────────────────────
 
-function generateSlots(openHour: number, closeHour: number): string[] {
+function generateSlots(
+  openHour: number,
+  closeHour: number,
+  duracionMinutos = 30,
+  bufferMinutes = 0,
+): string[] {
   const slots: string[] = [];
+  const totalBlockMinutos = duracionMinutos + bufferMinutes;
+  const closeTotalMin = closeHour * 60;
+
   for (let h = openHour; h < closeHour; h++) {
-    slots.push(`${String(h).padStart(2, '0')}:00`);
-    slots.push(`${String(h).padStart(2, '0')}:30`);
+    for (const m of [0, 30]) {
+      const slotMin = h * 60 + m;
+      if (slotMin + totalBlockMinutos <= closeTotalMin) {
+        slots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+      }
+    }
   }
   return slots;
 }
@@ -2078,6 +2183,18 @@ export async function updateServices(data: {
       `UPDATE businesses SET services_text = $1 WHERE id = $2`,
       [servicesText, data.businessId]
     )
+
+    // Sincronizar tabla services
+    await pool.query(`DELETE FROM services WHERE business_id = $1`, [data.businessId]);
+    for (const s of data.servicios) {
+      await pool.query(
+        `INSERT INTO services (business_id, name, price, duration_minutes)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (business_id, name) DO UPDATE SET price = $3, duration_minutes = $4`,
+        [data.businessId, s.nombre, s.precio, s.duracion]
+      );
+    }
+
     auditar(data.businessId, parseInt(session.user.id), "update_services", "business", data.businessId, {
       servicios_count: data.servicios.length,
     })

@@ -606,3 +606,53 @@ Sin ambos parámetros correctos, n8n no considera `jsCode` como parámetro váli
 - `dashboard/database/n8n-queries.sql` — COALESCE actualizado
 - `docs/superpowers/specs/2026-07-21-b1-fase2-professional-schedules.md` — NUEVO
 - `docs/superpowers/plans/2026-07-21-b1-fase2-professional-schedules.md` — NUEVO
+
+---
+
+## Sprint 20 — Lazy Loading Slots (90 días + MOSTRAR_SLOTS) — EN CURSO 🔴 (Julio 30, 2026)
+
+### Objetivo
+El bot no mostraba disponibilidad para fechas lejanas (ej. 9 de agosto) porque la query `Leer Slots Disponibles` usaba `generate_series(0, 7)` — solo 8 días. La solución: ventana amplia de 90 días visible al LLM en formato compacto (rangos por profesional) + lazy loading de slots por día para fechas lejanas vía código `MOSTRAR_SLOTS|DD/MM/YYYY`.
+
+### Causa raíz
+- Query original: `SELECT ... FROM generate_series(0, 7) AS n` → solo hoy+7 días
+- Fechas lejanas no aparecían → el LLM decía "no tengo disponibilidad"
+- Verificado: el 9 de agosto SÍ tiene slots en DB real (Camila 09:00 AM...)
+
+### Diseño (aprobado)
+1. **Vista compacta 90 días** (5.4KB/87 líneas reales): agrupa profesionales por rango idéntico, `N profesionales` si >3, separador " · "
+2. **Detalle 7 días** (7.1KB): horas exactas por profesional, formato vertical 🟢
+3. **Días > 7d**: LLM responde SOLO `MOSTRAR_SLOTS|DD/MM/YYYY`
+4. **Nuevo flujo**: Switch → Leer Slots Fecha (postgres) → Formatear Slots Fecha (code, 2 salidas) → Enviar Slots Fecha (httpRequest) + Guardar Historial Fecha (postgres upsert)
+5. **Historial override**: el texto real de slots mostrados reemplaza el código MOSTRAR_SLOTS en DB para que el siguiente turno del LLM tenga contexto
+
+### Implementado ✅ (código listo, NO aplicado al workflow)
+- **`slots-query.sql`**: query ampliada a `generate_series(0, 89)` (90 días)
+- **`fmt-code-new.js`**: formateador nuevo con `horaAMin`/`minAHora` (corrige bug "9:0 AM"), rangos contiguos agrupados (`🟢 9:00 AM - 6:30 PM`), agrupación por profesional. Probado con DB real: 90d = 5.4KB/87 líneas, 7d = 7.1KB
+- **`ai-code.js`**: jsCode AI Agent editado (5 ocurrencias MOSTRAR_SLOTS):
+  - `horariosDisponibles`: "HORARIOS DISPONIBLES (próximos 90 días — vista por día)" + "HORARIOS COMPLETOS (detalle hora por hora de los próximos 7 días)" + regla día >7d → `MOSTRAR_SLOTS|DD/MM/YYYY`
+  - `reglaDisponibilidad`: para fechas lejanas emitir el código, prohibido inventar horas
+  - `agendamiento` paso 4 + `reagendamiento` PASO 2 → misma regla
+  - Normalizador: patrón `MOSTRAR_SLOTS\|dd/mm/yyyy` añadido al inicio de `patrones`
+- **`slots-fecha-query.sql`**: query por fecha específica (TO_DATE de output del AI Agent)
+- **`fmt-fecha-code.js`**: formateador de día específico (2 salidas: texto + historyJSON)
+- **`workflow-nuevo.json`**: workflow completo (45 nodos, 32 conexiones, sintaxis validada)
+  - Switch: regla 5 `MOSTRAR_SLOTS` → main[4] → Leer Slots Fecha
+  - Respuesta Normal: movida de main[4] a main[5] (fallback extra)
+  - 4 nodos nuevos: Leer Slots Fecha (postgres), Formatear Slots Fecha (code), Enviar Slots Fecha (httpRequest), Guardar Historial Fecha (postgres)
+
+### Pendiente 🔴
+1. Aplicar PATCH a la API n8n (POST /login → PUT /workflows/tzFJ9m2pJX1AheI0) con backoff 429/401
+2. Sincronizar `workflows/WhatsApp Bot - Genérico restored.json`
+3. Verificar E2E: "agendar → 9 de agosto" debe emitir MOSTRAR_SLOTS, mostrar slots y permitir confirmar
+
+### Archivos temporales (en /var/folders/.../T/opencode/)
+- `workflow-nuevo.json` (aplicar), `workflow-full.json` (backup), `builder.cjs` (constructor)
+- `slots-query.sql`, `fmt-code-new.js`, `ai-code.js`, `slots-fecha-query.sql`, `fmt-fecha-code.js`
+
+### Lecciones Sprint 20
+- **Lazy loading es esencial**: 90 días = 10386 slots = ~313KB no cabe en un prompt de LLM. Vista compacta con rangos (5.4KB) + detalle de primeros 7 días (7.1KB) = 12.5KB total es viable.
+- **Bug del formateador viejo**: regex `h.replace(/\b0(\d)/g,'$1')` producía "9:0 AM" (eliminaba el cero de minutos). Corregido con funciones `horaAMin`/`minAHora` que preservan formato correcto.
+- **Switch fallback desplazamiento**: al añadir una regla a un Switch con `fallbackOutput: "extra"`, el fallback se mueve al siguiente índice. Mover manualmente la conexión del nodo fallback.
+- **Code node 2 salidas**: return `[[{json}],[{json}]]` para 2 outputs. Usar para ramas paralelas (enviar mensaje + guardar historial).
+- **Historial override**: el flujo MOSTRAR_SLOTS sobrescribe el historial con el texto real mostrado (INSERT ON CONFLICT DO UPDATE) para evitar que el siguiente turno del LLM vea el código interno en vez de los slots que se le enviaron.

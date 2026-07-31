@@ -1,78 +1,22 @@
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
-import { getTodayAppointments, getTodayStats } from "@/lib/appointments";
-import { getActiveProfessionals } from "@/lib/actions";
-import { pool } from "@/lib/db";
-import { StatsCards } from "@/components/stats-cards";
-import { AppointmentList } from "@/components/appointment-list";
-import { RefreshButton } from "@/components/refresh-button";
-import { NewAppointmentSheet } from "@/components/new-appointment-sheet";
-import { AutoRefresh } from "@/components/auto-refresh";
+import { auth } from "@/auth"
+import { redirect } from "next/navigation"
+import { DashboardPageV2 } from "@/features/dashboard-home/components/dashboard-pageV2"
 
 export default async function DashboardPage() {
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await auth()
+  if (!session) redirect("/login")
 
-  const businessId = session.user.businessId;
-  const professionalId = session.user.professionalId;
-  // Solo owner/admin (professionalId null) ven el selector con TODOS los
-  // profesionales al agendar manual. Un "profesional" agenda siempre a su
-  // propio nombre (el server action también lo fuerza, esto es solo UI).
-  const isOwnerOrAdmin = professionalId == null;
-
-  const [[appointments, stats], bizRows, allProfessionals] = await Promise.all([
-    Promise.all([
-      getTodayAppointments(businessId, professionalId),
-      getTodayStats(businessId, professionalId),
-    ]),
-    pool
-      .query("SELECT services_text FROM businesses WHERE id = $1", [businessId])
-      .then((r) => r.rows),
-    getActiveProfessionals(businessId),
-  ]);
-  const servicesText: string = bizRows[0]?.services_text ?? "";
-  // Calculado en vivo desde la tabla professionals — NO depende de ningún
-  // flag manual en `businesses`. Cualquier negocio (nuevo o existente) que
-  // tenga profesionales activos obtiene esta UI automáticamente.
-  const multiProfessional = allProfessionals.length > 0;
-  const professionals = isOwnerOrAdmin ? allProfessionals : [];
-
-  // Fecha de hoy en español para el header
-  const fechaHoy = new Date().toLocaleDateString("es-CO", {
-    timeZone: "America/Bogota",
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-  const fechaCapitalizada =
-    fechaHoy.charAt(0).toUpperCase() + fechaHoy.slice(1);
+  const businessId = session.user.businessId
+  const professionalId = session.user.professionalId
+  const isOwnerOrAdmin = professionalId == null
 
   return (
     <div>
-      <AutoRefresh intervalMs={30000} />
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Hoy</h1>
-          <p className="text-sm text-[var(--text-secondary)] mt-0.5">
-            {fechaCapitalizada}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <NewAppointmentSheet
-            servicesText={servicesText}
-            professionals={professionals}
-            multiProfessional={multiProfessional}
-          />
-          <RefreshButton />
-        </div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-zf-text">Dashboard</h1>
+        <p className="mt-0.5 text-sm text-zf-text-secondary">Resumen del negocio</p>
       </div>
-
-      {/* Stats */}
-      <StatsCards stats={stats} />
-
-      {/* Lista de citas */}
-      <AppointmentList appointments={appointments} multiProfessional={multiProfessional} />
+      <DashboardPageV2 businessId={businessId} isOwnerOrAdmin={isOwnerOrAdmin} userProfessionalId={professionalId} />
     </div>
-  );
+  )
 }

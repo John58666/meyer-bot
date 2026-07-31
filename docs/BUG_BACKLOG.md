@@ -345,6 +345,30 @@ Si el LLM inventa un día/hora que no estaba en `disponibilidad`, la verificaci�
 
 ---
 
+### B17 — Bot repite "Entendido, dime cómo puedo ayudarte" siempre (historial envenenado)
+
+**Síntoma:** El bot responde "Entendido, dime cómo puedo ayudarte. 😊 ¿Quieres agendar una cita?" a CUALQUIER mensaje ("Hola", "si", etc.), incluso después de aplicar el fix del neutralizador. Afectó a múltiples números.
+
+**Causa raíz:** Bucle de envenenamiento del historial en `conversation_history`:
+1. Sin sesión activa, el LLM alucina cancelación → el neutralizador post-LLM reemplazaba el output con la frase
+2. El nodo guardaba `result.content` (YA reemplazado por la frase) como turno assistant en el historial
+3. El LLM veía TODOS sus turns anteriores diciendo la frase → la imitaba
+4. La frase imitada no matchea la regex del neutralizador (no contiene "cancelad/anulad") → pasa directo → se guarda → se refuerza el bucle
+
+**Diagnóstico:** El `historyJSON` de la ejecución mostraba todos los turns assistant con la frase exacta. El workflow activo (`tzFJ9m2pJX1AheI0`) YA tenía el fix de regex — el problema no era el código actual.
+
+**Estado:** ✅ Resuelto (2026-07-30)
+
+**Cambios:**
+- [x] DB: `DELETE FROM conversation_history` para números envenenados (573142556322, 573226541957). Detección: `SELECT numero FROM conversation_history WHERE messages::text LIKE '%Entendido, dime cómo puedo ayudarte%'`
+- [x] Código: el neutralizador guarda `result.rawOriginal` (lo que el LLM dijo) en el historial en vez de la frase neutralizada
+- [x] Aplicado en workflow activo vía API PATCH (versionId `f757a680-b9c1-424d-b817-c05ecf0814bb`) y en `WhatsApp Bot - Genérico restored.json`
+- [x] Regla permanente agregada en `docs/harness/RULES.md` + lección en `docs/KEY_LEARNINGS.md`
+
+**Validación:** Historial nuevo de 573142556322 muestra respuesta correcta ("Hola" → saludo, "agendar" → lista de servicios).
+
+---
+
 ## Prioridad MEDIA
 
 ### B10 — Información de tratamiento de datos
@@ -359,6 +383,55 @@ Si el LLM inventa un día/hora que no estaba en `disponibilidad`, la verificaci�
 - [x] Enlace dinámico: `${d.politicaPrivacidadUrl || '[enlace a política de privacidad]'}`
 - [x] Detecta: "uso de sus datos", "privacidad", "protección de datos", "para qué van a usar mi información", "dónde guardan mis datos"
 - [x] Cumple Ley 1581 de 2012 (Colombia)
+
+---
+
+### B18 — Lazy Loading Slots 90 días (MOSTRAR_SLOTS|DD/MM/YYYY)
+
+**Síntoma:** Fechas lejanas (ej. 9 de agosto) no muestran disponibilidad. El bot dice "no tengo disponibilidad" aunque la DB SÍ tiene slots para esa fecha.
+
+**Causa raíz:** Query `Leer Slots Disponibles` usaba `generate_series(0, 7)` → solo ventana de hoy+7 días. Fechas fuera de esa ventana quedaban fuera de la lista de disponibilidad.
+
+**Solución diseñada:**
+1. Vista compacta 90 días (`generate_series(0, 89)`)
+2. Detalle hora por hora de 7 días
+3. Días > 7: LLM responde SOLO `MOSTRAR_SLOTS|DD/MM/YYYY` → nodo Postgres consulta slots de esa fecha → envía por WhatsApp
+4. Historial: el texto real de slots mostrados reemplaza el código MOSTRAR_SLOTS en DB
+
+**Cambios en workflow (45 nodos, 32 conexiones):**
+- `Leer Slots Disponibles`: query ampliada a 90 días (`generate_series(0, 89)`)
+- `Formatear Disponibilidad`: nuevo formateador con rangos por profesional
+- `AI Agent`: jsCode con regla MOSTRAR_SLOTS en 5 secciones del prompt
+- `Switch`: regla 5 `MOSTRAR_SLOTS` → main[4], Respuesta Normal movida a main[5]
+- **4 nodos nuevos:** Leer Slots Fecha, Formatear Slots Fecha, Enviar Slots Fecha, Guardar Historial Fecha
+
+**Diagnóstico E2E (Jul 31, corregido):**
+
+El diagnóstico anterior decía "Lookup Negocio devuelve vacío" — **eso es FALSO**. Verificación real:
+
+| Componente | Estado | Detalle |
+|------------|--------|---------|
+| Lookup Negocio | ✅ FUNCIONA | Encontró business_id=1 (`peluqueria-beta`) en 36ms |
+| Leer Slots Disponibles | ✅ FUNCIONA | 10,412 items en ventana de 90 días (104ms) |
+| Formatear Disponibilidad | ✅ FUNCIONA | Incluye "Domingo 9 de agosto" en vista compacta |
+| Switch + 4 nodos nuevos | ✅ FUNCIONA | Conectados correctamente |
+| AI Agent → MOSTRAR_SLOTS | 🔴 FALLA | No emite el código para días >7 |
+
+**Causa raíz real:** El AI Agent NO emite `MOSTRAR_SLOTS|09/08/2026` por colisión de reglas en el prompt:
+1. `saludoInicial` (posición 2 del prompt) dice "siempre saluda en primer mensaje" sin excepción
+2. `MOSTRAR_SLOTS` está en posición 9-10 del prompt
+3. No hay regla de precedencia explícita que resuelva el conflicto
+
+**Fix parcial aplicado (Jul 31):**
+- [x] Pre-processor de fechas: detecta fecha en español via regex → agrega `INSTRUCCIÓN DE PRECEDENCIA` al TOP del system prompt
+- [x] Resultado: el bot YA NO solo saluda — ahora procesa el mensaje cuando trae fecha
+- [x] Pero todavía no emite `MOSTRAR_SLOTS|DD/MM/YYYY` — responde con flujo de agendamiento normal
+- versionId activo: `2e1b896a-a22c-4109-8c65-be032ebb18e7`
+
+**Pendiente 🔴 (requiere investigación):**
+1. El LLM ignora la regla MOSTRAR_SLOTS para días >7 — responde con agendamiento normal
+2. Prompt de 560 líneas con múltiples bugs históricos de colisión de reglas
+3. Investigar: state machines vs prompt-based routing, function calling, validación determinística
 
 ---
 

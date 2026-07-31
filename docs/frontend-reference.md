@@ -59,7 +59,12 @@ Cada recomendación tiene un estado:
 ### Contexto
 Vista base con métricas operativas generales. Construida sin sistema de diseño unificado.
 
-### Estado: ✅ Operativo — rediseño UX en curso
+### Estado: ✅ Implementado V2 — `features/dashboard-home/components/`
+
+### Archivos V2
+- `features/dashboard-home/components/dashboard-pageV2.tsx` — Range selector (Hoy/Semana/Mes), 4 KPI cards (Ingresos, Citas, Ocupación, Clientes nuevos con trends+sparklines), bar chart recharts, top profesionales, clientes recurrentes/nuevos, heatmap ocupación horaria
+- `features/dashboard-home/actionsV2.ts` — getMetricasV2, getOcupacionHeatmapV2
+- `app/(dashboard)/dashboard/page.tsx` — server component thin (22 líneas)
 
 ### API Contract
 
@@ -99,7 +104,13 @@ Dos modos de operación:
 - **Vista Calendario**: Navegación semanal por profesional con citas y bloqueos (diseño UX pendiente).
 - **Vista Lista / Consola de Despacho**: Timeline mensual con acordeón por días (citas + bloqueos combinados), filtros multi-select (profesionales, servicios, estados, canal), soft delete con toast.
 
-### Estado: 🔵 Pendiente de diseño UX — specs aprobadas
+### Estado: ✅ Implementado V2 — `features/agenda/components/`
+
+### Archivos V2
+- `features/agenda/components/week-viewV2.tsx` — Grid hora×profesional con navegación diaria, filtro profesional, skeleton/empty/error states, cards de cita por status
+- `features/agenda/components/agenda-modalV2.tsx` — Modal 2-tabs: "Nueva Cita" (cliente search, servicio+prencia+duración, slots disponibles) + "Bloquear Horario" (profesional, fecha, rango horas, motivo, notas). Success state con auto-close
+- `features/agenda/components/appointment-detail-drawerV2.tsx` — Drawer con detalle de cita + acciones: Completar, Cancelar, Reactivar, Reagendar (inline date/time inputs)
+- `features/agenda/actionsV2.ts` — 10 server action wrappers: getWeekAppointmentsV2, getProfessionalsV2, getClientesV2, getServicesV2, getAvailableSlotsV2, createAppointmentV2, updateAppointmentStatusV2, rescheduleAppointmentV2, getBusinessNameV2
 
 ### Schema — columnas adicionales
 ```sql
@@ -225,7 +236,7 @@ Dos endpoints separados para evitar cargar el mes completo:
 ### Contexto
 Tabla de alta densidad de clientes. Panel expandible derecho (Drawer) con datos del cliente, acceso directo a WhatsApp y Notas Técnicas / Fórmulas Químicas de Color.
 
-### Estado: 🔵 Pendiente de diseño UX
+### Estado: 🟡 Plan V2 listo — `docs/refactoring-v2/02-clientes.md`
 
 ### Schema de respaldo
 ```sql
@@ -271,7 +282,16 @@ customers (
 ### Contexto
 Layout de pantalla dividida 60/40 para cierres de caja y ventas al paso. Es el módulo más complejo porque integra servicios, productos, IVA, propinas, comisiones y métodos de pago.
 
-### Estado: ✅ Diseño aprobado — flujo post-cobro congelado
+### Estado: ✅ Demo visual V2 — `features/caja/components/`
+
+### Archivos V2
+- `features/caja/components/pos-layoutV2.tsx` — Orquestador 60/40, carga servicios+productos+métodos pago
+- `features/caja/components/pos-catalogV2.tsx` — Panel izquierdo: tabs Servicios/Productos, grid de items
+- `features/caja/components/pos-cartV2.tsx` — Panel derecho: carrito con IVA, métodos pago, "Cobrar" → success
+- `features/caja/actionsV2.ts` — Wrappers: getCatalogServicesV2, getCatalogProductsV2, getPaymentMethodsV2
+- `app/(dashboard)/dashboard/caja/page.tsx` — Ruta nueva
+
+**Nota**: Versión demo visual. No persiste transacciones. Para habilitar persistencia: migration 023 (`transactions` + `transaction_items`) + `createTransactionV2`.
 
 ### Layout
 
@@ -684,7 +704,18 @@ ALTER TABLE appointments ADD COLUMN duration_at_booking INT;
 #### Contexto
 Gestión del personal. Al editar un profesional se incluye su **Horario Individual** (herencia visual del COALESCE: si no tiene horario propio, muestra el del negocio).
 
-#### Estado: 🟡 Diseño parcial — pendiente de completar
+#### Estado: ✅ Implementado V2 — `features/config-team/components/`
+
+#### Archivos V2
+- `features/config-team/components/team-listV2.tsx` — tabla miembros + menú 3-puntos (Editar Permisos, Configurar Turno, Eliminar) + detalle expandible con schedule editor inline + modal confirmación eliminación con cancelación citas futuras
+- `features/config-team/components/team-member-modalV2.tsx` — modal crear miembro (ModalV2 + form validación client-side)
+- `features/config-team/components/team-permissions-modalV2.tsx` — modal editar permisos (role radio + checkboxes servicios asignados)
+- `features/config-team/components/team-schedule-editorV2.tsx` — editor horario inline (toggle heredar/custom + grid semanal open/close)
+- `features/equipo-roles/components/employee-detail-modalV2.tsx` — modal detalle de profesional con Perfil, Horario, Estadísticas (completadas, cancelación%, ingresos), Servicios asignados, Reseñas de clientes (★)
+- `features/equipo-roles/actionsV2.ts` — getEmployeeStatsV2, getEmployeeReviewsV2
+- `database/migrations/021_reviews.sql` — tabla reviews (rating 1-5, comment, FK a customers/appointments)
+- `features/config-team/actionsV2.ts` — 13 server actions: CRUD equipo, permisos, horarios, servicios
+- `lib/actions.ts` — `deleteTeamMember()` soft-delete
 
 #### Schema
 ```sql
@@ -749,7 +780,7 @@ SINO → heredar businesses.schedule_text (horario general del negocio)
 | # | Recomendación | Estado |
 |---|---------------|--------|
 | 5.2.1 | Refactorizar `generateSlots()` para recibir `ranges: Array<{open, close}>` | ✅ Aplicada en diseño |
-| 5.2.2 | Herencia visual del COALESCE en el editor de horario | ⏳ Pendiente |
+| 5.2.2 | Herencia visual del COALESCE en el editor de horario | ✅ Implementado (team-schedule-editorV2) |
 | 5.2.3 | Validación 409 al cambiar horario con citas fuera del nuevo rango | ✅ Aplicada en diseño |
 | 5.2.4 | Campos comision_servicio_pct y comision_producto_pct en ficha del profesional | ⏳ Pendiente |
 
@@ -760,7 +791,12 @@ SINO → heredar businesses.schedule_text (horario general del negocio)
 #### Contexto
 Sub-sección dividida en dos sub-pestañas laterales: **Días Festivos** (izquierda) y **Gestión de Bloqueos y Vacaciones** (derecha). Diseño UX congelado y aprobado en Stitch.
 
-#### Estado: ✅ Diseño aprobado — pendiente de implementar
+#### Estado: ✅ Implementado V2 — `features/config-schedule/components/`
+
+#### Archivos V2
+- `features/config-schedule/components/business-schedule-editorV2.tsx` — editor horario semanal del negocio con toggle por día, selectores de hora, skeleton/empty/error states, save con feedback
+- `features/config-schedule/components/schedule-blocksV2.tsx` — tabla de bloqueos con filtros (búsqueda, tipo, profesional), modal crear bloqueo con tipo (cierre total/horario especial), delete con loading state
+- `features/config-schedule/actionsV2.ts` — server actions: getBusinessScheduleV2, saveBusinessScheduleV2, getBloqueosV2, createBloqueoV2, deleteBloqueoV2, updateBloqueoV2, getProfessionalsV2, checkBloqueoConflictosV2, cancelAppsAndNotifyV2, getBusinessRawScheduleV2
 
 #### Unificación del endpoint de bloqueos
 El frontend usa un **único disparador** (`createBloqueosBatch`) para registrar excepciones en `schedule_exceptions`:
@@ -936,7 +972,11 @@ payment_methods (
 #### Contexto
 Consola de seguridad inmutable (solo inserts, solo lectura). Registra cambios operativos y financieros sospechosos como modificaciones de precios en caja o descuentos manuales.
 
-#### Estado: 🔵 Pendiente de diseño UX
+#### Estado: ✅ Implementado V2 — `features/config-audit/components/`
+
+#### Archivos V2
+- `features/config-audit/components/audit-listV2.tsx` — filtros avanzados (acción, usuario, fechas), vista expandible inline por fila, colores semánticos por tipo de acción, paginación server-side con URL params
+- `features/config-audit/actionsV2.ts` — `getAuditLogsV2()`, `getAuditUsersV2()`, `getAuditProfessionalsV2()`
 
 #### Schema (existente en backend)
 ```sql
@@ -971,7 +1011,7 @@ Las funciones están en `dashboard/lib/audit.ts`.
 #### Recomendaciones
 | # | Recomendación | Estado |
 |---|---------------|--------|
-| 5.5.1 | Tabla de solo lectura con filtros por acción, usuario y fecha | ⏳ Pendiente |
+| 5.5.1 | Tabla de solo lectura con filtros por acción, usuario y fecha | ✅ Implementado (audit-listV2) |
 | 5.5.2 | Exportable a CSV | ⏳ Pendiente |
 
 ---
@@ -981,7 +1021,14 @@ Las funciones están en `dashboard/lib/audit.ts`.
 ### Contexto
 Para multi-industria. Peluquerías venden champús (retail), clínicas usan insumos sin cobrar al cliente (supply). Accesible desde el buscador rápido de Caja y desde gestión directa.
 
-### Estado: 🟡 Schema acordado — pendiente de implementar
+### Estado: ✅ Implementado V2 — `features/inventory/components/`
+
+### Archivos V2
+- `features/inventory/components/product-catalogV2.tsx` — 3 stat cards + search + filtro tipo + tabla con stock badges + paginación + toggle/delete
+- `features/inventory/components/product-modalV2.tsx` — Modal create/edit con tipo radio (Venta Directa/Insumo), IVA y Precio deshabilitados en Insumo
+- `features/inventory/actionsV2.ts` — 5 server actions con lógica supply (sale_price=null, iva=false, iva%=0)
+- `database/migrations/022_products.sql` — CREATE TABLE products
+- `app/(dashboard)/dashboard/inventario/page.tsx` — Nueva ruta
 
 ### Schema
 ```sql

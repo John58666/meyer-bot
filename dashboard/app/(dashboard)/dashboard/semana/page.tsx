@@ -1,11 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { getWeekAppointments } from "@/lib/appointments";
-import { getActiveProfessionals } from "@/lib/actions";
 import { pool } from "@/lib/db";
-import { WeekView } from "@/components/week-view";
-import { RefreshButton } from "@/components/refresh-button";
-import { SemanaClient } from "@/app/(dashboard)/semana/SemanaClient";
+import { WeekViewV2 } from "@/features/agenda/components/week-viewV2";
 
 export default async function SemanaPage() {
   const session = await auth();
@@ -13,41 +9,29 @@ export default async function SemanaPage() {
 
   const businessId = session.user.businessId;
   const professionalId = session.user.professionalId;
-  // Solo owner/admin ven el selector con TODOS los profesionales al agendar.
   const isOwnerOrAdmin = professionalId == null;
-  const appointments = await getWeekAppointments(businessId, professionalId);
 
-  const { rows: bizRows } = await pool.query(
-    "SELECT services_text FROM businesses WHERE id = $1",
+  const { rows: bizRows } = await pool.query<{ name: string }>(
+    "SELECT name FROM businesses WHERE id = $1",
     [businessId],
   );
-  const servicesText: string = bizRows[0]?.services_text ?? "";
-  const allProfessionals = await getActiveProfessionals(businessId);
-  // Calculado en vivo — no depende de ningún flag manual en `businesses`.
-  const multiProfessional = allProfessionals.length > 0;
-  const professionals = isOwnerOrAdmin ? allProfessionals : [];
-
-  const todayISO = new Date().toLocaleDateString("en-CA", {
-    timeZone: "America/Bogota",
-  });
+  const businessName = bizRows[0]?.name ?? "";
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Semana</h1>
-          <p className="text-sm text-[var(--text-secondary)] mt-0.5">
-            Vista semanal de citas
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <RefreshButton />
-        </div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-zf-text">Agenda</h1>
+        <p className="mt-0.5 text-sm text-zf-text-secondary">
+          Gestión de citas y horarios
+        </p>
       </div>
 
-      <SemanaClient multiProfessional={multiProfessional} servicesText={servicesText} professionals={professionals}>
-        <WeekView appointments={appointments} todayISO={todayISO} multiProfessional={multiProfessional} />
-      </SemanaClient>
+      <WeekViewV2
+        businessId={businessId}
+        businessName={businessName}
+        isOwnerOrAdmin={isOwnerOrAdmin}
+        userProfessionalId={professionalId}
+      />
     </div>
   );
 }
