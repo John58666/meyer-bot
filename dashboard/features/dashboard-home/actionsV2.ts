@@ -14,14 +14,14 @@ export async function getMetricasV2(
   fechaHasta?: string
 ) {
   const session = await auth()
-  if (!session) return { error: "No autenticado", data: null as MetricasData | null }
-  if (session.user.businessId !== businessId) return { error: "No autorizado", data: null as MetricasData | null }
+  if (!session) return { error: "No autenticado", data: null }
+  if (session.user.businessId !== businessId) return { error: "No autorizado", data: null }
 
   try {
     const { data, error } = await getMetricas(businessId, rango, professionalId, fechaDesde, fechaHasta)
     return { data, error }
   } catch {
-    return { error: "Error al cargar métricas", data: null as MetricasData | null }
+    return { error: "Error al cargar métricas", data: null }
   }
 }
 
