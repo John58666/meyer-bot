@@ -246,7 +246,7 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
 
   return (
     <>
-      <div className="rounded-xl border border-zf-border/50 bg-zf-surface">
+      <div className="rounded-xl border border-zf-border/50 bg-zf-surface overflow-hidden">
         {viewMode === "professional" && (
         <div className="flex flex-col gap-3 border-b border-zf-border/40 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">

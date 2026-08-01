@@ -43,7 +43,7 @@ export function ConfiguracionClient({ businessId, isOwner }: Props) {
               type="button"
               onClick={() => setActiveTab(tab.key)}
               className={[
-                "flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-all",
+                "flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-3 text-xs font-semibold transition-all",
                 isActive ? "bg-zf-primary text-white shadow-sm" : "text-zf-text-secondary hover:text-zf-text",
               ].join(" ")}
             >

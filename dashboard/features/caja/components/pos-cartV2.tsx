@@ -88,14 +88,14 @@ export function PosCartV2({ items, paymentMethods, onUpdateQuantity, onRemoveIte
                 </div>
                 <div className="flex items-center gap-1">
                   <button type="button" onClick={() => onUpdateQuantity(item.id, item.type, item.quantity - 1)}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary hover:bg-zinc-100"><Minus className="h-3 w-3" /></button>
+                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary hover:bg-zinc-100"><Minus className="h-3 w-3" /></button>
                   <span className="w-8 text-center text-sm font-semibold text-zf-text">{item.quantity}</span>
                   <button type="button" onClick={() => onUpdateQuantity(item.id, item.type, item.quantity + 1)}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary hover:bg-zinc-100"><Plus className="h-3 w-3" /></button>
+                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary hover:bg-zinc-100"><Plus className="h-3 w-3" /></button>
                 </div>
                 <span className="w-16 text-right text-sm font-bold text-zinc-700">{formatCurrency(item.price * item.quantity)}</span>
                 <button type="button" onClick={() => onRemoveItem(item.id, item.type)}
-                  className="flex h-7 w-7 items-center justify-center rounded-lg text-zf-text-muted hover:bg-zf-error-bg hover:text-zf-error-text"><Trash2 className="h-3.5 w-3.5" /></button>
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-zf-text-muted hover:bg-zf-error-bg hover:text-zf-error-text"><Trash2 className="h-3.5 w-3.5" /></button>
               </div>
             ))}
           </div>

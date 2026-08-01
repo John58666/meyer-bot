@@ -59,7 +59,7 @@ export function DayStripV2({ selectedDay, onSelectDay, onPrevWeek, onNextWeek, o
       <button
         type="button"
         onClick={onPrevWeek}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary transition-colors hover:bg-zinc-100 active:scale-[0.97]"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary transition-colors hover:bg-zinc-100 active:scale-[0.97]"
       >
         <ChevronLeft className="h-4 w-4" />
       </button>
@@ -74,7 +74,7 @@ export function DayStripV2({ selectedDay, onSelectDay, onPrevWeek, onNextWeek, o
               type="button"
               onClick={() => onSelectDay(d.date)}
               className={cn(
-                "flex shrink-0 items-center justify-center rounded-lg px-3 py-2 text-center transition-all active:scale-[0.97]",
+                "flex shrink-0 items-center justify-center rounded-lg px-3 py-2.5 text-center transition-all active:scale-[0.97]",
                 isSelected
                   ? "bg-zinc-800 text-white shadow-sm"
                   : isToday
@@ -127,7 +127,7 @@ export function DayStripV2({ selectedDay, onSelectDay, onPrevWeek, onNextWeek, o
       <button
         type="button"
         onClick={onNextWeek}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary transition-colors hover:bg-zinc-100 active:scale-[0.97]"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary transition-colors hover:bg-zinc-100 active:scale-[0.97]"
       >
         <ChevronRight className="h-4 w-4" />
       </button>

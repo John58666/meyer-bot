@@ -217,13 +217,13 @@ export function ProductCatalogV2({ businessId }: Props) {
                         <td className="px-5 py-3 text-right">
                           <div className="flex items-center justify-end gap-1">
                             <button type="button" onClick={() => { setEditingProduct(p); setModalOpen(true) }}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg text-zf-text-secondary transition-colors hover:bg-zf-accent-bg hover:text-zf-accent-text" title="Editar">
+                              className="flex h-9 w-9 items-center justify-center rounded-lg text-zf-text-secondary transition-colors hover:bg-zf-accent-bg hover:text-zf-accent-text" title="Editar">
                               <Pencil className="h-4 w-4" /></button>
                             <button type="button" onClick={() => handleToggle(p.id, p.active)} disabled={toggleLoading === p.id}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg text-zf-text-secondary transition-colors hover:bg-zf-accent-bg" title={p.active ? "Desactivar" : "Activar"}>
+                              className="flex h-9 w-9 items-center justify-center rounded-lg text-zf-text-secondary transition-colors hover:bg-zf-accent-bg" title={p.active ? "Desactivar" : "Activar"}>
                               {toggleLoading === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : p.active ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}</button>
                             <button type="button" onClick={() => handleDelete(p.id)} disabled={deleteLoading === p.id}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg text-zf-text-secondary transition-colors hover:bg-zf-error-bg hover:text-zf-error-text" title="Eliminar">
+                              className="flex h-9 w-9 items-center justify-center rounded-lg text-zf-text-secondary transition-colors hover:bg-zf-error-bg hover:text-zf-error-text" title="Eliminar">
                               {deleteLoading === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}</button>
                           </div>
                         </td>
@@ -269,13 +269,13 @@ export function ProductCatalogV2({ businessId }: Props) {
                     </div>
                     <div className="flex items-center justify-end gap-1 border-t border-zf-border/20 pt-3">
                       <button type="button" onClick={() => { setEditingProduct(p); setModalOpen(true) }}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-zf-text-secondary transition-colors hover:bg-zf-accent-bg hover:text-zf-accent-text" title="Editar">
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-zf-text-secondary transition-colors hover:bg-zf-accent-bg hover:text-zf-accent-text" title="Editar">
                         <Pencil className="h-4 w-4" /></button>
                       <button type="button" onClick={() => handleToggle(p.id, p.active)} disabled={toggleLoading === p.id}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-zf-text-secondary transition-colors hover:bg-zf-accent-bg" title={p.active ? "Desactivar" : "Activar"}>
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-zf-text-secondary transition-colors hover:bg-zf-accent-bg" title={p.active ? "Desactivar" : "Activar"}>
                         {toggleLoading === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : p.active ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}</button>
                       <button type="button" onClick={() => handleDelete(p.id)} disabled={deleteLoading === p.id}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-zf-text-secondary transition-colors hover:bg-zf-error-bg hover:text-zf-error-text" title="Eliminar">
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-zf-text-secondary transition-colors hover:bg-zf-error-bg hover:text-zf-error-text" title="Eliminar">
                         {deleteLoading === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}</button>
                     </div>
                   </div>
@@ -288,9 +288,9 @@ export function ProductCatalogV2({ businessId }: Props) {
                 <span>Mostrando {(page-1)*10+1}-{Math.min(page*10, total)} de {total}</span>
                 <div className="flex gap-1">
                   <button type="button" onClick={() => setPage(p => Math.max(1, p-1))} disabled={page <= 1}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-zf-border bg-white disabled:opacity-30"><ChevronLeft className="h-4 w-4" /></button>
+                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-zf-border bg-white disabled:opacity-30"><ChevronLeft className="h-4 w-4" /></button>
                   <button type="button" onClick={() => setPage(p => Math.min(pages, p+1))} disabled={page >= pages}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-zf-border bg-white disabled:opacity-30"><ChevronRight className="h-4 w-4" /></button>
+                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-zf-border bg-white disabled:opacity-30"><ChevronRight className="h-4 w-4" /></button>
                 </div>
               </div>
             )}

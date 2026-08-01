@@ -79,7 +79,7 @@ export function TimelineGridV2({
         ))}
       </div>
 
-      <div className="h-[calc(100vh-220px)] overflow-y-auto">
+      <div className="h-[calc(100vh-220px)] overflow-y-auto overflow-x-auto">
         <div className="flex" style={{ minHeight: `${totalHeight}px` }}>
           <div className="w-[60px] shrink-0 border-r border-zinc-200">
             {Array.from({ length: totalHours }, (_, i) => {

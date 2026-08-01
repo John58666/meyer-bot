@@ -20,7 +20,7 @@ const NAV_ITEMS = [
 export function SidebarV2() {
   return (
     <>
-      <aside className="fixed bottom-0 left-0 z-50 flex h-14 w-full items-center justify-around border-t border-zf-border/40 bg-zf-surface lg:bottom-auto lg:top-0 lg:h-full lg:w-16 lg:flex-col lg:justify-start lg:gap-1 lg:border-r lg:border-t-0 lg:py-4">
+      <aside className="fixed bottom-0 left-0 z-50 flex h-14 w-full items-center justify-around border-t border-zf-border/40 bg-zf-surface pb-[env(safe-area-inset-bottom,0.5rem)] lg:bottom-auto lg:top-0 lg:h-full lg:w-16 lg:flex-col lg:justify-start lg:gap-1 lg:border-r lg:border-t-0 lg:py-4">
         {NAV_ITEMS.map((item) => (
           <Link
             key={item.href}

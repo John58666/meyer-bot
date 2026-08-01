@@ -19,6 +19,8 @@ app.post('/api/chat', async (req, res) => {
     const body = req.body as ChatRequest;
 
     if (!body || typeof body.textoOriginal !== 'string') {
+      console.error('BOT-SERVICE: Invalid request body, textoOriginal missing');
+      console.error('BOT-SERVICE: Received body keys:', body ? Object.keys(body).join(',') : 'null');
       res.status(400).json({
         output: 'Error: solicitud invalida.',
         rawOutput: '',
@@ -124,6 +126,8 @@ app.post('/api/chat', async (req, res) => {
     res.json(response);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
+    console.error('BOT-SERVICE ERROR:', msg);
+    if (err instanceof Error && err.stack) console.error('BOT-SERVICE STACK:', err.stack);
     res.json({
       output: 'Disculpa, ocurrio un error inesperado. \u00BFPuedes intentar de nuevo? \u{1F60A}',
       rawOutput: '',
