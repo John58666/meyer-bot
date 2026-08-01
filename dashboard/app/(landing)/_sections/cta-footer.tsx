@@ -8,18 +8,15 @@ export function CtaFooter() {
             className="absolute inset-0"
             style={{
               backgroundImage: `
-                radial-gradient(ellipse 60% 50% at 50% 50%, rgba(249, 115, 22, 0.1) 0%, transparent 70%),
-                radial-gradient(ellipse 50% 60% at 80% 20%, rgba(251, 146, 60, 0.06) 0%, transparent 60%)
+                radial-gradient(ellipse 60% 50% at 50% 50%, rgba(255, 107, 107, 0.08) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 60% at 80% 20%, rgba(255, 107, 107, 0.04) 0%, transparent 60%)
               `,
             }}
           />
         </div>
 
         <div className="mx-auto max-w-2xl text-center">
-          <h2
-            className="text-[clamp(28px,5vw,48px)] font-extrabold tracking-tight text-zf-text"
-            style={{ fontFamily: "'DM Sans', sans-serif" }}
-          >
+          <h2 className="font-display text-[clamp(28px,5vw,48px)] font-extrabold tracking-tight text-zf-text">
             Tu negocio merece atender{" "}
             <span className="text-zf-primary">24/7</span>
           </h2>
@@ -30,10 +27,10 @@ export function CtaFooter() {
 
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <a
-              href="https://wa.me/573226541957?text=Hola,%20quiero%20empezar%20con%20Nova"
+              href="https://wa.me/573226541957?text=Hola,%20quiero%20empezar%20con%20NovaFlow"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-zf-primary px-8 py-4 text-base font-semibold text-white transition-all duration-160 ease-out hover:bg-[#e06200] hover:-translate-y-0.5 active:scale-[0.97] sm:w-auto"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-zf-primary px-8 py-4 text-base font-semibold text-white transition-all duration-160 ease-out hover:brightness-110 hover:-translate-y-0.5 active:scale-[0.97] sm:w-auto"
             >
               <svg
                 width="20"
@@ -55,31 +52,29 @@ export function CtaFooter() {
         </div>
       </section>
 
-      <footer className="border-t border-zf-border/50 bg-zf-surface/50 px-6 py-10 lg:px-12">
+      <footer className="border-t border-zf-border/50 bg-zf-surface/30 px-6 py-10 lg:px-12">
         <div className="mx-auto max-w-5xl">
           <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
-            <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-zf-primary">
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                  <path d="M2 17l10 5 10-5" />
-                  <path d="M2 12l10 5 10-5" />
-                </svg>
-              </div>
-              <span
-                className="text-base font-bold tracking-tight text-zf-text"
-                style={{ fontFamily: "'DM Sans', sans-serif" }}
+            <div className="flex items-center gap-2.5">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 28 28"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
               >
-                Nova
+                <defs>
+                  <linearGradient id="footerGrad" x1="0" y1="0" x2="28" y2="28">
+                    <stop stopColor="#818cf8" />
+                    <stop offset="1" stopColor="#a78bfa" />
+                  </linearGradient>
+                </defs>
+                <path d="M14 2L3 8l11 5.5L25 8l-11-6z" stroke="url(#footerGrad)" strokeWidth="2" strokeLinejoin="round" />
+                <path d="M3 12v4l11 5.5L25 16v-4" stroke="url(#footerGrad)" strokeWidth="2" strokeLinejoin="round" />
+                <path d="M3 16v4l11 5.5L25 20v-4" stroke="url(#footerGrad)" strokeWidth="1.5" strokeLinejoin="round" opacity="0.5" />
+              </svg>
+              <span className="font-display text-base font-extrabold tracking-tight text-zf-text">
+                Nova<span className="bg-gradient-to-r from-zf-primary to-violet-300 bg-clip-text text-transparent">Flow</span>
               </span>
             </div>
 

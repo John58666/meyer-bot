@@ -191,8 +191,8 @@ body {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 9998;
-  opacity: 0.035;
+  z-index: 9990;
+  opacity: 0.04;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
   background-repeat: repeat;
   background-size: 200px 200px;
@@ -200,9 +200,28 @@ body {
 
 @media (max-width: 767px) {
   .grain {
-    opacity: 0.02;
-    background-size: 100px 100px;
+    display: none;
   }
+}
+
+/* Landing dark theme overrides */
+.landing-dark {
+  --zf-bg: #0a0a0f;
+  --zf-surface: oklch(15% 0.01 280);
+  --zf-primary: #818cf8;
+  --zf-text: #eeedf2;
+  --zf-text-secondary: oklch(80% 0.005 280);
+  --zf-text-muted: oklch(60% 0.005 280);
+  --zf-border: oklch(25% 0.01 280);
+  --zf-accent-bg: oklch(20% 0.08 270 / 0.3);
+  --zf-accent-text: #a5b4fc;
+  --zf-success-bg: oklch(20% 0.06 150 / 0.2);
+  --zf-success-text: #34d399;
+  --zf-warning-bg: oklch(20% 0.06 80 / 0.2);
+  --zf-warning-text: #fbbf24;
+  --zf-error-bg: oklch(20% 0.05 15 / 0.2);
+  --zf-error-text: #f87171;
+  --zf-neutral-bg: oklch(18% 0.005 280);
 }
 
 /* Chat mockup animations */
@@ -218,7 +237,7 @@ body {
 }
 
 .chat-mock .msg.client {
-  background: #f97316;
+  background: var(--zf-primary);
   color: #fff;
   align-self: flex-end;
   border-bottom-right-radius: 4px;
@@ -226,15 +245,15 @@ body {
 }
 
 .chat-mock .msg.bot {
-  background: #fef3ee;
-  color: #584237;
+  background: var(--zf-surface);
+  color: var(--zf-text-secondary);
   align-self: flex-start;
   border-bottom-left-radius: 4px;
-  border: 1px solid #fde0d1;
+  border: 1px solid var(--zf-border);
 }
 
 .chat-mock .msg.bot strong {
-  color: #251913;
+  color: var(--zf-text);
 }
 
 .chat-mock .msg:nth-child(1) { animation-delay: 0.2s; }
@@ -249,10 +268,10 @@ body {
   gap: 4px;
   padding: 8px 12px;
   align-self: flex-start;
-  background: #fef3ee;
+  background: var(--zf-surface);
   border-radius: 12px;
   border-bottom-left-radius: 4px;
-  border: 1px solid #fde0d1;
+  border: 1px solid var(--zf-border);
   opacity: 0;
   animation: fadeUp 0.4s ease 2.7s forwards;
 }
@@ -261,7 +280,7 @@ body {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: #c49a7c;
+  background: var(--zf-text-muted);
   animation: typing 1.4s infinite;
 }
 

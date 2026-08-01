@@ -100,7 +100,7 @@ export function PosLayoutV2({ businessId }: Props) {
       <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-zf-border/50 bg-zf-surface py-16">
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-zf-error-bg"><AlertCircle className="h-7 w-7 text-zf-error-text" /></div>
         <p className="text-sm font-semibold text-zf-error-text">{error}</p>
-        <button type="button" onClick={loadData} className="rounded-xl bg-zf-primary px-6 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90">Reintentar</button>
+        <button type="button" onClick={loadData} className="rounded-xl bg-zinc-800 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90">Reintentar</button>
       </div>
     )
   }

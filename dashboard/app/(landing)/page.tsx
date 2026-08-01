@@ -6,12 +6,14 @@ import { Features } from "./_sections/features";
 import { Industries } from "./_sections/industries";
 import { Demo } from "./_sections/demo";
 import { Pricing } from "./_sections/pricing";
+import { ComingSoon } from "./_sections/coming-soon";
+import { Expansion } from "./_sections/expansion";
 import { Faq } from "./_sections/faq";
 import { CtaFooter } from "./_sections/cta-footer";
 
 export default function LandingPage() {
   return (
-    <div className="relative overflow-x-hidden">
+    <div className="landing-dark relative overflow-x-hidden">
       <div className="grain" />
       <Hero />
       <SocialProof />
@@ -21,6 +23,8 @@ export default function LandingPage() {
       <Industries />
       <Demo />
       <Pricing />
+      <ComingSoon />
+      <Expansion />
       <Faq />
       <CtaFooter />
     </div>

@@ -7,7 +7,7 @@ const plans = [
     name: "Starter",
     sub: "1 a 5 profesionales",
     monthly: 120000,
-    annual: 110000,
+    annual: 100000,
     features: [
       "Bot WhatsApp completo",
       "Dashboard web",
@@ -23,7 +23,7 @@ const plans = [
     name: "Pro",
     sub: "6 a 12 profesionales",
     monthly: 180000,
-    annual: 160000,
+    annual: 150000,
     features: [
       "Todo lo de Starter",
       "Dashboard completo",
@@ -39,7 +39,7 @@ const plans = [
     name: "Business",
     sub: "13 a 20 profesionales",
     monthly: 260000,
-    annual: 230000,
+    annual: 220000,
     features: [
       "Todo lo de Pro",
       "Múltiples sucursales",
@@ -64,13 +64,10 @@ export function Pricing() {
     }).format(n);
 
   return (
-    <section id="precios" className="bg-zf-surface/50 px-6 py-20 lg:px-12">
+    <section id="precios" className="bg-zf-surface/30 px-6 py-20 lg:px-12">
       <div className="mx-auto max-w-5xl">
         <div className="mb-10 text-center">
-          <h2
-            className="text-[clamp(28px,4vw,44px)] font-extrabold tracking-tight text-zf-text"
-            style={{ fontFamily: "'DM Sans', sans-serif" }}
-          >
+          <h2 className="font-display text-[clamp(28px,4vw,44px)] font-extrabold tracking-tight text-zf-text">
             Planes <span className="text-zf-primary">simples</span>, sin letra
             pequeña
           </h2>
@@ -80,7 +77,7 @@ export function Pricing() {
           </p>
         </div>
 
-        <div className="mb-10 flex items-center justify-center gap-3">
+        <div className="relative mb-10 flex items-center justify-center gap-3">
           <span
             className={`text-sm font-medium transition-colors duration-200 ${
               !annual ? "text-zf-text" : "text-zf-text-muted"
@@ -100,27 +97,25 @@ export function Pricing() {
               }`}
             />
           </button>
-          <span
-            className={`text-sm font-medium transition-colors duration-200 ${
-              annual ? "text-zf-text" : "text-zf-text-muted"
-            }`}
-          >
+          <span className="relative text-sm font-medium transition-colors duration-200 text-zf-text">
             Anual
-          </span>
-          {annual && (
-            <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700">
-              -15%
+            <span
+              className={`absolute -right-16 top-1/2 -translate-y-1/2 rounded-full bg-green-400/10 px-2 py-0.5 text-xs font-bold text-green-400 transition-opacity duration-200 ${
+                annual ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              -17%
             </span>
-          )}
+          </span>
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`relative flex flex-col rounded-2xl border bg-zf-surface p-8 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg ${
+              className={`relative flex flex-col rounded-2xl border bg-zf-surface/80 p-8 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-zf-primary/5 ${
                 plan.featured
-                  ? "border-zf-primary/40 shadow-lg ring-1 ring-zf-primary/10"
+                  ? "border-zf-primary/30 shadow-lg shadow-zf-primary/5 ring-1 ring-zf-primary/10"
                   : "border-zf-border/50"
               }`}
             >
@@ -136,10 +131,7 @@ export function Pricing() {
               <div className="text-xs text-zf-text-muted">{plan.sub}</div>
 
               <div className="mt-5 mb-6">
-                <span
-                  className="text-[clamp(32px,4vw,40px)] font-extrabold text-zf-text"
-                  style={{ fontFamily: "'DM Sans', sans-serif" }}
-                >
+                <span className="font-display text-[clamp(32px,4vw,40px)] font-extrabold text-zf-text">
                   {formatCOP(annual ? plan.annual : plan.monthly)}
                 </span>
                 <span className="text-sm text-zf-text-muted">/mes</span>
@@ -149,7 +141,7 @@ export function Pricing() {
                 {plan.features.map((f) => (
                   <li key={f} className="flex items-start gap-2 text-sm text-zf-text-secondary">
                     <svg
-                      className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500"
+                      className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-400"
                       width="16"
                       height="16"
                       viewBox="0 0 24 24"
@@ -167,12 +159,12 @@ export function Pricing() {
               </ul>
 
               <a
-                href={`https://wa.me/573226541957?text=Hola,%20quiero%20información%20sobre%20el%20plan%20${plan.name}%20de%20Nova`}
+                href={`https://wa.me/573226541957?text=Hola,%20quiero%20información%20sobre%20el%20plan%20${plan.name}%20de%20NovaFlow`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`block w-full rounded-full py-3 text-center text-sm font-semibold transition-all duration-160 ease-out active:scale-[0.97] ${
                   plan.featured
-                    ? "bg-zf-primary text-white hover:bg-[#e06200]"
+                    ? "bg-zf-primary text-white hover:brightness-110"
                     : "border-2 border-zf-border text-zf-text hover:border-zf-primary hover:text-zf-primary"
                 }`}
               >
@@ -185,7 +177,7 @@ export function Pricing() {
         <p className="mt-8 text-center text-sm text-zf-text-muted">
           ¿Más de 20 profesionales?{" "}
           <a
-            href="https://wa.me/573226541957?text=Hola,%20quiero%20cotizar%20un%20plan%20personalizado%20de%20Nova"
+            href="https://wa.me/573226541957?text=Hola,%20quiero%20cotizar%20un%20plan%20personalizado%20de%20NovaFlow"
             target="_blank"
             rel="noopener noreferrer"
             className="font-semibold text-zf-primary underline underline-offset-2"

@@ -1,9 +1,15 @@
-# Nova
-> Bot de WhatsApp con inteligencia artificial para agendar citas. Hecho en Colombia.
+# NovaFlow
+> Bot de WhatsApp con inteligencia artificial para agendar citas. Suite de productos con IA. Hecho en Colombia.
 
 ## Core pages
 - https://zyvenshop.com/: Landing page — información del producto, precios y FAQ
 - https://zyvenshop.com/login: Acceso al dashboard de gestión
+
+## Products
+- NovaFlow: Bot WhatsApp + Dashboard para agendamiento de citas (peluquerías, clínicas, consultorios)
+- NovaRestaurants: Sistema de gestión para restaurantes con IA (próximamente)
+- NovaEat: Delivery y pedidos por WhatsApp (próximamente)
+- NovaSuite: Sistema de gestión hotelera automatizada (próximamente)
 
 ## Features
 - Bot WhatsApp conversacional con IA en español colombiano
@@ -23,9 +29,9 @@
 - Spas y centros de estética
 - Psicólogos y terapeutas
 - Gimnasios y entrenadores personales
-- Nutricionistas
-- Fisioterapeutas
-- Cualquier negocio que maneje citas
+- Nutricionistas y fisioterapeutas
+- Restaurantes (próximamente)
+- Hoteles (próximamente)
 
 ## Pricing
 - Plan Starter: $120,000 COP/mes (1-5 profesionales)

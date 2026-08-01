@@ -1,4 +1,5 @@
 import NextAuth from "next-auth";
+import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { authConfig } from "./auth.config";
 
@@ -6,9 +7,9 @@ const nextAuthMiddleware = NextAuth(authConfig).auth;
 
 export default function middleware(request: NextRequest) {
   if (request.nextUrl.pathname === "/") {
-    return;
+    return NextResponse.next();
   }
-  return nextAuthMiddleware(request as Parameters<typeof nextAuthMiddleware>[0]);
+  return nextAuthMiddleware(request as never);
 }
 
 export const config = {

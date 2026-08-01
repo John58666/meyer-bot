@@ -25,7 +25,7 @@ export function PosCatalogV2({ services, products, activeTab, onTabChange, onAdd
           onClick={() => onTabChange("services")}
           className={[
             "flex-1 rounded-lg px-4 py-2 text-xs font-semibold transition-all",
-            activeTab === "services" ? "bg-zf-primary text-white shadow-sm" : "text-zf-text-secondary hover:text-zf-text",
+            activeTab === "services" ? "bg-zinc-800 text-white shadow-sm" : "text-zf-text-secondary hover:text-zf-text",
           ].join(" ")}
         >
           Servicios ({services.length})
@@ -35,7 +35,7 @@ export function PosCatalogV2({ services, products, activeTab, onTabChange, onAdd
           onClick={() => onTabChange("products")}
           className={[
             "flex-1 rounded-lg px-4 py-2 text-xs font-semibold transition-all",
-            activeTab === "products" ? "bg-zf-primary text-white shadow-sm" : "text-zf-text-secondary hover:text-zf-text",
+            activeTab === "products" ? "bg-zinc-800 text-white shadow-sm" : "text-zf-text-secondary hover:text-zf-text",
           ].join(" ")}
         >
           Productos ({products.length})
@@ -50,11 +50,11 @@ export function PosCatalogV2({ services, products, activeTab, onTabChange, onAdd
                 key={s.id}
                 type="button"
                 onClick={() => onAddService(s)}
-                className="flex flex-col items-start gap-1 rounded-xl border border-zf-border/30 bg-white p-3 text-left transition-all hover:border-zf-primary/40 hover:shadow-sm active:scale-[0.97]"
+                className="flex flex-col items-start gap-1 rounded-xl border border-zf-border/30 bg-white p-3 text-left transition-all hover:border-zinc-800/40 hover:shadow-sm active:scale-[0.97]"
               >
                 <span className="text-sm font-semibold text-zf-text">{s.name}</span>
                 <span className="text-xs text-zf-text-secondary">{s.duration_minutes} min</span>
-                <span className="text-sm font-bold text-zf-accent-text">{formatCurrency(s.price)}</span>
+                <span className="text-sm font-bold text-zinc-700">{formatCurrency(s.price)}</span>
               </button>
             ))}
           </div>
@@ -65,11 +65,11 @@ export function PosCatalogV2({ services, products, activeTab, onTabChange, onAdd
                 key={p.id}
                 type="button"
                 onClick={() => onAddProduct(p)}
-                className="flex flex-col items-start gap-1 rounded-xl border border-zf-border/30 bg-white p-3 text-left transition-all hover:border-zf-primary/40 hover:shadow-sm active:scale-[0.97]"
+                className="flex flex-col items-start gap-1 rounded-xl border border-zf-border/30 bg-white p-3 text-left transition-all hover:border-zinc-800/40 hover:shadow-sm active:scale-[0.97]"
               >
                 <span className="text-sm font-semibold text-zf-text">{p.name}</span>
                 <span className="text-xs text-zf-text-muted">{p.product_type === "supply" ? "Insumo" : `Stock: ${p.current_stock}`}</span>
-                <span className="text-sm font-bold text-zf-accent-text">{p.product_type === "supply" ? "N/A" : formatCurrency(p.sale_price ?? 0)}</span>
+                <span className="text-sm font-bold text-zinc-700">{p.product_type === "supply" ? "N/A" : formatCurrency(p.sale_price ?? 0)}</span>
               </button>
             ))}
           </div>

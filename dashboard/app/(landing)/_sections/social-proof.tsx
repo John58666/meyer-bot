@@ -31,15 +31,7 @@ function useCountUp(end: number, duration: number, startCounting: boolean) {
   return count;
 }
 
-function StatCounter({
-  value,
-  suffix,
-  label,
-}: {
-  value: number;
-  suffix: string;
-  label: string;
-}) {
+function useInView() {
   const [inView, setInView] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -54,21 +46,31 @@ function StatCounter({
           observer.disconnect();
         }
       },
-      { threshold: 0.5 }
+      { threshold: 0.3 }
     );
 
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
 
+  return { ref, inView };
+}
+
+function StatCounter({
+  value,
+  suffix,
+  label,
+}: {
+  value: number;
+  suffix: string;
+  label: string;
+}) {
+  const { ref, inView } = useInView();
   const count = useCountUp(value, 2000, inView);
 
   return (
     <div ref={ref} className="flex flex-col items-center gap-1 text-center">
-      <div
-        className="text-[clamp(28px,4vw,44px)] font-extrabold tracking-tight text-zf-text"
-        style={{ fontFamily: "'DM Sans', sans-serif" }}
-      >
+      <div className="font-display text-[clamp(28px,4vw,44px)] font-extrabold tracking-tight text-zf-text">
         {count}
         {suffix}
       </div>
@@ -79,22 +81,18 @@ function StatCounter({
 
 export function SocialProof() {
   return (
-    <section className="relative border-y border-zf-border/50 bg-zf-surface/50 px-6 py-12 lg:px-12">
+    <section className="relative border-y border-zf-border/50 bg-zf-surface/30 px-6 py-12 lg:px-12">
       <div className="mx-auto max-w-5xl">
         <div className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-wrap items-center justify-center gap-8 md:justify-start">
-            <StatCounter value={3} suffix="+" label="Negocios activos" />
+            <StatCounter value={20} suffix="+" label="Empresas confían en NovaFlow" />
             <div className="hidden md:block h-12 w-px bg-zf-border/50" />
-            <StatCounter
-              value={350}
-              suffix="+"
-              label="Citas agendadas este mes"
-            />
+            <StatCounter value={2500} suffix="+" label="Citas agendadas este mes" />
             <div className="hidden md:block h-12 w-px bg-zf-border/50" />
-            <StatCounter value={98} suffix="%" label="Tiempo activo del bot" />
+            <StatCounter value={99.9} suffix="%" label="Tiempo activo del bot" />
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-4 md:justify-end">
+          <div className="flex flex-wrap items-center justify-center gap-3 md:justify-end">
             <span className="text-sm text-zf-text-muted">Usado por:</span>
             <Badge label="Peluquerías" />
             <Badge label="Clínicas" />
@@ -109,7 +107,7 @@ export function SocialProof() {
 
 function Badge({ label }: { label: string }) {
   return (
-    <span className="rounded-full border border-zf-border/50 bg-zf-accent-bg/50 px-3 py-1 text-xs text-zf-accent-text">
+    <span className="rounded-full border border-zf-border/50 bg-zf-accent-bg/30 px-3 py-1 text-xs text-zf-accent-text">
       {label}
     </span>
   );

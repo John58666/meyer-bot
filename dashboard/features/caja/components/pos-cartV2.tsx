@@ -42,7 +42,7 @@ export function PosCartV2({ items, paymentMethods, onUpdateQuantity, onRemoveIte
   const total = Math.round((subtotal + iva) * 100) / 100
 
   const handleCheckout = () => {
-    if (!paymentMethodId || items.length === 0) return
+    if (items.length === 0) return
     setShowSuccess(true)
   }
 
@@ -62,7 +62,7 @@ export function PosCartV2({ items, paymentMethods, onUpdateQuantity, onRemoveIte
         <p className="text-sm text-zf-text-secondary">Total: {formatCurrency(total)}</p>
         <p className="text-xs text-zf-text-muted">{items.length} items</p>
         <button type="button" onClick={handleNewSale}
-          className="mt-2 rounded-xl bg-zf-primary px-6 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-[0.97]">
+          className="mt-2 rounded-xl bg-zinc-800 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-[0.97]">
           Nueva Venta
         </button>
       </div>
@@ -88,12 +88,12 @@ export function PosCartV2({ items, paymentMethods, onUpdateQuantity, onRemoveIte
                 </div>
                 <div className="flex items-center gap-1">
                   <button type="button" onClick={() => onUpdateQuantity(item.id, item.type, item.quantity - 1)}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary hover:bg-zf-accent-bg"><Minus className="h-3 w-3" /></button>
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary hover:bg-zinc-100"><Minus className="h-3 w-3" /></button>
                   <span className="w-8 text-center text-sm font-semibold text-zf-text">{item.quantity}</span>
                   <button type="button" onClick={() => onUpdateQuantity(item.id, item.type, item.quantity + 1)}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary hover:bg-zf-accent-bg"><Plus className="h-3 w-3" /></button>
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary hover:bg-zinc-100"><Plus className="h-3 w-3" /></button>
                 </div>
-                <span className="w-16 text-right text-sm font-bold text-zf-accent-text">{formatCurrency(item.price * item.quantity)}</span>
+                <span className="w-16 text-right text-sm font-bold text-zinc-700">{formatCurrency(item.price * item.quantity)}</span>
                 <button type="button" onClick={() => onRemoveItem(item.id, item.type)}
                   className="flex h-7 w-7 items-center justify-center rounded-lg text-zf-text-muted hover:bg-zf-error-bg hover:text-zf-error-text"><Trash2 className="h-3.5 w-3.5" /></button>
               </div>
@@ -117,7 +117,7 @@ export function PosCartV2({ items, paymentMethods, onUpdateQuantity, onRemoveIte
                 <button key={m.id} type="button" onClick={() => setPaymentMethodId(m.id)}
                   className={[
                     "flex flex-col items-center gap-1 rounded-lg px-2 py-2 text-xs font-medium transition-all",
-                    paymentMethodId === m.id ? "bg-zf-primary text-white shadow-sm" : "border border-zf-border/30 text-zf-text-secondary hover:bg-zf-accent-bg",
+                    paymentMethodId === m.id ? "bg-zinc-800 text-white shadow-sm" : "border border-zf-border/30 text-zf-text-secondary hover:bg-zinc-100",
                   ].join(" ")}>
                   {METHOD_ICONS[m.tipo] ?? null}
                   <span className="truncate">{m.name}</span>
@@ -127,8 +127,8 @@ export function PosCartV2({ items, paymentMethods, onUpdateQuantity, onRemoveIte
           </div>
         )}
 
-        <button type="button" onClick={handleCheckout} disabled={items.length === 0 || !paymentMethodId}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-zf-primary px-4 py-3 text-sm font-bold text-white shadow-sm transition-all hover:opacity-90 disabled:opacity-40 active:scale-[0.97]">
+        <button type="button" onClick={handleCheckout} disabled={items.length === 0}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-800 px-4 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-zinc-700 disabled:opacity-40 active:scale-[0.97]">
           Cobrar {formatCurrency(total)}
         </button>
         {items.length > 0 && !paymentMethodId && (
