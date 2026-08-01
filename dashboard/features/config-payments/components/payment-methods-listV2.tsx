@@ -31,6 +31,7 @@ export function PaymentMethodsListV2({ businessId }: Props) {
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editName, setEditName] = useState("")
   const [editTipo, setEditTipo] = useState("")
+  const [editInstructions, setEditInstructions] = useState("")
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -53,6 +54,7 @@ export function PaymentMethodsListV2({ businessId }: Props) {
     setEditingId(m.id)
     setEditName(m.name)
     setEditTipo(m.tipo)
+    setEditInstructions(typeof m.instructions === "string" ? m.instructions : JSON.stringify(m.instructions) || "")
     setError("")
   }
 
@@ -61,10 +63,10 @@ export function PaymentMethodsListV2({ businessId }: Props) {
   async function saveEdit(m: PaymentMethod) {
     if (!editName.trim()) return
     setSaving(true)
-    const res = await updatePaymentMethod(m.id, businessId, { name: editName.trim(), tipo: editTipo })
+    const res = await updatePaymentMethod(m.id, businessId, { name: editName.trim(), tipo: editTipo, instructions: editInstructions.trim() || undefined })
     setSaving(false)
     if ("error" in res && res.error) { setError(res.error); return }
-    setMethods(prev => prev.map(x => x.id === m.id ? { ...x, name: editName.trim(), tipo: editTipo as PaymentMethod["tipo"] } : x))
+    setMethods(prev => prev.map(x => x.id === m.id ? { ...x, name: editName.trim(), tipo: editTipo as PaymentMethod["tipo"], instructions: editInstructions.trim() as unknown as Record<string, unknown> } : x))
     setEditingId(null)
   }
 
@@ -83,6 +85,7 @@ export function PaymentMethodsListV2({ businessId }: Props) {
                 <select value={editTipo} onChange={e => setEditTipo(e.target.value)} className="w-full rounded-lg border border-zf-border bg-white px-3 py-2 text-xs text-zf-text focus:border-zf-primary focus:outline-none">
                   {TIPO_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
+                <textarea value={editInstructions} onChange={e => setEditInstructions(e.target.value)} placeholder="Instrucciones de pago (ej: cuenta bancaria, alias, datos para transferencia)" rows={3} className="w-full rounded-lg border border-zf-border bg-white px-3 py-2 text-xs text-zf-text placeholder:text-zf-text-muted focus:border-zf-primary focus:outline-none" />
                 <div className="flex gap-2">
                   <button onClick={() => saveEdit(m)} disabled={saving} className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-zf-primary px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"><Check className="h-3.5 w-3.5" />Guardar</button>
                   <button onClick={cancelEdit} className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-zf-border px-3 py-2 text-xs font-semibold text-zf-text-secondary"><X className="h-3.5 w-3.5" />Cancelar</button>

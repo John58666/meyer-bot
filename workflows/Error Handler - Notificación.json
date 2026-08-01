@@ -1,0 +1,104 @@
+{
+  "name": "Error Handler - Notificación",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Formatear mensaje de error para alerta\nconst error = $input.first().json;\n\nconst workflowName = error.workflow?.name || 'Desconocido';\nconst executionId = error.execution?.id || 'N/A';\nconst errorMessage = error.execution?.error?.message || 'Error sin mensaje';\nconst lastNode = error.execution?.lastNodeExecuted || 'N/A';\nconst startedAt = error.execution?.startedAt || new Date().toISOString();\n\nconst mensaje = `⚠️ *Error en Workflow* ⚠️\\n\\n📋 *Workflow:* ${workflowName}\\n🔗 *Execution ID:* ${executionId}\\n🕐 *Inicio:* ${startedAt}\\n📍 *Último nodo:* ${lastNode}\\n❌ *Error:* ${errorMessage}`;\n\nreturn [{ json: { mensaje, workflowName, executionId, errorMessage } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        450,
+        300
+      ],
+      "name": "Formatear Error"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $('Formatear Error').item.json.workflowName.includes('WhatsApp') ? 'MEYER_BOT' : 'MEYER_BOT' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.EVOLUTION_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $env.OWNER_NUMBER || '573002273807' }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $('Formatear Error').item.json.mensaje }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        650,
+        300
+      ],
+      "name": "Alertar por WhatsApp"
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Formatear Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Error": {
+      "main": [
+        [
+          {
+            "node": "Alertar por WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alertar por WhatsApp": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "pinData": {},
+  "versionId": "d2a5b8c1-e3f4-4a67-8b90-c1d2e3f4a5b6",
+  "active": true,
+  "settings": {},
+  "tags": [],
+  "id": "P4kL8mN2xR1vY7wQ",
+  "createdAt": "2026-07-28T00:00:00.000Z",
+  "updatedAt": "2026-07-28T00:00:00.000Z"
+}

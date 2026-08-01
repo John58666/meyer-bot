@@ -1,17 +1,15 @@
 -- ============================================================
--- ⚠️ QUERIES DEPRECADAS — usar API del dashboard en su lugar
+-- ⚠️ QUERIES HISTÓRICAS — desde Jul/2026 las queries viven
+--    directamente en el workflow JSON de n8n y buscan duración
+--    desde la tabla `services` (duration_minutes + buffer_minutes)
 -- ============================================================
--- En lugar de estas queries SQL, los workflows de n8n deben llamar:
---
---   POST /api/availability/check
---     Body: { fecha: "2026-08-15", hora: "14:00", professionalId: 2 }
---     Response: { available: true/false, reason: "conflict"|"closed"|... }
---
---   GET /api/appointments/slots?fecha=2026-08-15&professionalId=2
---     Response: { slots: ["09:00", "09:30", ...] }
---
--- Los endpoints ya incluyen toda la lógica: schedule_text,
--- schedule_exceptions (cerrado + horario_especial), y colisiones.
+-- Cambios Backend v2 (Jul 2026):
+--   1. Collision checks usan COALESCE(hora_fin, hora + '30min')
+--      en vez de hora + (30 + buffer) * interval
+--   2. INSERT appointments ahora incluye hora_fin calculada
+--      via subquery a services.duration_minutes + businesses.buffer_minutes
+--   3. UPDATE reagend recalcula hora_fin
+--   4. generateSlots() trunca slots donde servicio+cabezote no cabe
 -- ============================================================
 
 -- ============================================================

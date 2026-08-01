@@ -136,6 +136,28 @@ export function describirDetalle(accion: string, detalle: Record<string, unknown
       ].filter(Boolean) as string[];
     case "delete_professional_schedule":
       return ["Horario restaurado al del negocio"];
+    case "create_product":
+    case "update_product":
+      return [
+        detalle.name ? `Producto: ${detalle.name}` : null,
+        detalle.product_type ? `Tipo: ${detalle.product_type === "supply" ? "Insumo" : "Venta Directa"}` : null,
+        detalle.cost_price != null ? `Costo: $${detalle.cost_price}` : null,
+        detalle.email ? `Email: ${detalle.email}` : null,
+      ].filter(Boolean) as string[];
+    case "toggle_product":
+      return [
+        detalle.active !== undefined ? `Estado: ${detalle.active ? "Activado" : "Desactivado"}` : null,
+      ].filter(Boolean) as string[];
+    case "delete_product":
+      return ["Producto eliminado"];
+    case "create_cliente":
+    case "update_cliente":
+      return [
+        detalle.nombre ? `Cliente: ${detalle.nombre}` : null,
+        detalle.numero ? `Teléfono: ${detalle.numero}` : null,
+        detalle.email ? `Email: ${detalle.email}` : null,
+        detalle.direccion ? `Dirección: ${detalle.direccion}` : null,
+      ].filter(Boolean) as string[];
     default:
       return [JSON.stringify(detalle, null, 2)];
   }

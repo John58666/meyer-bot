@@ -155,13 +155,32 @@ Envía la notificación al dueño vía Evolution API.
 
 ---
 
+### Colisión por rango (Backend v2)
+```sql
+AND s.hora < COALESCE(a.hora_fin, a.hora + INTERVAL '30 minutes')
+```
+En vez del antiguo `hora + (30 + buffer) * interval`. Ahora la colisión se detecta
+por overlap real del rango `[hora, hora_fin)` entre la cita existente y la propuesta.
+
+---
+
 ## Nodos de nueva cita
 
 ### Insertar Cita (Postgres)
 ```sql
-INSERT INTO appointments (...)
-VALUES (...)
-RETURNING id, fecha::text, hora::text, nombre, servicio, numero, estado, professional_id
+INSERT INTO appointments (business_id, fecha, hora, nombre, servicio, numero, estado, professional_id, hora_fin)
+VALUES (...,
+  (SELECT MIN(hora_fin_calc) FROM (
+    SELECT hora::time + (COALESCE((
+      SELECT s.duration_minutes + COALESCE(b.buffer_minutes, 0)
+      FROM services s, businesses b
+      WHERE b.id = business_id
+        AND LOWER(s.name) = LOWER(servicio)
+        AND s.business_id = b.id
+    ), 30)) * interval '1 minute' AS hora_fin_calc
+  ) t)
+)
+RETURNING id, fecha::text, hora::text, nombre, servicio, numero, estado, professional_id, hora_fin::text
 ```
 
 ### Sync New Dashboard (HTTP)

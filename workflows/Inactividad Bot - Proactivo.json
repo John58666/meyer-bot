@@ -52,12 +52,12 @@
         0
       ],
       "parameters": {
-        "jsCode": "// ─── FILTRAR Y DECIDIR ACCIÓN POR INACTIVIDAD ───\n// Entrada: items del nodo PostgreSQL\n// Salida: items con acción 'avisar' o 'cerrar'\n// Luego un IF node bifurca según accion === 'avisar'\n\nconst ITEMS = $input.all();\nconst RESULT = [];\n\nconst DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];\n\nfor (const item of ITEMS) {\n  const json = item.json;\n\n  // 1. Parsear schedule_text\n  let scheduleText = {};\n  try {\n    scheduleText = typeof json.schedule_text === 'string'\n      ? JSON.parse(json.schedule_text)\n      : json.schedule_text;\n  } catch (e) {\n    scheduleText = {};\n  }\n\n  // 2. Verificar horario laboral\n  const ahora = new Date();\n  const diaSemana = DIAS[ahora.getDay()];\n  const horaActual = ahora.getHours() * 60 + ahora.getMinutes();\n\n  const horarioHoy = scheduleText[diaSemana];\n  let dentroDeHorario = false;\n\n  if (horarioHoy && horarioHoy.length > 0) {\n    for (const bloque of horarioHoy) {\n      if (bloque.desde && bloque.hasta) {\n        const [hDesde, mDesde] = bloque.desde.split(':').map(Number);\n        const [hHasta, mHasta] = bloque.hasta.split(':').map(Number);\n        const inicio = hDesde * 60 + mDesde;\n        const fin = hHasta * 60 + mHasta;\n        if (horaActual >= inicio && horaActual <= fin) {\n          dentroDeHorario = true;\n          break;\n        }\n      }\n    }\n  }\n\n  if (!dentroDeHorario) continue;\n\n  // 3. Revisar último mensaje del assistant\n  let ultimoMensaje = '';\n  try {\n    const messages = typeof json.messages === 'string'\n      ? JSON.parse(json.messages)\n      : json.messages;\n    if (Array.isArray(messages) && messages.length > 0) {\n      for (let i = messages.length - 1; i >= 0; i--) {\n        if (messages[i].role === 'assistant') {\n          ultimoMensaje = messages[i].content || messages[i].text || '';\n          break;\n        }\n      }\n    }\n  } catch (e) {}\n\n  // 4. Detectar cierre de conversación\n  const patronesCierre = ['CITA_CONFIRMADA', 'GESTIONAR_CITA', 'fuera de horario', 'vuelve mañana', 'gracias por escribir'];\n  if (patronesCierre.some(p => ultimoMensaje.includes(p))) continue;\n\n  // 5. Decidir acción\n  if (json.inactividad_estado === null || json.inactividad_estado === undefined || json.inactividad_estado === '') {\n    RESULT.push({ json: { accion: 'avisar', numero: json.numero, business_id: json.business_id, instance: json.instance } });\n  } else if (json.inactividad_estado === 'avisado') {\n    RESULT.push({ json: { accion: 'cerrar', numero: json.numero, business_id: json.business_id } });\n  }\n}\n\nreturn RESULT;"
+        "jsCode": "// \u2500\u2500\u2500 FILTRAR Y DECIDIR ACCI\u00d3N POR INACTIVIDAD \u2500\u2500\u2500\n// Entrada: items del nodo PostgreSQL\n// Salida: items con acci\u00f3n 'avisar' o 'cerrar'\n// Luego un IF node bifurca seg\u00fan accion === 'avisar'\n\nconst ITEMS = $input.all();\nconst RESULT = [];\n\nconst DIAS = ['domingo', 'lunes', 'martes', 'mi\u00e9rcoles', 'jueves', 'viernes', 's\u00e1bado'];\n\nfor (const item of ITEMS) {\n  const json = item.json;\n\n  // 1. Parsear schedule_text\n  let scheduleText = {};\n  try {\n    scheduleText = typeof json.schedule_text === 'string'\n      ? JSON.parse(json.schedule_text)\n      : json.schedule_text;\n  } catch (e) {\n    scheduleText = {};\n  }\n\n  // 2. Verificar horario laboral\n  const ahora = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }));\n  const diaSemana = DIAS[ahora.getDay()];\n  const horaActual = ahora.getHours() * 60 + ahora.getMinutes();\n\n  const horarioHoy = scheduleText[diaSemana];\n  let dentroDeHorario = false;\n\n  if (horarioHoy && horarioHoy.length > 0) {\n    for (const bloque of horarioHoy) {\n      if (bloque.desde && bloque.hasta) {\n        const [hDesde, mDesde] = bloque.desde.split(':').map(Number);\n        const [hHasta, mHasta] = bloque.hasta.split(':').map(Number);\n        const inicio = hDesde * 60 + mDesde;\n        const fin = hHasta * 60 + mHasta;\n        if (horaActual >= inicio && horaActual <= fin) {\n          dentroDeHorario = true;\n          break;\n        }\n      }\n    }\n  }\n\n  if (!dentroDeHorario) continue;\n\n  // 3. Revisar \u00faltimo mensaje del assistant\n  let ultimoMensaje = '';\n  try {\n    const messages = typeof json.messages === 'string'\n      ? JSON.parse(json.messages)\n      : json.messages;\n    if (Array.isArray(messages) && messages.length > 0) {\n      for (let i = messages.length - 1; i >= 0; i--) {\n        if (messages[i].role === 'assistant') {\n          ultimoMensaje = messages[i].content || messages[i].text || '';\n          break;\n        }\n      }\n    }\n  } catch (e) {}\n\n  // 4. Detectar cierre de conversaci\u00f3n\n  const patronesCierre = ['CITA_CONFIRMADA', 'GESTIONAR_CITA', 'fuera de horario', 'vuelve ma\u00f1ana', 'gracias por escribir'];\n  if (patronesCierre.some(p => ultimoMensaje.includes(p))) continue;\n\n  // 5. Decidir acci\u00f3n\n  if (json.inactividad_estado === null || json.inactividad_estado === undefined || json.inactividad_estado === '') {\n    RESULT.push({ json: { accion: 'avisar', numero: json.numero, business_id: json.business_id, instance: json.instance } });\n  } else if (json.inactividad_estado === 'avisado') {\n    RESULT.push({ json: { accion: 'cerrar', numero: json.numero, business_id: json.business_id } });\n  }\n}\n\nreturn RESULT;"
       }
     },
     {
       "id": "if-bifurcar-001",
-      "name": "¿Es para avisar?",
+      "name": "\u00bfEs para avisar?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
@@ -87,7 +87,7 @@
     },
     {
       "id": "http-send-001",
-      "name": "Enviar ¿Sigues Ahí?",
+      "name": "Enviar \u00bfSigues Ah\u00ed?",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
@@ -113,7 +113,7 @@
         "sendBody": true,
         "contentType": "raw",
         "rawContentType": "application/json",
-        "body": "={\n  \"number\": \"{{ $json.numero }}\",\n  \"text\": \"¡Hola! ¿Sigues ahí? 😊 Hace rato no sé de ti. Si quieres retomamos donde íbamos o dime si prefieres empezar de nuevo.\"\n}",
+        "body": "={\n  \"number\": \"{{ $json.numero }}\",\n  \"text\": \"\u00a1Hola! \u00bfSigues ah\u00ed? \ud83d\ude0a Hace rato no s\u00e9 de ti. Si quieres retomamos donde \u00edbamos o dime si prefieres empezar de nuevo.\"\n}",
         "options": {}
       }
     },
@@ -134,7 +134,19 @@
       },
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE conversation_history\nSET inactividad_estado = 'avisado'\nWHERE business_id = {{ $json.business_id }}\n  AND numero = '{{ $json.numero }}'\n  AND (inactividad_estado IS NULL OR inactividad_estado = '');",
+        "query": "UPDATE conversation_history\nSET inactividad_estado = 'avisado'\nWHERE business_id = $1\n  AND numero = $2\n  AND (inactividad_estado IS NULL OR inactividad_estado = '');",
+        "additionalFields": {
+          "values": [
+            {
+              "name": "$1",
+              "value": "={{ $json.business_id }}"
+            },
+            {
+              "name": "$2",
+              "value": "={{ $json.numero }}"
+            }
+          ]
+        },
         "options": {}
       }
     },
@@ -155,7 +167,19 @@
       },
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE conversation_history\nSET inactividad_estado = 'cerrado'\nWHERE business_id = {{ $json.business_id }}\n  AND numero = '{{ $json.numero }}'\n  AND inactividad_estado = 'avisado';",
+        "query": "UPDATE conversation_history\nSET inactividad_estado = 'cerrado'\nWHERE business_id = $1\n  AND numero = $2\n  AND inactividad_estado = 'avisado';",
+        "additionalFields": {
+          "values": [
+            {
+              "name": "$1",
+              "value": "={{ $json.business_id }}"
+            },
+            {
+              "name": "$2",
+              "value": "={{ $json.numero }}"
+            }
+          ]
+        },
         "options": {}
       }
     }
@@ -187,18 +211,18 @@
       "main": [
         [
           {
-            "node": "¿Es para avisar?",
+            "node": "\u00bfEs para avisar?",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "¿Es para avisar?": {
+    "\u00bfEs para avisar?": {
       "main": [
         [
           {
-            "node": "Enviar ¿Sigues Ahí?",
+            "node": "Enviar \u00bfSigues Ah\u00ed?",
             "type": "main",
             "index": 0
           }
@@ -212,7 +236,7 @@
         ]
       ]
     },
-    "Enviar ¿Sigues Ahí?": {
+    "Enviar \u00bfSigues Ah\u00ed?": {
       "main": [
         [
           {

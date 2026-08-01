@@ -59,7 +59,7 @@ export async function togglePaymentMethod(id: number, businessId: number, isActi
   }
 }
 
-export async function updatePaymentMethod(id: number, businessId: number, data: { name: string; tipo: string }) {
+export async function updatePaymentMethod(id: number, businessId: number, data: { name: string; tipo: string; instructions?: string }) {
   const session = await auth()
   if (!session) return { error: "No autenticado" }
   if (session.user.role !== "owner" && session.user.role !== "admin")
@@ -70,8 +70,8 @@ export async function updatePaymentMethod(id: number, businessId: number, data: 
 
   try {
     await pool.query(
-      `UPDATE payment_methods SET name = $1, tipo = $2 WHERE id = $3 AND business_id = $4`,
-      [name, data.tipo, id, businessId]
+      `UPDATE payment_methods SET name = $1, tipo = $2, instructions = $3 WHERE id = $4 AND business_id = $5`,
+      [name, data.tipo, data.instructions || null, id, businessId]
     )
     revalidatePath("/dashboard/configuracion")
     return { ok: true }
