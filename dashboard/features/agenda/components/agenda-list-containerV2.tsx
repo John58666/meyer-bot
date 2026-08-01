@@ -119,15 +119,15 @@ export function AgendaListContainerV2({
 
   const handleComplete = async (id: number) => {
     try {
-      await updateAppointmentStatusV2(id, "Completada")
-      loadData()
+      const result = await updateAppointmentStatusV2(id, "Completada")
+      if ("ok" in result || !("error" in result)) loadData()
     } catch { /* handled in server action */ }
   }
 
   const handleCancel = async (id: number) => {
     try {
-      await updateAppointmentStatusV2(id, "Cancelada")
-      loadData()
+      const result = await updateAppointmentStatusV2(id, "Cancelada")
+      if ("ok" in result || !("error" in result)) loadData()
     } catch { /* handled in server action */ }
   }
 

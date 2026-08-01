@@ -38,7 +38,7 @@ function formatHora(hour: number): string {
 }
 
 function getCurrentTimeTop(hourHeight: number): number {
-  const now = new Date()
+  const now = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Bogota" }))
   const minutes = now.getHours() * 60 + now.getMinutes()
   return (minutes / 60) * hourHeight
 }
