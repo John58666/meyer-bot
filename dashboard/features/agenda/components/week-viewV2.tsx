@@ -61,11 +61,11 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
   const [drawerAppointment, setDrawerAppointment] = useState<AppointmentRow | WeekAppointment | null>(null)
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const initialLoadDone = useRef(false)
 
   const loadData = useCallback(async () => {
     setError("")
-    const hasData = Object.keys(appointments).length > 0
-    if (!hasData) setLoading(true)
+    if (!initialLoadDone.current) setLoading(true)
     else setRefreshing(true)
 
     try {
@@ -80,13 +80,14 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
       setProfessionals(profsRes.professionals)
       if (!initialName && bizRes.name) setBusinessName(bizRes.name)
       setBloqueos(bloqRes.bloqueos)
+      initialLoadDone.current = true
     } catch {
       setError("Error al cargar los datos")
     } finally {
       setLoading(false)
       setRefreshing(false)
     }
-  }, [businessId, selectedProfessionalId, userProfessionalId, initialName])
+  }, [businessId, selectedProfessionalId, userProfessionalId, initialName, currentDay])
 
   useEffect(() => { loadData() }, [loadData])
 
@@ -211,8 +212,8 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
     for (const apt of dayAppointments) {
       const [h, m] = apt.hora.split(":").map(Number)
       const startMin = h * 60 + m
-      const colId = isOwner && (apt as WeekAppointment & { professional_id?: number }).professional_id
-        ? (apt as WeekAppointment & { professional_id?: number }).professional_id!
+      const colId = isOwner && apt.professional_id
+        ? apt.professional_id
         : gridColumns[0].id
 
       result.push({

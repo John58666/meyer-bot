@@ -77,7 +77,8 @@ export async function getTodayStats(
 }
 
 export type WeekAppointment = Appointment & {
-  fecha: string; // YYYY-MM-DD
+  fecha: string;
+  professional_id?: number | null;
 };
 
 export type AppointmentRow = {
@@ -140,7 +141,7 @@ export async function getWeekAppointments(
     : '';
 
   const { rows } = await pool.query(
-    `SELECT a.id, a.fecha::text, a.hora::text, a.nombre, a.servicio, a.numero, a.estado, a.created_at::text, p.name AS profesional
+    `SELECT a.id, a.fecha::text, a.hora::text, a.nombre, a.servicio, a.numero, a.estado, a.created_at::text, a.professional_id, p.name AS profesional
      FROM appointments a
      LEFT JOIN professionals p ON a.professional_id = p.id
      WHERE a.fecha BETWEEN $1 AND $2
