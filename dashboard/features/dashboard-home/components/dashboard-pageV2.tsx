@@ -105,6 +105,19 @@ export function DashboardPageV2({ businessId, isOwnerOrAdmin, userProfessionalId
     loadData()
   }, [loadData])
 
+  useEffect(() => {
+    const interval = setInterval(() => loadData(), 15000)
+    const onVisible = () => { if (document.visibilityState === "visible") loadData() }
+    const onFocus = () => loadData()
+    document.addEventListener("visibilitychange", onVisible)
+    window.addEventListener("focus", onFocus)
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener("visibilitychange", onVisible)
+      window.removeEventListener("focus", onFocus)
+    }
+  }, [loadData])
+
   const chartData = (data?.historialPorDia ?? []).map((d) => ({
     dia: DIAS_CORTOS[new Date(d.fecha + "T00:00:00").getDay()],
     ingresos: d.ingresos,

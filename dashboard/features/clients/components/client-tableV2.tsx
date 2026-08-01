@@ -58,6 +58,19 @@ export function ClientTableV2({ businessId }: Props) {
   }, [loadData])
 
   useEffect(() => {
+    const interval = setInterval(() => loadData(), 15000)
+    const onVisible = () => { if (document.visibilityState === "visible") loadData() }
+    const onFocus = () => loadData()
+    document.addEventListener("visibilitychange", onVisible)
+    window.addEventListener("focus", onFocus)
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener("visibilitychange", onVisible)
+      window.removeEventListener("focus", onFocus)
+    }
+  }, [loadData])
+
+  useEffect(() => {
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current)
     if (search.length < 2 && search.length > 0) return
     // eslint-disable-next-line react-hooks/set-state-in-effect
