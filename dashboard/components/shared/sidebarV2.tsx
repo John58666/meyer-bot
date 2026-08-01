@@ -25,7 +25,7 @@ export function SidebarV2() {
           <Link
             key={item.href}
             href={item.href}
-            className="flex flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-2 text-zf-text-muted transition-all hover:bg-zf-accent-bg/50 hover:text-zf-accent-text lg:h-12 lg:w-12"
+            className="flex flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-2 text-zf-text-muted transition-all hover:bg-zinc-100/50 hover:text-zinc-700 lg:h-12 lg:w-12"
           >
             <item.icon className="h-5 w-5" />
             <span className="text-[10px] font-medium leading-none lg:hidden">{item.label}</span>

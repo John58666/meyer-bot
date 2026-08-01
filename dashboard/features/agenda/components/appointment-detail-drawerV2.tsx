@@ -107,7 +107,7 @@ export function AppointmentDetailDrawerV2({
     >
       <div className="space-y-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-zf-accent-bg text-lg font-bold text-zf-accent-text">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 text-lg font-bold text-zinc-700">
             {appointment.nombre?.charAt(0).toUpperCase() ?? "?"}
           </div>
           <div>
@@ -232,20 +232,20 @@ export function AppointmentDetailDrawerV2({
                       value={rescheduleFecha}
                       onChange={(e) => setRescheduleFecha(e.target.value)}
                       min={new Date().toISOString().split("T")[0]}
-                      className="flex-1 rounded-xl border border-zf-border bg-white px-3 py-2.5 text-sm text-zf-text focus:border-zf-primary focus:outline-none focus:ring-1 focus:ring-zf-primary/20"
+                      className="flex-1 rounded-xl border border-zf-border bg-white px-3 py-2.5 text-sm text-zf-text focus:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-zinc-800/20"
                     />
                     <input
                       type="time"
                       value={rescheduleHora}
                       onChange={(e) => setRescheduleHora(e.target.value)}
-                      className="w-28 rounded-xl border border-zf-border bg-white px-3 py-2.5 text-center text-sm text-zf-text focus:border-zf-primary focus:outline-none focus:ring-1 focus:ring-zf-primary/20"
+                      className="w-28 rounded-xl border border-zf-border bg-white px-3 py-2.5 text-center text-sm text-zf-text focus:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-zinc-800/20"
                     />
                   </div>
                   <button
                     type="button"
                     onClick={handleReschedule}
                     disabled={!!actionLoading || !rescheduleFecha || !rescheduleHora}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-zf-primary px-4 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50 active:scale-[0.97]"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-800 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50 active:scale-[0.97]"
                   >
                     {actionLoading === "reschedule" ? (
                       <>
@@ -268,7 +268,7 @@ export function AppointmentDetailDrawerV2({
               type="button"
               onClick={() => handleStatusChange(appointment.id, "Pendiente")}
               disabled={!!actionLoading}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-zf-accent-bg px-4 py-3 text-sm font-semibold text-zf-accent-text transition-all hover:bg-zf-accent-bg/70 active:scale-[0.97] disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-100 px-4 py-3 text-sm font-semibold text-zinc-700 transition-all hover:bg-zinc-100/70 active:scale-[0.97] disabled:opacity-50"
             >
               {actionLoading === "Pendiente" ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

@@ -10,10 +10,10 @@ export const MONTHS_ES = [
 
 export const STATUS_BADGE: Record<string, { bg: string; border: string; badge: string; badgeText: string; label: string }> = {
   Pendiente: {
-    bg: "#fff7ed",
-    border: "#f97316",
-    badge: "#ffedd5",
-    badgeText: "#9a3412",
+    bg: "#fef3c7",
+    border: "#a16207",
+    badge: "#fde68a",
+    badgeText: "#92400e",
     label: "Pendiente",
   },
   Confirmada: {

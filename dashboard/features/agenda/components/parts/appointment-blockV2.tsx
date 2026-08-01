@@ -16,10 +16,10 @@ interface Props {
 }
 
 const STATUS_STYLE: Record<string, string> = {
-  Pendiente:  "border-l-zinc-400 bg-zinc-50 text-zinc-900",
-  Confirmada: "border-l-emerald-500 bg-emerald-50/30 text-emerald-950",
-  Completada: "border-l-sky-500 bg-sky-50/30 text-sky-950",
-  Cancelada:  "border-l-rose-300 bg-zinc-100/50 text-zinc-400 line-through",
+  Pendiente:  "bg-amber-50/90 border-l-amber-400 text-amber-950",
+  Confirmada: "bg-emerald-50/90 border-l-emerald-500 text-emerald-950",
+  Completada: "bg-sky-50/90 border-l-sky-500 text-sky-950",
+  Cancelada:  "bg-zinc-100/80 border-l-zinc-300 text-zinc-400 line-through opacity-60",
 }
 
 export function AppointmentBlockV2({

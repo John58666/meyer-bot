@@ -292,7 +292,7 @@ export function AgendaModalV2({
             className={[
               "px-4 py-2.5 text-sm font-semibold transition-all",
               tab === "cita"
-                ? "border-b-2 border-zf-primary text-zf-accent-text"
+                ? "border-b-2 border-zinc-800 text-zinc-700"
                 : "text-zf-text-secondary hover:text-zf-text",
             ].join(" ")}
           >
@@ -305,7 +305,7 @@ export function AgendaModalV2({
             className={[
               "px-4 py-2.5 text-sm font-semibold transition-all",
               tab === "bloquear"
-                ? "border-b-2 border-zf-primary text-zf-accent-text"
+                ? "border-b-2 border-zinc-800 text-zinc-700"
                 : "text-zf-text-secondary hover:text-zf-text",
             ].join(" ")}
           >
@@ -323,7 +323,7 @@ export function AgendaModalV2({
                 Cliente
               </label>
               {selectedCliente ? (
-                <div className="flex items-center justify-between rounded-xl border border-zf-primary/30 bg-zf-accent-bg/30 px-4 py-3">
+                <div className="flex items-center justify-between rounded-xl border border-zinc-800/30 bg-zinc-100/30 px-4 py-3">
                   <div>
                     <p className="text-sm font-semibold text-zf-text">
                       {selectedCliente.nombre}
@@ -349,7 +349,7 @@ export function AgendaModalV2({
                       placeholder="Buscar cliente (Nombre o Teléfono)"
                       value={clienteSearch}
                       onChange={(e) => setClienteSearch(e.target.value)}
-                      className="w-full rounded-xl border border-zf-border bg-white py-2.5 pl-10 pr-3 text-sm text-zf-text placeholder:text-zf-text-muted focus:border-zf-primary focus:outline-none focus:ring-1 focus:ring-zf-primary/20"
+                      className="w-full rounded-xl border border-zf-border bg-white py-2.5 pl-10 pr-3 text-sm text-zf-text placeholder:text-zf-text-muted focus:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-zinc-800/20"
                     />
                     {searching && (
                       <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-zf-text-muted" />
@@ -362,7 +362,7 @@ export function AgendaModalV2({
                           key={c.id}
                           type="button"
                           onClick={() => handleSelectCliente(c)}
-                          className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm transition-colors hover:bg-zf-accent-bg/40"
+                          className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm transition-colors hover:bg-zinc-100/40"
                         >
                           <div>
                             <p className="font-medium text-zf-text">{c.nombre}</p>
@@ -381,14 +381,14 @@ export function AgendaModalV2({
                       placeholder="Nombre *"
                       value={nombreCliente}
                       onChange={(e) => setNombreCliente(e.target.value)}
-                      className="flex-1 rounded-xl border border-zf-border bg-white px-3 py-2.5 text-sm text-zf-text placeholder:text-zf-text-muted focus:border-zf-primary focus:outline-none focus:ring-1 focus:ring-zf-primary/20"
+                      className="flex-1 min-w-0 rounded-xl border border-zf-border bg-white px-3 py-2.5 text-sm text-zf-text placeholder:text-zf-text-muted focus:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-zinc-800/20"
                     />
                     <input
                       type="tel"
                       placeholder="Teléfono *"
                       value={numeroCliente}
                       onChange={(e) => setNumeroCliente(e.target.value)}
-                      className="flex-1 rounded-xl border border-zf-border bg-white px-3 py-2.5 text-sm text-zf-text placeholder:text-zf-text-muted focus:border-zf-primary focus:outline-none focus:ring-1 focus:ring-zf-primary/20"
+                      className="flex-1 min-w-0 rounded-xl border border-zf-border bg-white px-3 py-2.5 text-sm text-zf-text placeholder:text-zf-text-muted focus:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-zinc-800/20"
                     />
                   </div>
                 </>
@@ -405,7 +405,7 @@ export function AgendaModalV2({
                   onChange={(e) =>
                     setSelectedServiceId(e.target.value ? parseInt(e.target.value) : "")
                   }
-                  className="w-full rounded-xl border border-zf-border bg-white px-3 py-2.5 text-sm text-zf-text focus:border-zf-primary focus:outline-none focus:ring-1 focus:ring-zf-primary/20"
+                  className="w-full rounded-xl border border-zf-border bg-white px-3 py-2.5 text-sm text-zf-text focus:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-zinc-800/20"
                 >
                   <option value="">Selecciona un servicio</option>
                   {services.map((s) => (
@@ -424,7 +424,7 @@ export function AgendaModalV2({
                   onChange={(e) =>
                     setSelectedProfId(e.target.value ? parseInt(e.target.value) : null)
                   }
-                  className="w-full rounded-xl border border-zf-border bg-white px-3 py-2.5 text-sm text-zf-text focus:border-zf-primary focus:outline-none focus:ring-1 focus:ring-zf-primary/20"
+                  className="w-full rounded-xl border border-zf-border bg-white px-3 py-2.5 text-sm text-zf-text focus:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-zinc-800/20"
                 >
                   {professionals.length === 0 && (
                     <option value="">Sin profesionales</option>
@@ -447,7 +447,7 @@ export function AgendaModalV2({
                 value={fecha}
                 onChange={(e) => setFecha(e.target.value)}
                 min={new Date().toISOString().split("T")[0]}
-                className="w-full rounded-xl border border-zf-border bg-white px-3 py-2.5 text-sm text-zf-text focus:border-zf-primary focus:outline-none focus:ring-1 focus:ring-zf-primary/20"
+                className="w-full rounded-xl border border-zf-border bg-white px-3 py-2.5 text-sm text-zf-text focus:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-zinc-800/20"
               />
             </div>
 
@@ -478,8 +478,8 @@ export function AgendaModalV2({
                       className={[
                         "rounded-lg border px-2 py-2 text-xs font-semibold transition-all",
                         hora === slot
-                          ? "border-zf-primary bg-zf-primary text-white"
-                          : "border-zf-border text-zf-text-secondary hover:border-zf-primary hover:text-zf-text",
+                          ? "border-zinc-800 bg-zinc-800 text-white"
+                          : "border-zf-border text-zf-text-secondary hover:border-zinc-800 hover:text-zf-text",
                       ].join(" ")}
                     >
                       {formatHora(slot)}
@@ -500,7 +500,7 @@ export function AgendaModalV2({
                 onChange={(e) =>
                   setBloqueoProfId(e.target.value ? parseInt(e.target.value) : null)
                 }
-                className="w-full rounded-xl border border-zf-border bg-white px-3 py-2.5 text-sm text-zf-text focus:border-zf-primary focus:outline-none focus:ring-1 focus:ring-zf-primary/20"
+                className="w-full rounded-xl border border-zf-border bg-white px-3 py-2.5 text-sm text-zf-text focus:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-zinc-800/20"
               >
                 <option value="">Todo el negocio</option>
                 {professionals.map((p) => (
@@ -521,21 +521,21 @@ export function AgendaModalV2({
                   value={bloqueoFecha}
                   onChange={(e) => setBloqueoFecha(e.target.value)}
                   min={new Date().toISOString().split("T")[0]}
-                  className="flex-1 rounded-xl border border-zf-border bg-white px-3 py-2.5 text-sm text-zf-text focus:border-zf-primary focus:outline-none focus:ring-1 focus:ring-zf-primary/20"
+                  className="flex-1 rounded-xl border border-zf-border bg-white px-3 py-2.5 text-sm text-zf-text focus:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-zinc-800/20"
                 />
                 <div className="flex items-center gap-2">
                   <input
                     type="time"
                     value={bloqueoHoraInicio}
                     onChange={(e) => setBloqueoHoraInicio(e.target.value)}
-                    className="w-28 rounded-xl border border-zf-border bg-white px-3 py-2.5 text-center text-sm text-zf-text focus:border-zf-primary focus:outline-none focus:ring-1 focus:ring-zf-primary/20"
+                    className="w-28 rounded-xl border border-zf-border bg-white px-3 py-2.5 text-center text-sm text-zf-text focus:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-zinc-800/20"
                   />
                   <span className="text-sm text-zf-text-secondary">a</span>
                   <input
                     type="time"
                     value={bloqueoHoraFin}
                     onChange={(e) => setBloqueoHoraFin(e.target.value)}
-                    className="w-28 rounded-xl border border-zf-border bg-white px-3 py-2.5 text-center text-sm text-zf-text focus:border-zf-primary focus:outline-none focus:ring-1 focus:ring-zf-primary/20"
+                    className="w-28 rounded-xl border border-zf-border bg-white px-3 py-2.5 text-center text-sm text-zf-text focus:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-zinc-800/20"
                   />
                 </div>
               </div>
@@ -553,7 +553,7 @@ export function AgendaModalV2({
               <select
                 value={bloqueoMotivo}
                 onChange={(e) => setBloqueoMotivo(e.target.value)}
-                className="w-full rounded-xl border border-zf-border bg-white px-3 py-2.5 text-sm text-zf-text focus:border-zf-primary focus:outline-none focus:ring-1 focus:ring-zf-primary/20"
+                className="w-full rounded-xl border border-zf-border bg-white px-3 py-2.5 text-sm text-zf-text focus:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-zinc-800/20"
               >
                 <option value="">Sin motivo especificado</option>
                 {MOTIVOS_BLOQUEO.map((m) => (
@@ -573,7 +573,7 @@ export function AgendaModalV2({
                 onChange={(e) => setBloqueoNotas(e.target.value)}
                 placeholder="Ej: Pausa para almuerzo programada"
                 rows={3}
-                className="w-full rounded-xl border border-zf-border bg-white px-3 py-2.5 text-sm text-zf-text placeholder:text-zf-text-muted focus:border-zf-primary focus:outline-none focus:ring-1 focus:ring-zf-primary/20"
+                className="w-full rounded-xl border border-zf-border bg-white px-3 py-2.5 text-sm text-zf-text placeholder:text-zf-text-muted focus:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-zinc-800/20"
               />
             </div>
           </>
@@ -592,7 +592,7 @@ export function AgendaModalV2({
           type="button"
           onClick={onClose}
           disabled={saving}
-          className="flex-1 rounded-xl border border-zf-border px-4 py-2.5 text-sm font-semibold text-zf-text-secondary transition-all hover:bg-zf-accent-bg disabled:opacity-50"
+          className="flex-1 rounded-xl border border-zf-border px-4 py-2.5 text-sm font-semibold text-zf-text-secondary transition-all hover:bg-zinc-100 disabled:opacity-50"
         >
           Cancelar
         </button>
@@ -600,7 +600,7 @@ export function AgendaModalV2({
           type="button"
           onClick={handleSubmit}
           disabled={saving || (tab === "cita" ? !canSubmit : !bloqueoFecha)}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-zf-primary px-4 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50 active:scale-[0.97]"
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-zinc-800 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50 active:scale-[0.97]"
         >
           {saving ? (
             <>

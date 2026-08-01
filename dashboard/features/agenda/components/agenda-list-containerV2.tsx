@@ -1,8 +1,6 @@
 "use client"
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
-import { format, addMonths, subMonths } from "date-fns"
-import { es } from "date-fns/locale"
 import {
   getAppointmentsByMonthV2,
   getBloqueosV2,
@@ -11,17 +9,20 @@ import {
 } from "../actionsV2"
 import type { AppointmentRow } from "@/lib/appointments"
 import {
-  ChevronLeft,
-  ChevronRight,
   Plus,
   AlertCircle,
   SearchX,
   CalendarDays,
-  RefreshCw,
   Search,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { DayAccordionV2 } from "./parts/day-accordionV2"
+import { DayStripV2 } from "./parts/day-stripV2"
+
+const MONTHS_ES = [
+  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+]
 
 interface BloqueoRow {
   id: number
@@ -64,11 +65,7 @@ export function AgendaListContainerV2({
 
   const year = currentMonth.getFullYear()
   const month = currentMonth.getMonth() + 1
-  const monthLabel = format(currentMonth, "MMMM yyyy", { locale: es })
   const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" })
-  const isCurrentMonth =
-    currentMonth.getFullYear() === new Date().getFullYear() &&
-    currentMonth.getMonth() === new Date().getMonth()
 
   const loadData = useCallback(async () => {
     setError("")
@@ -103,15 +100,6 @@ export function AgendaListContainerV2({
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
   }, [loadData])
-
-  const handlePrevMonth = () => setCurrentMonth((m) => subMonths(m, 1))
-  const handleNextMonth = () => setCurrentMonth((m) => addMonths(m, 1))
-  const handleTodayMonth = () => setCurrentMonth(new Date())
-
-  const handleRefresh = async () => {
-    setRefreshing(true)
-    await loadData()
-  }
 
   const handleToggleDay = (dateStr: string) => {
     setExpandedDay((prev) => (prev === dateStr ? null : dateStr))
@@ -228,49 +216,24 @@ export function AgendaListContainerV2({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handlePrevMonth}
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary transition-colors hover:bg-zinc-100 active:scale-[0.97]"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            className="min-w-[140px] rounded-lg border border-zf-border bg-white px-3 py-1.5 text-center text-lg font-bold capitalize text-zf-text hover:bg-zinc-50 transition-colors"
-          >
-            {monthLabel}
-          </button>
-          <button
-            type="button"
-            onClick={handleNextMonth}
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary transition-colors hover:bg-zinc-100 active:scale-[0.97]"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-          {!isCurrentMonth && (
-            <button
-              type="button"
-              onClick={handleTodayMonth}
-              className="flex h-9 items-center rounded-lg bg-zinc-100 px-3 text-xs font-semibold text-zinc-700 transition-colors hover:bg-zinc-200 active:scale-[0.97]"
-            >
-              Hoy
-            </button>
-          )}
-        </div>
-
-        <button
-          type="button"
-          onClick={handleRefresh}
-          disabled={refreshing}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary transition-colors hover:bg-zinc-100 disabled:opacity-50 active:scale-[0.97]"
-          title="Actualizar"
-        >
-          <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
-        </button>
-      </div>
+      <DayStripV2
+        selectedDay={`${year}-${String(month).padStart(2, "0")}-01`}
+        onSelectDay={(dateStr) => {
+          const d = new Date(dateStr + "T00:00:00")
+          setCurrentMonth(d)
+        }}
+        onPrevWeek={() => {
+          const m = new Date(currentMonth)
+          m.setMonth(m.getMonth() - 1)
+          setCurrentMonth(m)
+        }}
+        onNextWeek={() => {
+          const m = new Date(currentMonth)
+          m.setMonth(m.getMonth() + 1)
+          setCurrentMonth(m)
+        }}
+        showMonthPicker={false}
+      />
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <div className="relative w-full sm:w-56">
@@ -305,7 +268,7 @@ export function AgendaListContainerV2({
             <CalendarDays className="h-6 w-6 text-zf-text-muted" />
           </div>
           <p className="text-sm font-medium text-zf-text-secondary">
-            Sin citas en {monthLabel}
+            Sin citas en {MONTHS_ES[currentMonth.getMonth()]} {currentMonth.getFullYear()}
           </p>
           <button
             type="button"

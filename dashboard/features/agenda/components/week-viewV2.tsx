@@ -275,6 +275,11 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
               d.setDate(d.getDate() + 7)
               setCurrentDay(d.toISOString().slice(0, 10))
             }}
+            onGoToMonth={(year, month) => {
+              const d = new Date(year, month, 1)
+              setCurrentDay(d.toISOString().slice(0, 10))
+            }}
+            showMonthPicker
           />
         </div>
 
@@ -284,7 +289,7 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
               className={cn("flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-all",
                 viewMode === "professional" ? "bg-zinc-800 text-white shadow-sm" : "text-zf-text-secondary hover:text-zf-text")}>
               <CalendarDays className="h-3 w-3" />
-              <span className="hidden sm:inline">Grid</span>
+              <span className="hidden sm:inline">Calendario</span>
             </button>
             <button type="button" onClick={() => setViewMode("list")}
               className={cn("flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-all",
