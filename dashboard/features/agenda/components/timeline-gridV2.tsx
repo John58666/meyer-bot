@@ -130,7 +130,7 @@ export function TimelineGridV2({
                 />
               ))}
 
-              {isToday && col.id === columns[0].id && (
+              {isToday && (
                 <div
                   className="pointer-events-none absolute left-0 right-0 z-20 flex items-center"
                   style={{ top: `${getCurrentTimeTop(hourHeight) - startHour * hourHeight}px` }}

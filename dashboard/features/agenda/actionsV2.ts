@@ -23,14 +23,15 @@ export type Professional = { id: number; name: string }
 
 export async function getWeekAppointmentsV2(
   businessId: number,
-  professionalId?: number | null
+  professionalId?: number | null,
+  referenceDate?: string
 ) {
   const session = await auth()
   if (!session) return { error: "No autenticado", appointments: {} as Record<string, WeekAppointment[]> }
   if (session.user.businessId !== businessId) return { error: "No autorizado", appointments: {} as Record<string, WeekAppointment[]> }
 
   try {
-    const appointments = await getWeekAppointments(businessId, professionalId)
+    const appointments = await getWeekAppointments(businessId, professionalId, referenceDate)
     return { appointments }
   } catch {
     return { error: "Error al cargar las citas de la semana", appointments: {} as Record<string, WeekAppointment[]> }

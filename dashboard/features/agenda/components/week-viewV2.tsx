@@ -71,7 +71,7 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
     try {
       const profId = selectedProfessionalId ?? userProfessionalId
       const [apptsRes, profsRes, bizRes, bloqRes] = await Promise.all([
-        getWeekAppointmentsV2(businessId, profId),
+        getWeekAppointmentsV2(businessId, profId, currentDay),
         getProfessionalsV2(businessId),
         initialName ? Promise.resolve({ name: initialName }) : getBusinessNameV2(businessId),
         getBloqueosV2(businessId, profId),
@@ -267,6 +267,7 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
   return (
     <>
       <div className="rounded-xl border border-zf-border/50 bg-zf-surface">
+        {viewMode === "professional" && (
         <div className="flex flex-col gap-3 border-b border-zf-border/40 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
@@ -304,6 +305,7 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
             </button>
           </div>
         </div>
+        )}
 
         <div className="flex items-center justify-end border-b border-zf-border/40 bg-zf-bg/60 px-6 py-2">
           <div className="flex rounded-lg bg-zf-bg/80 p-0.5">

@@ -118,16 +118,16 @@ export async function getAppointmentsByMonth(
 
 export async function getWeekAppointments(
   businessId: number,
-  professionalId?: number | null
+  professionalId?: number | null,
+  referenceDate?: string
 ): Promise<Record<string, WeekAppointment[]>> {
-  // Lunes de esta semana en Bogotá
-  const nowBogota = new Date(
-    new Date().toLocaleString("en-US", { timeZone: "America/Bogota" })
-  );
-  const day = nowBogota.getDay(); // 0=dom, 1=lun...
-  const diffToMonday = day === 0 ? -6 : 1 - day;
-  const monday = new Date(nowBogota);
-  monday.setDate(nowBogota.getDate() + diffToMonday);
+  const refDate = referenceDate
+    ? new Date(referenceDate + "T00:00:00")
+    : new Date(new Date().toLocaleString("en-US", { timeZone: "America/Bogota" }))
+  const day = refDate.getDay()
+  const diffToMonday = day === 0 ? -6 : 1 - day
+  const monday = new Date(refDate)
+  monday.setDate(refDate.getDate() + diffToMonday)
 
   // Domingo de esta semana
   const sunday = new Date(monday);
