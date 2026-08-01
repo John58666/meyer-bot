@@ -15,7 +15,6 @@ import {
   Plus,
   CalendarDays,
   AlertCircle,
-  SearchX,
   LayoutList,
   RefreshCw,
 } from "lucide-react"
@@ -311,17 +310,6 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
             onNewAppointment={() => handleOpenModal()}
             onAppointmentClick={handleAppointmentClick}
           />
-        ) : dayAppointments.length === 0 && bloqueos.filter(b => b.fecha === currentDay).length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-16">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-zf-bg">
-              <SearchX className="h-6 w-6 text-zf-text-muted" />
-            </div>
-            <p className="text-sm font-medium text-zf-text-secondary">No hay citas para este día</p>
-            <button type="button" onClick={() => handleOpenModal()}
-              className="flex items-center gap-1.5 rounded-xl bg-zinc-800 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-[0.97]">
-              <Plus className="h-4 w-4" />Agendar primera cita
-            </button>
-          </div>
         ) : gridColumns.length <= 1 && !isOwnerOrAdmin ? (
           <div className="p-6 space-y-3">
             {dayAppointments.map((apt) => {
