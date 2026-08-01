@@ -11,6 +11,7 @@ interface Props {
   estado: string
   isBlock?: boolean
   motivo?: string
+  zIndex?: number
   onClick: () => void
 }
 
@@ -32,14 +33,15 @@ export function AppointmentBlockV2({
   estado,
   isBlock,
   motivo,
+  zIndex,
   onClick,
 }: Props) {
   if (isBlock) {
     return (
       <div
         onClick={onClick}
-        style={{ top: `${top + 1}px`, height: `${height - 2}px`, left, width }}
-        className="absolute z-10 mx-0.5 rounded-md border border-dashed border-zinc-300 bg-zinc-100/80 p-2.5 cursor-pointer overflow-hidden transition-all hover:bg-zinc-200/60 active:scale-[0.99]"
+        style={{ top: `${top}px`, height: `${height}px`, left, width, zIndex: zIndex ?? 10 }}
+        className="absolute z-10 mx-0.5 rounded-md border border-dashed border-zinc-300 bg-zinc-100/60 p-2.5 cursor-pointer overflow-hidden transition-all hover:bg-zinc-200/60 active:scale-[0.99]"
       >
         <span className="text-[10px] font-medium text-zinc-500 block truncate">
           {hora}
@@ -58,8 +60,8 @@ export function AppointmentBlockV2({
   return (
     <div
       onClick={onClick}
-      style={{ top: `${top + 1}px`, height: `${height - 2}px`, left, width }}
-      className={`absolute z-10 mx-0.5 rounded-md border-l-4 p-2.5 cursor-pointer overflow-hidden transition-all hover:shadow-md hover:ring-1 hover:ring-zinc-300 active:scale-[0.99] ${style}`}
+      style={{ top: `${top}px`, height: `${height}px`, left, width, zIndex: zIndex ?? 10 }}
+      className={`absolute mx-0.5 rounded-md border-l-4 p-2.5 cursor-pointer overflow-hidden transition-all hover:shadow-md hover:ring-1 hover:ring-zinc-300 active:scale-[0.99] ${style}`}
     >
       <div className="flex flex-col h-full justify-between">
         <div>

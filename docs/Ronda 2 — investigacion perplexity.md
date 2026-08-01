@@ -1,3 +1,5 @@
+📦 ARCHIVADO — Ver workflows/docs/03-INVESTIGACION.md para resumen consolidado.
+
 # Ronda 2: de parches reactivos a arquitectura sistemática
 
 ## 1. Validación post-LLM: patrón de pipeline, no parches sueltos

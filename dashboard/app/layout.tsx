@@ -1,10 +1,17 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, DM_Sans } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { auth } from "@/auth";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  weight: ["600", "700", "800", "900"],
+  variable: "--font-dm-sans",
+  display: "swap",
+});
 
 export async function generateMetadata(): Promise<Metadata> {
   const session = await auth();
@@ -22,7 +29,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={`${inter.className} ${dmSans.variable}`}>
         {children}
         <Toaster />
       </body>

@@ -7,7 +7,52 @@
 > - `docs/CURRENT_SESSION_CONTEXT.md` = contexto detallado de lo que se está haciendo AHORA. Se sobrescribe completo al empezar una nueva sesión.
 > - `docs/harness/MEMORY.md` = resumen acumulado de lo que ha pasado. Se edita (no se reemplaza) al final de cada sesión.
 
-## Última sesión
+## Ultima sesion
+- **Fecha**: 2026-08-01
+- **Objetivo**: B18 (fechas >7d) + F3.4 (migracion AI Agent a microservicio)
+- **Estado**: B18 completado. F3.4 incrementos 1-2 completados, incremento 3 pendiente.
+
+### B18 — Fechas >7 dias
+- Root cause: `forceMostrarSlots` nunca existio en `restored.json`. El v6 intento en n8n (versionId 2e1b896a) tenia infraestructura pero deteccion no activaba.
+- Fix: `extraerFechaLejana()` en Procesar Mensaje + short-circuit en AI Agent (sin LLM). Redirige con mensaje amable a ventana 7d.
+- Archivos modificados: `restored.json` (3 edits en PM + AI Agent + Formatear Disponibilidad). INICIO.md, 05-BUGS.md, 01-BOT.md actualizados.
+
+### F3.4 — Migracion AI Agent a bot-core
+- `packages/bot-core/src/` (40 tests, 8 archivos TS): types, constants, date-parser, normalizer, validation, gap-message, prompt-builder (22 secciones, ~300 lineas), llm-chain (circuit breaker + httpRequest wrapper).
+- `apps/bot-service/src/index.ts`: Express en puerto 3003 con POST /api/chat + GET /health + graceful shutdown. Desplegado en prod via Docker (red meyer_network). Conexion n8n→bot-service verificada. Gemini responde en produccion.
+- 0 dependencias runtime en bot-core (fetch nativo Node 22). Solo `express` en bot-service.
+- 11 fallos identificados y mitigados (G1-G11 en F3-MIGRACION.md). Spec completo en F3-MIGRACION.md (14 archivos, Docker, verificacion, 18 campos HTTP Request).
+- Pendiente: Incremento 3 (cambiar Code node "AI Agent" por HTTP Request en n8n UI, ~10 min, pasos en F3-MIGRACION.md). Agregar `timezone` al return JSON de Procesar Mensaje (G3, 1 linea).
+
+### F3.6 — Git Source Control
+- Descartado: no disponible en n8n community 2.10.3. Solo Enterprise/Cloud.
+
+### Servidor (178.104.27.180)
+- ARM64 (aarch64). n8n v2.10.3 community en /root/n8n/docker-compose.yml (red meyer_network).
+- bot-service desplegado como imagen docker `bot-service:latest` en puerto 3003 (3002 ocupado por uptime-kuma).
+- n8n alcanza bot-service via `http://bot-service:3003` (misma red Docker).
+- .env en /root/n8n/.env. LLM API keys configuradas.
+- 40/40 tests pasan en el servidor.
+
+### Proxima sesion
+1. Incremento 3 F3.4: cambiar Code node por HTTP Request en n8n UI.
+2. Agregar `timezone` al return JSON de Procesar Mensaje (G3 fix).
+3. Dashboard: B1, N2, N11, N24.
+4. B15: rotar Evolution API key leakada.
+
+### Archivos modificados/creados
+- `workflows/WhatsApp Bot - Generico restored.json` — B18 fix (3 edits)
+- `packages/bot-core/src/*.ts` — 8 archivos nuevos + 7 tests
+- `apps/bot-service/src/index.ts` — servidor Express
+- `apps/bot-service/Dockerfile` — node:22-alpine, non-root
+- `apps/bot-service/tsconfig.json` — config TS
+- `workflows/docs/F3-MIGRACION.md` — spec completo (reemplazado)
+- `workflows/docs/INICIO.md` — B18 y F3.4 status
+- `workflows/docs/05-BUGS.md` — B18 fix, contadores
+- `workflows/docs/01-BOT.md` — B18 en fixes activos
+- `docs/harness/MEMORY.md` — este entry
+
+## Ultima sesion (prev)
 - **Fecha**: 2026-07-31
 - **Objetivo**: Refactor V2 — COMPLETADO (12/12 módulos, 100%)
 - **Estado**: Completados. TS 0 errores, lint clean.

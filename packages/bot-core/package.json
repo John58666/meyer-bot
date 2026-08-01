@@ -1,0 +1,16 @@
+{
+  "name": "@meyer/bot-core",
+  "version": "0.1.0",
+  "description": "Logica compartida del bot — validacion, slots, prompt builder, LLM chain",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "test": "node --import tsx --test src/__tests__/*.test.ts",
+    "typecheck": "npx tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "tsx": "^4",
+    "typescript": "^5"
+  }
+}

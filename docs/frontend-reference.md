@@ -236,7 +236,13 @@ Dos endpoints separados para evitar cargar el mes completo:
 ### Contexto
 Tabla de alta densidad de clientes. Panel expandible derecho (Drawer) con datos del cliente, acceso directo a WhatsApp y Notas Técnicas / Fórmulas Químicas de Color.
 
-### Estado: 🟡 Plan V2 listo — `docs/refactoring-v2/02-clientes.md`
+### Estado: ✅ Implementado V2 — `features/clients/components/`
+
+### Archivos V2
+- `features/clients/components/client-tableV2.tsx` — Tabla + search debounce + stat card + WhatsApp link + skeleton/empty/error
+- `features/clients/components/client-detail-drawerV2.tsx` — Drawer con avatar + stats + historial de citas con badges
+- `features/clients/components/new-client-modalV2.tsx` — Modal crear/editar con upsert ON CONFLICT
+- `features/clients/actionsV2.ts` — getClientesV2, getClienteHistorialV2, getClienteByIdV2, createClienteV2, updateClienteV2
 
 ### Schema de respaldo
 ```sql

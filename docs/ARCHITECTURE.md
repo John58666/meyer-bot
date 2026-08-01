@@ -255,3 +255,101 @@ Sin backups del VPS, una pérdida total requiere rehacer credenciales manualment
 4. Conectar número escaneando QR en el manager
 5. Crear usuario: `node database/seeds/create-user.js --email=X --password=X --name=X --business_id=N --role=owner`
 6. El dueño puede editar servicios desde `/dashboard/configuracion` sin intervención técnica.
+
+## Diagrama de Conexiones Backend
+
+```
+WhatsApp (telefono real)
+        │
+        ▼
+Evolution API (puerto 8080, Docker)
+        │  POST /message/sendText/{instance}
+        │  webhook → n8n
+        ▼
+n8n (puerto 5678, Docker)
+  ├── Workflow: WhatsApp Bot - Generico (45 nodos)
+  ├── Workflow: Recordatorios 24h/2h
+  ├── Workflow: Inactividad Bot
+  ├── Workflow: No-Shows
+  └── Workflow: Error Handler
+        │
+        ├── PostgreSQL (meyer_postgres, Docker)
+        │     Tablas: businesses, appointments, professionals, services,
+        │             sessions, conversation_history, schedule_exceptions, customers
+        │
+        └── HTTP webhooks → Dashboard
+              POST /api/webhooks/sync-new
+              POST /api/webhooks/sync-cancel
+              POST /api/webhooks/sync-reagend
+              Auth: x-webhook-secret
+                    │
+                    ▼
+              Dashboard Next.js (puerto 3001, PM2)
+                ── PostgreSQL (misma DB)
+```
+
+## Escalabilidad — Limites y Umbrales
+
+| Componente | Limite actual | Se rompe en | Accion |
+|-----------|--------------|------------|--------|
+| n8n modo regular | ~200 ejecuciones/dia | 5-10 negocios | Modo queue (Redis + workers) |
+| Gemini free tier | 1,000 RPD, 15 RPM | 1 negocio con trafico real | Tier pago (~$1.50/mes) |
+| Cerebras free tier | 30 RPM, 1M tokens/dia | 3-5 negocios | Tier pago (~$3.30/mes) |
+| Groq free tier | 1,000 RPD, 8k tokens/min | 1 negocio con prompt largo | Reducir prompt o pagar |
+| Code node unico (AI Agent) | 560 lineas, sin tests | Ya — B6, B18 | Microservicio Node.js (Fase 3) |
+| Evolution API | ~200-300 conv/dia por numero | 50 negocios/numero | BSP oficial (360dialog) |
+| PostgreSQL sin indices | businessId+fecha | 20-30 negocios | Indices compuestos |
+| Sin staging | Cambios directo a prod | Ya — B6 | Git Source Control nativo |
+
+## WhatsApp / Evolution API
+
+**Arquitectura actual:** Evolution API (cliente WhatsApp Web no oficial, puerto 8080).
+
+**Riesgos:** Ban del numero, QR expira, sin templates, sin SLA, sin catalogos oficiales.
+
+**Mitigaciones:** <200-300 conversaciones/dia, delays aleatorios, no iniciar conversaciones, **SUSCRIBIR CONNECTION_UPDATE webhook**.
+
+**Migracion a BSP (360dialog Partner Platform):** €250/mes + €49/canal. Diseñado para multi-tenant. Timing: cuando un bloqueo cueste mas que la suscripcion.
+
+## Multi-Tenant — Aislamiento de Datos
+
+Cada negocio tiene su propio `whatsapp_instance` y `business_id`. Todo filtrado por `business_id` en queries SQL. Sessions aisladas por `(business_id, numero)`. **Riesgo:** sin UNIQUE constraint en `businesses.whatsapp_instance` → data leak si dos comparten el mismo valor.
+
+## Documentacion del Bot
+
+Ver `workflows/docs/` para documentacion detallada del bot, roadmap, investigacion y reglas.
+
+## Onboarding Nuevo Negocio — Proceso Dual
+
+### Con Evolution API (actual)
+| Paso | Accion | Detalle |
+|------|--------|---------|
+| 1 | SQL INSERT | `INSERT INTO businesses (slug, name, whatsapp_instance, schedule_text, services_text...)` |
+| 2 | Evolution API Manager | Crear instancia con `instanceName = whatsapp_instance` |
+| 3 | Configurar Webhook | `POST /webhook/set/{instance}` → `https://n8n.zyvenshop.com/webhook/whatsapp-bot` |
+| 4 | Conectar Numero | Escanear QR en el Manager |
+| 5 | Crear Usuario | `node database/seeds/create-user.js --email=X --password=X --name=X --business_id=N --role=owner` |
+| 6 | Dueño edita servicios | Desde `/dashboard/configuracion` |
+
+### Con BSP 360dialog (cuando migres)
+| Paso | Accion | Detalle |
+|------|--------|---------|
+| 1 | SQL INSERT | `INSERT INTO businesses (slug, name, phone_number_id, schedule_text, services_text...)` |
+| 2 | Hub 360dialog | Crear numero en Partner Platform → obtener `phone_number_id` |
+| 3 | Configurar Webhook | Meta Developer → Webhook URL: `https://n8n.zyvenshop.com/webhook/whatsapp-bot` |
+| 4 | Verificar Endpoint | Meta envia GET con `hub.challenge` → n8n responde con el challenge |
+| 5 | Crear Usuario | Igual que Evolution API |
+| 6 | Dueño edita servicios | Igual que Evolution API |
+
+### Diferencias clave entre proveedores
+
+| Aspecto | Evolution API | BSP (360dialog) |
+|---------|--------------|-----------------|
+| Identificador | `whatsapp_instance` (string) | `phone_number_id` (string numerico) |
+| Webhook payload | `body.data.key.remoteJid`, `body.data.message.conversation` | `entry[0].changes[0].value.messages[0].from`, `text.body` |
+| Verificacion endpoint | No requiere | Requiere GET con `hub.challenge` |
+| Templates | No disponibles | Disponibles (recordatorios, marketing) |
+| Riesgo | Ban del numero | Oficial Meta, sin riesgo de ban |
+| Costo | Gratis | Desde EUR49/mes por numero |
+
+> **El webhook normalizer** (Fase 1 item 7) abstrae estas diferencias. El workflow siempre recibe un formato interno estandar.

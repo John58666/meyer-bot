@@ -1,3 +1,5 @@
+📦 ARCHIVADO — Ver workflows/docs/03-INVESTIGACION.md para resumen consolidado.
+
 ## Resumen ejecutivo
 
 El proyecto tiene una base de datos e infraestructura sorprendentemente maduras para un solo desarrollador (schema normalizado, RBAC, migraciones aditivas, sync dashboard-bot), pero el cuello de botella real es el diseño del "cerebro" conversacional: un prompt monolítico de 560 líneas que intenta hacer routing, extracción de entidades, validación de negocio y generación de lenguaje en una sola llamada no determinística. Los bugs B2 a B18 no son errores de "mal prompt", son el síntoma esperado de pedirle a un LLM que actúe como state machine usando únicamente texto en lenguaje natural. Ninguna plataforma seria de WhatsApp+IA en producción (Landbot, Wati, respond.io, Treble) resuelve el control de flujo dentro del prompt: todas separan lógica determinística del razonamiento del LLM. Ese es el cambio de mayor impacto que puedes hacer sin reescribir nada de infraestructura.[^1][^2]

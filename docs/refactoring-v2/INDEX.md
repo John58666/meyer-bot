@@ -297,8 +297,8 @@ Los diseños están en `stitch_export/stitch_agenda_weekly_calendar_view/`. Cada
 
 > **Orden sugerido**: 0 → 1→2→3→4→5 (paralelo) → 6 → 7 → 8 → 12 → 11 → 9 → 10
 > **Avance actual**: ¡12/12 módulos completados (100%)! ✅
->
-> **Cambio de orden**: Los módulos 12, 11 y 9 se adelantaron por no tener backend gaps. Caja/POS (10) se implementó como versión demo visual (sin persistencia de transacciones).
+> **Layout**: Sidebar V2, Topbar V2, Login ZF, Notificaciones bell. Migrations 019-023 ejecutadas en VPS.
+> **Pendiente**: Limpiar browser cache (Ctrl+Shift+R) si hay errores de Server Action ID.
 >
 > Los módulos 1-5 no tienen dependencias entre sí — se pueden hacer en paralelo.
 >

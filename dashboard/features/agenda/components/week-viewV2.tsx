@@ -8,12 +8,10 @@ import {
   getBloqueosV2,
 } from "../actionsV2"
 import type { WeekAppointment, AppointmentRow } from "@/lib/appointments"
-import { DAYS_FULL, MONTHS_ES, STATUS_BADGE } from "../constants"
+import { STATUS_BADGE } from "../constants"
 import { formatHora } from "@/lib/utils"
 import { cn } from "@/lib/utils"
 import {
-  ChevronLeft,
-  ChevronRight,
   Plus,
   CalendarDays,
   AlertCircle,
@@ -25,7 +23,7 @@ import { AgendaModalV2 } from "./agenda-modalV2"
 import { AppointmentDetailDrawerV2 } from "./appointment-detail-drawerV2"
 import { AgendaListContainerV2 } from "./agenda-list-containerV2"
 import { TimelineGridV2 } from "./timeline-gridV2"
-import { DatePickerPopoverV2 } from "./parts/date-picker-popoverV2"
+import { DayStripV2 } from "./parts/day-stripV2"
 
 interface Props {
   businessId: number
@@ -49,7 +47,6 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
 
   const [currentDay, setCurrentDay] = useState(todayISO())
   const [viewMode, setViewMode] = useState<"professional" | "list">("professional")
-  const [rangeMode, setRangeMode] = useState<"day" | "week">("day")
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<number | null>(
     isOwnerOrAdmin ? null : userProfessionalId
   )
@@ -103,20 +100,6 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
     loadData()
   }
 
-  const handlePrevDay = () => {
-    const d = new Date(currentDay + "T00:00:00")
-    d.setDate(d.getDate() - 1)
-    setCurrentDay(d.toISOString().slice(0, 10))
-  }
-
-  const handleNextDay = () => {
-    const d = new Date(currentDay + "T00:00:00")
-    d.setDate(d.getDate() + 1)
-    setCurrentDay(d.toISOString().slice(0, 10))
-  }
-
-  const handleToday = () => setCurrentDay(todayISO())
-
   const handleOpenModal = (date?: string, hour?: string, professionalId?: number | null) => {
     setPreselectedSlot({
       date: date ?? currentDay,
@@ -156,7 +139,6 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
   }
 
   const dayDate = new Date(currentDay + "T00:00:00")
-  const dayName = DAYS_FULL[dayDate.getDay()]
   const isToday = currentDay === todayISO()
 
   const dayAppointments = appointments[currentDay] ?? []
@@ -266,34 +248,10 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
   return (
     <>
       <div className="rounded-xl border border-zf-border/50 bg-zf-surface">
-        {viewMode === "professional" && (
-        <div className="flex flex-col gap-3 border-b border-zf-border/40 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <button type="button" onClick={handlePrevDay}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary transition-colors hover:bg-zinc-100 active:scale-[0.97]">
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <DatePickerPopoverV2
-                date={dayDate}
-                onSelect={(d) => setCurrentDay(d.toISOString().slice(0, 10))}
-              />
-              <button type="button" onClick={handleNextDay}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary transition-colors hover:bg-zinc-100 active:scale-[0.97]">
-                <ChevronRight className="h-4 w-4" />
-              </button>
-              {!isToday && (
-                <button type="button" onClick={handleToday}
-                  className="flex h-8 items-center rounded-lg bg-zinc-100 px-3 text-xs font-semibold text-zinc-700 transition-colors hover:bg-zinc-200 active:scale-[0.97]">
-                  Hoy
-                </button>
-              )}
-            </div>
-          </div>
-
+        <div className="flex flex-col gap-3 border-b border-zf-border/40 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <button type="button" onClick={handleRefresh} disabled={refreshing}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary transition-colors hover:bg-zinc-100 disabled:opacity-50"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary transition-colors hover:bg-zinc-100 disabled:opacity-50"
               title="Actualizar">
               <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
             </button>
@@ -303,33 +261,30 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
               <span className="hidden sm:inline">Nueva Cita</span>
             </button>
           </div>
-        </div>
-        )}
 
-        <div className="flex items-center justify-between border-b border-zf-border/40 bg-zf-bg/60 px-6 py-2">
-          <div className="flex rounded-lg bg-zf-bg/80 p-0.5">
-            <button type="button" onClick={() => { setRangeMode("day"); setViewMode("professional") }}
-              className={cn("rounded-md px-2.5 py-1.5 text-[10px] font-bold uppercase transition-all",
-                rangeMode === "day" && viewMode === "professional" ? "bg-zinc-800 text-white shadow-sm" : "text-zf-text-secondary hover:text-zf-text")}>
-              Día
-            </button>
-            <button type="button" onClick={() => { setRangeMode("week"); setViewMode("professional") }}
-              className={cn("rounded-md px-2.5 py-1.5 text-[10px] font-bold uppercase transition-all",
-                rangeMode === "week" && viewMode === "professional" ? "bg-zinc-800 text-white shadow-sm" : "text-zf-text-secondary hover:text-zf-text")}>
-              Semana
-            </button>
-            <button type="button" onClick={() => setViewMode("list")}
-              className={cn("rounded-md px-2.5 py-1.5 text-[10px] font-bold uppercase transition-all",
-                viewMode === "list" ? "bg-zinc-800 text-white shadow-sm" : "text-zf-text-secondary hover:text-zf-text")}>
-              Mes
-            </button>
-          </div>
+          <DayStripV2
+            selectedDay={currentDay}
+            onSelectDay={setCurrentDay}
+            onPrevWeek={() => {
+              const d = new Date(currentDay + "T00:00:00")
+              d.setDate(d.getDate() - 7)
+              setCurrentDay(d.toISOString().slice(0, 10))
+            }}
+            onNextWeek={() => {
+              const d = new Date(currentDay + "T00:00:00")
+              d.setDate(d.getDate() + 7)
+              setCurrentDay(d.toISOString().slice(0, 10))
+            }}
+          />
+        </div>
+
+        <div className="flex items-center justify-end border-b border-zf-border/40 bg-zf-bg/60 px-6 py-2">
           <div className="flex rounded-lg bg-zf-bg/80 p-0.5">
             <button type="button" onClick={() => setViewMode("professional")}
               className={cn("flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-all",
                 viewMode === "professional" ? "bg-zinc-800 text-white shadow-sm" : "text-zf-text-secondary hover:text-zf-text")}>
               <CalendarDays className="h-3 w-3" />
-              <span className="hidden sm:inline">Calendario</span>
+              <span className="hidden sm:inline">Grid</span>
             </button>
             <button type="button" onClick={() => setViewMode("list")}
               className={cn("flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-all",

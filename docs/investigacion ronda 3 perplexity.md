@@ -1,3 +1,5 @@
+📦 ARCHIVADO — Ver workflows/docs/03-INVESTIGACION.md para resumen consolidado.
+
 # Seguridad, organización de código y límites de LLM
 
 ## Seguridad de webhooks multi‑tenant

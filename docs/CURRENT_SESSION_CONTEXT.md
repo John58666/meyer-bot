@@ -1,9 +1,20 @@
-# Sesión actual — Dashboard fixes
+# Sesión actual — Refactor V2 Dashboard
 
 ## Estado
-- Iniciada: 2026-07-22
-- Objetivo: Fixear bugs del dashboard + mejorar UX para personal no técnico
-- Método: Paso por paso, validando y preguntando antes de cada cambio
+- Iniciada: 2026-07-31
+- Última actualización: 2026-07-31 23:59
+- Objetivo: Refactor V2 completo (12/12 módulos) + layout + notificaciones
+- Estado: ✅ Completado
+
+## Bugs resueltos (B1, B2)
+- B1 (createAppointment sin validar exceptions): ✅ Resuelto (commit 4847091)
+- B2 (fetchOcupacion ignora exceptions): ✅ Resuelto (commit ad404c3)
+- ServiceRow/Cliente/MetricasData ReferenceError: ✅ Resuelto (export type re-exports eliminados)
+
+## Pendiente para próxima sesión
+- Limpiar cache browser (Ctrl+Shift+R) al recargar
+- Verificar todos los módulos cargan sin errores
+- Probar responsive en mobile real
 
 ## Bugs confirmados
 

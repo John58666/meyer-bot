@@ -1,0 +1,34 @@
+# Nova
+> Bot de WhatsApp con inteligencia artificial para agendar citas. Hecho en Colombia.
+
+## Core pages
+- https://zyvenshop.com/: Landing page — información del producto, precios y FAQ
+- https://zyvenshop.com/login: Acceso al dashboard de gestión
+
+## Features
+- Bot WhatsApp conversacional con IA en español colombiano
+- Agendamiento automático de citas con verificación en tiempo real
+- Dashboard de gestión: citas, clientes, inventario, caja, equipo
+- Multi-profesional con agendas independientes
+- Recordatorios automáticos: 24 horas y 2 horas antes de cada cita
+- Triple respaldo de inteligencia artificial
+- Relleno inteligente de espacios vacíos
+- CRM con historial de clientes
+- Métricas e informes de negocio
+
+## Industries
+- Peluquerías y barberías
+- Clínicas dentales y consultorios médicos
+- Veterinarias
+- Spas y centros de estética
+- Psicólogos y terapeutas
+- Gimnasios y entrenadores personales
+- Nutricionistas
+- Fisioterapeutas
+- Cualquier negocio que maneje citas
+
+## Pricing
+- Plan Starter: $120,000 COP/mes (1-5 profesionales)
+- Plan Pro: $180,000 COP/mes (6-12 profesionales)
+- Plan Business: $260,000 COP/mes (13-20 profesionales)
+- Sin contrato, cancela cuando quieras

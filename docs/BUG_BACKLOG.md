@@ -1,7 +1,7 @@
 # BUG_BACKLOG.md — meyer-bot
 
 > Backlog priorizado de bugs detectados en producción.  
-> **Estado:** Pendiente de revisión y corrección uno por uno.  
+> **Quick-ref:** para ver estado de todos los bugs en tabla → `workflows/docs/05-BUGS.md`  
 > **Regla:** No mergear a main sin aprobación explícita. Cada bug se corrige, prueba y despliega individualmente.
 
 ---
@@ -464,3 +464,12 @@ VALUES (1, ..., ..., ..., ..., ..., 'Pendiente');
 | Code node sin jsCode | Sprint 17 | — | No ha regresado |
 | quoted messages | Sprint 17 | — | No ha regresado |
 | Confirmación saltada | Sprint 12? | Varias veces | Prompt monolítico (B6 resuelve la fragilidad) |
+
+---
+
+## Documentacion complementaria
+
+Para bugs del bot especificamente, ver tambien:
+- `workflows/docs/01-BOT.md` — Workflow, proveedores, fixes activos
+- `workflows/docs/02-ROADMAP.md` — Fases y prioridades
+- `workflows/docs/03-INVESTIGACION.md` — Lo que aprendimos de Perplexity
