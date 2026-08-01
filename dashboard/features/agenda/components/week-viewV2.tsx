@@ -224,7 +224,7 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
           <button
             type="button"
             onClick={loadData}
-            className="rounded-xl bg-zf-primary px-6 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90"
+            className="rounded-xl bg-zinc-800 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90"
           >
             Reintentar
           </button>
@@ -238,8 +238,8 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
       <div className="rounded-xl border border-zf-border/50 bg-zf-surface">
         <div className="flex flex-col gap-4 border-b border-zf-border/40 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-zf-accent-bg">
-              <CalendarDays className="h-4 w-4 text-zf-accent-text" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100">
+              <CalendarDays className="h-4 w-4 text-zinc-700" />
             </div>
             <div>
               <h3 className="text-sm font-semibold text-zf-text">
@@ -247,7 +247,7 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
               </h3>
               <p className="text-xs text-zf-text-secondary">
                 {totalDia} {totalDia === 1 ? "cita" : "citas"} · {dayName} {dayNum} de {dayMonth}
-                {isToday && <span className="ml-1 font-semibold text-zf-accent-text">· Hoy</span>}
+                {isToday && <span className="ml-1 font-semibold text-zinc-700">· Hoy</span>}
               </p>
             </div>
           </div>
@@ -257,7 +257,7 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
               type="button"
               onClick={handleRefresh}
               disabled={refreshing}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary transition-colors hover:bg-zf-accent-bg disabled:opacity-50"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary transition-colors hover:bg-zinc-100 disabled:opacity-50"
               title="Actualizar"
             >
               <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
@@ -270,7 +270,7 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
                     e.target.value ? parseInt(e.target.value) : null
                   )
                 }
-                className="h-9 rounded-lg border border-zf-border bg-white px-3 text-xs text-zf-text focus:border-zf-primary focus:outline-none focus:ring-1 focus:ring-zf-primary/20"
+                className="h-9 rounded-lg border border-zf-border bg-white px-3 text-xs text-zf-text focus:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-zf-primary/20"
               >
                 <option value="">Todos los profesionales</option>
                 {professionals.map((p) => (
@@ -284,7 +284,7 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
             <button
               type="button"
               onClick={() => handleOpenModal()}
-              className="flex items-center gap-1.5 rounded-lg bg-zf-primary px-4 py-2 text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-[0.97]"
+              className="flex items-center gap-1.5 rounded-lg bg-zinc-800 px-4 py-2 text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-[0.97]"
             >
               <Plus className="h-3.5 w-3.5" />
               Nueva Cita
@@ -292,12 +292,13 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
           </div>
         </div>
 
+        {viewMode === "professional" ? (
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zf-border/40 bg-zf-bg/60 px-6 py-3">
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={handlePrevDay}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary transition-colors hover:bg-zf-accent-bg"
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary transition-colors hover:bg-zinc-100"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
@@ -310,7 +311,7 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
             <button
               type="button"
               onClick={handleNextDay}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary transition-colors hover:bg-zf-accent-bg"
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary transition-colors hover:bg-zinc-100"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -318,7 +319,7 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
               <button
                 type="button"
                 onClick={handleToday}
-                className="flex h-8 items-center rounded-lg bg-zf-accent-bg px-3 text-xs font-semibold text-zf-accent-text transition-colors hover:bg-zf-accent-bg/70"
+                className="flex h-8 items-center rounded-lg bg-zinc-100 px-3 text-xs font-semibold text-zinc-700 transition-colors hover:bg-zinc-100/70"
               >
                 Hoy
               </button>
@@ -333,11 +334,11 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
               <div className="flex items-center gap-2">
                 <div className="h-2.5 w-28 overflow-hidden rounded-full bg-zf-bg">
                   <div
-                    className="h-full rounded-full bg-zf-primary transition-all"
+                    className="h-full rounded-full bg-zinc-800 transition-all"
                     style={{ width: `${Math.min(ocupacion.pct, 100)}%` }}
                   />
                 </div>
-                <span className="text-xs font-bold text-zf-accent-text">{ocupacion.pct}%</span>
+                <span className="text-xs font-bold text-zinc-700">{ocupacion.pct}%</span>
               </div>
             </div>
 
@@ -347,7 +348,7 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
                 onClick={() => setRangeMode("day")}
                 className={[
                   "rounded-md px-2.5 py-1.5 text-[10px] font-bold uppercase transition-all",
-                  rangeMode === "day" ? "bg-white text-zf-accent-text shadow-sm" : "text-zf-text-secondary hover:text-zf-text",
+                  rangeMode === "day" ? "bg-white text-zinc-700 shadow-sm" : "text-zf-text-secondary hover:text-zf-text",
                 ].join(" ")}
               >
                 Día
@@ -357,37 +358,41 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
                 onClick={() => setRangeMode("week")}
                 className={[
                   "rounded-md px-2.5 py-1.5 text-[10px] font-bold uppercase transition-all",
-                  rangeMode === "week" ? "bg-white text-zf-accent-text shadow-sm" : "text-zf-text-secondary hover:text-zf-text",
+                  rangeMode === "week" ? "bg-white text-zinc-700 shadow-sm" : "text-zf-text-secondary hover:text-zf-text",
                 ].join(" ")}
               >
                 Semana
               </button>
             </div>
 
-            <div className="flex rounded-lg bg-zf-bg/80 p-0.5">
-              <button
-                type="button"
-                onClick={() => setViewMode("professional")}
-                className={[
-                  "flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-all",
-                  viewMode === "professional" ? "bg-white text-zf-accent-text shadow-sm" : "text-zf-text-secondary hover:text-zf-text",
-                ].join(" ")}
-              >
-                <CalendarDays className="h-3 w-3" />
-                <span className="hidden sm:inline">Calendario</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("list")}
-                className={[
-                  "flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-all",
-                  viewMode === "list" ? "bg-white text-zf-accent-text shadow-sm" : "text-zf-text-secondary hover:text-zf-text",
-                ].join(" ")}
-              >
-                <LayoutList className="h-3 w-3" />
-                <span className="hidden sm:inline">Lista</span>
-              </button>
-            </div>
+          </div>
+        </div>
+        ) : null}
+
+        <div className="flex items-center justify-end gap-2 border-b border-zf-border/40 bg-zf-bg/60 px-6 py-2">
+          <div className="flex rounded-lg bg-zf-bg/80 p-0.5">
+            <button
+              type="button"
+              onClick={() => setViewMode("professional")}
+              className={[
+                "flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-all",
+                viewMode === "professional" ? "bg-zinc-800 text-white shadow-sm" : "text-zf-text-secondary hover:text-zf-text",
+              ].join(" ")}
+            >
+              <CalendarDays className="h-3 w-3" />
+              <span className="hidden sm:inline">Calendario</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("list")}
+              className={[
+                "flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-all",
+                viewMode === "list" ? "bg-zinc-800 text-white shadow-sm" : "text-zf-text-secondary hover:text-zf-text",
+              ].join(" ")}
+            >
+              <LayoutList className="h-3 w-3" />
+              <span className="hidden sm:inline">Lista</span>
+            </button>
           </div>
         </div>
 
@@ -414,7 +419,7 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
             <button
               type="button"
               onClick={() => handleOpenModal()}
-              className="flex items-center gap-1.5 rounded-xl bg-zf-primary px-5 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-[0.97]"
+              className="flex items-center gap-1.5 rounded-xl bg-zinc-800 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-[0.97]"
             >
               <Plus className="h-4 w-4" />
               Agendar primera cita
@@ -448,7 +453,7 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
                   key={prof.id}
                   className="flex flex-col items-center justify-center gap-1 border-b border-zf-border/40 bg-zf-bg/60 py-3"
                 >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zf-accent-bg text-xs font-bold text-zf-accent-text">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 text-xs font-bold text-zinc-700">
                     {prof.name.charAt(0).toUpperCase()}
                   </div>
                   <span className="text-xs font-semibold text-zf-text">
@@ -548,7 +553,7 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
                       return (
                         <div
                           key={`${prof.id}-${hour}`}
-                          className="group relative flex cursor-pointer items-center justify-center border-b border-r border-zf-border/30 transition-colors hover:bg-zf-accent-bg/30"
+                          className="group relative flex cursor-pointer items-center justify-center border-b border-r border-zf-border/30 transition-colors hover:bg-zinc-100/30"
                           onClick={() => handleOpenModal(currentDay, hourStr, prof.id > 0 ? prof.id : null)}
                         >
                           <span className="text-[10px] font-medium text-zf-text-muted opacity-0 transition-opacity group-hover:opacity-100">
@@ -593,7 +598,7 @@ function renderAppointmentCard(apt: WeekAppointment) {
   const isCancelled = apt.estado === "Cancelada"
   return (
     <div className="flex items-center gap-3">
-      <span className="w-14 flex-shrink-0 text-sm font-semibold text-zf-accent-text">
+      <span className="w-14 flex-shrink-0 text-sm font-semibold text-zinc-700">
         {formatHora(apt.hora)}
       </span>
       <div className="flex-1 space-y-0.5">

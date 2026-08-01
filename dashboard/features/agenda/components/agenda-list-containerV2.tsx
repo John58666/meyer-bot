@@ -255,7 +255,7 @@ export function AgendaListContainerV2({
         <button
           type="button"
           onClick={loadData}
-          className="rounded-xl bg-zf-primary px-6 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-[0.97]"
+          className="rounded-xl bg-zinc-800 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-[0.97]"
         >
           Reintentar
         </button>
@@ -272,17 +272,20 @@ export function AgendaListContainerV2({
           <button
             type="button"
             onClick={handlePrevMonth}
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary transition-colors hover:bg-zf-accent-bg active:scale-[0.97]"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary transition-colors hover:bg-zinc-100 active:scale-[0.97]"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <span className="min-w-[140px] text-center text-lg font-bold capitalize text-zf-text">
+          <button
+            type="button"
+            className="min-w-[140px] rounded-lg border border-zf-border bg-white px-3 py-1.5 text-center text-lg font-bold capitalize text-zf-text hover:bg-zinc-50 transition-colors"
+          >
             {monthLabel}
-          </span>
+          </button>
           <button
             type="button"
             onClick={handleNextMonth}
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary transition-colors hover:bg-zf-accent-bg active:scale-[0.97]"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary transition-colors hover:bg-zinc-100 active:scale-[0.97]"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -290,48 +293,22 @@ export function AgendaListContainerV2({
             <button
               type="button"
               onClick={handleTodayMonth}
-              className="flex h-9 items-center rounded-lg bg-zf-accent-bg px-3 text-xs font-semibold text-zf-accent-text transition-colors hover:bg-zf-accent-bg/70 active:scale-[0.97]"
+              className="flex h-9 items-center rounded-lg bg-zinc-100 px-3 text-xs font-semibold text-zinc-700 transition-colors hover:bg-zinc-200 active:scale-[0.97]"
             >
               Hoy
             </button>
           )}
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary transition-colors hover:bg-zf-accent-bg disabled:opacity-50 active:scale-[0.97]"
-            title="Actualizar"
-          >
-            <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
-          </button>
-          {isOwnerOrAdmin && professionals.length > 1 && (
-            <select
-              value={selectedProfessionalId ?? ""}
-              onChange={(e) =>
-                setSelectedProfessionalId(e.target.value ? parseInt(e.target.value) : null)
-              }
-              className="h-9 rounded-lg border border-zf-border bg-white px-3 text-xs text-zf-text focus:border-zf-primary focus:outline-none focus:ring-1 focus:ring-zf-primary/20"
-            >
-              <option value="">Todos los profesionales</option>
-              {professionals.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          )}
-          <button
-            type="button"
-            onClick={onNewAppointment}
-            className="flex items-center gap-1.5 rounded-xl bg-zf-primary px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:opacity-90 active:scale-[0.97]"
-          >
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">NUEVA CITA</span>
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary transition-colors hover:bg-zinc-100 disabled:opacity-50 active:scale-[0.97]"
+          title="Actualizar"
+        >
+          <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
+        </button>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -341,9 +318,9 @@ export function AgendaListContainerV2({
             type="button"
             onClick={() => setActiveFilter(f.key)}
             className={cn(
-              "rounded-full px-4 py-2 text-xs font-bold uppercase tracking-wide transition-all active:scale-[0.97]",
+              "rounded-full px-2.5 py-1 text-[11px] sm:px-4 sm:py-2 sm:text-xs font-bold uppercase tracking-wide transition-all active:scale-[0.97]",
               activeFilter === f.key
-                ? "bg-zf-primary text-white shadow-sm"
+                ? "bg-zinc-800 text-white shadow-sm"
                 : "border border-zf-border/50 text-zf-text-secondary hover:border-zf-text-muted hover:text-zf-text"
             )}
           >
@@ -359,7 +336,7 @@ export function AgendaListContainerV2({
           placeholder="Buscar cliente o servicio..."
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
-          className="h-9 w-full rounded-xl border border-zf-border bg-white pl-9 pr-3 text-sm text-zf-text placeholder:text-zf-text-muted focus:border-zf-primary focus:outline-none focus:ring-1 focus:ring-zf-primary/20"
+          className="h-9 w-full rounded-xl border border-zf-border bg-white pl-9 pr-3 text-sm text-zf-text placeholder:text-zf-text-muted focus:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-zf-primary/20"
         />
       </div>
 
@@ -374,7 +351,7 @@ export function AgendaListContainerV2({
           <button
             type="button"
             onClick={onNewAppointment}
-            className="flex items-center gap-1.5 rounded-xl bg-zf-primary px-5 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-[0.97]"
+            className="flex items-center gap-1.5 rounded-xl bg-zinc-800 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-[0.97]"
           >
             <Plus className="h-4 w-4" />
             NUEVA CITA
@@ -394,7 +371,7 @@ export function AgendaListContainerV2({
               setActiveFilter("todos")
               setSearchText("")
             }}
-            className="rounded-xl border border-zf-border bg-white px-5 py-2 text-sm font-semibold text-zf-text-secondary transition-all hover:bg-zf-accent-bg active:scale-[0.97]"
+            className="rounded-xl border border-zf-border bg-white px-5 py-2 text-sm font-semibold text-zf-text-secondary transition-all hover:bg-zinc-100 active:scale-[0.97]"
           >
             Ver todas
           </button>

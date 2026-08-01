@@ -109,21 +109,21 @@ export function DayAccordionV2({
         className={cn(
           "flex w-full items-center justify-between px-4 py-3 text-left transition-colors",
           isExpanded && !isToday
-            ? "bg-zf-accent-bg/20"
+            ? "bg-zinc-100/20"
             : isToday
-              ? "bg-zf-accent-bg/10 hover:bg-zf-accent-bg/20"
-              : "bg-zf-surface hover:bg-zf-accent-bg/5"
+              ? "bg-zinc-100/10 hover:bg-zinc-100/20"
+              : "bg-zf-surface hover:bg-zinc-100/5"
         )}
       >
         <div className="flex items-center gap-3 min-w-0">
           <span className="text-sm font-semibold text-zf-text truncate">
             {DAYS_FULL[dayOfWeek]} {dayNum} de {MONTHS_ES[month]}
             {isToday && (
-              <span className="ml-2 text-xs font-bold text-zf-primary">Hoy</span>
+              <span className="ml-2 text-xs font-bold text-zinc-800">Hoy</span>
             )}
           </span>
           {totalItems > 0 && (
-            <span className="shrink-0 rounded-full bg-zf-accent-bg px-2 py-0.5 text-[10px] font-bold uppercase text-zf-accent-text">
+            <span className="shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-bold uppercase text-zinc-700">
               {totalItems} {totalItems === 1 ? "item" : "items"}
             </span>
           )}
@@ -133,7 +133,7 @@ export function DayAccordionV2({
             <div className="hidden items-center gap-2 sm:flex">
               <div className="h-1.5 w-16 overflow-hidden rounded-full bg-zf-bg">
                 <div
-                  className="h-full rounded-full bg-zf-primary transition-all"
+                  className="h-full rounded-full bg-zinc-800 transition-all"
                   style={{ width: `${pct}%` }}
                 />
               </div>

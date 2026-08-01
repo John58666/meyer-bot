@@ -66,7 +66,7 @@ export function AppointmentCardV2({
         "w-full rounded-xl border p-4 text-left transition-all hover:shadow-sm active:scale-[0.98]",
         isCancelled
           ? "opacity-40 grayscale bg-zf-bg/50 border-zf-border/20"
-          : "bg-zf-surface border-zf-border/30 hover:bg-zf-accent-bg/5",
+          : "bg-zf-surface border-zf-border/30 hover:bg-zinc-100/5",
         "md:flex md:flex-row md:items-center md:gap-4 md:p-3"
       )}
       aria-disabled={isCancelled}
@@ -75,7 +75,7 @@ export function AppointmentCardV2({
         <div className="flex items-center justify-between md:w-20 md:shrink-0">
           <span
             className={cn(
-              "text-sm font-bold text-zf-accent-text md:w-full",
+              "text-sm font-bold text-zinc-700 md:w-full",
               isCancelled && "line-through"
             )}
           >
@@ -132,7 +132,7 @@ export function AppointmentCardV2({
                 type="button"
                 onClick={handleComplete}
                 disabled={completing}
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-zf-text-muted transition-colors hover:bg-zf-accent-bg hover:text-emerald-600 active:scale-[0.97] disabled:opacity-50"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-zf-text-muted transition-colors hover:bg-zinc-100 hover:text-emerald-600 active:scale-[0.97] disabled:opacity-50"
                 title="Completar"
               >
                 <CheckCircle2 className="h-4 w-4" />
@@ -141,7 +141,7 @@ export function AppointmentCardV2({
                 type="button"
                 onClick={handleCancel}
                 disabled={cancelling}
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-zf-text-muted transition-colors hover:bg-zf-accent-bg hover:text-red-500 active:scale-[0.97] disabled:opacity-50"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-zf-text-muted transition-colors hover:bg-zinc-100 hover:text-red-500 active:scale-[0.97] disabled:opacity-50"
                 title="Cancelar"
               >
                 <XCircle className="h-4 w-4" />
@@ -150,7 +150,7 @@ export function AppointmentCardV2({
                 <button
                   type="button"
                   onClick={handleWhatsApp}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg text-zf-text-muted transition-colors hover:bg-zf-accent-bg hover:text-[#25D366] active:scale-[0.97]"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-zf-text-muted transition-colors hover:bg-zinc-100 hover:text-[#25D366] active:scale-[0.97]"
                   title="WhatsApp"
                 >
                   <MessageCircle className="h-4 w-4" />
@@ -163,7 +163,7 @@ export function AppointmentCardV2({
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); onClick() }}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-zf-text-muted transition-colors hover:bg-zf-accent-bg hover:text-zf-text active:scale-[0.97]"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-zf-text-muted transition-colors hover:bg-zinc-100 hover:text-zf-text active:scale-[0.97]"
             title="Detalle"
           >
             <MoreVertical className="h-4 w-4" />
