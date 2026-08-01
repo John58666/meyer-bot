@@ -160,7 +160,6 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
   const isToday = currentDay === todayISO()
 
   const dayAppointments = appointments[currentDay] ?? []
-  const totalDia = dayAppointments.length
 
   const displayProfessionals = isOwnerOrAdmin ? professionals : []
 
@@ -305,13 +304,7 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
           </div>
         </div>
 
-        <div className="flex items-center justify-between border-b border-zf-border/40 bg-zf-bg/60 px-6 py-2">
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-zf-text-secondary">
-              {totalDia} {totalDia === 1 ? "cita" : "citas"} · {dayName} {dayNum}
-              {isToday && <span className="ml-1 font-semibold text-zinc-700">· Hoy</span>}
-            </span>
-          </div>
+        <div className="flex items-center justify-end border-b border-zf-border/40 bg-zf-bg/60 px-6 py-2">
           <div className="flex rounded-lg bg-zf-bg/80 p-0.5">
             <button type="button" onClick={() => setViewMode("professional")}
               className={cn("flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-all",

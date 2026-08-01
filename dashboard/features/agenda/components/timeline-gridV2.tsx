@@ -43,6 +43,10 @@ function getCurrentTimeTop(hourHeight: number): number {
   return (minutes / 60) * hourHeight
 }
 
+function aptsForColumn(appointments: GridAppointment[], columnId: number): GridAppointment[] {
+  return appointments.filter((a) => a.columnId === columnId)
+}
+
 export function TimelineGridV2({
   columns,
   appointments,
@@ -57,99 +61,87 @@ export function TimelineGridV2({
   const totalHeight = totalHours * hourHeight
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-zf-border/30 bg-zf-surface">
+    <div className="rounded-xl border border-zf-border/30 bg-zf-surface overflow-hidden">
       <div
-        className="grid"
+        className="grid sticky top-0 z-10 bg-zf-surface"
         style={{ gridTemplateColumns: `60px repeat(${columns.length}, 1fr)` }}
       >
         <div className="border-b border-zf-border/40 bg-zf-bg/60 py-2">
-          <span className="block text-center text-[10px] font-bold uppercase tracking-wider text-zf-text-muted">
-            Hora
-          </span>
+          <span className="block text-center text-[10px] font-bold uppercase tracking-wider text-zf-text-muted">Hora</span>
         </div>
         {columns.map((col) => (
-          <div
-            key={col.id}
-            className="flex items-center justify-center gap-1.5 border-b border-zf-border/40 bg-zf-bg/60 py-2"
-          >
+          <div key={col.id} className="flex items-center justify-center gap-1.5 border-b border-zf-border/40 bg-zf-bg/60 py-2">
             <div className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-200 text-[10px] font-bold text-zinc-600">
               {col.name.charAt(0).toUpperCase()}
             </div>
-            <span className="text-[11px] font-semibold text-zf-text truncate">
-              {col.name}
-            </span>
+            <span className="text-[11px] font-semibold text-zf-text truncate">{col.name}</span>
           </div>
         ))}
       </div>
 
-      <div className="relative" style={{ height: `${totalHeight}px` }}>
-        <div
-          className="grid"
-          style={{ gridTemplateColumns: `60px repeat(${columns.length}, 1fr)` }}
-        >
-          {Array.from({ length: totalHours }, (_, i) => {
-            const hour = startHour + i
-            return (
-              <div
-                key={hour}
-                className="contents"
-                style={{ height: `${hourHeight}px` }}
-              >
+      <div className="h-[calc(100vh-220px)] overflow-y-auto">
+        <div className="flex" style={{ minHeight: `${totalHeight}px` }}>
+          <div className="w-[60px] shrink-0 border-r border-zinc-200">
+            {Array.from({ length: totalHours }, (_, i) => {
+              const hour = startHour + i
+              return (
                 <div
-                  className="relative flex items-start justify-center border-r border-dashed border-zinc-200 pt-1 text-[10px] font-medium text-zf-text-muted"
+                  key={hour}
+                  className="flex items-start justify-center border-b border-dashed border-zinc-100 pt-1 text-[10px] font-medium text-zf-text-muted"
                   style={{ height: `${hourHeight}px` }}
                 >
                   {formatHora(hour)}
                 </div>
-                {columns.map((col) => (
+              )
+            })}
+          </div>
+
+          {columns.map((col) => (
+            <div key={col.id} className="relative flex-1 border-r border-dashed border-zinc-100 last:border-r-0">
+              {Array.from({ length: totalHours }, (_, i) => {
+                const hour = startHour + i
+                return (
                   <div
-                    key={col.id}
+                    key={hour}
                     onClick={() => {
                       const hh = String(hour).padStart(2, "0")
                       onSlotClick(col.id, `${hh}:00`)
                     }}
-                    className="cursor-pointer border-r border-dashed border-zinc-200 transition-colors hover:bg-zinc-50/50"
+                    className="cursor-pointer border-b border-dashed border-zinc-100 transition-colors hover:bg-zinc-50/50"
                     style={{ height: `${hourHeight}px` }}
                   />
-                ))}
-              </div>
-            )
-          })}
+                )
+              })}
+
+              {aptsForColumn(appointments, col.id).map((apt) => (
+                <AppointmentBlockV2
+                  key={apt.id}
+                  top={(apt.startMinute - startHour * 60) / 60 * hourHeight}
+                  left="0"
+                  width="100%"
+                  height={(apt.durationMin / 60) * hourHeight}
+                  hora={apt.hora}
+                  nombre={apt.nombre}
+                  servicio={apt.servicio}
+                  estado={apt.estado}
+                  isBlock={apt.isBlock}
+                  motivo={apt.motivo}
+                  onClick={() => onAppointmentClick(apt.id)}
+                />
+              ))}
+
+              {isToday && col.id === columns[0].id && (
+                <div
+                  className="pointer-events-none absolute left-0 right-0 z-20 flex items-center"
+                  style={{ top: `${getCurrentTimeTop(hourHeight) - startHour * hourHeight}px` }}
+                >
+                  <div className="h-2 w-2 rounded-full bg-rose-500" />
+                  <div className="flex-1 border-t border-rose-400" />
+                </div>
+              )}
+            </div>
+          ))}
         </div>
-
-        {appointments.map((apt) => {
-          const colIndex = columns.findIndex((c) => c.id === apt.columnId)
-          if (colIndex === -1) return null
-          const colWidth = 100 / columns.length
-          const left = `${60 / (60 + columns.length * (100 / columns.length)) * 100}%` // simplified below
-
-          return (
-            <AppointmentBlockV2
-              key={apt.id}
-              top={(apt.startMinute - startHour * 60) / 60 * hourHeight}
-              left={`calc(60px + ${colIndex} * (100% - 60px) / ${columns.length})`}
-              width={`calc((100% - 60px) / ${columns.length} - 2px)`}
-              height={(apt.durationMin / 60) * hourHeight}
-              hora={apt.hora}
-              nombre={apt.nombre}
-              servicio={apt.servicio}
-              estado={apt.estado}
-              isBlock={apt.isBlock}
-              motivo={apt.motivo}
-              onClick={() => onAppointmentClick(apt.id)}
-            />
-          )
-        })}
-
-        {isToday && (
-          <div
-            className="pointer-events-none absolute left-0 right-0 z-20 flex items-center"
-            style={{ top: `${getCurrentTimeTop(hourHeight) - startHour * hourHeight}px` }}
-          >
-            <div className="h-3 w-3 rounded-full bg-rose-500 -ml-1.5" />
-            <div className="flex-1 border-t border-rose-400" />
-          </div>
-        )}
       </div>
     </div>
   )
