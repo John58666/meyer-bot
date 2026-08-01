@@ -58,3 +58,25 @@ export async function togglePaymentMethod(id: number, businessId: number, isActi
     return { error: "Error al actualizar método de pago" }
   }
 }
+
+export async function updatePaymentMethod(id: number, businessId: number, data: { name: string; tipo: string }) {
+  const session = await auth()
+  if (!session) return { error: "No autenticado" }
+  if (session.user.role !== "owner" && session.user.role !== "admin")
+    return { error: "No autorizado" }
+
+  const name = data.name?.trim()
+  if (!name) return { error: "El nombre es obligatorio" }
+
+  try {
+    await pool.query(
+      `UPDATE payment_methods SET name = $1, tipo = $2 WHERE id = $3 AND business_id = $4`,
+      [name, data.tipo, id, businessId]
+    )
+    revalidatePath("/dashboard/configuracion")
+    return { ok: true }
+  } catch (e) {
+    console.error("[updatePaymentMethod]", e)
+    return { error: "Error al actualizar método de pago" }
+  }
+}

@@ -3,6 +3,8 @@
 import { useState, useEffect, useTransition } from "react"
 import { getServicesV2, createService, updateService, toggleServiceActive, deleteService } from "@/features/config-services/actionsV2"
 import type { ServiceRow, ServiceInput } from "@/lib/services"
+import { getProfessionalServices, setProfessionalServices } from "@/lib/services"
+import { getActiveProfessionals } from "@/lib/actions"
 import { ModalV2 } from "@/components/shared/modalV2"
 import { BadgeV2 } from "@/components/shared/badgeV2"
 import { EmptyStateV2 } from "@/components/shared/empty-stateV2"
@@ -23,6 +25,9 @@ export function ServicesListV2({ businessId }: ServicesListV2Props) {
   const [formPrice, setFormPrice] = useState("")
   const [formDuration, setFormDuration] = useState("30")
   const [formError, setFormError] = useState("")
+  const [modalTab, setModalTab] = useState<"info" | "professionals">("info")
+  const [professionals, setProfessionals] = useState<{ id: number; name: string }[]>([])
+  const [assignedIds, setAssignedIds] = useState<Set<number>>(new Set())
 
   function loadServices() {
     getServicesV2(businessId).then((res) => {
@@ -57,6 +62,25 @@ export function ServicesListV2({ businessId }: ServicesListV2Props) {
     setFormError("")
     setModalOpen(true)
   }
+
+  useEffect(() => {
+    if (modalOpen) {
+      setModalTab("info")
+      getActiveProfessionals(businessId).then(async (profs) => {
+        setProfessionals(profs)
+        if (editingId) {
+          const assigned = new Set<number>()
+          for (const p of profs) {
+            const serviceIds = await getProfessionalServices(businessId, p.id)
+            if ((serviceIds as number[]).includes(editingId)) assigned.add(p.id)
+          }
+          setAssignedIds(assigned)
+        } else {
+          setAssignedIds(new Set())
+        }
+      }).catch(() => {})
+    }
+  }, [modalOpen, editingId, businessId])
 
   function handleSaveForm() {
     setFormError("")
@@ -233,67 +257,52 @@ export function ServicesListV2({ businessId }: ServicesListV2Props) {
         onClose={() => setModalOpen(false)}
         title={editingId != null ? "Editar Servicio" : "Nuevo Servicio"}
       >
-        <div className="space-y-4">
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-zf-text-secondary">Nombre del Servicio</label>
-            <input
-              value={formName}
-              onChange={(e) => setFormName(e.target.value)}
-              placeholder="Ej: Corte caballero"
-              className="w-full rounded-xl border border-zf-border bg-zf-bg px-4 py-3 text-sm text-zf-text placeholder:text-zf-text-muted outline-none transition-all focus:border-zf-primary focus:ring-2 focus:ring-zf-primary/20"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-zf-text-secondary">Precio ($)</label>
-              <input
-                type="number"
-                value={formPrice}
-                onChange={(e) => setFormPrice(e.target.value)}
-                placeholder="25000"
-                min="0"
-                className="w-full rounded-xl border border-zf-border bg-zf-bg px-4 py-3 text-sm text-zf-text placeholder:text-zf-text-muted outline-none transition-all focus:border-zf-primary focus:ring-2 focus:ring-zf-primary/20"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-zf-text-secondary">Duración (min)</label>
-              <input
-                type="number"
-                value={formDuration}
-                onChange={(e) => setFormDuration(e.target.value)}
-                placeholder="30"
-                min="5"
-                max="480"
-                className="w-full rounded-xl border border-zf-border bg-zf-bg px-4 py-3 text-sm text-zf-text placeholder:text-zf-text-muted outline-none transition-all focus:border-zf-primary focus:ring-2 focus:ring-zf-primary/20"
-              />
-            </div>
-          </div>
-
-          {formError && (
-            <div className="flex items-center gap-2 text-sm text-zf-error-text">
-              <AlertCircle className="h-4 w-4" />
-              {formError}
-            </div>
-          )}
-
-          <div className="flex gap-3 pt-2">
-            <button
-              onClick={() => setModalOpen(false)}
-              className="flex-1 rounded-xl border border-zf-border py-3 text-sm font-semibold text-zf-text-secondary transition-all hover:bg-zf-accent-bg active:scale-[0.97]"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleSaveForm}
-              disabled={isPending}
-              className="flex-1 rounded-xl bg-zf-primary py-3 text-sm font-semibold text-white shadow-sm transition-all hover:opacity-90 active:scale-[0.97] disabled:opacity-50"
-            >
-              {isPending ? "Guardando..." : editingId != null ? "Guardar Cambios" : "Agregar"}
-            </button>
+        <div className="-mx-6 -mt-4 mb-0 border-b border-zf-border/40">
+          <div className="flex px-6 pt-2">
+            <button type="button" onClick={() => setModalTab("info")} className={["px-4 py-2.5 text-sm font-semibold transition-all", modalTab === "info" ? "border-b-2 border-zf-primary text-zf-accent-text" : "text-zf-text-secondary hover:text-zf-text"].join(" ")}>Información</button>
+            <button type="button" onClick={() => setModalTab("professionals")} className={["px-4 py-2.5 text-sm font-semibold transition-all", modalTab === "professionals" ? "border-b-2 border-zf-primary text-zf-accent-text" : "text-zf-text-secondary hover:text-zf-text"].join(" ")}>Profesionales</button>
           </div>
         </div>
+
+        {modalTab === "info" ? (
+          <div className="mt-4 space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-zf-text-secondary">Nombre del Servicio</label>
+              <input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Ej: Corte caballero" className="w-full rounded-xl border border-zf-border bg-zf-bg px-4 py-3 text-sm text-zf-text placeholder:text-zf-text-muted outline-none transition-all focus:border-zf-primary focus:ring-2 focus:ring-zf-primary/20" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-zf-text-secondary">Precio ($)</label>
+                <input type="number" value={formPrice} onChange={(e) => setFormPrice(e.target.value)} placeholder="25000" min="0" className="w-full rounded-xl border border-zf-border bg-zf-bg px-4 py-3 text-sm text-zf-text placeholder:text-zf-text-muted outline-none transition-all focus:border-zf-primary focus:ring-2 focus:ring-zf-primary/20" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-zf-text-secondary">Duración (min)</label>
+                <input type="number" value={formDuration} onChange={(e) => setFormDuration(e.target.value)} placeholder="30" min="5" max="480" className="w-full rounded-xl border border-zf-border bg-zf-bg px-4 py-3 text-sm text-zf-text placeholder:text-zf-text-muted outline-none transition-all focus:border-zf-primary focus:ring-2 focus:ring-zf-primary/20" />
+              </div>
+            </div>
+            {formError && <div className="flex items-center gap-2 text-sm text-zf-error-text"><AlertCircle className="h-4 w-4" />{formError}</div>}
+            <div className="flex gap-3 pt-2">
+              <button onClick={() => setModalOpen(false)} className="flex-1 rounded-xl border border-zf-border py-3 text-sm font-semibold text-zf-text-secondary transition-all hover:bg-zf-accent-bg active:scale-[0.97]">Cancelar</button>
+              <button onClick={handleSaveForm} disabled={isPending} className="flex-1 rounded-xl bg-zf-primary py-3 text-sm font-semibold text-white shadow-sm transition-all hover:opacity-90 active:scale-[0.97] disabled:opacity-50">{isPending ? "Guardando..." : editingId != null ? "Guardar Cambios" : "Agregar"}</button>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-4 space-y-3">
+            {professionals.length === 0 ? (
+              <p className="text-xs text-zf-text-secondary py-4 text-center">No hay profesionales registrados</p>
+            ) : (
+              professionals.map((p) => (
+                <label key={p.id} className="flex cursor-pointer items-center gap-3 rounded-lg border border-zf-border/30 bg-white p-3 hover:bg-zf-accent-bg/20">
+                  <input type="checkbox" checked={assignedIds.has(p.id)} onChange={() => { const next = new Set(assignedIds); next.has(p.id) ? next.delete(p.id) : next.add(p.id); setAssignedIds(next) }} className="h-4 w-4 accent-zf-primary" />
+                  <span className="text-sm font-medium text-zf-text">{p.name}</span>
+                </label>
+              ))
+            )}
+            {editingId != null && (
+              <button onClick={async () => { await setProfessionalServices(editingId, [...assignedIds]); setModalOpen(false); loadServices() }} className="mt-2 w-full rounded-xl bg-zf-primary py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-[0.97]">Guardar Asignaciones</button>
+            )}
+          </div>
+        )}
       </ModalV2>
     </div>
   )
