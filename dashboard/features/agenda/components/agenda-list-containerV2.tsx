@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import {
   getAppointmentsByMonthV2,
   getBloqueosV2,
@@ -61,7 +61,6 @@ export function AgendaListContainerV2({
   const [searchText, setSearchText] = useState("")
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<number | null>(null)
   const [refreshing, setRefreshing] = useState(false)
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const year = currentMonth.getFullYear()
   const month = currentMonth.getMonth() + 1
@@ -93,11 +92,15 @@ export function AgendaListContainerV2({
   }, [loadData])
 
   useEffect(() => {
-    intervalRef.current = setInterval(() => {
-      loadData()
-    }, 30000)
+    const interval = setInterval(() => loadData(), 15000)
+    const onVisible = () => { if (document.visibilityState === "visible") loadData() }
+    const onFocus = () => loadData()
+    document.addEventListener("visibilitychange", onVisible)
+    window.addEventListener("focus", onFocus)
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
+      clearInterval(interval)
+      document.removeEventListener("visibilitychange", onVisible)
+      window.removeEventListener("focus", onFocus)
     }
   }, [loadData])
 
