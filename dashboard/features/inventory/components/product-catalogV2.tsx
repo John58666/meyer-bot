@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { getProductsV2, toggleProductActiveV2, deleteProductV2 } from "../actionsV2"
 import type { Product } from "../actionsV2"
 import {
@@ -31,6 +31,8 @@ export function ProductCatalogV2({ businessId }: Props) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [productType, setProductType] = useState("all")
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
@@ -48,7 +50,7 @@ export function ProductCatalogV2({ businessId }: Props) {
     setError("")
     setLoading(true)
     try {
-      const res = await getProductsV2(businessId, search || undefined, productType !== "all" ? productType : undefined, page)
+      const res = await getProductsV2(businessId, debouncedSearch || undefined, productType !== "all" ? productType : undefined, page)
       if (res.products) setProducts(res.products)
       setTotal(res.total ?? 0)
       setPages(res.pages ?? 0)
@@ -61,7 +63,15 @@ export function ProductCatalogV2({ businessId }: Props) {
     } finally {
       setLoading(false)
     }
-  }, [businessId, search, productType, page])
+  }, [businessId, debouncedSearch, productType, page])
+
+  useEffect(() => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current)
+    searchTimerRef.current = setTimeout(() => {
+      setDebouncedSearch(search)
+    }, 300)
+    return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current) }
+  }, [search])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect

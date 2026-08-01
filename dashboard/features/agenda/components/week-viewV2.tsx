@@ -22,6 +22,7 @@ import {
 import { AgendaModalV2 } from "./agenda-modalV2"
 import { AppointmentDetailDrawerV2 } from "./appointment-detail-drawerV2"
 import { ListViewV2 } from "./list-viewV2"
+import { CalendarMonthView } from "@/components/calendar-month-view"
 
 interface Props {
   businessId: number
@@ -57,7 +58,7 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
 
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [drawerAppointment, setDrawerAppointment] = useState<AppointmentRow | WeekAppointment | null>(null)
-  const [viewMode, setViewMode] = useState<"professional" | "list">("professional")
+  const [viewMode, setViewMode] = useState<"professional" | "list" | "calendar">("professional")
 
   const loadData = useCallback(async () => {
     setError("")
@@ -300,10 +301,27 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
               <LayoutList className="h-3 w-3" />
               Lista
             </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("calendar")}
+              className={[
+                "flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-semibold transition-all",
+                viewMode === "calendar"
+                  ? "bg-white text-zf-accent-text shadow-sm"
+                  : "text-zf-text-secondary hover:text-zf-text",
+              ].join(" ")}
+            >
+              <CalendarDays className="h-3 w-3" />
+              Calendario
+            </button>
           </div>
         </div>
 
-        {viewMode === "list" ? (
+        {viewMode === "calendar" ? (
+          <div className="rounded-xl border border-zf-border/50 bg-zf-surface p-4">
+            <CalendarMonthView multiProfessional={isOwnerOrAdmin} servicesText="" professionals={professionals} />
+          </div>
+        ) : viewMode === "list" ? (
           <ListViewV2
             businessId={businessId}
             professionals={professionals}

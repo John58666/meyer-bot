@@ -12,6 +12,8 @@ interface BusinessProfileFormV2Props {
 
 const CURRENCIES = [
   { value: "COP", label: "Peso Colombiano (COP - $)" },
+  { value: "MXN", label: "Peso Mexicano (MXN - $)" },
+  { value: "BRL", label: "Real Brasileño (BRL - R$)" },
   { value: "USD", label: "Dólar Americano (USD - $)" },
   { value: "EUR", label: "Euro (EUR - €)" },
   { value: "ARS", label: "Peso Argentino (ARS - $)" },
