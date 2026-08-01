@@ -37,7 +37,7 @@ export async function getPaymentMethodsV2(businessId: number) {
   if (session.user.businessId !== businessId) return { error: "No autorizado", methods: [] }
   try {
     const methods = await getPaymentMethods(businessId)
-    return { methods }
+    return { methods: methods.methods?.filter(m => m.is_active) ?? [] }
   } catch {
     return { error: "Error al cargar métodos de pago", methods: [] }
   }

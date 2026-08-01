@@ -131,9 +131,6 @@ export function PosCartV2({ items, paymentMethods, onUpdateQuantity, onRemoveIte
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-800 px-4 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-zinc-700 disabled:opacity-40 active:scale-[0.97]">
           Cobrar {formatCurrency(total)}
         </button>
-        {items.length > 0 && !paymentMethodId && (
-          <p className="text-center text-xs text-zf-warning-text">Selecciona un método de pago para continuar</p>
-        )}
       </div>
     </div>
   )
