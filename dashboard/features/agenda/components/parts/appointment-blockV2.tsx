@@ -41,12 +41,12 @@ export function AppointmentBlockV2({
       <div
         onClick={onClick}
         style={{ top: `${top}px`, height: `${height}px`, left, width, zIndex: zIndex ?? 10 }}
-        className="absolute z-10 mx-0.5 rounded-md border border-dashed border-zinc-300 bg-zinc-100/60 p-2.5 cursor-pointer overflow-hidden transition-all hover:bg-zinc-200/60 active:scale-[0.99]"
+        className="absolute mx-0.5 rounded-md border border-dashed border-zinc-300 bg-zinc-100/60 p-1.5 sm:p-2.5 cursor-pointer overflow-hidden transition-all hover:bg-zinc-200/60 active:scale-[0.99]"
       >
-        <span className="text-[10px] font-medium text-zinc-500 block truncate">
+        <span className="text-[9px] sm:text-[10px] font-medium text-zinc-500 block truncate">
           {hora}
         </span>
-        <span className="text-[11px] font-medium text-zinc-600 block truncate">
+        <span className="text-[10px] sm:text-[11px] font-medium text-zinc-600 block truncate">
           {motivo || "Bloqueado"}
         </span>
       </div>
@@ -61,23 +61,19 @@ export function AppointmentBlockV2({
     <div
       onClick={onClick}
       style={{ top: `${top}px`, height: `${height}px`, left, width, zIndex: zIndex ?? 10 }}
-      className={`absolute mx-0.5 rounded-md border-l-4 p-2.5 cursor-pointer overflow-hidden transition-all hover:shadow-md hover:ring-1 hover:ring-zinc-300 active:scale-[0.99] ${style}`}
+      className={`absolute mx-0.5 rounded-md border-l-4 p-1.5 sm:p-2.5 cursor-pointer overflow-hidden transition-all hover:shadow-md hover:ring-1 hover:ring-zinc-300 active:scale-[0.99] ${style}`}
     >
-      <div className="flex flex-col h-full justify-between">
-        <div>
-          <p className="text-[10px] font-medium text-zinc-400 leading-tight mb-0.5 truncate">
-            {hora}
-          </p>
-          <p className={`text-xs font-semibold leading-tight truncate ${isCancelled ? "line-through" : ""}`}>
-            {nombre}
-          </p>
-          {!isCompact && (
-            <p className={`text-[11px] text-zinc-500 leading-tight truncate mt-0.5 ${isCancelled ? "line-through" : ""}`}>
-              {servicio}
-            </p>
-          )}
-        </div>
-      </div>
+      <p className="text-[9px] sm:text-[10px] font-medium text-zinc-400 leading-tight truncate">
+        {hora}
+      </p>
+      <p className={`text-[11px] sm:text-xs font-semibold leading-tight truncate ${isCancelled ? "line-through" : ""}`}>
+        {nombre}
+      </p>
+      {!isCompact && (
+        <p className={`text-[10px] sm:text-[11px] text-zinc-500 leading-tight truncate mt-0.5 ${isCancelled ? "line-through" : ""}`}>
+          {servicio}
+        </p>
+      )}
     </div>
   )
 }
