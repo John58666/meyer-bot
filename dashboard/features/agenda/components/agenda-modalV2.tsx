@@ -9,7 +9,8 @@ import {
   createAppointmentV2,
   createBloqueoV2,
 } from "../actionsV2"
-import type { Cliente, ServiceRow } from "../actionsV2"
+import type { Cliente } from "@/lib/actions"
+import type { ServiceRow } from "@/lib/services"
 import {
   Search,
   Loader2,

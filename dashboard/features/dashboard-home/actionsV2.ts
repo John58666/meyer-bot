@@ -4,8 +4,6 @@ import { auth } from "@/auth"
 import { getMetricas, getMetricasDrawer } from "@/lib/actions"
 import type { MetricasData, RangoMetricas } from "@/lib/actions"
 
-export type { MetricasData, RangoMetricas }
-
 export async function getMetricasV2(
   businessId: number,
   rango: RangoMetricas = "semana",

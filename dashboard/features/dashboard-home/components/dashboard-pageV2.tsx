@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { getMetricasV2, getOcupacionHeatmapV2 } from "../actionsV2"
-import type { MetricasData, RangoMetricas } from "../actionsV2"
+import type { MetricasData, RangoMetricas } from "@/lib/actions"
 import {
   TrendingUp,
   TrendingDown,

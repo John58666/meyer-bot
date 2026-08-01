@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { ModalV2 } from "@/components/shared/modalV2"
 import { createClienteV2, updateClienteV2, getClienteByIdV2 } from "../actionsV2"
-import type { Cliente } from "../actionsV2"
+import type { Cliente } from "@/lib/actions"
 import {
   Loader2,
   AlertCircle,

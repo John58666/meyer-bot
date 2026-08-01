@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { getClientesV2 } from "../actionsV2"
 import { getInitials, formatDate } from "@/lib/utils"
-import type { Cliente } from "../actionsV2"
+import type { Cliente } from "@/lib/actions"
 import {
   Search,
   Plus,

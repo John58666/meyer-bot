@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { DrawerV2 } from "@/components/shared/drawerV2"
 import { getClienteHistorialV2 } from "../actionsV2"
-import type { Cliente } from "../actionsV2"
+import type { Cliente } from "@/lib/actions"
 import { formatHora, getInitials, formatDate } from "@/lib/utils"
 import { STATUS_BADGE } from "../constants"
 import {

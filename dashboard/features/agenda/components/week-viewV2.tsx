@@ -6,7 +6,7 @@ import {
   getProfessionalsV2,
   getBusinessNameV2,
 } from "../actionsV2"
-import type { WeekAppointment, AppointmentRow } from "../actionsV2"
+import type { WeekAppointment, AppointmentRow } from "@/lib/appointments"
 import { DAYS_FULL, MONTHS_ES, STATUS_BADGE } from "../constants"
 import { formatHora } from "@/lib/utils"
 import {

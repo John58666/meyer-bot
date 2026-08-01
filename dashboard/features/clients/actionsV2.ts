@@ -9,7 +9,6 @@ import {
 } from "@/lib/actions"
 import type { Cliente } from "@/lib/actions"
 
-export type { Cliente }
 
 export interface ClienteFull extends Cliente {
   email: string | null

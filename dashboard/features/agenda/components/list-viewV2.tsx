@@ -6,7 +6,7 @@ import { es } from "date-fns/locale"
 import {
   getAppointmentsByMonthV2,
 } from "../actionsV2"
-import type { AppointmentRow } from "../actionsV2"
+import type { AppointmentRow } from "@/lib/appointments"
 import { STATUS_BADGE } from "../constants"
 import { formatHora } from "@/lib/utils"
 import {
