@@ -58,7 +58,6 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [drawerAppointment, setDrawerAppointment] = useState<AppointmentRow | WeekAppointment | null>(null)
 
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const initialLoadDone = useRef(false)
 
   const loadData = useCallback(async () => {
@@ -86,14 +85,23 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
       setRefreshing(false)
     }
   }, [businessId, selectedProfessionalId, userProfessionalId, initialName, currentDay])
-
-  useEffect(() => { loadData() }, [loadData])
-
   useEffect(() => {
-    intervalRef.current = setInterval(() => loadData(), 30000)
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
+    loadData()
   }, [loadData])
 
+  useEffect(() => {
+    const interval = setInterval(() => loadData(), 15000)
+    const onFocus = () => loadData()
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") loadData()
+    })
+    window.addEventListener("focus", onFocus)
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener("visibilitychange", onFocus)
+      window.removeEventListener("focus", onFocus)
+    }
+  }, [loadData])
   const handleRefresh = () => {
     setRefreshing(true)
     loadData()
