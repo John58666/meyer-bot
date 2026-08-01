@@ -9,7 +9,7 @@ import {
   setTeamMemberServicesV2,
   updateTeamMemberRoleV2,
 } from "../actionsV2"
-import type { MiembroEquipo } from "../actionsV2"
+import type { MiembroEquipo } from "@/lib/actions"
 import { AlertCircle, Check, Scissors } from "lucide-react"
 
 interface Props {

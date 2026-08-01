@@ -13,7 +13,6 @@ import {
 } from "@/lib/actions"
 import type { ScheduleData, DaySchedule } from "@/lib/actions"
 
-export type { ScheduleData, DaySchedule }
 
 export type BloqueoRow = {
   id: number

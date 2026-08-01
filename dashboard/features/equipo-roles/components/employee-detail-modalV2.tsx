@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { ModalV2 } from "@/components/shared/modalV2"
-import type { MiembroEquipo } from "@/features/config-team/actionsV2"
+import type { MiembroEquipo } from "@/lib/actions"
 import {
   getTeamMemberScheduleV2,
   getTeamMemberServicesNamesV2,

@@ -4,7 +4,6 @@ import { getAllServices, createService, updateService, toggleServiceActive, dele
 import { auth } from "@/auth"
 import type { ServiceRow, ServiceInput } from "@/lib/services"
 
-export type { ServiceRow, ServiceInput }
 
 export { createService, updateService, toggleServiceActive, deleteService }
 

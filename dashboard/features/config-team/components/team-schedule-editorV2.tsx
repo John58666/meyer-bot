@@ -6,7 +6,7 @@ import {
   updateTeamMemberScheduleV2,
   resetTeamMemberScheduleV2,
 } from "../actionsV2"
-import type { ScheduleData } from "../actionsV2"
+import type { ScheduleData } from "@/lib/actions"
 import { AlertCircle, Lock, Clock, CheckCircle2, Loader2, RotateCcw } from "lucide-react"
 
 const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0]

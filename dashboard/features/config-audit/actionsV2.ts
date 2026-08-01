@@ -9,7 +9,6 @@ import {
 import type { MiembroEquipo } from "@/lib/actions"
 import type { AuditLogEntry, AuditLogFilters } from "@/lib/audit-types"
 
-export type { AuditLogEntry, AuditLogFilters, MiembroEquipo }
 
 export async function getAuditLogsV2(
   businessId: number,

@@ -7,8 +7,6 @@ import { getPaymentMethods } from "@/features/config-payments/actionsV2"
 import type { ServiceRow } from "@/lib/services"
 import type { Product } from "@/features/inventory/actionsV2"
 
-export type { ServiceRow, Product }
-
 export async function getCatalogServicesV2(businessId: number) {
   const session = await auth()
   if (!session) return { error: "No autenticado", services: [] }

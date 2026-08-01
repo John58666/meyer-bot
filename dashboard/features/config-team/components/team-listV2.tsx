@@ -9,7 +9,7 @@ import {
   getFutureAppointmentsV2,
   cancelFutureAppointmentsV2,
 } from "../actionsV2"
-import type { MiembroEquipo } from "../actionsV2"
+import type { MiembroEquipo } from "@/lib/actions"
 import { ModalV2 } from "@/components/shared/modalV2"
 import { BadgeV2 } from "@/components/shared/badgeV2"
 import { EmptyStateV2 } from "@/components/shared/empty-stateV2"

@@ -1,6 +1,7 @@
 "use client"
 
-import type { ServiceRow, Product } from "../actionsV2"
+import type { ServiceRow } from "@/lib/services"
+import type { Product } from "@/features/inventory/actionsV2"
 
 interface Props {
   services: ServiceRow[]

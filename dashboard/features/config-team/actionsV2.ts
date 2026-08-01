@@ -18,7 +18,6 @@ import {
 import { getAllServices, getProfessionalServices, setProfessionalServices } from "@/lib/services"
 import type { MiembroEquipo, DaySchedule, ScheduleData } from "@/lib/actions"
 
-export type { MiembroEquipo, DaySchedule, ScheduleData }
 
 export { createMiembroEquipo, updateMiembroCredenciales }
 

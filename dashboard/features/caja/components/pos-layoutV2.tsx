@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { getCatalogServicesV2, getCatalogProductsV2, getPaymentMethodsV2 } from "../actionsV2"
-import type { ServiceRow, Product } from "../actionsV2"
+import type { ServiceRow } from "@/lib/services"
+import type { Product } from "@/features/inventory/actionsV2"
 import { PosCatalogV2 } from "./pos-catalogV2"
 import { PosCartV2 } from "./pos-cartV2"
 import { AlertCircle } from "lucide-react"

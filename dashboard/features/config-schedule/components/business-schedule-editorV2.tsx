@@ -5,7 +5,7 @@ import {
   getBusinessScheduleV2,
   saveBusinessScheduleV2,
 } from "../actionsV2"
-import type { ScheduleData } from "../actionsV2"
+import type { ScheduleData } from "@/lib/actions"
 import {
   Clock,
   Save,

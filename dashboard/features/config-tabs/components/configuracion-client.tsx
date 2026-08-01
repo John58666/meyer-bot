@@ -48,7 +48,7 @@ export function ConfiguracionClient({ businessId, isOwner }: Props) {
               ].join(" ")}
             >
               <Icon className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">{tab.label}</span>
+              <span>{tab.label}</span>
             </button>
           )
         })}

@@ -17,7 +17,6 @@ import type { WeekAppointment, AppointmentRow } from "@/lib/appointments"
 import type { ServiceRow } from "@/lib/services"
 import type { Cliente } from "@/lib/actions"
 
-export type { WeekAppointment, ServiceRow, AppointmentRow }
 
 export type Professional = { id: number; name: string }
 

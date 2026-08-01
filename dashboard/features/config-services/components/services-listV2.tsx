@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useTransition } from "react"
 import { getServicesV2, createService, updateService, toggleServiceActive, deleteService } from "@/features/config-services/actionsV2"
-import type { ServiceRow, ServiceInput } from "@/features/config-services/actionsV2"
+import type { ServiceRow, ServiceInput } from "@/lib/services"
 import { ModalV2 } from "@/components/shared/modalV2"
 import { BadgeV2 } from "@/components/shared/badgeV2"
 import { EmptyStateV2 } from "@/components/shared/empty-stateV2"
