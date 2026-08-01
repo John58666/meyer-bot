@@ -44,19 +44,19 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-[400px] mx-4 bg-[var(--bg-card)] border-[var(--border-subtle)]">
+    <Card className="w-full max-w-[400px] mx-4 bg-zf-surface border-zf-border/50">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-bold text-white">
+        <CardTitle className="text-2xl font-bold text-zf-text">
           Bienvenido
         </CardTitle>
-        <CardDescription className="text-[var(--text-secondary)]">
+        <CardDescription className="text-zf-text-secondary">
           Inicia sesión para gestionar tu negocio
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-[var(--text-secondary)]">
+            <Label htmlFor="email" className="text-zf-text-secondary">
               Email
             </Label>
             <Input
@@ -67,11 +67,11 @@ export function LoginForm() {
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
-              className="bg-[var(--bg-primary)] border-[var(--border-subtle)] text-white placeholder:text-[var(--text-muted)]"
+              className="bg-zf-bg border-zf-border text-zf-text placeholder:text-zf-text-muted"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-[var(--text-secondary)]">
+            <Label htmlFor="password" className="text-zf-text-secondary">
               Contraseña
             </Label>
             <Input
@@ -82,12 +82,12 @@ export function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               required
               autoComplete="current-password"
-              className="bg-[var(--bg-primary)] border-[var(--border-subtle)] text-white placeholder:text-[var(--text-muted)]"
+              className="bg-zf-bg border-zf-border text-zf-text placeholder:text-zf-text-muted"
             />
           </div>
 
           {error && (
-            <p className="text-sm text-[var(--color-danger)] text-center">
+            <p className="text-sm text-zf-error-text text-center">
               {error}
             </p>
           )}
@@ -95,7 +95,7 @@ export function LoginForm() {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white rounded-full h-11"
+            className="w-full bg-zf-primary hover:opacity-90 text-white rounded-xl h-11 font-semibold"
           >
             {loading ? "Entrando..." : "Iniciar sesión"}
           </Button>

@@ -1,26 +1,19 @@
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
-import { Sidebar } from "@/components/sidebar";
-import { Topbar, BottomNav } from "@/components/topbar";
-import { Footer } from "@/components/footer";
+import { auth } from "@/auth"
+import { redirect } from "next/navigation"
+import { SidebarV2 } from "@/components/shared/sidebarV2"
+import { TopbarV2 } from "@/components/shared/topbarV2"
 
-export default async function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const session = await auth();
-  if (!session) redirect("/login");
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const session = await auth()
+  if (!session) redirect("/login")
 
   return (
     <div className="min-h-screen bg-zf-bg">
-      <Topbar user={session.user} role={session.user.role} />
-      <Sidebar role={session.user.role} />
-      <main className="ml-0 lg:ml-[56px] mt-[56px] pb-[56px] lg:pb-0 p-6">
+      <TopbarV2 />
+      <SidebarV2 />
+      <main className="ml-0 mt-14 pb-14 p-4 lg:ml-16 lg:pb-0">
         {children}
-        <Footer businessName={session.user.businessName} />
       </main>
-      <BottomNav />
     </div>
-  );
+  )
 }
