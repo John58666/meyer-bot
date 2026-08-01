@@ -236,6 +236,7 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
   return (
     <>
       <div className="rounded-xl border border-zf-border/50 bg-zf-surface">
+        {viewMode === "professional" && (
         <div className="flex flex-col gap-4 border-b border-zf-border/40 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100">
@@ -291,6 +292,7 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
             </button>
           </div>
         </div>
+        )}
 
         {viewMode === "professional" ? (
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zf-border/40 bg-zf-bg/60 px-6 py-3">

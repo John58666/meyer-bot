@@ -43,24 +43,6 @@ interface Props {
   onAppointmentClick: (apt: AppointmentRow) => void
 }
 
-type FilterKey = "todos" | "pendientes" | "confirmadas" | "completadas" | "canceladas" | "bloqueos"
-
-const FILTERS: { key: FilterKey; label: string }[] = [
-  { key: "todos", label: "TODOS" },
-  { key: "pendientes", label: "PENDIENTES" },
-  { key: "confirmadas", label: "CONFIRMADAS" },
-  { key: "completadas", label: "COMPLETADAS" },
-  { key: "canceladas", label: "CANCELADAS" },
-  { key: "bloqueos", label: "BLOQUEOS" },
-]
-
-const STATUS_MAP: Record<string, string> = {
-  pendientes: "Pendiente",
-  confirmadas: "Confirmada",
-  completadas: "Completada",
-  canceladas: "Cancelada",
-}
-
 export function AgendaListContainerV2({
   businessId,
   professionals,
@@ -75,7 +57,6 @@ export function AgendaListContainerV2({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [expandedDay, setExpandedDay] = useState<string | null>(null)
-  const [activeFilter, setActiveFilter] = useState<FilterKey>("todos")
   const [searchText, setSearchText] = useState("")
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<number | null>(null)
   const [refreshing, setRefreshing] = useState(false)
@@ -91,7 +72,8 @@ export function AgendaListContainerV2({
 
   const loadData = useCallback(async () => {
     setError("")
-    setLoading(true)
+    if (appointments.length === 0) setLoading(true)
+    else setRefreshing(true)
     try {
       const profId = isOwnerOrAdmin ? selectedProfessionalId : userProfessionalId
       const [aptsRes, bloqRes] = await Promise.all([
@@ -161,35 +143,21 @@ export function AgendaListContainerV2({
   }
 
   const filteredAppointments = useMemo(() => {
-    let result = appointments
-    if (activeFilter !== "todos" && activeFilter !== "bloqueos") {
-      const targetStatus = STATUS_MAP[activeFilter]
-      result = result.filter((a) => a.estado === targetStatus)
-    } else if (activeFilter === "bloqueos") {
-      return []
-    }
-
-    if (searchText) {
-      const low = searchText.toLowerCase()
-      result = result.filter(
-        (a) =>
-          (a.nombre ?? "").toLowerCase().includes(low) ||
-          (a.servicio ?? "").toLowerCase().includes(low) ||
-          (a.numero ?? "").toLowerCase().includes(low)
-      )
-    }
-    return result
-  }, [appointments, activeFilter, searchText])
+    if (!searchText) return appointments
+    const low = searchText.toLowerCase()
+    return appointments.filter(
+      (a) =>
+        (a.nombre ?? "").toLowerCase().includes(low) ||
+        (a.servicio ?? "").toLowerCase().includes(low) ||
+        (a.numero ?? "").toLowerCase().includes(low)
+    )
+  }, [appointments, searchText])
 
   const filteredBloqueos = useMemo(() => {
-    if (activeFilter !== "todos" && activeFilter !== "bloqueos") return []
-    let result = bloqueos
-    if (searchText) {
-      const low = searchText.toLowerCase()
-      result = result.filter((b) => (b.motivo ?? "").toLowerCase().includes(low))
-    }
-    return result
-  }, [bloqueos, activeFilter, searchText])
+    if (!searchText) return bloqueos
+    const low = searchText.toLowerCase()
+    return bloqueos.filter((b) => (b.motivo ?? "").toLowerCase().includes(low))
+  }, [bloqueos, searchText])
 
   const daysWithData = useMemo(() => {
     const map = new Map<string, { appointments: AppointmentRow[]; bloqueos: BloqueoRow[] }>()
@@ -199,15 +167,13 @@ export function AgendaListContainerV2({
       map.get(apt.fecha)!.appointments.push(apt)
     }
 
-    if (activeFilter === "todos" || activeFilter === "bloqueos") {
-      for (const b of filteredBloqueos) {
-        if (!map.has(b.fecha)) map.set(b.fecha, { appointments: [], bloqueos: [] })
-        map.get(b.fecha)!.bloqueos.push(b)
-      }
+    for (const b of filteredBloqueos) {
+      if (!map.has(b.fecha)) map.set(b.fecha, { appointments: [], bloqueos: [] })
+      map.get(b.fecha)!.bloqueos.push(b)
     }
 
     return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b))
-  }, [filteredAppointments, filteredBloqueos, activeFilter])
+  }, [filteredAppointments, filteredBloqueos])
 
   useEffect(() => {
     if (daysWithData.length > 0) {
@@ -230,11 +196,6 @@ export function AgendaListContainerV2({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="h-7 w-40 animate-pulse rounded-lg bg-zf-border/20" />
           <div className="h-9 w-32 animate-pulse rounded-lg bg-zf-border/20" />
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {FILTERS.map((f) => (
-            <div key={f.key} className="h-8 w-24 animate-pulse rounded-full bg-zf-border/20" />
-          ))}
         </div>
         <div className="animate-pulse space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -311,33 +272,31 @@ export function AgendaListContainerV2({
         </button>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {FILTERS.map((f) => (
-          <button
-            key={f.key}
-            type="button"
-            onClick={() => setActiveFilter(f.key)}
-            className={cn(
-              "rounded-full px-2.5 py-1 text-[11px] sm:px-4 sm:py-2 sm:text-xs font-bold uppercase tracking-wide transition-all active:scale-[0.97]",
-              activeFilter === f.key
-                ? "bg-zinc-800 text-white shadow-sm"
-                : "border border-zf-border/50 text-zf-text-secondary hover:border-zf-text-muted hover:text-zf-text"
-            )}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="relative w-full sm:w-64">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="relative w-full sm:w-56">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zf-text-muted" />
         <input
           type="text"
           placeholder="Buscar cliente o servicio..."
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
-          className="h-9 w-full rounded-xl border border-zf-border bg-white pl-9 pr-3 text-sm text-zf-text placeholder:text-zf-text-muted focus:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-zf-primary/20"
+          className="h-9 w-full rounded-xl border border-zf-border bg-white pl-9 pr-3 text-sm text-zf-text placeholder:text-zf-text-muted focus:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-zinc-800/20"
         />
+      </div>
+        {isOwnerOrAdmin && professionals.length > 1 && (
+          <select
+            value={selectedProfessionalId ?? ""}
+            onChange={(e) =>
+              setSelectedProfessionalId(e.target.value ? parseInt(e.target.value) : null)
+            }
+            className="h-9 rounded-lg border border-zf-border bg-white px-3 text-xs text-zf-text focus:border-zinc-800 focus:outline-none"
+          >
+            <option value="">Todos los profesionales</option>
+            {professionals.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+        )}
       </div>
 
       {monthIsEmpty && !loading ? (
@@ -367,17 +326,14 @@ export function AgendaListContainerV2({
           </p>
           <button
             type="button"
-            onClick={() => {
-              setActiveFilter("todos")
-              setSearchText("")
-            }}
+            onClick={() => setSearchText("")}
             className="rounded-xl border border-zf-border bg-white px-5 py-2 text-sm font-semibold text-zf-text-secondary transition-all hover:bg-zinc-100 active:scale-[0.97]"
           >
-            Ver todas
+            Limpiar búsqueda
           </button>
         </div>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className={cn("flex flex-col gap-2 transition-opacity", refreshing && "opacity-60 pointer-events-none")}>
           {daysWithData.map(([date, data]) => (
             <DayAccordionV2
               key={date}
