@@ -105,7 +105,7 @@ export function PosLayoutV2({ businessId }: Props) {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[3fr_2fr] lg:h-[calc(100vh-12rem)]">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[3fr_2fr] lg:h-[calc(100vh-7rem)]">
       <div className="lg:h-full lg:overflow-hidden">
         <PosCatalogV2 services={services} products={products} activeTab={activeTab} onTabChange={setActiveTab}
           onAddService={addService} onAddProduct={addProduct} />
