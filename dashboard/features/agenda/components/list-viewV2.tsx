@@ -5,6 +5,7 @@ import { format, addMonths, subMonths, getDaysInMonth } from "date-fns"
 import { es } from "date-fns/locale"
 import {
   getAppointmentsByMonthV2,
+  getBloqueosV2,
 } from "../actionsV2"
 import type { AppointmentRow } from "@/lib/appointments"
 import { STATUS_BADGE } from "../constants"
@@ -19,7 +20,20 @@ import {
   ChevronUp,
   User,
   Scissors,
+  Lock,
+  Search,
 } from "lucide-react"
+
+interface BloqueoRow {
+  id: number
+  fecha: string
+  tipo: string
+  hora_inicio: string | null
+  hora_fin: string | null
+  motivo: string | null
+  professional_id: number | null
+  professional_name?: string
+}
 
 interface Props {
   businessId: number
@@ -53,9 +67,12 @@ export function ListViewV2({
     userProfessionalId
   )
   const [appointments, setAppointments] = useState<AppointmentRow[]>([])
+  const [bloqueos, setBloqueos] = useState<BloqueoRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [expandedDay, setExpandedDay] = useState<string | null>(null)
+  const [searchText, setSearchText] = useState("")
+  const [statusFilter, setStatusFilter] = useState<string>("all")
 
   const year = currentMonth.getFullYear()
   const month = currentMonth.getMonth() + 1
@@ -68,8 +85,12 @@ export function ListViewV2({
     setLoading(true)
     try {
       const profId = isOwnerOrAdmin ? selectedProfessionalId : userProfessionalId
-      const res = await getAppointmentsByMonthV2(businessId, year, month, profId)
-      setAppointments(res.appointments)
+      const [aptsRes, bloqRes] = await Promise.all([
+        getAppointmentsByMonthV2(businessId, year, month, profId),
+        getBloqueosV2(businessId, profId),
+      ])
+      setAppointments(aptsRes.appointments)
+      setBloqueos(bloqRes.bloqueos)
       setExpandedDay(null)
     } catch {
       setError("Error al cargar las citas del mes")
@@ -88,10 +109,29 @@ export function ListViewV2({
   const handleTodayMonth = () => setCurrentMonth(new Date())
 
   const appointmentsByDate = new Map<string, AppointmentRow[]>()
+  const bloqueosByDate = new Map<string, BloqueoRow[]>()
+  const low = searchText.toLowerCase()
+
   for (const apt of appointments) {
-    const date = apt.fecha
-    if (!appointmentsByDate.has(date)) appointmentsByDate.set(date, [])
-    appointmentsByDate.get(date)!.push(apt)
+    const matchesSearch = !low
+      || (apt.nombre ?? "").toLowerCase().includes(low)
+      || (apt.servicio ?? "").toLowerCase().includes(low)
+    const matchesStatus = statusFilter === "all" || statusFilter === apt.estado
+    if (matchesSearch && matchesStatus) {
+      const date = apt.fecha
+      if (!appointmentsByDate.has(date)) appointmentsByDate.set(date, [])
+      appointmentsByDate.get(date)!.push(apt)
+    }
+  }
+
+  for (const b of bloqueos) {
+    const matchesSearch = !low || (b.motivo ?? "").toLowerCase().includes(low)
+    const matchesStatus = statusFilter === "all" || statusFilter === "bloqueo"
+    if (matchesSearch && matchesStatus) {
+      const date = b.fecha
+      if (!bloqueosByDate.has(date)) bloqueosByDate.set(date, [])
+      bloqueosByDate.get(date)!.push(b)
+    }
   }
 
   if (loading) {
@@ -178,13 +218,37 @@ export function ListViewV2({
             </select>
           )}
 
+          <div className="relative flex-1 sm:w-56">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zf-text-muted" />
+            <input
+              type="text"
+              placeholder="Buscar cliente o servicio..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              className="h-9 w-full rounded-lg border border-zf-border bg-white pl-9 pr-3 text-xs text-zf-text placeholder:text-zf-text-muted focus:border-zf-primary focus:outline-none focus:ring-1 focus:ring-zf-primary/20"
+            />
+          </div>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-9 rounded-lg border border-zf-border bg-white px-2 text-xs text-zf-text focus:border-zf-primary focus:outline-none"
+          >
+            <option value="all">Todos</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="Confirmada">Confirmada</option>
+            <option value="Completada">Completada</option>
+            <option value="Cancelada">Cancelada</option>
+            <option value="bloqueo">Bloqueos</option>
+          </select>
+
           <button
             type="button"
             onClick={onNewAppointment}
             className="flex items-center gap-1.5 rounded-lg bg-zf-primary px-4 py-2 text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-[0.97]"
           >
             <Plus className="h-3.5 w-3.5" />
-            Nueva Cita
+            <span className="hidden sm:inline">Nueva Cita</span>
           </button>
         </div>
       </div>
@@ -207,9 +271,13 @@ export function ListViewV2({
             const day = i + 1
             const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`
             const dayAppts = appointmentsByDate.get(dateStr) ?? []
+            const dayBloqs = bloqueosByDate.get(dateStr) ?? []
+            const totalDayItems = dayAppts.length + dayBloqs.length
             const isToday = dateStr === todayStr
             const isExpanded = expandedDay === dateStr || (expandedDay === null && isToday)
-            const totalDia = dayAppts.length
+            const activeAppts = dayAppts.filter(a => a.estado !== "Cancelada").length
+            const maxSlots = activeAppts + dayBloqs.length + 5
+            const dayPct = maxSlots > 0 ? Math.min(100, Math.round((activeAppts / maxSlots) * 100)) : 0
 
             return (
               <div
@@ -249,10 +317,18 @@ export function ListViewV2({
                   </div>
 
                   <div className="flex items-center gap-4">
-                    {totalDia > 0 && (
+                    {totalDayItems > 0 && (
                       <span className="rounded-full bg-zf-accent-bg px-2 py-0.5 text-xs font-semibold text-zf-accent-text">
-                        {totalDia} {totalDia === 1 ? "cita" : "citas"}
+                        {totalDayItems} {totalDayItems === 1 ? "item" : "items"}
                       </span>
+                    )}
+                    {totalDayItems > 0 && (
+                      <div className="hidden items-center gap-2 sm:flex">
+                        <div className="h-1.5 w-16 overflow-hidden rounded-full bg-zf-bg">
+                          <div className="h-full rounded-full bg-zf-primary transition-all" style={{ width: `${dayPct}%` }} />
+                        </div>
+                        <span className="text-[10px] font-bold text-zf-text-muted">{dayPct}%</span>
+                      </div>
                     )}
                     {isExpanded ? (
                       <ChevronUp className="h-4 w-4 text-zf-text-muted" />
@@ -262,7 +338,7 @@ export function ListViewV2({
                   </div>
                 </button>
 
-                {isExpanded && dayAppts.length > 0 && (
+                {isExpanded && totalDayItems > 0 && (
                   <div className="overflow-x-auto border-t border-zf-border/30">
                     <table className="w-full text-left">
                       <thead>
@@ -280,7 +356,7 @@ export function ListViewV2({
                           const isCancelled = apt.estado === "Cancelada"
                           return (
                             <tr
-                              key={apt.id}
+                              key={`apt-${apt.id}`}
                               onClick={() => onAppointmentClick(apt)}
                               className={[
                                 "cursor-pointer transition-colors hover:bg-zf-accent-bg/15",
@@ -288,67 +364,71 @@ export function ListViewV2({
                               ].join(" ")}
                             >
                               <td className="px-4 py-3">
-                                <span className={[
-                                  "text-sm font-semibold text-zf-accent-text",
-                                  isCancelled ? "line-through" : "",
-                                ].join(" ")}>
+                                <span className={["text-sm font-semibold text-zf-accent-text", isCancelled ? "line-through" : ""].join(" ")}>
                                   {formatHora(apt.hora)}
                                 </span>
                               </td>
                               <td className="px-4 py-3">
-                                <span className={[
-                                  "text-sm font-medium text-zf-text",
-                                  isCancelled ? "line-through" : "",
-                                ].join(" ")}>
+                                <span className={["text-sm font-medium text-zf-text", isCancelled ? "line-through grayscale" : ""].join(" ")}>
                                   {apt.nombre}
                                 </span>
                               </td>
                               <td className="px-4 py-3">
-                                <span className="text-sm text-zf-text-secondary">
-                                  {apt.numero}
-                                </span>
+                                <span className="text-sm text-zf-text-secondary">{apt.numero}</span>
                               </td>
                               <td className="px-4 py-3">
                                 <div className="flex items-center gap-1.5">
                                   <Scissors className="h-3 w-3 text-zf-text-muted" />
-                                  <span className={[
-                                    "text-sm text-zf-text",
-                                    isCancelled ? "line-through" : "",
-                                  ].join(" ")}>
+                                  <span className={["text-sm text-zf-text", isCancelled ? "line-through" : ""].join(" ")}>
                                     {apt.servicio}
                                   </span>
                                 </div>
                                 {apt.profesional && (
                                   <div className="mt-0.5 flex items-center gap-1">
                                     <User className="h-3 w-3 text-zf-text-muted" />
-                                    <span className="text-xs text-zf-text-secondary">
-                                      {apt.profesional}
-                                    </span>
+                                    <span className="text-xs text-zf-text-secondary">{apt.profesional}</span>
                                   </div>
                                 )}
                               </td>
                               <td className="px-4 py-3">
-                                <span
-                                  className="inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase"
-                                  style={{
-                                    backgroundColor: style.badge,
-                                    color: style.badgeText,
-                                  }}
-                                >
+                                <span className="inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase"
+                                  style={{ backgroundColor: style.badge, color: style.badgeText }}>
                                   {style.label}
                                 </span>
                               </td>
                             </tr>
                           )
                         })}
+                        {dayBloqs.map((b) => (
+                          <tr key={`bloq-${b.id}`} className="bg-zf-bg/30 italic">
+                            <td className="px-4 py-2.5">
+                              <span className="text-sm font-medium text-zf-text-muted">
+                                {b.hora_inicio ? formatHora(b.hora_inicio) : "Todo el día"}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2.5" colSpan={3}>
+                              <div className="flex items-center gap-2 text-zf-text-muted">
+                                <Lock className="h-3.5 w-3.5" />
+                                <span className="text-sm">
+                                  {b.tipo === "cerrado" ? "Cierre" : "Bloqueo"}{b.motivo ? `: ${b.motivo}` : ""}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-2.5">
+                              <span className="inline-block rounded-full bg-zf-neutral-bg px-2 py-0.5 text-[10px] font-bold uppercase text-zf-text-muted">
+                                Bloqueo
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   </div>
                 )}
 
-                {isExpanded && dayAppts.length === 0 && (
+                {isExpanded && totalDayItems === 0 && (
                   <div className="border-t border-zf-border/30 px-4 py-4 text-center text-xs text-zf-text-muted">
-                    Sin citas este día
+                    {statusFilter === "bloqueo" ? "Sin bloqueos este día" : "Sin citas ni bloqueos este día"}
                   </div>
                 )}
               </div>

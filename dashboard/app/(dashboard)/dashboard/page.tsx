@@ -14,7 +14,7 @@ export default async function DashboardPage() {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-zf-text">Dashboard</h1>
-        <p className="mt-0.5 text-sm text-zf-text-secondary">Resumen del negocio</p>
+        <p className="mt-0.5 text-sm text-zf-text-secondary">Métricas del negocio</p>
       </div>
       <DashboardPageV2 businessId={businessId} isOwnerOrAdmin={isOwnerOrAdmin} userProfessionalId={professionalId} />
     </div>

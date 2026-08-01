@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import {
   getWeekAppointmentsV2,
   getProfessionalsV2,
   getBusinessNameV2,
+  getBloqueosV2,
 } from "../actionsV2"
 import type { WeekAppointment, AppointmentRow } from "@/lib/appointments"
 import { DAYS_FULL, MONTHS_ES, STATUS_BADGE } from "../constants"
@@ -18,11 +19,12 @@ import {
   AlertCircle,
   SearchX,
   LayoutList,
+  RefreshCw,
+  Lock,
 } from "lucide-react"
 import { AgendaModalV2 } from "./agenda-modalV2"
 import { AppointmentDetailDrawerV2 } from "./appointment-detail-drawerV2"
 import { ListViewV2 } from "./list-viewV2"
-import { CalendarMonthView } from "@/components/calendar-month-view"
 
 interface Props {
   businessId: number
@@ -35,6 +37,18 @@ const HOURS = Array.from({ length: 13 }, (_, i) => i + 8)
 
 function todayISO(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" })
+}
+
+function getWeekDates(dayStr?: string): string[] {
+  const d = new Date((dayStr ?? todayISO()) + "T00:00:00")
+  const day = d.getDay()
+  const monday = new Date(d)
+  monday.setDate(d.getDate() - (day === 0 ? 6 : day - 1))
+  return Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(monday)
+    date.setDate(monday.getDate() + i)
+    return date.toISOString().slice(0, 10)
+  })
 }
 
 export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdmin, userProfessionalId }: Props) {
@@ -58,7 +72,12 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
 
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [drawerAppointment, setDrawerAppointment] = useState<AppointmentRow | WeekAppointment | null>(null)
-  const [viewMode, setViewMode] = useState<"professional" | "list" | "calendar">("professional")
+  const [viewMode, setViewMode] = useState<"professional" | "list">("professional")
+  const [rangeMode, setRangeMode] = useState<"day" | "week">("day")
+  const [bloqueos, setBloqueos] = useState<{ id: number; fecha: string; tipo: string; hora_inicio: string | null; hora_fin: string | null; motivo: string | null; professional_id: number | null }[]>([])
+  const [ocupacion, setOcupacion] = useState({ total: 0, ocupadas: 0, pct: 0 })
+  const [refreshing, setRefreshing] = useState(false)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const loadData = useCallback(async () => {
     setError("")
@@ -66,15 +85,25 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
     try {
       const profId = selectedProfessionalId ?? userProfessionalId
 
-      const [apptsRes, profsRes, bizRes] = await Promise.all([
+      const [apptsRes, profsRes, bizRes, bloqRes] = await Promise.all([
         getWeekAppointmentsV2(businessId, profId),
         getProfessionalsV2(businessId),
         initialName ? Promise.resolve({ name: initialName }) : getBusinessNameV2(businessId),
+        getBloqueosV2(businessId, profId),
       ])
 
       setAppointments(apptsRes.appointments)
       setProfessionals(profsRes.professionals)
       if (!initialName && bizRes.name) setBusinessName(bizRes.name)
+      setBloqueos(bloqRes.bloqueos)
+
+      const weekDates = getWeekDates()
+      const allAppts = Object.values(apptsRes.appointments).flat()
+      const bloqsEnSemana = bloqRes.bloqueos.filter(b => weekDates.includes(b.fecha))
+      const ocupadas = allAppts.filter(a => a.estado !== "Cancelada").length
+      const total = ocupadas + bloqsEnSemana.length + 10
+      const pct = total > 0 ? Math.round((ocupadas / total) * 100) : 0
+      setOcupacion({ total, ocupadas, pct })
     } catch {
       setError("Error al cargar los datos")
     } finally {
@@ -86,6 +115,21 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadData()
   }, [loadData])
+
+  useEffect(() => {
+    intervalRef.current = setInterval(() => {
+      loadData()
+    }, 30000)
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
+  }, [loadData])
+
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    await loadData()
+    setRefreshing(false)
+  }
 
   const handlePrevDay = () => {
     const d = new Date(currentDay + "T00:00:00")
@@ -209,6 +253,15 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-zf-border bg-white text-zf-text-secondary transition-colors hover:bg-zf-accent-bg disabled:opacity-50"
+              title="Actualizar"
+            >
+              <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+            </button>
             {isOwnerOrAdmin && professionals.length > 1 && (
               <select
                 value={selectedProfessionalId ?? ""}
@@ -239,7 +292,7 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
           </div>
         </div>
 
-        <div className="flex items-center justify-between border-b border-zf-border/40 bg-zf-bg/60 px-6 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zf-border/40 bg-zf-bg/60 px-6 py-3">
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -251,7 +304,7 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
             <div className="flex h-8 items-center gap-2 rounded-lg border border-zf-border bg-white px-3">
               <Clock className="h-3.5 w-3.5 text-zf-text-muted" />
               <span className="text-xs font-semibold text-zf-text">
-                {dayName} {dayNum} {dayMonth}
+                {rangeMode === "week" ? `${DAYS_FULL[1].slice(0,3)}-${DAYS_FULL[5].slice(0,3)} ${dayMonth}` : `${dayName} ${dayNum} ${dayMonth}`}
               </span>
             </div>
             <button
@@ -271,57 +324,74 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
               </button>
             )}
           </div>
-          <div className="text-xs text-zf-text-secondary">
-            {totalDia} {totalDia === 1 ? "cita" : "citas"} hoy
-          </div>
-          <div className="flex rounded-lg bg-zf-bg/80 p-0.5">
-            <button
-              type="button"
-              onClick={() => setViewMode("professional")}
-              className={[
-                "flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-semibold transition-all",
-                viewMode === "professional"
-                  ? "bg-white text-zf-accent-text shadow-sm"
-                  : "text-zf-text-secondary hover:text-zf-text",
-              ].join(" ")}
-            >
-              <CalendarDays className="h-3 w-3" />
-              Profesional
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("list")}
-              className={[
-                "flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-semibold transition-all",
-                viewMode === "list"
-                  ? "bg-white text-zf-accent-text shadow-sm"
-                  : "text-zf-text-secondary hover:text-zf-text",
-              ].join(" ")}
-            >
-              <LayoutList className="h-3 w-3" />
-              Lista
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("calendar")}
-              className={[
-                "flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-semibold transition-all",
-                viewMode === "calendar"
-                  ? "bg-white text-zf-accent-text shadow-sm"
-                  : "text-zf-text-secondary hover:text-zf-text",
-              ].join(" ")}
-            >
-              <CalendarDays className="h-3 w-3" />
-              Calendario
-            </button>
+
+          <div className="flex items-center gap-3">
+            <div className="hidden flex-col items-end gap-0.5 sm:flex">
+              <div className="flex items-center gap-2 text-xs text-zf-text-secondary">
+                <span>Ocupación {rangeMode === "week" ? "semanal" : "hoy"}: {ocupacion.ocupadas}/{ocupacion.total}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-2.5 w-28 overflow-hidden rounded-full bg-zf-bg">
+                  <div
+                    className="h-full rounded-full bg-zf-primary transition-all"
+                    style={{ width: `${Math.min(ocupacion.pct, 100)}%` }}
+                  />
+                </div>
+                <span className="text-xs font-bold text-zf-accent-text">{ocupacion.pct}%</span>
+              </div>
+            </div>
+
+            <div className="flex rounded-lg bg-zf-bg/80 p-0.5">
+              <button
+                type="button"
+                onClick={() => setRangeMode("day")}
+                className={[
+                  "rounded-md px-2.5 py-1.5 text-[10px] font-bold uppercase transition-all",
+                  rangeMode === "day" ? "bg-white text-zf-accent-text shadow-sm" : "text-zf-text-secondary hover:text-zf-text",
+                ].join(" ")}
+              >
+                Día
+              </button>
+              <button
+                type="button"
+                onClick={() => setRangeMode("week")}
+                className={[
+                  "rounded-md px-2.5 py-1.5 text-[10px] font-bold uppercase transition-all",
+                  rangeMode === "week" ? "bg-white text-zf-accent-text shadow-sm" : "text-zf-text-secondary hover:text-zf-text",
+                ].join(" ")}
+              >
+                Semana
+              </button>
+            </div>
+
+            <div className="flex rounded-lg bg-zf-bg/80 p-0.5">
+              <button
+                type="button"
+                onClick={() => setViewMode("professional")}
+                className={[
+                  "flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-all",
+                  viewMode === "professional" ? "bg-white text-zf-accent-text shadow-sm" : "text-zf-text-secondary hover:text-zf-text",
+                ].join(" ")}
+              >
+                <CalendarDays className="h-3 w-3" />
+                <span className="hidden sm:inline">Calendario</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("list")}
+                className={[
+                  "flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-all",
+                  viewMode === "list" ? "bg-white text-zf-accent-text shadow-sm" : "text-zf-text-secondary hover:text-zf-text",
+                ].join(" ")}
+              >
+                <LayoutList className="h-3 w-3" />
+                <span className="hidden sm:inline">Lista</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        {viewMode === "calendar" ? (
-          <div className="rounded-xl border border-zf-border/50 bg-zf-surface p-4">
-            <CalendarMonthView multiProfessional={isOwnerOrAdmin} servicesText="" professionals={professionals} />
-          </div>
-        ) : viewMode === "list" ? (
+        {viewMode === "list" ? (
           <ListViewV2
             businessId={businessId}
             professionals={professionals}
@@ -406,6 +476,36 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
                             : true)
                       })
 
+                      const bloq = bloqueos.find((b) =>
+                        b.fecha === currentDay
+                        && (!isOwnerOrAdmin || b.professional_id === prof.id || b.professional_id === null)
+                        && b.tipo !== "cerrado_anual"
+                        && (!b.hora_inicio || (hourStr >= b.hora_inicio && hourStr < (b.hora_fin ?? "24:00")))
+                      )
+
+                      if (bloq && !apt) {
+                        const isFullDay = bloq.hora_inicio === null || bloq.hora_fin === null
+                        return (
+                          <div key={`${prof.id}-${hour}-bloq`} className="border-b border-r border-zf-border/30 p-1">
+                            <div
+                              className="flex h-full w-full flex-col items-center justify-center gap-1 rounded-md bg-zf-bg/80 text-center"
+                              style={{
+                                backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(0,0,0,0.03) 8px, rgba(0,0,0,0.03) 16px)",
+                              }}
+                            >
+                              <Lock className="h-3.5 w-3.5 text-zf-text-muted" />
+                              <span className="text-[10px] font-medium text-zf-text-muted leading-tight">
+                                {isFullDay || bloq.tipo === "cerrado"
+                                  ? (bloq.motivo ?? "Cerrado")
+                                  : bloq.motivo
+                                    ? bloq.motivo.length > 15 ? bloq.motivo.slice(0, 15) + "…" : bloq.motivo
+                                    : "Bloqueado"}
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      }
+
                       if (apt) {
                         const style = STATUS_BADGE[apt.estado] ?? STATUS_BADGE.Pendiente
                         const isCancelled = apt.estado === "Cancelada"
@@ -421,7 +521,8 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
                               style={{
                                 backgroundColor: style.bg,
                                 borderLeft: `4px solid ${style.border}`,
-                                opacity: isCancelled ? 0.5 : 1,
+                                opacity: isCancelled ? 0.4 : 1,
+                                filter: isCancelled ? "grayscale(0.5)" : undefined,
                               }}
                             >
                               <span
@@ -433,10 +534,10 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
                               >
                                 {apt.estado}
                               </span>
-                              <div className="text-sm font-bold text-zf-text">
+                              <div className={`text-sm font-bold text-zf-text ${isCancelled ? "line-through" : ""}`}>
                                 {apt.nombre}
                               </div>
-                              <div className="text-[11px] text-zf-text-secondary">
+                              <div className={`text-[11px] text-zf-text-secondary ${isCancelled ? "line-through" : ""}`}>
                                 {apt.servicio}
                               </div>
                             </button>
@@ -450,8 +551,8 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
                           className="group relative flex cursor-pointer items-center justify-center border-b border-r border-zf-border/30 transition-colors hover:bg-zf-accent-bg/30"
                           onClick={() => handleOpenModal(currentDay, hourStr, prof.id > 0 ? prof.id : null)}
                         >
-                          <span className="text-xs font-light text-zf-border opacity-0 transition-opacity group-hover:opacity-100">
-                            + Agendar
+                          <span className="text-[10px] font-medium text-zf-text-muted opacity-0 transition-opacity group-hover:opacity-100">
+                            + Crear
                           </span>
                         </div>
                       )

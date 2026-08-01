@@ -9,8 +9,8 @@ import {
 } from "lucide-react"
 
 const NAV_ITEMS = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/dashboard/semana", icon: CalendarDays, label: "Agenda" },
+  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/dashboard/clientes", icon: Users, label: "Clientes" },
   { href: "/dashboard/inventario", icon: Package, label: "Inventario" },
   { href: "/dashboard/caja", icon: ShoppingCart, label: "Caja" },

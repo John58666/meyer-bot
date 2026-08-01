@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { pool } from "@/lib/db";
+import { describirDetalle } from "@/lib/audit-types";
 
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
 
@@ -32,22 +33,27 @@ export async function POST(request: Request) {
   }
 
   try {
+    const detalle = {
+      nombre: body.nombre || "",
+      servicio: body.servicio || "",
+      fecha: body.fecha || "",
+      hora: body.hora || "",
+      estado: body.estado || "Pendiente",
+      professional_name: body.professional_name || "",
+      origen: "whatsapp",
+    };
+
     await pool.query(
       `INSERT INTO audit_log (business_id, user_id, accion, entidad, entidad_id, detalle)
        VALUES ($1, NULL, 'reschedule_appointment', 'appointment', $2, $3)`,
-      [
-        businessId,
-        appointmentId,
-        JSON.stringify({
-          nombre: body.nombre || "",
-          servicio: body.servicio || "",
-          fecha: body.fecha || "",
-          hora: body.hora || "",
-          estado: body.estado || "Pendiente",
-          professional_name: body.professional_name || "",
-          origen: "whatsapp",
-        }),
-      ],
+      [businessId, appointmentId, JSON.stringify(detalle)],
+    );
+
+    const descripcion = describirDetalle("reschedule_appointment", detalle).join(" | ");
+    await pool.query(
+      `INSERT INTO notifications (business_id, user_id, accion, entidad, entidad_id, detalle)
+       VALUES ($1, NULL, 'reschedule_appointment', 'appointment', $2, $3)`,
+      [businessId, appointmentId, descripcion || null],
     );
 
     revalidatePath("/dashboard");

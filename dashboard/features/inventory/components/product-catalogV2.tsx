@@ -179,7 +179,7 @@ export function ProductCatalogV2({ businessId }: Props) {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto rounded-xl border border-zf-border/50 bg-zf-surface">
+            <div className="hidden sm:block overflow-x-auto rounded-xl border border-zf-border/50 bg-zf-surface">
               <table className="w-full text-left">
                 <thead>
                   <tr className="border-b border-zf-border/30 bg-zf-bg/50 text-[10px] font-bold uppercase text-zf-text-secondary">
@@ -233,6 +233,56 @@ export function ProductCatalogV2({ businessId }: Props) {
                 </tbody>
               </table>
             </div>
+
+            <div className="space-y-3 sm:hidden">
+              {products.map((p) => {
+                const badge = getStockBadge(p)
+                return (
+                  <div key={p.id} className={`rounded-xl border border-zf-border/50 bg-zf-surface p-4 ${!p.active ? "opacity-40" : ""}`}>
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-zf-text">{p.name}</p>
+                        {p.description && <p className="text-xs text-zf-text-secondary mt-0.5">{p.description}</p>}
+                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${p.product_type === "supply" ? "bg-zf-neutral-bg text-zf-text-muted" : "bg-zf-accent-bg text-zf-accent-text"}`}>
+                            {p.product_type === "supply" ? "Insumo" : "Retail"}
+                          </span>
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${badge.bg} ${badge.text}`}>
+                            {badge.label} ({p.current_stock})
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between mb-3 text-xs">
+                      <div>
+                        <span className="text-zf-text-secondary">SKU: </span>
+                        <span className="font-medium text-zf-text">{p.sku || "—"}</span>
+                      </div>
+                      <div>
+                        <span className="text-zf-text-secondary">Costo: </span>
+                        <span className="font-medium text-zf-text">{formatCurrency(p.cost_price)}</span>
+                      </div>
+                      <div>
+                        <span className="text-zf-text-secondary">Precio: </span>
+                        <span className="font-medium text-zf-text">{p.product_type === "supply" ? "—" : formatCurrency(p.sale_price)}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-end gap-1 border-t border-zf-border/20 pt-3">
+                      <button type="button" onClick={() => { setEditingProduct(p); setModalOpen(true) }}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg text-zf-text-secondary transition-colors hover:bg-zf-accent-bg hover:text-zf-accent-text" title="Editar">
+                        <Pencil className="h-4 w-4" /></button>
+                      <button type="button" onClick={() => handleToggle(p.id, p.active)} disabled={toggleLoading === p.id}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg text-zf-text-secondary transition-colors hover:bg-zf-accent-bg" title={p.active ? "Desactivar" : "Activar"}>
+                        {toggleLoading === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : p.active ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}</button>
+                      <button type="button" onClick={() => handleDelete(p.id)} disabled={deleteLoading === p.id}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg text-zf-text-secondary transition-colors hover:bg-zf-error-bg hover:text-zf-error-text" title="Eliminar">
+                        {deleteLoading === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}</button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
             {pages > 1 && (
               <div className="flex items-center justify-between text-xs text-zf-text-secondary">
                 <span>Mostrando {(page-1)*10+1}-{Math.min(page*10, total)} de {total}</span>

@@ -12,6 +12,7 @@ import {
   updateAppointmentStatus,
   rescheduleAppointment,
   createBloqueo,
+  getBloqueos,
 } from "@/lib/actions"
 import type { WeekAppointment, AppointmentRow } from "@/lib/appointments"
 import type { ServiceRow } from "@/lib/services"
@@ -181,9 +182,35 @@ export async function createBloqueoV2(data: {
   if (!session) return { error: "No autenticado" }
 
   try {
+    const { rows } = await pool.query(
+      `SELECT COUNT(*)::int AS count
+       FROM appointments
+       WHERE business_id = $1 AND fecha = $2
+         AND estado IN ('Pendiente', 'Confirmada')
+         AND ($3::bigint IS NULL OR professional_id = $3)`,
+      [data.businessId, data.fecha, data.professionalId ?? null]
+    )
+    const conflictCount = rows[0]?.count ?? 0
+    if (conflictCount > 0) {
+      return { error: `Hay ${conflictCount} ${conflictCount === 1 ? "cita" : "citas"} pendiente(s) en esta fecha`, conflictCount }
+    }
+
     const result = await createBloqueo(data)
     return result as { ok: true } | { error: string }
   } catch {
     return { error: "Error al crear el bloqueo" }
+  }
+}
+
+export async function getBloqueosV2(businessId: number, professionalId?: number | null) {
+  const session = await auth()
+  if (!session) return { error: "No autenticado", bloqueos: [] }
+  if (session.user.businessId !== businessId) return { error: "No autorizado", bloqueos: [] }
+
+  try {
+    const bloqueos = await getBloqueos(businessId, professionalId)
+    return { bloqueos }
+  } catch {
+    return { error: "Error al cargar bloqueos", bloqueos: [] }
   }
 }

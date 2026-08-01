@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { pool } from "@/lib/db";
+import { describirDetalle } from "@/lib/audit-types";
 
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
 
@@ -45,22 +46,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Cita no encontrada" }, { status: 404 });
     }
 
+    const detalle = {
+      nombre: apt[0].nombre,
+      servicio: apt[0].servicio,
+      fecha: apt[0].fecha,
+      hora: apt[0].hora,
+      estado: apt[0].estado,
+      professional_name: apt[0].professional_name,
+      origen: "whatsapp",
+    };
+
     await pool.query(
       `INSERT INTO audit_log (business_id, user_id, accion, entidad, entidad_id, detalle)
        VALUES ($1, NULL, 'cancel_appointment', 'appointment', $2, $3)`,
-      [
-        businessId,
-        appointmentId,
-        JSON.stringify({
-          nombre: apt[0].nombre,
-          servicio: apt[0].servicio,
-          fecha: apt[0].fecha,
-          hora: apt[0].hora,
-          estado: apt[0].estado,
-          professional_name: apt[0].professional_name,
-          origen: "whatsapp",
-        }),
-      ],
+      [businessId, appointmentId, JSON.stringify(detalle)],
+    );
+
+    const descripcion = describirDetalle("cancel_appointment", detalle).join(" | ");
+    await pool.query(
+      `INSERT INTO notifications (business_id, user_id, accion, entidad, entidad_id, detalle)
+       VALUES ($1, NULL, 'cancel_appointment', 'appointment', $2, $3)`,
+      [businessId, appointmentId, descripcion || null],
     );
 
     revalidatePath("/dashboard");

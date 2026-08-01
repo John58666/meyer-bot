@@ -112,7 +112,7 @@ export function PosCartV2({ items, paymentMethods, onUpdateQuantity, onRemoveIte
         {paymentMethods.length > 0 && (
           <div>
             <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-zf-text-secondary">Método de pago</p>
-            <div className="grid grid-cols-4 gap-1">
+            <div className="grid grid-cols-2 gap-1 sm:grid-cols-4">
               {paymentMethods.map((m) => (
                 <button key={m.id} type="button" onClick={() => setPaymentMethodId(m.id)}
                   className={[

@@ -1,6 +1,7 @@
 import { pool } from "@/lib/db";
 import { headers } from "next/headers";
 import type { AuditAccion, AuditEntidad, AuditLogEntry } from "./audit-types";
+import { describirDetalle } from "./audit-types";
 
 export { ACCIONES_LABELS } from "./audit-types";
 export type { AuditLogEntry } from "./audit-types";
@@ -27,6 +28,13 @@ export async function auditar(
       `INSERT INTO audit_log (business_id, user_id, accion, entidad, entidad_id, detalle, ip_address)
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [businessId, userId, accion, entidad, entidadId, detalle ? JSON.stringify(detalle) : null, ipAddress],
+    );
+
+    const descripcion = describirDetalle(accion, detalle).join(" | ");
+    await pool.query(
+      `INSERT INTO notifications (business_id, user_id, accion, entidad, entidad_id, detalle)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [businessId, userId, accion, entidad, entidadId, descripcion || null],
     );
   } catch (e) {
     console.error("[auditar] error:", e);
