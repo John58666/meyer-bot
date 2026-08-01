@@ -122,7 +122,7 @@ export async function getWeekAppointments(
   referenceDate?: string
 ): Promise<Record<string, WeekAppointment[]>> {
   const refDate = referenceDate
-    ? new Date(referenceDate + "T00:00:00")
+    ? new Date(new Date(referenceDate + "T00:00:00").toLocaleString("en-US", { timeZone: "America/Bogota" }))
     : new Date(new Date().toLocaleString("en-US", { timeZone: "America/Bogota" }))
   const day = refDate.getDay()
   const diffToMonday = day === 0 ? -6 : 1 - day

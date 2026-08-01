@@ -116,7 +116,7 @@ export function TimelineGridV2({
               {aptsForColumn(appointments, col.id).map((apt) => (
                 <AppointmentBlockV2
                   key={apt.id}
-                  zIndex={1100 - Math.floor(apt.startMinute / 60)}
+                  zIndex={30 - Math.floor(apt.startMinute / 60)}
                   top={(apt.startMinute - startHour * 60) / 60 * hourHeight}
                   left="0"
                   width="100%"
