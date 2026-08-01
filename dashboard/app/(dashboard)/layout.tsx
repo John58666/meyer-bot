@@ -13,7 +13,7 @@ export default async function DashboardLayout({
   if (!session) redirect("/login");
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)]">
+    <div className="min-h-screen bg-zf-bg">
       <Topbar user={session.user} role={session.user.role} />
       <Sidebar role={session.user.role} />
       <main className="ml-0 lg:ml-[56px] mt-[56px] pb-[56px] lg:pb-0 p-6">
