@@ -20,8 +20,8 @@ export interface EmployeeReview {
 
 export async function getEmployeeStatsV2(businessId: number, professionalId: number) {
   const session = await auth()
-  if (!session) return { error: "No autenticado", stats: null as EmployeeStats | null }
-  if (session.user.businessId !== businessId) return { error: "No autorizado", stats: null as EmployeeStats | null }
+  if (!session) return { error: "No autenticado", stats: null }
+  if (session.user.businessId !== businessId) return { error: "No autorizado", stats: null }
 
   try {
     const { rows: statsRows } = await pool.query<{ completadas: number; canceladas: number; total: number }>(
@@ -52,14 +52,14 @@ export async function getEmployeeStatsV2(businessId: number, professionalId: num
       },
     }
   } catch {
-    return { error: "Error al cargar estadísticas", stats: null as EmployeeStats | null }
+    return { error: "Error al cargar estadísticas", stats: null }
   }
 }
 
 export async function getEmployeeReviewsV2(businessId: number, professionalId: number) {
   const session = await auth()
-  if (!session) return { error: "No autenticado", reviews: [] as EmployeeReview[] }
-  if (session.user.businessId !== businessId) return { error: "No autorizado", reviews: [] as EmployeeReview[] }
+  if (!session) return { error: "No autenticado", reviews: [] }
+  if (session.user.businessId !== businessId) return { error: "No autorizado", reviews: [] }
 
   try {
     const { rows } = await pool.query<EmployeeReview>(
@@ -73,6 +73,6 @@ export async function getEmployeeReviewsV2(businessId: number, professionalId: n
     )
     return { reviews: rows }
   } catch {
-    return { error: "Error al cargar reseñas", reviews: [] as EmployeeReview[] }
+    return { error: "Error al cargar reseñas", reviews: [] }
   }
 }

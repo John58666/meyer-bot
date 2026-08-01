@@ -11,25 +11,25 @@ export type { ServiceRow, Product }
 
 export async function getCatalogServicesV2(businessId: number) {
   const session = await auth()
-  if (!session) return { error: "No autenticado", services: [] as ServiceRow[] }
-  if (session.user.businessId !== businessId) return { error: "No autorizado", services: [] as ServiceRow[] }
+  if (!session) return { error: "No autenticado", services: [] }
+  if (session.user.businessId !== businessId) return { error: "No autorizado", services: [] }
   try {
     const rows = await getServices(businessId)
     return { services: rows }
   } catch {
-    return { error: "Error al cargar servicios", services: [] as ServiceRow[] }
+    return { error: "Error al cargar servicios", services: [] }
   }
 }
 
 export async function getCatalogProductsV2(businessId: number) {
   const session = await auth()
-  if (!session) return { error: "No autenticado", products: [] as Product[] }
-  if (session.user.businessId !== businessId) return { error: "No autorizado", products: [] as Product[] }
+  if (!session) return { error: "No autenticado", products: [] }
+  if (session.user.businessId !== businessId) return { error: "No autorizado", products: [] }
   try {
     const res = await getProductsV2(businessId)
     return { products: res.products.filter(p => p.active && p.current_stock > 0) }
   } catch {
-    return { error: "Error al cargar productos", products: [] as Product[] }
+    return { error: "Error al cargar productos", products: [] }
   }
 }
 

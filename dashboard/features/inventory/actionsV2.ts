@@ -44,8 +44,8 @@ export async function getProductsV2(
   page = 1
 ) {
   const session = await auth()
-  if (!session) return { error: "No autenticado", products: [] as Product[], total: 0, pages: 0, lowStock: 0, noStock: 0, inventoryValue: 0 }
-  if (session.user.businessId !== businessId) return { error: "No autorizado", products: [] as Product[], total: 0, pages: 0, lowStock: 0, noStock: 0, inventoryValue: 0 }
+  if (!session) return { error: "No autenticado", products: [], total: 0, pages: 0, lowStock: 0, noStock: 0, inventoryValue: 0 }
+  if (session.user.businessId !== businessId) return { error: "No autorizado", products: [], total: 0, pages: 0, lowStock: 0, noStock: 0, inventoryValue: 0 }
 
   const limit = 10
   const offset = (page - 1) * limit
@@ -97,7 +97,7 @@ export async function getProductsV2(
       inventoryValue: parseFloat(s.inventory_value ?? "0"),
     }
   } catch {
-    return { error: "Error al cargar productos", products: [] as Product[], total: 0, pages: 0, lowStock: 0, noStock: 0, inventoryValue: 0 }
+    return { error: "Error al cargar productos", products: [], total: 0, pages: 0, lowStock: 0, noStock: 0, inventoryValue: 0 }
   }
 }
 

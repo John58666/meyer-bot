@@ -59,7 +59,7 @@ export async function getBloqueosV2(businessId: number) {
 
   try {
     const rows = await getBloqueos(businessId, null, true)
-    return { bloqueos: rows as BloqueoRow[] }
+    return { bloqueos: rows }
   } catch {
     return { error: "Error al cargar bloqueos", bloqueos: [] }
   }

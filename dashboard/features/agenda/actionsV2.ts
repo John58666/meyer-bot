@@ -44,52 +44,52 @@ export async function getAppointmentsByMonthV2(
   professionalId?: number | null
 ) {
   const session = await auth()
-  if (!session) return { error: "No autenticado", appointments: [] as AppointmentRow[] }
-  if (session.user.businessId !== businessId) return { error: "No autorizado", appointments: [] as AppointmentRow[] }
+  if (!session) return { error: "No autenticado", appointments: [] }
+  if (session.user.businessId !== businessId) return { error: "No autorizado", appointments: [] }
 
   try {
     const rows = await getAppointmentsByMonth(businessId, year, month, professionalId)
     return { appointments: rows }
   } catch {
-    return { error: "Error al cargar las citas del mes", appointments: [] as AppointmentRow[] }
+    return { error: "Error al cargar las citas del mes", appointments: [] }
   }
 }
 
 export async function getProfessionalsV2(businessId: number) {
   const session = await auth()
-  if (!session) return { error: "No autenticado", professionals: [] as Professional[] }
-  if (session.user.businessId !== businessId) return { error: "No autorizado", professionals: [] as Professional[] }
+  if (!session) return { error: "No autenticado", professionals: [] }
+  if (session.user.businessId !== businessId) return { error: "No autorizado", professionals: [] }
 
   try {
     const rows = await getActiveProfessionals(businessId)
-    return { professionals: rows as Professional[] }
+    return { professionals: rows }
   } catch {
-    return { error: "Error al cargar profesionales", professionals: [] as Professional[] }
+    return { error: "Error al cargar profesionales", professionals: [] }
   }
 }
 
 export async function getClientesV2(businessId: number, search?: string) {
   const session = await auth()
-  if (!session) return { error: "No autenticado", clientes: [] as Cliente[] }
-  if (session.user.businessId !== businessId) return { error: "No autorizado", clientes: [] as Cliente[] }
+  if (!session) return { error: "No autenticado", clientes: [] }
+  if (session.user.businessId !== businessId) return { error: "No autorizado", clientes: [] }
 
   try {
     return getClientes(businessId, search)
   } catch {
-    return { error: "Error al buscar clientes", clientes: [] as Cliente[] }
+    return { error: "Error al buscar clientes", clientes: [] }
   }
 }
 
 export async function getServicesV2(businessId: number) {
   const session = await auth()
-  if (!session) return { error: "No autenticado", services: [] as ServiceRow[] }
-  if (session.user.businessId !== businessId) return { error: "No autorizado", services: [] as ServiceRow[] }
+  if (!session) return { error: "No autenticado", services: [] }
+  if (session.user.businessId !== businessId) return { error: "No autorizado", services: [] }
 
   try {
     const rows = await getServices(businessId)
     return { services: rows }
   } catch {
-    return { error: "Error al cargar servicios", services: [] as ServiceRow[] }
+    return { error: "Error al cargar servicios", services: [] }
   }
 }
 
