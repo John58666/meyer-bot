@@ -214,3 +214,17 @@ export async function getBloqueosV2(businessId: number, professionalId?: number 
     return { error: "Error al cargar bloqueos", bloqueos: [] }
   }
 }
+
+export async function deleteBloqueoV2(id: number, businessId: number) {
+  const session = await auth()
+  if (!session) return { error: "No autenticado" }
+  try {
+    await pool.query(
+      `UPDATE schedule_exceptions SET deleted_at = NOW() WHERE id = $1 AND business_id = $2`,
+      [id, businessId]
+    )
+    return { ok: true }
+  } catch {
+    return { error: "Error al liberar el bloqueo" }
+  }
+}

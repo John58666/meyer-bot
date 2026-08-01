@@ -24,7 +24,7 @@ import {
 } from "lucide-react"
 import { AgendaModalV2 } from "./agenda-modalV2"
 import { AppointmentDetailDrawerV2 } from "./appointment-detail-drawerV2"
-import { ListViewV2 } from "./list-viewV2"
+import { AgendaListContainerV2 } from "./agenda-list-containerV2"
 
 interface Props {
   businessId: number
@@ -392,7 +392,7 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
         </div>
 
         {viewMode === "list" ? (
-          <ListViewV2
+          <AgendaListContainerV2
             businessId={businessId}
             professionals={professionals}
             isOwnerOrAdmin={isOwnerOrAdmin}
