@@ -340,7 +340,7 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
             })}
           </div>
         ) : (
-          <div className={cn("transition-opacity duration-200", refreshing && "opacity-50 pointer-events-none")}>
+          <div className={cn("transition-opacity duration-300", refreshing && "opacity-50")}>
             <TimelineGridV2
               columns={gridColumns}
               appointments={gridAppointments}

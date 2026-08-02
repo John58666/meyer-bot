@@ -94,7 +94,7 @@ export function AgendaListContainerV2({
   }, [loadData])
 
   useEffect(() => {
-    const interval = setInterval(() => loadData(), 15000)
+    const interval = setInterval(() => loadData(), 30000)
     const onVisible = () => { if (document.visibilityState === "visible") loadData() }
     const onFocus = () => loadData()
     document.addEventListener("visibilitychange", onVisible)
@@ -301,7 +301,7 @@ export function AgendaListContainerV2({
           </button>
         </div>
       ) : (
-        <div className={cn("flex flex-col gap-2 transition-opacity", refreshing && "opacity-60 pointer-events-none")}>
+        <div className={cn("flex flex-col gap-2 transition-opacity duration-300", refreshing && "opacity-50")}>
           {daysWithData.map(([date, data]) => (
             <DayAccordionV2
               key={date}
