@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import {
   getAppointmentsByMonthV2,
   getBloqueosV2,
@@ -61,6 +61,7 @@ export function AgendaListContainerV2({
   const [searchText, setSearchText] = useState("")
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<number | null>(null)
   const [refreshing, setRefreshing] = useState(false)
+  const initialLoadDone = useRef(false)
 
   const year = currentMonth.getFullYear()
   const month = currentMonth.getMonth() + 1
@@ -68,7 +69,7 @@ export function AgendaListContainerV2({
 
   const loadData = useCallback(async () => {
     setError("")
-    if (appointments.length === 0) setLoading(true)
+    if (!initialLoadDone.current) setLoading(true)
     else setRefreshing(true)
     try {
       const profId = isOwnerOrAdmin ? selectedProfessionalId : userProfessionalId
@@ -78,6 +79,7 @@ export function AgendaListContainerV2({
       ])
       setAppointments(aptsRes.appointments)
       setBloqueos(bloqRes.bloqueos)
+      initialLoadDone.current = true
     } catch {
       setError("Error al cargar los datos")
     } finally {
