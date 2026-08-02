@@ -77,14 +77,20 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
       const newApts = apptsRes.appointments
       const newBloqs = bloqRes.bloqueos
       const totalApts = Object.values(newApts).flat().length
-      const { apts: prevApts, bloqs: prevBloqs } = lastLenRef.current
-      if (totalApts !== prevApts) {
+      if (!initialLoadDone.current) {
         setAppointments(newApts)
-        lastLenRef.current.apts = totalApts
-      }
-      if (newBloqs.length !== prevBloqs) {
         setBloqueos(newBloqs)
-        lastLenRef.current.bloqs = newBloqs.length
+        lastLenRef.current = { apts: totalApts, bloqs: newBloqs.length }
+      } else {
+        const { apts: prevApts, bloqs: prevBloqs } = lastLenRef.current
+        if (totalApts !== prevApts) {
+          setAppointments(newApts)
+          lastLenRef.current.apts = totalApts
+        }
+        if (newBloqs.length !== prevBloqs) {
+          setBloqueos(newBloqs)
+          lastLenRef.current.bloqs = newBloqs.length
+        }
       }
       setProfessionals(profsRes.professionals)
       if (!initialName && bizRes.name) setBusinessName(bizRes.name)

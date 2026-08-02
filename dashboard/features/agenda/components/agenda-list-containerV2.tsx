@@ -80,14 +80,20 @@ export function AgendaListContainerV2({
       ])
       const newApts = aptsRes.appointments
       const newBloqs = bloqRes.bloqueos
-      const { apts: prevApts, bloqs: prevBloqs } = lastLenRef.current
-      if (newApts.length !== prevApts) {
+      if (!initialLoadDone.current) {
         setAppointments(newApts)
-        lastLenRef.current.apts = newApts.length
-      }
-      if (newBloqs.length !== prevBloqs) {
         setBloqueos(newBloqs)
-        lastLenRef.current.bloqs = newBloqs.length
+        lastLenRef.current = { apts: newApts.length, bloqs: newBloqs.length }
+      } else {
+        const { apts: prevApts, bloqs: prevBloqs } = lastLenRef.current
+        if (newApts.length !== prevApts) {
+          setAppointments(newApts)
+          lastLenRef.current.apts = newApts.length
+        }
+        if (newBloqs.length !== prevBloqs) {
+          setBloqueos(newBloqs)
+          lastLenRef.current.bloqs = newBloqs.length
+        }
       }
       initialLoadDone.current = true
     } catch {
