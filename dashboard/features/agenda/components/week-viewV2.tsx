@@ -59,6 +59,7 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
   const [drawerAppointment, setDrawerAppointment] = useState<AppointmentRow | WeekAppointment | null>(null)
 
   const initialLoadDone = useRef(false)
+  const lastLenRef = useRef({ apts: 0, bloqs: 0 })
 
   const loadData = useCallback(async () => {
     setError("")
@@ -73,10 +74,20 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
         initialName ? Promise.resolve({ name: initialName }) : getBusinessNameV2(businessId),
         getBloqueosV2(businessId, profId),
       ])
-      setAppointments(apptsRes.appointments)
+      const newApts = apptsRes.appointments
+      const newBloqs = bloqRes.bloqueos
+      const totalApts = Object.values(newApts).flat().length
+      const { apts: prevApts, bloqs: prevBloqs } = lastLenRef.current
+      if (totalApts !== prevApts) {
+        setAppointments(newApts)
+        lastLenRef.current.apts = totalApts
+      }
+      if (newBloqs.length !== prevBloqs) {
+        setBloqueos(newBloqs)
+        lastLenRef.current.bloqs = newBloqs.length
+      }
       setProfessionals(profsRes.professionals)
       if (!initialName && bizRes.name) setBusinessName(bizRes.name)
-      setBloqueos(bloqRes.bloqueos)
       initialLoadDone.current = true
     } catch {
       setError("Error al cargar los datos")

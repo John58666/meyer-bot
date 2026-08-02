@@ -62,6 +62,7 @@ export function AgendaListContainerV2({
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<number | null>(null)
   const [refreshing, setRefreshing] = useState(false)
   const initialLoadDone = useRef(false)
+  const lastLenRef = useRef({ apts: 0, bloqs: 0 })
 
   const year = currentMonth.getFullYear()
   const month = currentMonth.getMonth() + 1
@@ -77,8 +78,17 @@ export function AgendaListContainerV2({
         getAppointmentsByMonthV2(businessId, year, month, profId),
         getBloqueosV2(businessId, profId),
       ])
-      setAppointments(aptsRes.appointments)
-      setBloqueos(bloqRes.bloqueos)
+      const newApts = aptsRes.appointments
+      const newBloqs = bloqRes.bloqueos
+      const { apts: prevApts, bloqs: prevBloqs } = lastLenRef.current
+      if (newApts.length !== prevApts) {
+        setAppointments(newApts)
+        lastLenRef.current.apts = newApts.length
+      }
+      if (newBloqs.length !== prevBloqs) {
+        setBloqueos(newBloqs)
+        lastLenRef.current.bloqs = newBloqs.length
+      }
       initialLoadDone.current = true
     } catch {
       setError("Error al cargar los datos")
