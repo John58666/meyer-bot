@@ -335,27 +335,6 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
             onNewAppointment={() => handleOpenModal()}
             onAppointmentClick={handleAppointmentClick}
           />
-        ) : gridColumns.length <= 1 && !isOwnerOrAdmin ? (
-          <div className="p-6 space-y-3">
-            {dayAppointments.map((apt) => {
-              const style = STATUS_BADGE[apt.estado] ?? STATUS_BADGE.Pendiente
-              const isCancelled = apt.estado === "Cancelada"
-              return (
-                <button key={apt.id} type="button" onClick={() => handleAppointmentClick(apt)}
-                  className="w-full cursor-pointer rounded-xl border border-zf-border/40 bg-white p-4 text-left transition-all hover:shadow-md active:scale-[0.98]">
-                  <div className="flex items-center gap-3">
-                    <span className="w-14 shrink-0 text-sm font-semibold text-zinc-700">{formatHora(apt.hora)}</span>
-                    <div className="flex-1 space-y-0.5">
-                      <p className={`text-sm font-semibold text-zf-text ${isCancelled ? "line-through" : ""}`}>{apt.nombre}</p>
-                      <p className={`text-xs text-zf-text-secondary ${isCancelled ? "line-through" : ""}`}>{apt.servicio}</p>
-                      <span className="inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase"
-                        style={{ backgroundColor: style.badge, color: style.badgeText }}>{apt.estado}</span>
-                    </div>
-                  </div>
-                </button>
-              )
-            })}
-          </div>
         ) : (
           <div className={cn("transition-opacity duration-300", refreshing && "opacity-50")}>
             <TimelineGridV2

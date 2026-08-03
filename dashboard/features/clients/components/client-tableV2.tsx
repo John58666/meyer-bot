@@ -20,9 +20,11 @@ import { NewClientModalV2 } from "./new-client-modalV2"
 
 interface Props {
   businessId: number
+  isOwnerOrAdmin: boolean
+  userProfessionalId: number | null
 }
 
-export function ClientTableV2({ businessId }: Props) {
+export function ClientTableV2({ businessId, isOwnerOrAdmin, userProfessionalId }: Props) {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -41,7 +43,8 @@ export function ClientTableV2({ businessId }: Props) {
     setError("")
     setLoading(true)
     try {
-      const res = await getClientesV2(businessId, searchTerm)
+      const profId = isOwnerOrAdmin ? null : userProfessionalId
+      const res = await getClientesV2(businessId, searchTerm, profId)
       if (res.clientes) setClientes(res.clientes)
       if (res.error) setError(res.error)
     } catch {

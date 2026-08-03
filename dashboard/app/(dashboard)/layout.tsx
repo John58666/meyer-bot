@@ -7,10 +7,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const session = await auth()
   if (!session) redirect("/login")
 
+  const isOwnerOrAdmin = session.user.role === "owner" || session.user.role === "admin"
+
   return (
     <div className="min-h-screen bg-zf-bg">
       <TopbarV2 />
-      <SidebarV2 />
+      <SidebarV2 isOwnerOrAdmin={isOwnerOrAdmin} />
       <main className="ml-0 mt-14 pb-14 p-6 lg:ml-16 lg:pb-0 overflow-x-hidden">
         {children}
       </main>

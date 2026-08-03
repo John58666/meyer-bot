@@ -2,17 +2,16 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import {
-  getBloqueosV2,
   updateAppointmentStatusV2,
   deleteBloqueoV2,
 } from "../actionsV2"
 import type { AppointmentRow } from "@/lib/appointments"
 import {
-  Plus,
   AlertCircle,
   SearchX,
   CalendarDays,
   Search,
+  Plus,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { DayAccordionV2 } from "./parts/day-accordionV2"
@@ -75,12 +74,15 @@ export function AgendaListContainerV2({
       const profId = isOwnerOrAdmin ? selectedProfessionalId : userProfessionalId
       const params = new URLSearchParams({ businessId: String(businessId), year: String(year), month: String(month) })
       if (profId) params.set("professionalId", String(profId))
+      const bloqParams = new URLSearchParams({ businessId: String(businessId) })
+      if (profId) bloqParams.set("professionalId", String(profId))
+      const handleJson = async (r: Response) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`)
+        return r.json()
+      }
       const [aptsRes, bloqRes] = await Promise.all([
-        fetch(`/api/appointments/month?${params}`).then(async r => {
-          if (!r.ok) throw new Error(`HTTP ${r.status}`)
-          return r.json()
-        }),
-        getBloqueosV2(businessId, profId),
+        fetch(`/api/appointments/month?${params}`).then(handleJson),
+        fetch(`/api/bloqueos?${bloqParams}`).then(handleJson),
       ])
       const newApts = aptsRes.appointments
       const newBloqs = bloqRes.bloqueos

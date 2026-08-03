@@ -24,13 +24,13 @@ export interface ClienteInput {
   notas?: string
 }
 
-export async function getClientesV2(businessId: number, search?: string) {
+export async function getClientesV2(businessId: number, search?: string, professionalId?: number | null) {
   const session = await auth()
   if (!session) return { error: "No autenticado", clientes: [] }
   if (session.user.businessId !== businessId) return { error: "No autorizado", clientes: [] }
 
   try {
-    return getClientes(businessId, search)
+    return getClientes(businessId, search, professionalId)
   } catch {
     return { error: "Error al cargar clientes", clientes: [] }
   }

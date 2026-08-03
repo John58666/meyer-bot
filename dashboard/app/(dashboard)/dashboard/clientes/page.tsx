@@ -7,6 +7,9 @@ export default async function ClientesPage() {
   if (!session) redirect("/login")
 
   const businessId = session.user.businessId
+  const role = session.user.role
+  const professionalId = session.user.professionalId
+  const isOwnerOrAdmin = role === "owner" || role === "admin"
 
   return (
     <div>
@@ -14,7 +17,7 @@ export default async function ClientesPage() {
         <h1 className="text-2xl font-bold text-zf-text">Clientes</h1>
         <p className="mt-0.5 text-sm text-zf-text-secondary">CRM de clientes</p>
       </div>
-      <ClientTableV2 businessId={businessId} />
+      <ClientTableV2 businessId={businessId} isOwnerOrAdmin={isOwnerOrAdmin} userProfessionalId={professionalId} />
     </div>
   )
 }
