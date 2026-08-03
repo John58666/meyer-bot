@@ -76,7 +76,10 @@ export function AgendaListContainerV2({
       const params = new URLSearchParams({ businessId: String(businessId), year: String(year), month: String(month) })
       if (profId) params.set("professionalId", String(profId))
       const [aptsRes, bloqRes] = await Promise.all([
-        fetch(`/api/appointments/month?${params}`).then(r => r.json()),
+        fetch(`/api/appointments/month?${params}`).then(async r => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`)
+          return r.json()
+        }),
         getBloqueosV2(businessId, profId),
       ])
       const newApts = aptsRes.appointments
