@@ -28,7 +28,7 @@ export const authConfig = {
         return Response.redirect(new URL("/dashboard", nextUrl));
       }
 
-      if ((path.startsWith("/dashboard/configuracion") || path.startsWith("/dashboard/auditoria")) && role !== "owner" && role !== "admin") {
+      if (path.startsWith("/dashboard/auditoria") && role !== "owner" && role !== "admin") {
         return Response.redirect(new URL("/dashboard", nextUrl));
       }
 
