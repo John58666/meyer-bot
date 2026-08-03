@@ -30,6 +30,7 @@ const TIPO_LABELS: Record<string, string> = {
 
 interface Props {
   businessId: number
+  filterProfessionalId?: number | null
 }
 
 type FilterState = {
@@ -38,7 +39,7 @@ type FilterState = {
   professionalId: number | null
 }
 
-export function ScheduleBlocksV2({ businessId }: Props) {
+export function ScheduleBlocksV2({ businessId, filterProfessionalId }: Props) {
   const [blocks, setBlocks] = useState<BloqueoRow[]>([])
   const [professionals, setProfessionals] = useState<
     { id: number; name: string }[]
@@ -53,7 +54,7 @@ export function ScheduleBlocksV2({ businessId }: Props) {
   const [filters, setFilters] = useState<FilterState>({
     search: "",
     tipo: "",
-    professionalId: null,
+    professionalId: filterProfessionalId ?? null,
   })
   const [showFilters, setShowFilters] = useState(false)
 

@@ -7,6 +7,7 @@ import { PaymentMethodsListV2 } from '@/features/config-payments/components/paym
 import { TeamListV2 } from '@/features/config-team/components/team-listV2'
 import { BusinessScheduleEditorV2 } from '@/features/config-schedule/components/business-schedule-editorV2'
 import { ScheduleBlocksV2 } from '@/features/config-schedule/components/schedule-blocksV2'
+import { TeamScheduleEditorV2 } from '@/features/config-team/components/team-schedule-editorV2'
 import { AuditListV2 } from '@/features/config-audit/components/audit-listV2'
 import { Clock, Scissors, Wallet, Building2, Users, ShieldAlert } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -69,10 +70,10 @@ export function ConfiguracionClient({ businessId, isOwner, isProfessional, profe
               </button>
             </div>
             {horarioTab === 'horario' && professionalId != null && (
-              <BusinessScheduleEditorV2 businessId={businessId} />
+              <TeamScheduleEditorV2 businessId={businessId} professionalId={professionalId} memberName="" />
             )}
             {horarioTab === 'bloqueos' && professionalId != null && (
-              <ScheduleBlocksV2 businessId={businessId} />
+              <ScheduleBlocksV2 businessId={businessId} filterProfessionalId={professionalId} />
             )}
           </div>
         )}

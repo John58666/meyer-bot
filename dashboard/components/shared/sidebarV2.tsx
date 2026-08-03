@@ -11,8 +11,10 @@ import {
 const NAV_ITEMS = [
   { href: "/dashboard/semana", icon: CalendarDays, label: "Agenda", allRoles: true },
   { href: "/dashboard/clientes", icon: Users, label: "Clientes", allRoles: true },
-  { href: "/dashboard/caja", icon: ShoppingCart, label: "Caja", allRoles: true },
-  { href: "/dashboard/inventario", icon: Package, label: "Inventario", allRoles: true },
+  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", allRoles: true },
+  { href: "/dashboard/configuracion", icon: Settings, label: "Configuración", allRoles: true },
+  { href: "/dashboard/caja", icon: ShoppingCart, label: "Caja", allRoles: false },
+  { href: "/dashboard/inventario", icon: Package, label: "Inventario", allRoles: false },
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", allRoles: true },
   { href: "/dashboard/configuracion", icon: Settings, label: "Configuración", allRoles: true },
 ]
