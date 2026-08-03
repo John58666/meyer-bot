@@ -13,6 +13,14 @@ const REQUEST_TIMEOUT_MS = 25_000;
 const app = express();
 app.use(express.json({ limit: '100kb' }));
 
+function safeDateInTimezone(tz: string): Date {
+  try {
+    return new Date(new Date().toLocaleString('en-US', { timeZone: tz }));
+  } catch {
+    return new Date();
+  }
+}
+
 app.post('/api/chat', async (req, res) => {
   const startTime = Date.now();
   try {
@@ -32,18 +40,24 @@ app.post('/api/chat', async (req, res) => {
         historyJSON: body?.priorMessages
           ? JSON.stringify(body.priorMessages).replace(/'/g, "''")
           : '[]',
+        deltaJSON: '[]',
       });
       return;
     }
 
-    const prior = Array.isArray(body.priorMessages) ? body.priorMessages : [];
+    const priorRaw = Array.isArray(body.priorMessages)
+      ? body.priorMessages
+      : typeof body.priorMessages === 'string'
+        ? JSON.parse(body.priorMessages)
+        : [];
+    const prior: ChatMessage[] = priorRaw;
 
     const { gapMessage, shouldResetHistory } = computeGapMessage(
       body.histUpdatedAt ?? null,
       body.inactividadEstado,
     );
 
-    const activePrior = shouldResetHistory ? [] : prior;
+    const activePrior = (shouldResetHistory ? [] : prior).slice(-MAX_HISTORY_MESSAGES);
 
     if (body.fueraDeHorario === true && body.mensajeHorario) {
       res.json({
@@ -54,7 +68,7 @@ app.post('/api/chat', async (req, res) => {
         debugError: null,
         businessId: body.businessId,
         numeroLimpio: body.numeroLimpio,
-        historyJSON: JSON.stringify(activePrior).replace(/'/g, "''"),
+        deltaJSON: JSON.stringify(activePrior).replace(/'/g, "''"),
       });
       return;
     }
@@ -66,7 +80,7 @@ app.post('/api/chat', async (req, res) => {
       const [fd, fm, fy] = body.forceMostrarSlots.split('/');
       const f = new Date(parseInt(fy), parseInt(fm) - 1, parseInt(fd));
       const fLabel = `${diasSemana[f.getUTCDay()]} ${parseInt(fd)} de ${meses[parseInt(fm) - 1]}`;
-      const ahora = new Date(new Date().toLocaleString('en-US', { timeZone: body.timezone || 'America/Bogota' }));
+      const ahora = safeDateInTimezone(body.timezone || 'America/Bogota');
       const fin = new Date(ahora.getTime() + 7 * 86400000);
       const finLabel = `${diasSemana[fin.getDay()]} ${fin.getDate()} de ${meses[fin.getMonth()]}`;
       const msg = `¡Hola! \u{1F60A}\n\nVeo que quieres agendar para el ${fLabel}. Ese d\u00EDa est\u00E1 fuera de mi ventana de citas \u2014 por ahora solo puedo agendar hasta el ${finLabel} (pr\u00F3ximos 7 d\u00EDas).\n\n\u00BFQuieres agendar para alg\u00FAn d\u00EDa de esta semana? \u{1F60A}`;
@@ -78,7 +92,7 @@ app.post('/api/chat', async (req, res) => {
         debugError: null,
         businessId: body.businessId,
         numeroLimpio: body.numeroLimpio,
-        historyJSON: JSON.stringify(activePrior).replace(/'/g, "''"),
+        deltaJSON: JSON.stringify(activePrior).replace(/'/g, "''"),
       });
       return;
     }
@@ -90,27 +104,30 @@ app.post('/api/chat', async (req, res) => {
 
     const systemPrompt = buildSystemPrompt(chatRequest);
 
+    const now = Date.now();
+
     const priorClean: ChatMessage[] = activePrior
       .filter((m: ChatMessage) => m && m.role && m.content)
       .map((m: ChatMessage) => ({ role: m.role, content: String(m.content) } as ChatMessage));
 
+    priorClean.sort((a, b) => ((a as any).ts || 0) - ((b as any).ts || 0));
+
     const messages: ChatMessage[] = [
       { role: 'system', content: systemPrompt },
       ...priorClean,
-      { role: 'user', content: String(body.textoOriginal || '') },
+      { role: 'user', content: String(body.textoOriginal || '') } as ChatMessage,
     ];
 
     const { result, provider, errorLog } = await callWithFallback(messages);
     const neut = neutralizador(result.content, body.sesionContexto?.length > 0);
     const cleaned = normalizar(neut.content);
 
-    const updated: ChatMessage[] = ([
-      ...activePrior,
-      { role: 'user', content: String(body.textoOriginal || '') },
-      { role: 'assistant', content: result.content },
-    ] as ChatMessage[]).slice(-MAX_HISTORY_MESSAGES);
+    const delta: ChatMessage[] = [
+      { role: 'user', content: String(body.textoOriginal || ''), ts: now } as ChatMessage,
+      { role: 'assistant', content: result.content, ts: now } as ChatMessage,
+    ];
 
-    const historyJSON = JSON.stringify(updated).replace(/'/g, "''");
+    const deltaJSON = JSON.stringify(delta).replace(/'/g, "''");
 
     const response: ChatResponse = {
       output: cleaned,
@@ -120,7 +137,7 @@ app.post('/api/chat', async (req, res) => {
       debugError: errorLog || null,
       businessId: body.businessId,
       numeroLimpio: body.numeroLimpio,
-      historyJSON,
+      deltaJSON: deltaJSON,
     };
 
     res.json(response);
@@ -136,7 +153,7 @@ app.post('/api/chat', async (req, res) => {
       debugError: msg,
       businessId: 0,
       numeroLimpio: '',
-      historyJSON: '[]',
+        deltaJSON: '[]',
     });
   }
 });

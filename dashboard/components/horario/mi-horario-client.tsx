@@ -450,9 +450,9 @@ export function MiHorarioClient({ data, role: _role, businessId, professionalId 
           <div className="text-center pt-3">
             <button
               onClick={() => setShowRecurrente(true)}
-              className="text-[11px] text-[var(--text-accent)] hover:text-[var(--color-accent)] transition-colors underline underline-offset-2"
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-[var(--color-accent)] text-white hover:opacity-90 transition-opacity w-full"
             >
-              Editar horario recurrente
+              Configurar mi horario semanal
             </button>
           </div>
         </div>

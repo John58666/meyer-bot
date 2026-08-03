@@ -144,48 +144,57 @@ export async function callWithFallback(
       continue;
     }
 
-    try {
-      const resp = await httpRequest({
-        method: 'POST',
-        url: p.url,
-        headers: {
-          Authorization: `Bearer ${p.key}`,
-          'Content-Type': 'application/json',
-        },
-        body: { model: p.model, messages, temperature, max_tokens: maxTokens },
-        json: true,
-        timeout,
-        returnFullResponse: true,
-      });
+    let succeeded = false;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const resp = await httpRequest({
+          method: 'POST',
+          url: p.url,
+          headers: {
+            Authorization: `Bearer ${p.key}`,
+            'Content-Type': 'application/json',
+          },
+          body: { model: p.model, messages, temperature, max_tokens: maxTokens },
+          json: true,
+          timeout,
+          returnFullResponse: true,
+        });
 
-      if (resp.statusCode !== 200) {
-        throw new Error(`status ${resp.statusCode}`);
+        if (resp.statusCode !== 200) {
+          throw new Error(`status ${resp.statusCode}`);
+        }
+
+        const choice = resp.body?.choices?.[0];
+        if (!choice?.message) {
+          throw new Error('sin choices');
+        }
+
+        const content = choice.message.content;
+        if (content == null || String(content).trim() === '') {
+          throw new Error('content vacio');
+        }
+
+        breaker.recordSuccess();
+        succeeded = true;
+
+        return {
+          result: {
+            content: String(content),
+            reasoning: choice.message.reasoning ?? null,
+          },
+          provider: p.name,
+          errorLog,
+        };
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (attempt === 0) {
+          errorLog += `[${p.name}(try1): ${msg}] `;
+          await new Promise(r => setTimeout(r, 2000));
+        } else {
+          errorLog += `[${p.name}: ${msg}] `;
+          breaker.recordFailure();
+        }
       }
-
-      const choice = resp.body?.choices?.[0];
-      if (!choice?.message) {
-        throw new Error('sin choices');
-      }
-
-      const content = choice.message.content;
-      if (content == null || String(content).trim() === '') {
-        throw new Error('content vacio');
-      }
-
-      breaker.recordSuccess();
-
-      return {
-        result: {
-          content: String(content),
-          reasoning: choice.message.reasoning ?? null,
-        },
-        provider: p.name,
-        errorLog,
-      };
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      errorLog += `[${p.name}: ${msg}] `;
-      breaker.recordFailure();
     }
   }
 

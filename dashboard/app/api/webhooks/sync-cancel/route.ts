@@ -74,7 +74,15 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (e) {
+    const errMsg = e instanceof Error ? e.message : String(e);
     console.error("[webhook sync-cancel]", e);
+    try {
+      await pool.query(
+        `INSERT INTO webhook_dead_letter (business_id, event_type, appointment_id, payload, error_message)
+         VALUES ($1, 'sync-cancel', $2, $3, $4)`,
+        [businessId, appointmentId, JSON.stringify(body), errMsg],
+      );
+    } catch (_) { /* silent */ }
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }

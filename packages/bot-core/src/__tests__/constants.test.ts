@@ -16,8 +16,8 @@ describe('constants', () => {
     }
   });
 
-  it('gemini is first in provider order', () => {
-    assert.equal(PROVIDERS[0].name, 'gemini');
+  it('cerebras is first in provider order', () => {
+    assert.equal(PROVIDERS[0].name, 'cerebras');
   });
 
   it('CODIGO_PATRONES has 4 patterns for each action type', () => {

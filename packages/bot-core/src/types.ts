@@ -48,6 +48,7 @@ export interface ChatResponse {
   businessId: number;
   numeroLimpio: string;
   historyJSON: string;
+  deltaJSON: string;
 }
 
 export type ActionType =

@@ -33,13 +33,28 @@ export async function POST(request: Request) {
   }
 
   try {
+    const { rows: apt } = await pool.query(
+      `SELECT a.nombre, a.servicio, a.fecha::text, a.hora::text, a.estado,
+              COALESCE(p.name, '') as professional_name
+       FROM appointments a
+       LEFT JOIN professionals p ON a.professional_id = p.id
+       WHERE a.id = $1 AND a.business_id = $2`,
+      [appointmentId, businessId],
+    );
+
+    if (apt.length === 0) {
+      return NextResponse.json({ error: "Cita no encontrada" }, { status: 404 });
+    }
+
+    const a = apt[0];
+
     const detalle = {
-      nombre: body.nombre || "",
-      servicio: body.servicio || "",
-      fecha: body.fecha || "",
-      hora: body.hora || "",
-      estado: body.estado || "Pendiente",
-      professional_name: body.professional_name || "",
+      nombre: a.nombre || body.nombre || "",
+      servicio: a.servicio || body.servicio || "",
+      fecha: a.fecha || body.fecha || "",
+      hora: a.hora || body.hora || "",
+      estado: a.estado || body.estado || "Pendiente",
+      professional_name: a.professional_name || body.professional_name || "",
       origen: "whatsapp",
     };
 
@@ -61,7 +76,15 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (e) {
+    const errMsg = e instanceof Error ? e.message : String(e);
     console.error("[webhook sync-new]", e);
+    try {
+      await pool.query(
+        `INSERT INTO webhook_dead_letter (business_id, event_type, appointment_id, payload, error_message)
+         VALUES ($1, 'sync-new', $2, $3, $4)`,
+        [businessId, appointmentId, JSON.stringify(body), errMsg],
+      );
+    } catch (_) { /* silent — don't fail the response if dead-letter insert fails */ }
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }

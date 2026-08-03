@@ -2,14 +2,14 @@ import type { Provider } from './types.js';
 
 export const PROVIDERS: Omit<Provider, 'key'>[] = [
   {
-    name: 'gemini',
-    url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
-    model: 'gemini-2.5-flash-lite',
-  },
-  {
     name: 'cerebras',
     url: 'https://api.cerebras.ai/v1/chat/completions',
     model: 'gpt-oss-120b',
+  },
+  {
+    name: 'gemini',
+    url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+    model: 'gemini-2.5-flash-lite',
   },
   {
     name: 'groq',

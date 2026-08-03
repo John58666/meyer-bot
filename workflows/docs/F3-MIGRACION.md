@@ -291,3 +291,20 @@ bot-service:
 | Latencia HTTP extra | Baja | Misma red Docker (~3ms). LLM tarda 500-3000ms. |
 | fetch() timeout mas corto que n8n | Media | Wrapper httpRequest() replica timeouts. Test V5 verifica. |
 | prompt-builder typo cambia comportamiento | Media | Snapshot test. Deploy staging primero. |
+
+---
+
+## Fixes en produccion detectados y resueltos
+
+### Fix @lid — Dispositivos vinculados (1 Ago 2026)
+
+**Sintoma:** Mensajes de usuarios con WhatsApp multi-dispositivo llegan con JID `XXXXXXXXXXX@lid` en vez de `57XXXXXXXXXXX@s.whatsapp.net`. Evolution API rechaza el envio porque el `split('@')[0]` extrae un numero que no coincide con el cache `onWhatsApp`.
+
+**Causa:** Baileys asigna `@lid` (Linked ID) a dispositivos secundarios en modo multi-device. El ID numerico no es un numero de telefono real — es un identificador interno de WhatsApp.
+
+**Fix en n8n — nodo Respuesta Normal, campo `number`:**
+```
+{{ $('Webhook').item.json.body.data.key.remoteJid.includes('lid') ? $('Webhook').item.json.body.data.key.remoteJid.split('@')[0] + '@lid' : $('Webhook').item.json.body.data.key.remoteJid.split('@')[0] }}
+```
+
+Si el JID contiene `lid` → envia con `numero@lid`. Si es normal → solo el numero.

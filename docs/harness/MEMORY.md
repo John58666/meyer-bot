@@ -34,23 +34,56 @@
 - .env en /root/n8n/.env. LLM API keys configuradas.
 - 40/40 tests pasan en el servidor.
 
-### Proxima sesion
-1. Incremento 3 F3.4: cambiar Code node por HTTP Request en n8n UI.
-2. Agregar `timezone` al return JSON de Procesar Mensaje (G3 fix).
-3. Dashboard: B1, N2, N11, N24.
-4. B15: rotar Evolution API key leakada.
+### Dashboard bugs (B1, N2, N11, N24)
+- B1: Boton "Configurar mi horario semanal" visible para profesionales (mi-horario-client.tsx). Antes: link 11px oculto. Ahora: boton prominente full-width.
+- N2: sync-new y sync-reagend obtienen el nombre del profesional real de la DB via LEFT JOIN, no del body del webhook.
+- N24: sync-new y sync-reagend ahora validan que la cita existe en DB antes de insertar en audit_log (404 si no).
+- N11: Tabla webhook_dead_letter + los 3 webhooks guardan payloads fallidos. Migracion 024 ejecutada en VPS.
+- Dashboard build y PM2 restart en VPS.
+
+### llm-chain mejoras
+- Retry inteligente: cada provider tiene 1 reintento automatico tras 2 segundos.
+- Orden: Cerebras primero (el mas rapido), luego Gemini, Groq, DeepSeek, OpenRouter.
+- Desplegado en prod (bot-service redeployed).
+
+### Fix @lid — Dispositivos vinculados
+- Cuando Evolution API recibe mensajes con `@lid` (multi-device), el Respuesta Normal ahora responde al JID completo en vez de extraer solo el numero.
+- Documentado en F3-MIGRACION.md, 01-BOT.md.
+
+### N10/N16 — Rate limit thread-safe + memory leak
+- Migration 025: tabla `rate_limits` (UNIQUE business_id + numero).
+- Nuevo nodo PostgreSQL "Rate Limit Check" entre ¿Negocio Existe? y Procesar Mensaje con UPSERT atomico.
+- DELETE automatico de ventanas expiradas (>1 hora) en la misma query del nodo.
+- Procesar Mensaje: `$getWorkflowStaticData` reemplazado por `$('Rate Limit Check').first().json.request_count`.<｜end▁of▁thinking｜>
+
+### Servidor
+- Evolution API restaurada a v2.3.7 limpia (se intento parchear sin exito).
+- Conectividad Evolution API ↔ n8n arreglada via red Docker compartida + EVOLUTION_API_URL cambiado a `host.docker.internal:8080`.
 
 ### Archivos modificados/creados
-- `workflows/WhatsApp Bot - Generico restored.json` — B18 fix (3 edits)
+- `workflows/WhatsApp Bot - Generico restored.json` — B18 fix (3 edits) + G3 timezone
 - `packages/bot-core/src/*.ts` — 8 archivos nuevos + 7 tests
-- `apps/bot-service/src/index.ts` — servidor Express
+- `apps/bot-service/src/index.ts` — servidor Express + safeDateInTimezone
 - `apps/bot-service/Dockerfile` — node:22-alpine, non-root
 - `apps/bot-service/tsconfig.json` — config TS
-- `workflows/docs/F3-MIGRACION.md` — spec completo (reemplazado)
-- `workflows/docs/INICIO.md` — B18 y F3.4 status
-- `workflows/docs/05-BUGS.md` — B18 fix, contadores
-- `workflows/docs/01-BOT.md` — B18 en fixes activos
+- `dashboard/components/horario/mi-horario-client.tsx` — B1 boton visible
+- `dashboard/app/api/webhooks/sync-new/route.ts` — N2 + N24 + N11 fixes
+- `dashboard/app/api/webhooks/sync-cancel/route.ts` — N11 fix
+- `dashboard/app/api/webhooks/sync-reagend/route.ts` — N2 + N24 + N11 fixes
+- `database/migrations/024_webhook_dead_letter.sql` — nueva migracion
+- `workflows/docs/F3-MIGRACION.md` — spec completo + fix @lid
+- `workflows/docs/INICIO.md` — Estados actualizados
+- `workflows/docs/05-BUGS.md` — 5 bugs marcados FIX
+- `workflows/docs/01-BOT.md` — llm-chain retry + fix @lid
 - `docs/harness/MEMORY.md` — este entry
+- `docs/sessions/HANDOFF.md` — actualizado
+
+### Proxima sesion
+1. B15: rotar Evolution API key leakada.
+2. B16: `==` en bodyParameter de HTTP Request.
+3. N4: race condition mensajes concurrentes.
+4. N10/N16: rate limit static data.
+5. Roadmap fase 2: state machines + function calling.
 
 ## Ultima sesion (prev)
 - **Fecha**: 2026-07-31

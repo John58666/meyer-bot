@@ -6,7 +6,7 @@ describe('llm-chain', () => {
   it('getProvidersWithKeys returns all providers', () => {
     const providers = getProvidersWithKeys();
     assert.ok(providers.length > 0);
-    assert.equal(providers[0].name, 'gemini');
+    assert.equal(providers[0].name, 'cerebras');
     assert.ok(providers.every((p) => typeof p.name === 'string'));
     assert.ok(providers.every((p) => typeof p.url === 'string'));
   });

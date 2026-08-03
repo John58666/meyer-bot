@@ -1,26 +1,23 @@
-# HANDOFF — Estado Final Dashboard V2 + B18 + F3.4
+# HANDOFF — Estado Final Sesion 1 Ago 2026
 
-**Fecha**: 2026-08-01 | **Avance**: B18 fixeado, F3.4 incrementos 1-2 completos, bot-service en prod
+**Fecha**: 2026-08-01 | **Avance**: B18 ✅, F3.4 ✅, Dashboard ✅, llm-chain ✅, B15/B16 ✅, N10/N16 ✅
 
 ---
 
 ## HARNESS — Limpieza y estado actual
 
 Los docs del harness (`workflows/docs/`) estan al dia:
-- `INICIO.md`: B18 🟢, F3.4 🟢, F3.6 ⚫ descartado, Dashboard 🔴 pendiente
-- `05-BUGS.md`: B18 ✅ FIX, contadores actualizados (12 fix, 21 high, 3 med, 10 crit)
-- `01-BOT.md`: B18 en tabla de fixes activos
-- `F3-MIGRACION.md`: Spec completo con 11 gaps, 18 campos HTTP Request, incremento 3 pendiente
-- `02-ROADMAP.md`, `03-INVESTIGACION.md`, `04-REGLAS.md`: sin cambios
+- `INICIO.md`: B18 🟢, F3.4 🟢, F3.6 ⚫ descartado, Dashboard 🟢, Rate limit 🟢
+- `05-BUGS.md`: 20 FIX (B18, B1, N2, N11, N24, B15, B16, N10, N16), contadores actualizados
+- `01-BOT.md`: B18, llm-chain retry, fix @lid, rate limit PG en tabla de fixes activos
+- `F3-MIGRACION.md`: Spec completo + Incremento 3 completado + fix @lid documentado
 
----
-
-## Lo que sigue
-
-1. **Incremento 3 F3.4** (10 min manual): cambiar Code node "AI Agent" por HTTP Request en n8n UI. Ver F3-MIGRACION.md seccion "INCREMENTO 3".
-2. **G3 fix** (1 min): agregar `timezone` al return JSON de Procesar Mensaje en `restored.json`.
-3. **Dashboard bugs**: B1, N2, N11, N24.
-4. **B15 seguridad**: rotar Evolution API key leakada.
+## Lo que sigue (proxima sesion)
+1. **N4**: Race condition mensajes concurrentes (SELECT FOR UPDATE en conversation_history)
+2. **N23**: Message ordering (ordenar priorMessages por messageTimestamp)
+3. **N20**: CHECK constraint fechas pasadas en appointments
+4. **N3**: WEBHOOK_SECRET por tenant (usar businesses.webhook_secret)
+5. Roadmap fase 2: state machines, function calling
 
 ---
 

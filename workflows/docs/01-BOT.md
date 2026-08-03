@@ -47,6 +47,9 @@ Orden actual: **Gemini → Cerebras → Groq → DeepSeek → OpenRouter (×3)**
 | Switch GESTIONAR_CITA | Switch | Sin `\n` corruptos en leftValue |
 | Providers orden | AI Agent | Gemini primero, DeepSeek 4to |
 | B18 fecha >7d | Procesar Mensaje + AI Agent | Deteccion `extraerFechaLejana()` + short-circuit sin LLM |
+| Fix @lid | Respuesta Normal | JID con `@lid` (dispositivos vinculados) usa JID completo en vez de solo numero. |
+| llm-chain retry | llm-chain.ts | Cada provider tiene 1 retry automatico tras 2s. Cerebras primero (mas rapido). |
+| Rate limit PG | Rate Limit Check | UPSERT atomico en rate_limits. Thread-safe + sin memory leak (N10+N16). |
 
 ## ⚠️ EMERGENCIAS — Qué NO tocar
 
