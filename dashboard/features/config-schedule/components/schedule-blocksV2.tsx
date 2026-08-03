@@ -348,7 +348,7 @@ export function ScheduleBlocksV2({ businessId, filterProfessionalId }: Props) {
             <thead>
               <tr className="border-b border-zf-border/40 bg-zf-bg/60 text-xs font-semibold uppercase text-zf-text-secondary">
                 <th className="px-6 py-3">Fecha</th>
-                <th className="px-6 py-3">Profesional</th>
+                {filterProfessionalId == null && <th className="px-6 py-3">Profesional</th>}
                 <th className="px-6 py-3">Motivo</th>
                 <th className="px-6 py-3">Horario</th>
                 <th className="px-6 py-3">Tipo</th>
@@ -369,6 +369,7 @@ export function ScheduleBlocksV2({ businessId, filterProfessionalId }: Props) {
                       )}
                     </span>
                   </td>
+                  {filterProfessionalId == null && (
                   <td className="px-6 py-3">
                     {block.professional_name ? (
                       <span className="flex items-center gap-1.5 text-sm text-zf-text">
@@ -381,6 +382,7 @@ export function ScheduleBlocksV2({ businessId, filterProfessionalId }: Props) {
                       </span>
                     )}
                   </td>
+                  )}
                   <td className="px-6 py-3">
                     <span className="text-sm text-zf-text">
                       {block.motivo || "—"}
@@ -538,6 +540,7 @@ export function ScheduleBlocksV2({ businessId, filterProfessionalId }: Props) {
             </div>
           )}
 
+          {filterProfessionalId == null && (
           <div className="space-y-2">
             <label className="text-xs font-semibold uppercase text-zf-text-secondary">
               Profesional (opcional)
@@ -552,7 +555,7 @@ export function ScheduleBlocksV2({ businessId, filterProfessionalId }: Props) {
                     : null,
                 }))
               }
-              className="w-full rounded-lg border border-zf-border bg-white px-3 py-2.5 text-sm text-zf-text focus:border-zf-primary focus:outline-none focus:ring-1 focus:ring-zf-primary/20"
+              className="w-full rounded-lg border border-zf-border bg-white px-3 py-2.5 text-sm text-zf-text focus:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-zinc-800/20"
             >
               <option value="">Todo el negocio</option>
               {professionals.map((p) => (
@@ -562,6 +565,7 @@ export function ScheduleBlocksV2({ businessId, filterProfessionalId }: Props) {
               ))}
             </select>
           </div>
+          )}
 
           <div className="space-y-2">
             <label className="text-xs font-semibold uppercase text-zf-text-secondary">
