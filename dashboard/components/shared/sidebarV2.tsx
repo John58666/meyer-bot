@@ -14,7 +14,7 @@ const NAV_ITEMS = [
   { href: "/dashboard/caja", icon: ShoppingCart, label: "Caja", allRoles: true },
   { href: "/dashboard/inventario", icon: Package, label: "Inventario", allRoles: true },
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", allRoles: true },
-  { href: "/dashboard/configuracion", icon: Settings, label: "Configuración", allRoles: false },
+  { href: "/dashboard/configuracion", icon: Settings, label: "Configuración", allRoles: true },
 ]
 
 export function SidebarV2({ isOwnerOrAdmin }: { isOwnerOrAdmin: boolean }) {

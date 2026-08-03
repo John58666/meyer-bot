@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { getClientesV2 } from "../actionsV2"
-import { getInitials, formatDate } from "@/lib/utils"
+import { getInitials, formatDate, cn } from "@/lib/utils"
 import type { Cliente } from "@/lib/actions"
 import {
   Search,
@@ -36,6 +36,7 @@ export function ClientTableV2({ businessId, isOwnerOrAdmin, userProfessionalId }
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null)
+  const [myClientsOnly, setMyClientsOnly] = useState(false)
 
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -43,7 +44,7 @@ export function ClientTableV2({ businessId, isOwnerOrAdmin, userProfessionalId }
     setError("")
     setLoading(true)
     try {
-      const profId = isOwnerOrAdmin ? null : userProfessionalId
+      const profId = myClientsOnly ? userProfessionalId : null
       const res = await getClientesV2(businessId, searchTerm, profId)
       if (res.clientes) setClientes(res.clientes)
       if (res.error) setError(res.error)
@@ -53,7 +54,7 @@ export function ClientTableV2({ businessId, isOwnerOrAdmin, userProfessionalId }
       setLoading(false)
       setSearching(false)
     }
-  }, [businessId])
+  }, [businessId, myClientsOnly, userProfessionalId])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -185,6 +186,21 @@ export function ClientTableV2({ businessId, isOwnerOrAdmin, userProfessionalId }
             Nuevo Cliente
           </button>
         </div>
+
+        {!isOwnerOrAdmin && (
+          <div className="flex rounded-lg bg-zf-bg/80 p-0.5 w-fit">
+            <button type="button" onClick={() => setMyClientsOnly(false)}
+              className={cn("rounded-md px-3 py-1.5 text-xs font-semibold transition-all",
+                !myClientsOnly ? "bg-zinc-800 text-white shadow-sm" : "text-zf-text-secondary hover:text-zf-text")}>
+              Todos
+            </button>
+            <button type="button" onClick={() => setMyClientsOnly(true)}
+              className={cn("rounded-md px-3 py-1.5 text-xs font-semibold transition-all",
+                myClientsOnly ? "bg-zinc-800 text-white shadow-sm" : "text-zf-text-secondary hover:text-zf-text")}>
+              Mis clientes
+            </button>
+          </div>
+        )}
 
         <div className="rounded-xl border border-zf-border/50 bg-zf-surface px-6 py-4">
           <div className="flex items-center gap-3">
