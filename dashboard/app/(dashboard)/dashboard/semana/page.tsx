@@ -9,7 +9,7 @@ export default async function SemanaPage() {
 
   const businessId = session.user.businessId;
   const professionalId = session.user.professionalId;
-  const isOwnerOrAdmin = professionalId == null;
+  const isOwnerOrAdmin = session.user.role === "owner" || session.user.role === "admin";
 
   const { rows: bizRows } = await pool.query<{ name: string }>(
     "SELECT name FROM businesses WHERE id = $1",

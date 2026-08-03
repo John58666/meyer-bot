@@ -8,7 +8,7 @@ export default async function DashboardPage() {
 
   const businessId = session.user.businessId
   const professionalId = session.user.professionalId
-  const isOwnerOrAdmin = professionalId == null
+  const isOwnerOrAdmin = session.user.role === "owner" || session.user.role === "admin";
 
   return (
     <div>
