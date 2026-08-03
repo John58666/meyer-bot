@@ -1,130 +1,204 @@
-# Sesión Actual — Lazy Loading Slots 90 días
+# Sesión Actual — Agenda V2 + Roles RBAC + Auditoría
 
 ## Fecha
-Jul 30–31, 2026 — sesión: `bot-lazy-loading-slots` (diagnóstico actualizado 31 jul 16:00)
+Ago 1-3, 2026 — diagnóstico, refactor, y auditoría de seguridad
 
 ## Objetivo
-Implementar lazy loading de slots por día en el bot de WhatsApp. Ventana amplia de 90 días visible al LLM (vista compacta) + detalle hora por hora de 7 días + carga bajo demanda para días lejanos via `MOSTRAR_SLOTS|DD/MM/YYYY`.
+Refactorizar módulo Agenda V2 y secciones del dashboard con diseño premium, responsive, roles RBAC completos, sincronización con bot WhatsApp, y corrección de bugs de Server Actions. Auditoría de seguridad post-refactor.
 
-## Causa raíz
-Query `Leer Slots Disponibles` usaba `generate_series(0, 7)` → solo hoy+7 días. Fechas lejanas (ej. 9 de agosto) quedaban fuera de ventana → el LLM decía "no tengo disponibilidad". Verificado: el 9 de agosto SÍ tiene slots en DB real.
+## Stack
+Next.js 16 + PostgreSQL 16 + Tailwind v4 + shadcn/ui + PM2
+VPS: root@178.104.27.180, puerto 3001, dashboard.zyvenshop.com
 
-## Diseño aprobado
-1. **Vista compacta 90 días** (5.4KB/87 líneas reales): agrupa profesionales por rango idéntico, `N profesionales` si >3, separador " · "
-2. **Detalle 7 días** (7.1KB): horas exactas por profesional, formato vertical 🟢
-3. **Días > 7d**: LLM responde SOLO `MOSTRAR_SLOTS|DD/MM/YYYY`, un nodo Postgres consulta slots de esa fecha y los envía por WhatsApp
-4. **Historial**: el texto real de slots mostrados reemplaza el código MOSTRAR_SLOTS en DB (para que el siguiente turno el LLM tenga contexto)
+---
 
 ## Progreso
 
-### Completado ✅
-- Extracción completa del workflow en `workflow-full.json` (nodos+conexiones reales)
-- Query ampliada a 90 días: `generate_series(0, 89)` en `slots-query.sql`
-- Formateador nuevo `fmt-code-new.js` probado con DB real (rangos contiguos, agrupa profesionales)
-- Prompt AI Agent `ai-code.js` editado: vista compacta 90d, detalle 7d, regla MOSTRAR_SLOTS en prompt + normalizador (5 ocurrencias)
-- Query por fecha `slots-fecha-query.sql` (TO_DATE de output del AI Agent)
-- Formateador de fecha `fmt-fecha-code.js` (2 salidas: texto + historyJSON)
-- 4 nodos nuevos diseñados: Leer Slots Fecha, Formatear Slots Fecha, Enviar Slots Fecha, Guardar Historial Fecha
-- Switch modificado: regla 5 MOSTRAR_SLOTS, Respuesta Normal movida a main[5]
-- `workflow-nuevo.json` completo (45 nodos, 32 conexiones, sintaxis validada)
+### ✅ Completado — Agenda V2
 
-### Aplicado (Jul 31) ✅
-- PATCH a la API n8n exitoso → versionId `96f38869-528a-421b-b57e-8e1128b30d90` (45 nodos, 32 conexiones)
-- POST /activate exitoso → `active: true`
-- `restored.json` sincronizado a `workflows/WhatsApp Bot - Genérico restored.json`
-- Verificado en n8n: Switch tiene 5 reglas (Rule 4 = MOSTRAR_SLOTS), AI Agent contiene MOSTRAR_SLOTS en jsCode, nodos Leer Slots Fecha y Formatear Slots Fecha existen
+**CalendarV2** (`week-viewV2.tsx`, ~370 líneas):
+- Calendar/Lista toggle, DayStripV2, TimelineGridV2, agenda-modalV2
+- `TimelineGridV2`: columnas flex, bloques `position:absolute`, z-index dinámico por hora, current time indicator
+- Líneas dashed + bloques con bordes (no gaps entre cards, se tocan como Google Calendar)
+- `AppointmentBlockV2`: card atómica con `STATUS_STYLE` (amber/emerald/sky/zinc), compact mode, dashed border
+- Cards padding responsive: `p-1.5 sm:p-2.5`
 
-### Diagnóstico E2E (Jul 31, actualizado)
+**ListView V2** (`agenda-list-containerV2.tsx`):
+- DayAccordionV2: acordeón diario con bloqueos intercalados por hora, barra ocupación, canceladas al final
+- DayStripV2: tira 7 días + month picker popover, touch targets 44px+
+- `AppointmentCardV2`: mobile/desktop con WhatsApp/Completar/Cancelar
+- Fetch via `GET /api/appointments/month` y `GET /api/bloqueos` (Route Handlers, no Server Actions)
+- Anti-flicker `lastLenRef` para evitar parpadeos en refresh
 
-**✅ Lookup Negocio: FUNCIONA.** Encontró business_id=1 (`whatsapp_instance='peluqueria-beta'`) en 36ms. La query SÍ retorna filas — el diagnóstico anterior (CURRENT.md desactualizado) decía lo contrario.
+**ModalV2** (`agenda-modalV2.tsx`): 2 tabs, `isOwnerOrAdmin` oculta selector profesional para profesionales.
 
-**✅ Leer Slots Disponibles:** retorna 10,412 items en ventana de 90 días (104ms).
+**Responsive**: touch targets 44px+, safe-area iPhone, overflow-x fixes, mobile single-column grid.
 
-**✅ Formatear Disponibilidad:** incluye "Domingo 9 de agosto" en la vista compacta. El pipeline de datos funciona correctamente.
+### ✅ Completado — Roles RBAC V2
 
-**✅ Switch, 4 nodos nuevos, conexiones:** todo cableado correctamente.
+- `isOwnerOrAdmin`: `session.user.role === "owner" || session.user.role === "admin"` (ya no por `professionalId == null`)
+- **SidebarV2**: Profesional NO ve Caja/Inventario. Configuración muestra solo "Mi Horario" (TeamScheduleEditorV2) + "Mis Servicios" (read-only). Dashboard/Config ocultos.
+- **Configuración**: `ConfiguracionClient` tabs dinámicos por rol — profesional ve 2 tabs, owner/admin ve 6 tabs.
+- **Middleware**: profesional permitido en `/dashboard/configuracion`, bloqueado en `/dashboard/auditoria` y `/dashboard/equipo`
+- **ScheduleBlocksV2**: acepta `filterProfessionalId`, oculta columna/selector/modal profesional cuando está fijado
+- **ClientTableV2**: toggle "Todos/Mis clientes" visible solo para profesionales, `professionalId` dinámico en `loadData`
+- **`getClientesV2`**: acepta `professionalId` param para filtrar clientes atendidos por el profesional
 
-**🔴 Causa raíz real: El AI Agent NO emite `MOSTRAR_SLOTS|09/08/2026`.** Responde con saludo normal. Dos factores:
+### ✅ Completado — Build & Sync
 
-1. **Colisión de reglas en el prompt:** `saludoInicial` (posición 2 del prompt) dice "siempre saluda en primer mensaje" sin excepción para mensajes que ya traen fecha. `MOSTRAR_SLOTS` está en posición 9-10. No hay regla de precedencia explícita.
-   - Ejemplo real: User "Hola, quiero agendar para el 9 de agosto" → Bot "¡Hola! Bienvenido a Peluquería Meyer" (ignora la fecha).
+- Server Actions → Route Handlers: `GET /api/appointments/month` y `GET /api/bloqueos` reemplazan `getAppointmentsByMonthV2` y `getBloqueosV2` (evita "Failed to find Server Action")
+- `GET /api/professional-services` — Route Handler para servicios asignados al profesional
+- `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` fijada en `.env` del VPS
+- `deploymentId` en `next.config.ts` + `Cache-Control: no-cache` headers
+- `getWeekAppointments` ahora acepta `referenceDate` con offset UTC-5 (Bogotá). Citas futuras visibles en grid.
+- Landing page eliminada (14 archivos), `app/page.tsx` restaurado a redirect
+- `globals.css` revertido a pre-landing (145 líneas borradas)
+- Auto-refresh 15s + focus/visibility listeners en Agenda, Dashboard, Clientes
 
-2. **OpenRouter descartado como causa:** La key existe en `/root/.env` pero NO está pasada al contenedor n8n (`env_file: .env` de `/root/n8n/.env`). Los 3 proveedores OpenRouter son saltados por `if (!p.key) continue`. Cadena real: Gemini → Cerebras → Groq.
+### ✅ Completado — Notificaciones
 
-### Fix aplicado (Jul 31, tarde) ✅
-- **Pre-processor de fechas** agregado al jsCode del AI Agent (línea ~390, antes de `systemPrompt`)
-- Detecta fechas en español via regex → agrega `INSTRUCCIÓN DE PRECEDENCIA` al TOP del system prompt
-- Resultado: el bot YA NO solo saluda cuando el mensaje trae fecha — ahora procesa
-- **Pero** todavía no emite `MOSTRAR_SLOTS|DD/MM/YYYY` para días >7 — responde con flujo de agendamiento normal
-- versionId activo: `2e1b896a-a22c-4109-8c65-be032ebb18e7`
-- SaludoInicial modificado con "REGLA DE PRECEDENCIA — CRÍTICO" (también aplicado)
+- `auditar()` inserta en `notifications` + `audit_log` (antes solo audit_log)
+- Webhooks `sync-*` también insertan en `notifications`
+- `NotificationBell`: rediseño completo, colores por acción, badge sin leer, dropdown 320px
 
-### Pendiente 🔴 (requiere investigación broader)
-1. **El LLM no emite MOSTRAR_SLOTS para días >7** — responde con agendamiento normal aunque la fecha esté lejos. Investigar por qué el LLM ignora esta regla específica.
-2. **Prompt de 560 líneas es frágil** — múltiples bugs históricos (B2-B18) son por colisión de reglas. Investigar arquitectura alternativa (state machines, validación determinística, function calling).
-3. **Research para Perplexity** — ver sección abajo.
+### ✅ Completado — Mi Horario y Configuración
 
-## Archivos clave (en /var/folders/.../T/opencode/)
-- `workflow-nuevo.json` — workflow completo a aplicar (45 nodos)
-- `workflow-full.json` — workflow original ( backup de referencia)
-- `slots-query.sql` — query 90 días
-- `fmt-code-new.js` — formateador nuevo
-- `ai-code.js` — jsCode AI Agent editado
-- `slots-fecha-query.sql` — query por fecha específica
-- `fmt-fecha-code.js` — formateador de día específico
-- `builder.cjs` — script constructor (ya ejecutado)
+- Mi Horario V1 eliminado, reemplazado por `ScheduleBlocksV2` + `TeamScheduleEditorV2`
+- Profesional ve solo su horario, no el del negocio ni el de otros profesionales
+- Servicios asignados visibles en modo read-only para profesionales
 
-## Estructura del prompt AI Agent (552 líneas, 8 layers/22 secciones)
-- L9: `const d = $('Formatear Disponibilidad').first().json;`
-- L18-32: RESET/RETOMAR POR INACTIVIDAD
-- L44: SHORT-CIRCUIT FUERA DE HORARIO
-- L65: SYSTEM PROMPT modular (8 layers)
-- L70: LAYER 1 IDENTITY
-- L107: horariosDisponibles (vista compacta 90d + detalle 7d + regla MOSTRAR_SLOTS)
-- L117: LAYER 2 PRIORITY RULES
-- L203: reglaDisponibilidad (días lejanos → código, prohibido inventar)
-- L212: LAYER 4 APPOINTMENT FLOW (agendamiento paso 4 → MOSTRAR_SLOTS)
-- L338: LAYER 5 CANCEL FLOW
-- L353: LAYER 8 TONE & EDGE CASES
-- L386: ASSEMBLE
-- L530: normalizador (patrones regex, MOSTRAR_SLOTS añadido al inicio)
-- L545: historial (prior + user + assistant)
+### ✅ Completado — Documentación
 
-## Switch (5 reglas + fallback)
-- main[0] CITA_CONFIRMADA → Leer Disponibilidad
-- main[1] GESTIONAR_CITA → Leer Citas Cliente
-- main[2] CANCELAR_CITA → Ejecutar Cancelación
-- main[3] REAGENDAR_CITA → Ejecutar Reagendamiento
-- main[4] MOSTRAR_SLOTS → Leer Slots Fecha (**NUEVO**)
-- main[5] Respuesta Normal (fallback extra, **movida de [4]**)
+- `docs/frontend-reference.md` eliminado (1126 líneas obsoletas)
+- Caja spec extraída a `docs/reference/caja-spec.md`
+- Reglas Perfil Negocio mergeadas a `ARCHITECTURE.md`
+- `docs/refactoring-v2/` archivado (13 archivos de plan ya ejecutados)
+- Membresías/Planes futuro anotado en `SPRINTS.md`
 
-## Flujo MOSTRAR_SLOTS (nuevo)
+---
+
+## Auditoría de Seguridad — Hallazgos Validados
+
+### P0 — Críticos
+
+| # | Hallazgo | Validación |
+|---|----------|-----------|
+| 1 | PM2 crash loop (72 reinicios) | **FALSO**. Los "restarts" son nuestros deploys. Server dice `✓ Ready in 180ms`. Logs solo muestran `CredentialsSignin` (normal). |
+| 2 | Cross-business auth bypass en 7 server actions | **REAL pero sin riesgo hoy** (single-tenant). Si agregamos más negocios, es brecha. |
+| 3 | `getServiceById` (`lib/services.ts:45`) expuesto sin auth | **REAL**. `"use server"` en archivo compartido lo expone. |
+
+### P1 — Altos
+
+| # | Hallazgo | Validación |
+|---|----------|-----------|
+| 4 | Dead tuples DB: 9 tablas, `conversation_history` 93% | **REAL**. `VACUUM ANALYZE` es 1 comando, 0 downtime. |
+| 5 | Referencias `mi-horario` muertas: `lib/actions.ts:2141`, `sidebar.tsx:11`, `topbar.tsx:18` | **REAL**. 3 referencias a ruta inexistente + archivos V1 muertos. |
+| 6 | Orange leftovers: 48 referencias en 8 archivos (inventory/clients/shared) | **REAL**. Migrar `bg-orange-*`/`text-orange-*` → `bg-amber-*`/`text-amber-*`. |
+| 7 | Silent catch blocks: ~30 en 7 `actionsV2.ts` | **REAL**. Sin `console.error`, imposible debuggear errores. |
+
+### P2 — Medios
+
+| # | Hallazgo |
+|---|----------|
+| 8 | `getClientes()` N+1 sin paginación (con 33 clientes no es bottleneck hoy) |
+| 9 | Debug endpoint expuesto |
+| 10 | Dead business id=2 en DB |
+
+### Nuevos hallazgos — Bot + Sincronización
+
+| # | Hallazgo | Severidad |
+|---|----------|-----------|
+| 11 | **`services_text` desincronizado**: CRUD de servicios V2 (`lib/services.ts`) NUNCA regenera `businesses.services_text`. El bot lee ese campo en cada mensaje → clientes de WhatsApp ven precios/nombres viejos. | **CRÍTICO** |
+| 12 | **Camila (admin) aparece como profesional en el bot**: Lookup Negocio (`restored.json:72`) hace `LEFT JOIN professionals p ON p.active = true` sin filtrar por rol. | **ALTO** |
+| 13 | **Equipo V2: no hay modal "Cambiar contraseña"**: `updateMiembroCredenciales` existe (`actions.ts:1701`) pero nunca se llama desde V2. | **ALTO** |
+| 14 | **Equipo V2: no hay modal "Editar credenciales"**: V1 tenía inline edit (name/email/password), V2 lo perdió. | **ALTO** |
+| 15 | **Bot no usa `professional_services`**: Asigna cualquier profesional a cualquier servicio sin validar especialidades. | **MEDIO** |
+| 16 | **Equipo: no se notifica al nuevo miembro**: `createMiembroEquipo` crea usuario pero no envía credenciales. | **MEDIO** |
+| 17 | **Caja checkout es fake**: `pos-cartV2.tsx:44-47` solo muestra animación. No guarda transacción. | **CRÍTICO** |
+
+---
+
+## Plan de Correcciones (18 ítems, priorizado)
+
+| Orden | # | Acción | Minutos |
+|:---:|:---:|------|:---:|
+| 1 | 4 | ✅ `VACUUM ANALYZE` 9 tablas DB | 1 |
+| 2 | 11 | Fix `services_text` sync: helper `regenerateServicesText()` llamado desde CRUD | 15 |
+| 3 | 12 | Fix bot Lookup Negocio: excluir admins de lista profesionales | 10 |
+| 4 | 13+14 | Modal "Cambiar credenciales" en Equipo V2 | 15 |
+| 5 | 16 | Notificar credenciales al crear miembro | 10 |
+| 6 | 15 | Bot: validar `professional_services` al asignar profesional | 10 |
+| 7 | — | Confirmación delete en inventario + fix stats incluyen inactivos | 5 |
+| 8 | — | Confirmación delete en servicios (shadcn dialog) | 3 |
+| 9 | — | Crear/eliminar métodos de pago | 10 |
+| 10 | 17 | Caja: implementar checkout real (tabla `transactions`) | 30 |
+| 11 | 3 | Quitar `"use server"` de `lib/services.ts` + auth en `getServiceById` | 2 |
+| 12 | 5 | Limpiar dead mi-horario references | 5 |
+| 13 | 6 | Migrar orange → amber (48 refs, 8 archivos) | 10 |
+| 14 | 7 | `console.error("[module]", e)` en ~30 catch blocks | 10 |
+| 15 | — | Validar Agenda List carga datos (fetch + Route Handlers) | 5 |
+| 16 | 2 | Cross-business auth bypass en 3 server actions | 5 |
+
+**Total: ~2.5 horas**
+
+---
+
+## Archivos Clave
+
+### Agenda V2
+| Archivo | Descripción |
+|---------|-------------|
+| `dashboard/features/agenda/components/week-viewV2.tsx` | Orquestador Calendar/Lista (~370 líneas) |
+| `dashboard/features/agenda/components/timeline-gridV2.tsx` | Grid premium con position:absolute, z-index |
+| `dashboard/features/agenda/components/parts/appointment-blockV2.tsx` | Card atómica STATUS_STYLE |
+| `dashboard/features/agenda/components/agenda-list-containerV2.tsx` | Lista mensual + fetch Route Handlers |
+| `dashboard/features/agenda/components/parts/day-stripV2.tsx` | 7 días + month picker |
+| `dashboard/features/agenda/components/parts/day-accordionV2.tsx` | Acordeón diario con bloqueos |
+| `dashboard/features/agenda/components/parts/appointment-cardV2.tsx` | Card cita mobile/desktop |
+| `dashboard/features/agenda/components/agenda-modalV2.tsx` | Modal 2 tabs crear cita/bloquear |
+| `dashboard/features/agenda/actionsV2.ts` | Server actions + deleteBloqueoV2 |
+| `dashboard/app/api/appointments/month/route.ts` | Route Handler GET citas del mes |
+| `dashboard/app/api/bloqueos/route.ts` | Route Handler GET bloqueos |
+| `dashboard/app/api/professional-services/route.ts` | Route Handler GET servicios profesional |
+
+### Roles & Layout
+| Archivo | Descripción |
+|---------|-------------|
+| `dashboard/components/shared/sidebarV2.tsx` | Nav con allRoles filter, items ocultos por rol |
+| `dashboard/components/shared/notification-bell.tsx` | Bell con badge, dropdown, colores por acción |
+| `dashboard/auth.config.ts` | Middleware — profesional en config, bloqueado auditoria/equipo |
+| `dashboard/next.config.ts` | deploymentId + Cache-Control headers |
+| `dashboard/features/config-tabs/components/configuracion-client.tsx` | Tabs dinámicos por rol |
+| `dashboard/features/config-schedule/components/schedule-blocksV2.tsx` | filterProfessionalId |
+| `dashboard/features/clients/components/client-tableV2.tsx` | Toggle Todos/Mis clientes |
+
+### Backend
+| Archivo | Descripción |
+|---------|-------------|
+| `dashboard/lib/appointments.ts` | getWeekAppointments con referenceDate UTC-5 |
+| `dashboard/lib/audit.ts` | auditar() → notifications + audit_log |
+| `dashboard/lib/actions.ts` | updateMiembroCredenciales (línea 1701), getClientesV2 |
+| `dashboard/lib/services.ts` | CRUD servicios (NO regenera services_text — bug #11) |
+
+---
+
+## Credenciales VPS
+
 ```
-Switch → Leer Slots Fecha (postgres) → Formatear Slots Fecha (code, 2 salidas)
-  → out[0] → Enviar Slots Fecha (httpRequest → Evolution API)
-  → out[1] → Guardar Historial Fecha (postgres upsert, sobrescribe código con texto real)
+ssh root@178.104.27.180
+DB: docker exec meyer_postgres psql -U meyer_user -d meyer_db
+PM2: pm2 restart meyer-dashboard
+Build: cd /root/meyer-bot/dashboard && rm -rf .next && npm run build
+Puerto: 3001 (nginx proxy 443 → 3001)
 ```
 
-## Research para Perplexity (próximo paso)
+| Recurso | Dato |
+|---------|------|
+| cristian@hotmail.com | cristian123 (profesional) |
+| camila@hotmail.com | (admin, professional_id=14) |
 
-### Documentos a subir
-1. **`workflows/WhatsApp Bot - Genérico restored.json`** — workflow completo (248KB)
-2. **`docs/BUG_BACKLOG.md`** — todos los bugs documentados
-3. **`docs/ARCHITECTURE.md`** — schema DB, arquitectura, principios
+---
 
-### Preguntas clave para Perplexity
+## Próximo Paso
 
-**1. Arquitectura de prompts para bots WhatsApp + LLMs**
-> "¿Cómo resuelven empresas como Landbot, Treble, Wati, respond.io la colisión de reglas en prompts largos de LLMs? ¿Usan state machines, validación determinística post-LLM, function calling con schema estricto, o prompt-based routing? ¿Cuál es la mejor práctica para evitar que un LLM ignore reglas del prompt?"
-
-**2. Lazy loading de datos en chatbots**
-> "¿Cómo implementan los chatbots con LLMs el lazy loading de datos (como mostrar slots de disponibilidad solo bajo demanda)? ¿Patrones para dividir información en ventanas (7 días detallado + 90 días compacto) y carga bajo demanda via códigos como MOSTRAR_SLOTS|DD/MM/YYYY?"
-
-**3. Fallback chains con detección de calidad**
-> "¿Cómo diseñar fallback chains de LLMs que detecten degradación de calidad (no solo disponibilidad)? Si un modelo responde 200 con contenido no-vacío pero ignora reglas del prompt, ¿cómo se activa el fallback al siguiente modelo?"
-
-**4. Multi-tenant WhatsApp bots con n8n**
-> "¿Cómo escalar un bot de WhatsApp multi-tenant con n8n a 10-50-100 negocios? Rate limiting, colas, concurrencia, separación de datos. ¿Evolution API vs WhatsApp oficial (BSP)?
-
-**5. Prompt engineering para instrucciones con precedencia**
-> "¿Cómo manejar reglas con precedencia en prompts de LLMs? Cuando dos reglas compiten (saludo vs procesamiento de fecha), ¿cuál es la mejor práctica: XML tags, secciones numeradas, role-based priority (developer vs user), o pre-procesamiento JavaScript antes del LLM?"
+Ejecutar fix #2: `services_text` sync. Ver `HANDOFF.md` para estado completo.

@@ -421,3 +421,99 @@
 - Módulos restantes V2: dashboard, agenda, clientes, métricas, caja, inventario
 - Bugs backlog: servicios no reflejados en bot
 - Rotar Evolution API key leakada
+
+## 2026-08-01/03 — Agenda V2 + Roles RBAC + Auditoría de Seguridad
+
+### Qué se hizo
+
+**Agenda V2 completa (Calendar + List + Cards + Route Handlers):**
+- `TimelineGridV2`: grid hora×profesional con bloques `position:absolute`, z-index dinámico por hora, current time indicator, líneas dashed, columnas flex. Cards se tocan como Google Calendar (sin gaps).
+- `DayAccordionV2`: acordeón diario con bloqueos intercalados por hora, barra de ocupación, canceladas al final. Reemplaza tabla antigua.
+- `DayStripV2`: tira 7 días navegables + month picker popover. Touch targets 44px+.
+- `AppointmentBlockV2`: card atómica con `STATUS_STYLE` (amber=pendiente, emerald=confirmada, sky=completada, zinc=cancelada), compact mode, bloques con dashed border.
+- `AppointmentCardV2`: card de cita mobile/desktop con botones WhatsApp, Completar, Cancelar.
+- `AgendaModalV2`: modal 2 tabs (Nueva Cita + Bloquear Horario), `isOwnerOrAdmin` oculta selector profesional.
+- **Route Handlers**: `GET /api/appointments/month` y `GET /api/bloqueos` reemplazan Server Actions (`getAppointmentsByMonthV2`, `getBloqueosV2`) para eliminar errores "Failed to find Server Action".
+- `GET /api/professional-services` — servicios asignados al profesional logueado.
+- Responsive: touch targets 44px+, safe-area iPhone, overflow-x fixes, mobile single-column grid.
+- `getWeekAppointments` con `referenceDate` + offset UTC-5 (Bogotá).
+
+**Roles RBAC V2:**
+- `isOwnerOrAdmin` ahora usa `session.user.role === "owner" || session.user.role === "admin"`, no `professionalId == null`.
+- **SidebarV2**: profesional NO ve Caja/Inventario. Configuración muestra solo "Mi Horario" (`TeamScheduleEditorV2`) + "Mis Servicios" (read-only). Ítems duplicados corregidos.
+- **ConfiguracionClient**: tabs dinámicos por rol — profesional ve 2 tabs (Mi Horario, Mis Servicios), owner/admin ve 6 tabs (Perfil, Servicios, Pagos, Equipo, Horarios, Auditoría).
+- **Middleware**: profesional permitido en `/dashboard/configuracion`, bloqueado en `/dashboard/auditoria` y `/dashboard/equipo`.
+- **ScheduleBlocksV2**: acepta `filterProfessionalId`, oculta columna/selector/modal profesional cuando está fijado.
+- **ClientTableV2**: toggle "Todos/Mis clientes" visible solo para profesionales, `professionalId` dinámico en `loadData`.
+- Mi Horario V1 eliminado completamente.
+
+**Build & Sync:**
+- `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` fijada en `.env` del VPS.
+- `deploymentId` en `next.config.ts` + `Cache-Control: no-cache` headers.
+- Landing page eliminada (14 archivos), `app/page.tsx` restaurado a redirect.
+- `globals.css` revertido a pre-landing (145 líneas de estilos landing borradas).
+- Auto-refresh 15s + focus/visibility listeners en Agenda, Dashboard, Clientes.
+- `auditar()` inserta en `notifications` + `audit_log` (antes solo audit_log). Webhooks `sync-*` también.
+- `NotificationBell`: rediseño completo, colores por acción, badge sin leer, dropdown 320px.
+
+**Documentación:**
+- `docs/frontend-reference.md` eliminado (1126 líneas obsoletas). Contenido rescatado: Caja spec → `docs/reference/caja-spec.md`, Perfil Negocio rules → `ARCHITECTURE.md`, Membresías → `SPRINTS.md`.
+- `docs/refactoring-v2/` archivado a `docs/archive/refactoring-v2/` (13 archivos de plan, todos ya ejecutados).
+
+**Auditoría de seguridad (10 hallazgos validados con evidencia):**
+- P0: PM2 crash loop (FALSO — son deploys, no crashes), cross-business auth bypass (REAL sin riesgo single-tenant), `getServiceById` sin auth (REAL).
+- P1: dead tuples DB 9 tablas (REAL), mi-horario dead references (REAL), orange leftovers 48 refs (REAL), silent catch blocks ~30 (REAL).
+- P2: N+1 getClientes, debug endpoint, dead business id=2.
+- **Nuevos hallazgos bot**: services_text desincronizado (CRÍTICO), Camila admin como profesional en bot (ALTO), equipo sin modal contraseña (ALTO), bot ignora professional_services (MEDIO), caja checkout fake (CRÍTICO).
+
+**Credenciales**: cristian@hotmail.com / cristian123 (profesional).
+
+### Reglas nuevas
+- **Server Actions en `lib/` causan "Failed to find Server Action"** en Route Handlers. Migrar a `fetch()` o Route Handlers propios. No poner `"use server"` en archivos compartidos.
+- **Siempre usar `session.user.role`** para RBAC, nunca `professionalId == null`.
+- **Después de cada deploy**: Ctrl+Shift+R para limpiar cache de Server Action IDs.
+- **`deploymentId` en next.config.ts** necesario para Next.js 16 en producción.
+- **Todo archivo de docs obsoleto** → archivar a `docs/archive/` o eliminar. No acumular. Nada de "⏳ Pendiente" que ya esté implementado.
+
+### Fix #1 VACUUM ANALYZE (2026-08-03)
+- 14 tablas limpiadas, 0 dead tuples. Autovacuum ON. Revisar en 1 semana si `conversation_history` requiere tuning `autovacuum_vacuum_scale_factor = 0.01`.
+
+### Archivos creados (~12)
+- `dashboard/app/api/appointments/month/route.ts`
+- `dashboard/app/api/bloqueos/route.ts`
+- `dashboard/app/api/professional-services/route.ts`
+- `dashboard/features/agenda/components/timeline-gridV2.tsx`
+- `dashboard/features/agenda/components/agenda-list-containerV2.tsx`
+- `dashboard/features/agenda/components/parts/day-stripV2.tsx`
+- `dashboard/features/agenda/components/parts/day-accordionV2.tsx`
+- `dashboard/features/agenda/components/parts/appointment-blockV2.tsx`
+- `dashboard/features/agenda/components/parts/appointment-cardV2.tsx`
+- `docs/reference/caja-spec.md`
+
+### Archivos modificados (~20)
+- `dashboard/features/agenda/components/week-viewV2.tsx` — orquestador Calendar/Lista
+- `dashboard/features/agenda/components/agenda-modalV2.tsx` — isOwnerOrAdmin
+- `dashboard/features/agenda/actionsV2.ts` — deleteBloqueoV2, referenceDate
+- `dashboard/components/shared/sidebarV2.tsx` — allRoles filter, items ocultos
+- `dashboard/components/shared/notification-bell.tsx` — rediseño completo
+- `dashboard/auth.config.ts` — middleware profesional en config
+- `dashboard/next.config.ts` — deploymentId + Cache-Control
+- `dashboard/features/config-tabs/components/configuracion-client.tsx` — tabs dinámicos
+- `dashboard/features/config-schedule/components/schedule-blocksV2.tsx` — filterProfessionalId
+- `dashboard/features/clients/components/client-tableV2.tsx` — toggle Todos/Mis clientes
+- `dashboard/features/clients/actionsV2.ts` — professionalId param
+- `dashboard/lib/appointments.ts` — referenceDate UTC-5
+- `dashboard/lib/audit.ts` — auditar() → notifications
+- `dashboard/app/(dashboard)/dashboard/semana/page.tsx` — isOwnerOrAdmin
+- `dashboard/app/(dashboard)/dashboard/page.tsx` — isOwnerOrAdmin
+- `dashboard/app/(dashboard)/dashboard/clientes/page.tsx` — isOwnerOrAdmin
+- `dashboard/app/(dashboard)/dashboard/configuracion/page.tsx` — permite profesionales
+- `dashboard/app/globals.css` — revertido a pre-landing
+- `docs/ARCHITECTURE.md` — Perfil Negocio rules + Caja ref
+- `docs/SPRINTS.md` — Membresías futuro
+
+### Qué quedó pendiente
+- **Ejecutar plan de 16 correcciones** (ver `CURRENT.md` para detalle completo)
+- Prioridad inmediata: #2 services_text sync, #3 bot admin filter, #4 equipo contraseñas, #10 caja checkout
+- Contraseña Camila: ver DB VPS
+- Rotar Evolution API key leakada (deuda de sesiones anteriores)

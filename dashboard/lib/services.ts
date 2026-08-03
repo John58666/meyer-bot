@@ -89,6 +89,20 @@ export async function buildPriceMap(businessId: number): Promise<Map<string, num
   return map;
 }
 
+export async function regenerateServicesText(businessId: number) {
+  const { rows } = await pool.query<{ name: string; price: number }>(
+    `SELECT name, price FROM services WHERE business_id = $1 AND active = true ORDER BY name`,
+    [businessId]
+  );
+  const text = rows
+    .map(r => `${r.name} $${r.price.toLocaleString('es-CO')}`)
+    .join(', ');
+  await pool.query(
+    `UPDATE businesses SET services_text = $1 WHERE id = $2`,
+    [text, businessId]
+  );
+}
+
 export async function createService(data: ServiceInput) {
   const session = await auth();
   if (!session) return { error: "No autenticado" };
@@ -120,6 +134,7 @@ export async function createService(data: ServiceInput) {
       duracion: data.duration_minutes,
     });
 
+    await regenerateServicesText(session.user.businessId);
     revalidatePath("/dashboard/configuracion");
     return { ok: true, id: rows[0].id };
   } catch (e) {
@@ -167,6 +182,7 @@ export async function updateService(serviceId: number, data: ServiceInput) {
       duracion: data.duration_minutes,
     });
 
+    await regenerateServicesText(session.user.businessId);
     revalidatePath("/dashboard/configuracion");
     return { ok: true };
   } catch (e) {
@@ -187,6 +203,7 @@ export async function toggleServiceActive(serviceId: number, active: boolean) {
       [active, serviceId, session.user.businessId]
     );
 
+    await regenerateServicesText(session.user.businessId);
     revalidatePath("/dashboard/configuracion");
     return { ok: true };
   } catch (e) {
@@ -207,6 +224,7 @@ export async function deleteService(serviceId: number) {
       [serviceId, session.user.businessId]
     );
 
+    await regenerateServicesText(session.user.businessId);
     revalidatePath("/dashboard/configuracion");
     return { ok: true };
   } catch (e) {
@@ -252,6 +270,7 @@ export async function setProfessionalServices(
       );
     }
 
+    await regenerateServicesText(session.user.businessId);
     revalidatePath("/dashboard/configuracion");
     return { ok: true };
   } catch (e) {
