@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import {
-  getAppointmentsByMonthV2,
   getBloqueosV2,
   updateAppointmentStatusV2,
   deleteBloqueoV2,
@@ -74,8 +73,10 @@ export function AgendaListContainerV2({
     else setRefreshing(true)
     try {
       const profId = isOwnerOrAdmin ? selectedProfessionalId : userProfessionalId
+      const params = new URLSearchParams({ businessId: String(businessId), year: String(year), month: String(month) })
+      if (profId) params.set("professionalId", String(profId))
       const [aptsRes, bloqRes] = await Promise.all([
-        getAppointmentsByMonthV2(businessId, year, month, profId),
+        fetch(`/api/appointments/month?${params}`).then(r => r.json()),
         getBloqueosV2(businessId, profId),
       ])
       const newApts = aptsRes.appointments
