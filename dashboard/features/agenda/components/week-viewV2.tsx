@@ -354,7 +354,9 @@ export function WeekViewV2({ businessId, businessName: initialName, isOwnerOrAdm
       {modalOpen && (
         <AgendaModalV2 open={modalOpen} onClose={handleCloseModal}
           businessId={businessId} preselectedSlot={preselectedSlot}
-          professionals={professionals} onSuccess={loadData} />
+          professionals={professionals} isOwnerOrAdmin={isOwnerOrAdmin}
+          userProfessionalId={userProfessionalId}
+          onSuccess={loadData} />
       )}
 
       {drawerAppointment && (

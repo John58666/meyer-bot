@@ -27,6 +27,8 @@ interface Props {
   businessId: number
   preselectedSlot: { date: string; hour: string; professionalId: number | null } | null
   professionals: { id: number; name: string }[]
+  isOwnerOrAdmin: boolean
+  userProfessionalId: number | null
   onSuccess: () => void
 }
 
@@ -49,6 +51,8 @@ export function AgendaModalV2({
   businessId,
   preselectedSlot,
   professionals,
+  isOwnerOrAdmin,
+  userProfessionalId,
   onSuccess,
 }: Props) {
   const [tab, setTab] = useState<Tab>("cita")
@@ -63,7 +67,7 @@ export function AgendaModalV2({
   const [selectedServiceId, setSelectedServiceId] = useState<number | "">("")
 
   const [selectedProfId, setSelectedProfId] = useState<number | null>(
-    preselectedSlot?.professionalId ?? professionals[0]?.id ?? null
+    isOwnerOrAdmin ? (preselectedSlot?.professionalId ?? professionals[0]?.id ?? null) : (userProfessionalId ?? null)
   )
 
   const [fecha, setFecha] = useState(preselectedSlot?.date ?? "")
@@ -79,7 +83,9 @@ export function AgendaModalV2({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
 
-  const [bloqueoProfId, setBloqueoProfId] = useState<number | null>(preselectedSlot?.professionalId ?? null)
+  const [bloqueoProfId, setBloqueoProfId] = useState<number | null>(
+    isOwnerOrAdmin ? (preselectedSlot?.professionalId ?? null) : userProfessionalId
+  )
   const [bloqueoFecha, setBloqueoFecha] = useState(preselectedSlot?.date ?? "")
   const [bloqueoHoraInicio, setBloqueoHoraInicio] = useState(preselectedSlot?.hour ?? "")
   const [bloqueoHoraFin, setBloqueoHoraFin] = useState("")
@@ -415,6 +421,7 @@ export function AgendaModalV2({
                   ))}
                 </select>
               </div>
+              {isOwnerOrAdmin ? (
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-zf-text-secondary">
                   Profesional
@@ -436,6 +443,7 @@ export function AgendaModalV2({
                   ))}
                 </select>
               </div>
+              ) : null}
             </div>
 
             <div className="space-y-2">
@@ -491,6 +499,7 @@ export function AgendaModalV2({
           </>
         ) : (
           <>
+            {isOwnerOrAdmin ? (
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-zf-text-secondary">
                 Profesional
@@ -510,6 +519,7 @@ export function AgendaModalV2({
                 ))}
               </select>
             </div>
+            ) : null}
 
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-zf-text-secondary">

@@ -284,6 +284,7 @@ export function ScheduleBlocksV2({ businessId, filterProfessionalId }: Props) {
             <option value="horario_especial">Horario especial</option>
           </select>
 
+          {filterProfessionalId == null && (
           <select
             value={filters.professionalId ?? ""}
             onChange={(e) =>
@@ -294,7 +295,7 @@ export function ScheduleBlocksV2({ businessId, filterProfessionalId }: Props) {
                   : null,
               }))
             }
-            className="rounded-lg border border-zf-border bg-white px-3 py-1.5 text-xs text-zf-text focus:border-zf-primary focus:outline-none"
+            className="rounded-lg border border-zf-border bg-white px-3 py-1.5 text-xs text-zf-text focus:border-zinc-800 focus:outline-none"
           >
             <option value="">Todos los Profesionales</option>
             {professionals.map((p) => (
@@ -303,6 +304,7 @@ export function ScheduleBlocksV2({ businessId, filterProfessionalId }: Props) {
               </option>
             ))}
           </select>
+          )}
 
           {activeFilterCount > 0 && (
             <button
