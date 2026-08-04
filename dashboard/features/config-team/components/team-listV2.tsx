@@ -16,6 +16,7 @@ import { EmptyStateV2 } from "@/components/shared/empty-stateV2"
 import { TeamMemberModalV2 } from "./team-member-modalV2"
 import { TeamPermissionsModalV2 } from "./team-permissions-modalV2"
 import { TeamScheduleEditorV2 } from "./team-schedule-editorV2"
+import { TeamCredentialsModalV2 } from "./team-credentials-modalV2"
 import { EmployeeDetailModalV2 } from "@/features/equipo-roles/components/employee-detail-modalV2"
 import {
   Plus,
@@ -27,6 +28,7 @@ import {
   AlertCircle,
   Users,
   User,
+  Key,
   Loader2,
 } from "lucide-react"
 
@@ -58,6 +60,7 @@ export function TeamListV2({ businessId }: Props) {
   const [deletePending, setDeletePending] = useState(false)
   const [togglePendingId, setTogglePendingId] = useState<number | null>(null)
   const [detailMember, setDetailMember] = useState<MiembroEquipo | null>(null)
+  const [credentialsTarget, setCredentialsTarget] = useState<MiembroEquipo | null>(null)
   const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
@@ -286,6 +289,7 @@ export function TeamListV2({ businessId }: Props) {
                     isPending={isPending}
                     isExpanded={isExpanded}
                     onViewDetail={() => { closeMenu(); setDetailMember(m) }}
+                    onChangeCredentials={() => { closeMenu(); setCredentialsTarget(m) }}
                   />
                 )
               })}
@@ -420,6 +424,15 @@ export function TeamListV2({ businessId }: Props) {
           businessId={businessId}
         />
       )}
+
+      {credentialsTarget && (
+        <TeamCredentialsModalV2
+          open={!!credentialsTarget}
+          onClose={() => { setCredentialsTarget(null); }}
+          member={credentialsTarget}
+          businessId={businessId}
+        />
+      )}
     </div>
   )
 }
@@ -435,6 +448,7 @@ interface RowProps {
   onToggleActive: () => void
   onDelete: () => void
   onViewDetail: () => void
+  onChangeCredentials: () => void
   getInitials: (name: string) => string
   getRoleBadge: (role: string) => React.ReactNode
   togglePending: boolean
@@ -453,6 +467,7 @@ function TeamRow({
   onToggleActive,
   onDelete,
   onViewDetail,
+  onChangeCredentials,
   getInitials,
   getRoleBadge,
   togglePending,
@@ -543,6 +558,17 @@ function TeamRow({
                   <Settings2 className="h-4 w-4 text-zf-text-muted" />
                   Editar Permisos
                 </button>
+
+                {member.role !== "owner" && (
+                  <button
+                    type="button"
+                    onClick={onChangeCredentials}
+                    className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-zf-text transition-colors hover:bg-zf-accent-bg"
+                  >
+                    <Key className="h-4 w-4 text-zf-text-muted" />
+                    Cambiar credenciales
+                  </button>
+                )}
 
                 {member.professional_id != null && (
                   <button

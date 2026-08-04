@@ -1762,6 +1762,12 @@ export async function updateMiembroCredenciales(data: {
       );
     }
 
+    auditar(businessId, parseInt(session.user.id), "update_credentials", "user", userId, {
+      nombre: name.trim(),
+      email: email.toLowerCase().trim(),
+      password_changed: !!password,
+    });
+
     revalidatePath("/dashboard/equipo");
     return { ok: true };
   } catch (e) {

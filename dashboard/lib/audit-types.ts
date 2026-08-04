@@ -19,7 +19,8 @@ export type AuditAccion =
   | "create_product"
   | "update_product"
   | "toggle_product"
-  | "delete_product";
+  | "delete_product"
+  | "update_credentials";
 
 export type AuditEntidad =
   | "appointment"
@@ -73,6 +74,7 @@ export const ACCIONES_LABELS: Record<string, string> = {
   update_product: "Actualizar producto",
   toggle_product: "Cambiar estado producto",
   delete_product: "Eliminar producto",
+  update_credentials: "Cambiar credenciales",
 };
 
 export const ENTIDAD_LABELS: Record<string, string> = {
@@ -119,6 +121,7 @@ export function describirDetalle(accion: string, detalle: Record<string, unknown
     case "create_miembro":
     case "toggle_miembro":
     case "update_role":
+    case "update_credentials":
       return [
         detalle.nombre ? `Nombre: ${detalle.nombre}` : null,
         detalle.email ? `Email: ${detalle.email}` : null,
