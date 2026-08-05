@@ -25,13 +25,13 @@ export async function GET(request: Request) {
        FROM schedule_exceptions se
        LEFT JOIN professionals p ON se.professional_id = p.id
        WHERE se.business_id = $1
-         AND se.deleted_at IS NULL
-         AND ($2::int IS NULL OR se.professional_id IS NULL OR se.professional_id = $2)
+          AND ($2::int IS NULL OR se.professional_id IS NULL OR se.professional_id = $2)
        ORDER BY se.fecha DESC`,
       [businessId, profId]
     )
     return NextResponse.json({ bloqueos: rows })
-  } catch {
+  } catch (e) {
+    console.error("[bloqueos]", e);
     return NextResponse.json({ error: "Error al cargar bloqueos", bloqueos: [] }, { status: 500 })
   }
 }
