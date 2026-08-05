@@ -84,46 +84,35 @@ export function TeamPermissionsModalV2({ open, onClose, businessId, member }: Pr
     setSaving(true)
     setError("")
 
-    const ops: Promise<{ error?: string }>[] = []
-
     const effectiveRole = isOwner ? "owner" : currentRole
     const targetRole = isOwner ? "owner" : currentRole
 
     if (effectiveRole !== originalRole && originalRole !== "owner" && targetRole !== "owner") {
-      ops.push(
-        (async () => {
-          const res = await updateTeamMemberRoleV2(member.id, businessId, targetRole as "admin" | "profesional")
-          return res
-        })()
-      )
-    }
-
-    if (member.professional_id && (targetRole === "profesional" || originalRole === "profesional")) {
-      ops.push(
-        (async () => {
-          const res = await setTeamMemberServicesV2(member.professional_id!, selectedIds)
-          return res as { error?: string }
-        })()
-      )
-    }
-
-    try {
-      const results = await Promise.all(ops)
-      const firstError = results.find((r) => r?.error)
-      if (firstError?.error) {
-        setError(firstError.error)
-      } else {
-        setSaved(true)
-        setTimeout(() => {
-          setSaved(false)
-          onClose()
-        }, 1200)
+      const res = await updateTeamMemberRoleV2(member.id, businessId, targetRole as "admin" | "profesional")
+      if (res.error) {
+        setError(res.error)
+        setSaving(false)
+        return
       }
-    } catch {
-      setError("Error guardando los permisos")
-    } finally {
-      setSaving(false)
     }
+
+    if (targetRole === "profesional") {
+      const effectiveProfId = (member.professional_id) ?? null
+      if (effectiveProfId) {
+        const res = await setTeamMemberServicesV2(effectiveProfId, selectedIds)
+        if ("error" in res && res.error) {
+          setError(res.error)
+          setSaving(false)
+          return
+        }
+      }
+    }
+
+    setSaved(true)
+    setTimeout(() => {
+      setSaved(false)
+      onClose()
+    }, 1200)
   }
 
   if (!member) return null

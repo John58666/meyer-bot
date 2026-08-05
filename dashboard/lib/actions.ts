@@ -1649,10 +1649,7 @@ export async function updateMiembroRole(
     await client.query("BEGIN");
 
     if (role === "profesional") {
-      // Si se está promoviendo a "profesional" y todavía no tiene un
-      // professional_id enlazado, hay que crearlo — de lo contrario queda
-      // huérfano (role='profesional' pero professional_id=NULL) y no
-      // aparece en ningún selector ni filtro de agenda.
+      let resultingProfId: number | null = null;
       const current = await client.query(
         `SELECT name, professional_id FROM users WHERE id = $1 AND business_id = $2`,
         [userId, businessId]
@@ -1665,14 +1662,14 @@ export async function updateMiembroRole(
            RETURNING id`,
           [businessId, row.name]
         );
+        resultingProfId = profResult.rows[0].id;
         await client.query(
           `UPDATE users SET role = $1, professional_id = $2, updated_at = NOW()
            WHERE id = $3 AND business_id = $4`,
-          [role, profResult.rows[0].id, userId, businessId]
+          [role, resultingProfId, userId, businessId]
         );
       } else {
-        // Ya tenía professional_id (p.ej. admin que antes fue profesional) —
-        // solo aseguramos que la fila professionals esté activa de nuevo.
+        resultingProfId = row?.professional_id ?? null;
         if (row?.professional_id != null) {
           await client.query(
             `UPDATE professionals SET active = true WHERE id = $1`,
@@ -1684,12 +1681,21 @@ export async function updateMiembroRole(
           [role, userId, businessId]
         );
       }
-    } else {
-      await client.query(
-        `UPDATE users SET role = $1, updated_at = NOW() WHERE id = $2 AND business_id = $3`,
-        [role, userId, businessId]
-      );
+
+      await client.query("COMMIT");
+
+      auditar(businessId, parseInt(session.user.id), "update_role", "user", userId, {
+        role_nuevo: role,
+      });
+
+      revalidatePath("/dashboard/equipo");
+      return { ok: true, professionalId: resultingProfId };
     }
+
+    await client.query(
+      `UPDATE users SET role = $1, updated_at = NOW() WHERE id = $2 AND business_id = $3`,
+      [role, userId, businessId]
+    );
 
     await client.query("COMMIT");
 
