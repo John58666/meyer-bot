@@ -14,7 +14,7 @@ export default async function BloqueosPage() {
   // owner/admin (professionalId null): pueden elegir bloquear a un
   // profesional específico o todo el negocio — pero solo si el negocio
   // REALMENTE tiene profesionales activos (calculado en vivo, sin flag manual).
-  const isOwnerOrAdmin = professionalId == null
+  const isOwnerOrAdmin = session.user.role === "owner" || session.user.role === "admin"
   const allProfessionals = isOwnerOrAdmin ? await getActiveProfessionals(businessId) : []
   const showProfessionalPicker = isOwnerOrAdmin && allProfessionals.length > 0
 

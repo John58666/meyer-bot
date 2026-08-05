@@ -57,7 +57,9 @@ export async function getBloqueosV2(businessId: number) {
   if (session.user.businessId !== businessId) return { error: "No autorizado", bloqueos: [] }
 
   try {
-    const rows = await getBloqueos(businessId, null, true)
+    const isProfessional = session.user.role === "profesional"
+    const professionalId = isProfessional ? session.user.professionalId : null
+    const rows = await getBloqueos(businessId, professionalId, !isProfessional)
     return { bloqueos: rows }
   } catch {
     return { error: "Error al cargar bloqueos", bloqueos: [] }

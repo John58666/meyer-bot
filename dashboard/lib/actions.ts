@@ -610,7 +610,13 @@ export async function getMetricas(
     ]);
 
     const profResult = await pool.query<{ id: number; name: string }>(
-      `SELECT id, name FROM professionals WHERE business_id = $1 AND active = true ORDER BY name`,
+      `SELECT p.id, p.name FROM professionals p
+       WHERE p.business_id = $1 AND p.active = true
+         AND NOT EXISTS (
+           SELECT 1 FROM users u
+           WHERE u.professional_id = p.id AND u.role IN ('admin','owner')
+         )
+       ORDER BY p.name`,
       [businessId]
     );
 
