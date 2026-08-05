@@ -102,6 +102,10 @@ export async function getProfessionalsV2(businessId: number) {
     const { rows } = await pool.query<{ id: number; name: string }>(
       `SELECT p.id, p.name FROM professionals p
        WHERE p.business_id = $1 AND p.active = true
+         AND NOT EXISTS (
+           SELECT 1 FROM users u
+           WHERE u.professional_id = p.id AND u.role IN ('admin','owner')
+         )
        ORDER BY p.name`,
       [businessId]
     )
