@@ -75,6 +75,7 @@ export function DayAccordionV2({
     while (ai < activos.length || bi < bloqs.length) {
       const aHora = activos[ai]?.hora ?? "99:99"
       const bHora = bloqs[bi]?.hora_inicio ?? "99:99"
+      if (aHora === "99:99" && bHora === "99:99") break
       if (aHora <= bHora) {
         merged.push("cita")
         ai++
@@ -83,6 +84,9 @@ export function DayAccordionV2({
         bi++
       }
     }
+
+    while (ai < activos.length) { merged.push("cita"); ai++ }
+    while (bi < bloqs.length) { merged.push("bloqueo"); bi++ }
 
     return { activos, bloqsOrdenados: bloqs, canceladas, merged }
   }, [appointments, bloqueos])
