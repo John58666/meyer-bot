@@ -1,9 +1,8 @@
 "use client"
 
 import { useState, useEffect, useTransition } from "react"
-import { getServicesV2, createService, updateService, toggleServiceActive, deleteService } from "@/features/config-services/actionsV2"
+import { getServicesV2, createService, updateService, toggleServiceActive, deleteService, getProfessionalServicesV2, setProfessionalServices } from "@/features/config-services/actionsV2"
 import type { ServiceRow, ServiceInput } from "@/lib/services"
-import { getProfessionalServices, setProfessionalServices } from "@/lib/services"
 import { getActiveProfessionals } from "@/lib/actions"
 import { ModalV2 } from "@/components/shared/modalV2"
 import { BadgeV2 } from "@/components/shared/badgeV2"
@@ -71,7 +70,7 @@ export function ServicesListV2({ businessId }: ServicesListV2Props) {
         if (editingId) {
           const assigned = new Set<number>()
           for (const p of profs) {
-            const serviceIds = await getProfessionalServices(businessId, p.id)
+            const serviceIds = await getProfessionalServicesV2(businessId, p.id)
             if ((serviceIds as number[]).includes(editingId)) assigned.add(p.id)
           }
           setAssignedIds(assigned)

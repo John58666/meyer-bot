@@ -1,11 +1,18 @@
 "use server"
 
-import { getAllServices, createService, updateService, toggleServiceActive, deleteService } from "@/lib/services"
+import { getAllServices, createService, updateService, toggleServiceActive, deleteService, getProfessionalServices, setProfessionalServices } from "@/lib/services"
 import { auth } from "@/auth"
 import type { ServiceRow, ServiceInput } from "@/lib/services"
 
 
-export { createService, updateService, toggleServiceActive, deleteService }
+export { createService, updateService, toggleServiceActive, deleteService, setProfessionalServices }
+
+export async function getProfessionalServicesV2(businessId: number, professionalId: number) {
+  const session = await auth()
+  if (!session) return []
+  if (session.user.businessId !== businessId) return []
+  return getProfessionalServices(businessId, professionalId)
+}
 
 export async function getServicesV2(businessId: number) {
   const session = await auth()
