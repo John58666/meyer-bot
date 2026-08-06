@@ -84,8 +84,8 @@ export function AgendaListContainerV2({
         fetch(`/api/appointments/month?${params}`).then(handleJson),
         fetch(`/api/bloqueos?${bloqParams}`).then(handleJson),
       ])
-      const newApts = aptsRes.appointments
-      const newBloqs = bloqRes.bloqueos
+      const newApts = aptsRes?.appointments ?? []
+      const newBloqs = bloqRes?.bloqueos ?? []
       if (!initialLoadDone.current) {
         setAppointments(newApts)
         setBloqueos(newBloqs)
@@ -176,6 +176,8 @@ export function AgendaListContainerV2({
 
   const daysWithData = useMemo(() => {
     const map = new Map<string, { appointments: AppointmentRow[]; bloqueos: BloqueoRow[] }>()
+
+    if (!Array.isArray(filteredAppointments) || !Array.isArray(filteredBloqueos)) return []
 
     for (const apt of filteredAppointments) {
       if (!map.has(apt.fecha)) map.set(apt.fecha, { appointments: [], bloqueos: [] })

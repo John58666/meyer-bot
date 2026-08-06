@@ -25,6 +25,7 @@ export async function GET(request: Request) {
        FROM schedule_exceptions se
        LEFT JOIN professionals p ON se.professional_id = p.id
        WHERE se.business_id = $1
+          AND se.fecha >= (NOW() AT TIME ZONE 'America/Bogota')::date
           AND ($2::int IS NULL OR se.professional_id IS NULL OR se.professional_id = $2)
        ORDER BY se.fecha DESC`,
       [businessId, profId]
